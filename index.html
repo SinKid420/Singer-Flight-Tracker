@@ -123,6 +123,11 @@ h1 b{color:var(--accent);font-weight:500}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.lbl b,.lbl i{max-width:104px;overflow:hidden;text-overflow:ellipsis}
+.folder .frow{background:var(--bg)}
+.folder .fhelp{margin:8px 6px}
+.folder .frelay{margin:0 6px 8px}
+.folder .links{margin:0 6px}
 .wxlegend{order:-1}
 .legends{bottom:46px}
 .tempctl{width:72px;height:72px;border-radius:50%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff;margin:0 16px 8px 0!important;pointer-events:auto;
@@ -178,7 +183,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <div id="map" role="application" aria-label="Live flight map"></div>
     <div class="pill">
       <h1>Sky<b>Overhead</b></h1>
-      <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading flights…</div>
+      <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading…</div>
       <button class="icon-btn" id="locate" aria-label="Use my location"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.9 3A9 9 0 0013 3.1V1h-2v2.1A9 9 0 003.1 11H1v2h2.1A9 9 0 0011 20.9V23h2v-2.1a9 9 0 007.9-7.9H23v-2h-2.1zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg></button>
     </div>
     <div class="chips">
@@ -206,7 +211,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   </div>
 </div>
 <div class="sheet-bg" id="fsheet" hidden>
-  <div class="sheet" role="dialog" aria-label="Feed status">
+  <div class="sheet" role="dialog" aria-label="Settings">
     <div class="sheet-head"><b>Settings</b><button class="close" id="fclose" aria-label="Close">✕</button></div>
     <label class="setrow" for="radius">Search radius<select id="radius" aria-label="Search radius"><option value="0">25 nm</option><option value="1">50 nm</option><option value="2" selected>100 nm</option><option value="3">150 nm</option></select></label>
     <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
@@ -221,13 +226,14 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <button class="setbtn" id="cnorth" type="button">Point map north</button>
       <div class="subh" style="margin-top:8px;text-transform:none;letter-spacing:0">Tap the dial to point north. Turn the map with two fingers.</div>
     </details>
-    <div class="subh">Flight feeds</div>
+    <details class="folder" id="ffolder"><summary>Flight feeds &amp; key</summary>
     <div id="flist" class="flist"></div>
     <p class="fhelp" id="fhelp"></p>
     <p class="fhelp" id="fenv"></p>
     <label class="frelay" for="apikey">FlyItalyADSB key (free) <a href="https://flyitalyadsb.com/en/data/api/#api-key" target="_blank" rel="noopener">Get a key</a><input id="apikey" type="password" autocomplete="off" placeholder="Paste your key"></label>
     <label class="frelay" for="relay" style="margin-top:8px">Relay address (optional)<input id="relay" type="url" inputmode="url" placeholder="https://your-relay.workers.dev/"></label>
     <div class="links"><a href="#" id="ftest" role="button">Test feeds</a><a href="#" class="alt" id="fsave" role="button">Save</a></div>
+    </details>
   </div>
 </div>
 
@@ -465,8 +471,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var vs=p.baro_rate?(p.baro_rate>0?'▲ ':'▼ ')+uVs(p.baro_rate):'level';
       var who=[airlineOf(p),typeName(p)].filter(Boolean).join(' · ')||'Unknown aircraft';
       var more=[p.r,p.squawk?'squawk '+p.squawk:''].filter(Boolean).join(' · ');
-      var near=cpaText(p), ph=getPhoto(p), phHtml=ph?'<a class="ph" href="'+esc(ph.link)+'" target="_blank" rel="noopener" aria-label="Photo on Planespotters.net"><img src="'+esc(ph.src)+'" alt="Photo of '+esc(name(p))+'" decoding="async" onerror="this.parentNode.remove()"><i>'+esc(ph.by?'Photo: '+ph.by:'Planespotters.net')+'</i></a>':'';
-      body.innerHTML='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><button class="close" id="cl" aria-label="Close">✕</button>'+
+      var near=cpaText(p), ph=getPhoto(p); if(ph&&!/^https:\/\//.test(ph.src||'')) ph=null; var phHtml=ph?'<a class="ph" href="'+esc(/^https:\/\//.test(ph.link||'')?ph.link:'https://www.planespotters.net/')+'" target="_blank" rel="noopener" aria-label="Photo on Planespotters.net"><img src="'+esc(ph.src)+'" alt="Photo of '+esc(name(p))+'" decoding="async" onerror="this.parentNode.remove()"><i>'+esc(ph.by?'Photo: '+ph.by:'Planespotters.net')+'</i></a>':'';
+      var html='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><button class="close" id="cl" aria-label="Close">✕</button>'+
         phHtml+'<div class="meta m1" style="color:var(--fg)">'+esc(who)+'</div>'+(more?'<div class="meta m1">'+esc(more)+'</div>':'')+
         '<div class="grid"><div><small>Altitude '+altUnit()+'</small><span>'+uAlt(p.alt_baro)+'</span></div>'+
         '<div><small>Speed '+spdUnit()+'</small><span>'+uSpd(p.gs)+'</span></div>'+
@@ -474,10 +480,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         '<div><small>From you</small><span>'+uDist(d,1)+' '+distUnit()+'</span></div></div>'+
         '<div class="meta">Climb: '+vs+'</div>'+(near?'<div class="meta" style="color:var(--fg)">'+esc(near)+'</div>':'')+
         '</div>';
-      document.getElementById('cl').onclick=function(){select(null)};
+      if(body._h!==html||!body.firstChild){body.innerHTML=html;body._h=html}
+      var clb=document.getElementById('cl'); if(clb) clb.onclick=function(){select(null)};
       return;
     }
-    body.innerHTML='';
+    body.innerHTML='';body._h='';
   }
 
   function select(h,pan){
@@ -578,20 +585,20 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(busy||document.hidden) return schedule();
     busy=true;
     var on=active();
-    if(!on.length){busy=false;setStat('Needs a feed · tap to set up',true);return schedule()}
+    if(!on.length){busy=false;setStat('Needs a feed<br>tap to set up',true);return schedule()}
     return Promise.all(on.map(fetchSource)).then(function(res){
       var good=res.filter(function(r){return r.ok});
       if(!good.length){
         failCount++;
         var code=res.map(function(r){return r.err}).filter(function(c){return /^\d+$/.test(c||'')})[0];
-        setStat(!navigator.onLine?'Offline · check your connection':(failCount>1?'Feed error'+(code?' '+code:'')+' · tap for fix':'Connecting…'),true);
+        setStat(!navigator.onLine?'No internet<br>check connection':(failCount>1?'Feed error<br>tap for fix':'Connecting…'),true);
         return;
       }
       failCount=0;
       lastData=merge(good.map(function(r){return r.ac}));
       render(lastData);
       var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
-      var warn=good.length<on.length?' · '+good.length+'/'+on.length+' feeds':'';
+      var warn=good.length<on.length?' · '+good.length+'/'+on.length:'';
       setStat('<em>'+lastData.length+(lastData.length===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
   }
@@ -606,9 +613,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   rate.onchange=function(){refreshMs=+rate.value;try{localStorage.setItem('sky-refresh',rate.value)}catch(e){}clearTimeout(timer);poll()};
   document.getElementById('map').parentNode.classList.add('glide');
 
-  function recenter(){
+  var touched=false;
+  ['pointerdown','wheel','touchstart'].forEach(function(ev){document.getElementById('map').addEventListener(ev,function(){touched=true},{passive:true})});
+  function recenter(keep){
     meMark.setLatLng([me.lat,me.lon]); meHalo.setLatLng([me.lat,me.lon]); loadTemp(); ring.setLatLng([me.lat,me.lon]).setRadius(radiusNm*1852);
-    map.fitBounds(ring.getBounds(),{padding:[10,10]});
+    if(!keep) map.fitBounds(ring.getBounds(),{padding:[10,10]});
     Object.keys(trails).forEach(function(h){trails[h].pts=[]});
     poll();
   }
@@ -624,13 +633,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     try{localStorage.setItem('sky-units',units)}catch(err){}
     applyUnits(); recenter(); render(lastData);
   };
-  function locate(){
-    if(!navigator.geolocation){setStat('Location unavailable · showing '+me.label);return}
+  function locate(auto){
+    if(!navigator.geolocation){setStat('No location<br>using default');return}
     navigator.geolocation.getCurrentPosition(function(pos){
-      me.lat=pos.coords.latitude; me.lon=pos.coords.longitude; me.label='you'; recenter();
-    },function(){setStat('Location off · showing '+me.label,true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+      me.lat=pos.coords.latitude; me.lon=pos.coords.longitude; me.label='you'; recenter(auto===true&&touched);
+    },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
-  document.getElementById('locate').onclick=locate;
+  document.getElementById('locate').onclick=function(){locate(false)};
 
   // Feed check: calls every feed once and explains what happened in plain words.
   function probe(s){
@@ -666,7 +675,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var how=location.protocol==='file:'||location.protocol==='content:'?'saved file':(/^https?:$/.test(location.protocol)?'web page':'preview');
     document.getElementById('fenv').textContent='Opened as: '+how+' · Internet: '+(navigator.onLine?'connected':'offline')+(how==='preview'?' · Previews inside other apps often block the internet. Open the saved file in Chrome.':'');
   }
-  function openSheet(){envLine();document.getElementById('relay').value=relay;document.getElementById('apikey').value=apiKey;document.getElementById('fsheet').hidden=false;runTest()}
+  function openSheet(){
+    envLine();document.getElementById('relay').value=relay;document.getElementById('apikey').value=apiKey;document.getElementById('fsheet').hidden=false;
+    var ff=document.getElementById('ffolder'), want=!active().length||failCount>0;
+    if(want){ if(ff.open) runTest(); else ff.open=true } else ff.open=false;
+  }
+  document.getElementById('ffolder').addEventListener('toggle',function(){ if(this.open) runTest() });
   document.getElementById('stat').onclick=openSheet;
   document.getElementById('gear').onclick=openSheet;
   document.getElementById('stat').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openSheet()}};
@@ -679,7 +693,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     try{localStorage.setItem('sky-relay',relay);localStorage.setItem('sky-key',apiKey)}catch(err){}
     runTest(); clearTimeout(timer); busy=false; poll();
   };
-  applyUnits(); syncLabels(); recenter(); locate();
+  applyUnits(); syncLabels(); recenter(); locate(true);
   if(!active().length) setTimeout(openSheet,600);
   // Works as an installable app once the page is hosted on https
   if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
