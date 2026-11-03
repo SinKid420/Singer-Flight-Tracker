@@ -125,6 +125,10 @@ h1 b{color:var(--accent);font-weight:500}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.ph{grid-column:2;grid-row:2/4;position:relative;display:block;width:104px;height:60px;border-radius:8px;overflow:hidden;background:var(--chip)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph i{position:absolute;left:0;right:0;bottom:0;padding:8px 4px 2px;font:400 8px/1.1 var(--font);font-style:normal;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hasph .m1{grid-column:1}
 #q{display:block;width:100%;height:42px;border:0;border-radius:21px;background:var(--chip);color:var(--fg);padding:0 16px;margin-bottom:6px;font:400 14px var(--font)}
 #q::placeholder{color:var(--dim)}
 #q:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -207,12 +211,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, HERE, Garmin, OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi'})]}},
+      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, HERE, Garmin, OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi'}),
+      L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi'})]}}
+      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}}
   };
   var baseLayers=[], baseKey='map';
   function setBase(key){
@@ -379,6 +383,15 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     renderDock();
   }
 
+  var photos={};
+  function getPhoto(p){
+    var h=p.hex, c=photos[h];
+    if(c!==undefined) return c||null;
+    photos[h]=null;
+    var look=function(u){return fetch(u).then(function(r){return r.ok?r.json():{}}).then(function(j){var x=j&&j.photos&&j.photos[0];return x?{src:(x.thumbnail_large||x.thumbnail||{}).src,link:x.link,by:x.photographer}:null}).catch(function(){return null})};
+    look('https://api.planespotters.net/pub/photos/hex/'+encodeURIComponent(h)).then(function(a){return a&&a.src?a:(p.r?look('https://api.planespotters.net/pub/photos/reg/'+encodeURIComponent(p.r)):null)}).then(function(a){if(a&&a.src){photos[h]=a;if(selected===h)renderDock()}});
+    return null;
+  }
   function matches(){
     var q=(document.getElementById('q').value||'').trim().toLowerCase().replace(/\s+/g,'');
     var all=lastData.filter(function(x){return x.lat!=null}).map(function(x){x._d=distNm(me.lat,me.lon,x.lat,x.lon);return x});
@@ -397,9 +410,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var vs=p.baro_rate?(p.baro_rate>0?'▲ ':'▼ ')+uVs(p.baro_rate):'level';
       var who=[airlineOf(p),typeName(p)].filter(Boolean).join(' · ')||'Unknown aircraft';
       var more=[p.r,p.squawk?'squawk '+p.squawk:''].filter(Boolean).join(' · ');
-      var near=cpaText(p);
-      body.innerHTML='<div class="card"><div class="cs">'+esc(name(p))+'</div><button class="close" id="cl" aria-label="Close">✕</button>'+
-        '<div class="meta" style="color:var(--fg)">'+esc(who)+'</div>'+(more?'<div class="meta">'+esc(more)+'</div>':'')+
+      var near=cpaText(p), ph=getPhoto(p), phHtml=ph?'<a class="ph" href="'+esc(ph.link)+'" target="_blank" rel="noopener" aria-label="Photo on Planespotters.net"><img src="'+esc(ph.src)+'" alt="Photo of '+esc(name(p))+'" decoding="async" onerror="this.parentNode.remove()"><i>'+esc(ph.by?'Photo: '+ph.by:'Planespotters.net')+'</i></a>':'';
+      body.innerHTML='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><button class="close" id="cl" aria-label="Close">✕</button>'+
+        phHtml+'<div class="meta m1" style="color:var(--fg)">'+esc(who)+'</div>'+(more?'<div class="meta m1">'+esc(more)+'</div>':'')+
         '<div class="grid"><div><small>Altitude '+altUnit()+'</small><span>'+uAlt(p.alt_baro)+'</span></div>'+
         '<div><small>Speed '+spdUnit()+'</small><span>'+uSpd(p.gs)+'</span></div>'+
         '<div><small>Heading</small><span>'+(p.track!=null?Math.round(p.track)+'°':'—')+'</span></div>'+
