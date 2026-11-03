@@ -61,9 +61,7 @@ h1 b{color:var(--accent);font-weight:500}
 .wxlegend img{display:block;max-height:110px;max-width:100px;margin-top:3px}
 .wxlegend div{white-space:nowrap}
 .wxlegend{pointer-events:auto}
-.wxop{display:flex;align-items:center;gap:6px;margin-top:4px}
 .cloudblend{mix-blend-mode:screen}
-.wxop input{width:84px;margin:0;accent-color:var(--accent)}
 [hidden]{display:none!important}
 .stat{cursor:pointer}
 .sheet-bg{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
@@ -157,15 +155,12 @@ h1 b{color:var(--accent);font-weight:500}
       <div class="seg" role="group" aria-label="Map style">
         <button data-b="map" aria-pressed="true">Map</button><button data-b="sat" aria-pressed="false">Satellite</button><button data-b="terrain" aria-pressed="false">Terrain</button>
       </div>
-      <div class="seg" role="group" aria-label="Weather overlays" id="wxseg">
-        <button data-w="rain" aria-pressed="false">Rain</button><button data-w="snow" aria-pressed="false">Snow</button><button data-w="cloud" aria-pressed="false">Clouds</button>
-      </div>
       <label class="refresh">Refresh<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
       <label class="refresh">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
     </div>
     <div class="legends">
       <div class="legend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
-      <div class="legend wxlegend" id="wxlegend" hidden><div id="wxlegtxt">Rain</div><img id="wxlegimg" alt="Precipitation legend"><label class="wxop" for="wxop">Opacity<input type="range" id="wxop" min="15" max="90" step="5" value="50"></label></div>
+      <div class="legend wxlegend" id="wxlegend"><div id="wxlegtxt">Live rain, mm/h</div><img id="wxlegimg" alt="Rain intensity scale"></div>
     </div>
   </div>
   <div class="dock" id="dock">
@@ -244,43 +239,18 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     snow:{layer:'RADAR_1KM_RSNO',opacity:.75,z:7,label:'Snow, cm/h',legend:GEOMET+'?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=RADAR_1KM_RSNO&format=image/png'},
     cloud:{layer:'GOES-West_1km_NaturalColor',boost:1.8,blend:true,z:5,label:'Clouds (daytime)',legend:''}
   };
-  var wxOn={}, wxLayers={}, wxOpacity=.5;
-  try{var so=parseInt(localStorage.getItem('sky-wxop'),10);if(so>=15&&so<=90)wxOpacity=so/100}catch(e){}
-  document.getElementById('wxop').value=String(Math.round(wxOpacity*100));
-  document.getElementById('wxop').oninput=function(e){
-    wxOpacity=e.target.value/100;
-    Object.keys(wxLayers).forEach(function(k){wxLayers[k].setOpacity(wxOp(k))});
-    try{localStorage.setItem('sky-wxop',e.target.value)}catch(err){}
-  };
+  // Weather is always on and read-only: rain, snow and cloud layers update by themselves.
+  var wxLayers={}, wxOpacity=.5;
   function wxOp(k){return Math.min(1,wxOpacity*(WX[k].boost||1))}
-  function wxLegend(){
-    var top=['rain','snow'].filter(function(k){return wxOn[k]})[0];
-    var box=document.getElementById('wxlegend'), img=document.getElementById('wxlegimg');
-    if(!top&&!wxOn.cloud){box.hidden=true;return}
-    box.hidden=false;
-    document.getElementById('wxlegtxt').textContent=top?WX[top].label:WX.cloud.label;
-    if(top){img.hidden=false;img.onerror=function(){img.hidden=true};img.src=WX[top].legend}else{img.hidden=true}
-  }
-  function setWx(key,on){
-    var w=WX[key]; if(!w) return;
-    if(on&&!wxLayers[key]){
-      wxLayers[key]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',opacity:wxOp(key),zIndex:w.z,className:w.blend?'cloudblend':'',
-        attribution:'Weather © Environment and Climate Change Canada'});
-    }
-    if(on) wxLayers[key].addTo(map); else if(wxLayers[key]) map.removeLayer(wxLayers[key]);
-    wxOn[key]=on;
-    var b=document.querySelector('#wxseg button[data-w="'+key+'"]'); if(b) b.setAttribute('aria-pressed',on?'true':'false');
-    wxLegend();
-    try{localStorage.setItem('sky-wx',Object.keys(wxOn).filter(function(k){return wxOn[k]}).join(','))}catch(e){}
-  }
+  ['cloud','rain','snow'].forEach(function(k){
+    var w=WX[k];
+    wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',opacity:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
+  });
+  (function(){var img=document.getElementById('wxlegimg');img.onerror=function(){img.hidden=true};img.src=WX.rain.legend})();
   // New frames arrive every 6 to 10 minutes. A changing parameter makes the browser fetch fresh tiles.
-  function refreshWx(){Object.keys(wxLayers).forEach(function(k){if(wxOn[k]) wxLayers[k].setParams({_ts:Date.now()})})}
+  function refreshWx(){Object.keys(wxLayers).forEach(function(k){wxLayers[k].setParams({_ts:Date.now()})})}
   setInterval(refreshWx,300000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden) refreshWx()});
-  Array.prototype.forEach.call(document.querySelectorAll('#wxseg button'),function(b){
-    b.onclick=function(){var k=b.getAttribute('data-w');setWx(k,!wxOn[k])};
-  });
-  try{(localStorage.getItem('sky-wx')||'').split(',').forEach(function(k){if(WX[k]) setWx(k,true)})}catch(e){}
 
   // Location dot with a soft red halo
   var meHalo = L.circleMarker([me.lat,me.lon],{radius:16,stroke:false,fillColor:'#ff3b30',fillOpacity:.22,interactive:false}).addTo(map);
@@ -423,7 +393,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       return;
     }
     var m=matches();
-    document.getElementById('q').placeholder=m.total?'Search '+m.total+' planes by callsign or airline':'Search callsign, airline or aircraft';
+    document.getElementById('q').placeholder=m.total?'Search '+m.total+(m.total===1?' plane':' planes')+' by callsign or airline':'Search callsign, airline or aircraft';
     var html='<div class="list">';
     if(!m.list.length) html+='<div class="empty">'+(m.q?'No plane matches that search.':'No aircraft reporting in this radius right now. Try a wider radius.')+'</div>';
     m.list.forEach(function(x){
@@ -504,7 +474,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       render(lastData);
       var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
       var warn=good.length<on.length?' · '+good.length+'/'+on.length+' feeds':'';
-      setStat('<em>'+lastData.length+' planes</em><br>'+t+warn, good.length<on.length);
+      setStat('<em>'+lastData.length+(lastData.length===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,refreshMs);
@@ -552,7 +522,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var ms=Math.round(performance.now()-t0);
       if(r.status===401||r.status===403) return {ok:false,text:s.needsKey?'The key was not accepted. Check that you pasted it in full.':'The server refused the request (error '+r.status+').'};
       if(!r.ok) return {ok:false,text:'The server answered with error '+r.status+'.'};
-      return r.json().then(function(j){return {ok:true,text:'Working · '+(j.ac||j.aircraft||[]).length+' planes · '+ms+' ms'}});
+      return r.json().then(function(j){return {ok:true,text:'Working · '+(j.ac||j.aircraft||[]).length+((j.ac||j.aircraft||[]).length===1?' plane':' planes')+' · '+ms+' ms'}});
     }).catch(function(){
       if(!navigator.onLine) return {ok:false,text:'No internet connection.'};
       return fetch(u,{mode:'no-cors'}).then(function(){
