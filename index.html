@@ -463,6 +463,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     })(t0);
   }
   document.getElementById('compass').onclick=resetNorth;
+  // planes keep pointing the way they fly: update the angle the instant the map turns (touch twist, tap-to-north, anything)
+  function syncBearing(){var bb=map.getBearing?map.getBearing():0; if(typeof bb==='number'&&bb===bb) mapEl.style.setProperty('--bearing',bb+'deg')}
+  map.on('rotate',syncBearing); syncBearing();
   (function(){
     var K='sky-compass', cfg={cread:'1',cshow:'1',cspin:'55'};
     try{var r=JSON.parse(localStorage.getItem(K)||'{}');for(var k in cfg) if(r[k]!=null) cfg[k]=String(r[k])}catch(e){}
