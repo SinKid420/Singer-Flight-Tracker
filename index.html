@@ -62,6 +62,9 @@ h1 b{color:var(--accent);font-weight:500}
 .wxlegend div{white-space:nowrap}
 .wxlegend{pointer-events:auto}
 .cloudblend{mix-blend-mode:screen}
+body.moving .cloudblend{mix-blend-mode:normal}
+body.zooming .lbl,body.far .lbl{display:none}
+body.zooming .glide .leaflet-marker-icon{transition:none}
 [hidden]{display:none!important}
 .stat{cursor:pointer}
 .sheet-bg{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
@@ -262,7 +265,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.GridLayer.prototype.options.keepBuffer=4; L.GridLayer.prototype.options.updateInterval=100;
+  L.GridLayer.prototype.options.keepBuffer=2; L.GridLayer.prototype.options.updateInterval=100;
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
   var tempEl=null, tempC=null, tcfg='C';
@@ -351,7 +354,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function step(){ if(document.hidden||document.body.classList.contains('moving')||frames.length<2) return;
     var n=cur+1; if(n>=frames.length) n=0; setFrame(n); clearTimeout(tmr); tmr=setTimeout(step,n===frames.length-1?1800:650) }
   function applyRadar(){
-    clearTimeout(tmr); clearFrames();
+    clearTimeout(tmr); clearFrames(); parked=false;
     ['rain','snow'].forEach(function(k){ var on=want('ca'); if(on&&!map.hasLayer(wxLayers[k])) wxLayers[k].addTo(map); if(!on&&map.hasLayer(wxLayers[k])) map.removeLayer(wxLayers[k]) });
     if(rcfg.src==='off'){ setFrame(0); return }
     var n=rcfg.loop==='1'?RSTEPS:1; for(var st=n-1;st>=0;st--) frames.push(buildFrame(st));
@@ -372,6 +375,15 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   setTimeout(function(){applyRadar(); loadRV()},4000); setInterval(radarTick,300000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ loadRV(); if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,650) } } });
   map.on('moveend zoomend',function(){ if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,900) } });
+  // While you pan or zoom, keep only the visible radar frame loaded; the rest return when you stop
+  var parked=false, parkT=null;
+  function parkRadar(){ if(parked||frames.length<2) return; parked=true; clearTimeout(tmr); frames.forEach(function(f,j){ if(j!==cur) ['rv','iem'].forEach(function(k){ if(f[k]) map.removeLayer(f[k]) }) }) }
+  function unparkRadar(){ if(!parked) return; parked=false; frames.forEach(function(f,j){ if(j!==cur) ['rv','iem'].forEach(function(k){ if(f[k]) f[k].addTo(map) }) }); clearTimeout(tmr); tmr=setTimeout(step,1200) }
+  map.on('zoomstart movestart',function(){ clearTimeout(parkT); parkRadar(); });
+  map.on('zoomstart',function(){ document.body.classList.add('zooming') });
+  map.on('zoomend',function(){ document.body.classList.remove('zooming'); document.body.classList.toggle('far',map.getZoom()<8) });
+  map.on('moveend zoomend',function(){ clearTimeout(parkT); parkT=setTimeout(unparkRadar,1500) });
+  map.whenReady(function(){ document.body.classList.toggle('far',map.getZoom()<8) });
   // one Settings folder open at a time so the sheet stays on one screen
   [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ if(d.open) [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(o){ if(o!==d) o.open=false }) }) });
 
@@ -405,7 +417,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       });
     });
   }
-  function schedulePreload(){clearTimeout(preT); preT=setTimeout(preloadNear,400)}
+  function schedulePreload(){clearTimeout(preT); preT=setTimeout(preloadNear,1800)}
   map.on('moveend zoomend',schedulePreload); map.whenReady(function(){setTimeout(preloadNear,1500)});
   // ---- Plain-English names ----
   var AIRLINES={ACA:'Air Canada',ROU:'Air Canada Rouge',JZA:'Jazz (Air Canada Express)',WJA:'WestJet',WEN:'WestJet Encore',WSW:'Swoop',POE:'Porter',FLE:'Flair',SWG:'Sunwing',TSC:'Air Transat',CJT:'Cargojet',PCO:'Pacific Coastal',KFA:'Kelowna Flightcraft',HAL:'Hawaiian',AAL:'American',DAL:'Delta',UAL:'United',SWA:'Southwest',ASA:'Alaska Airlines',QXE:'Horizon Air',SKW:'SkyWest',JBU:'JetBlue',NKS:'Spirit',FFT:'Frontier',AAY:'Allegiant',EDV:'Endeavor Air',RPA:'Republic',ENY:'Envoy',GJS:'GoJet',SCX:'Sun Country',FDX:'FedEx',UPS:'UPS',GTI:'Atlas Air',ABX:'ABX Air',KAL:'Korean Air',AAR:'Asiana',ANA:'All Nippon',JAL:'Japan Airlines',CPA:'Cathay Pacific',CAL:'China Airlines',EVA:'EVA Air',CCA:'Air China',CES:'China Eastern',CSN:'China Southern',UAE:'Emirates',QTR:'Qatar Airways',ETD:'Etihad',BAW:'British Airways',AFR:'Air France',DLH:'Lufthansa',KLM:'KLM',VIR:'Virgin Atlantic',SAS:'SAS',FIN:'Finnair',ICE:'Icelandair',THY:'Turkish Airlines',QFA:'Qantas',ANZ:'Air New Zealand',AMX:'Aeromexico',VOI:'Volaris',AVA:'Avianca',LAN:'LATAM',EJA:'NetJets',LXJ:'Flexjet',CFC:'Canadian Forces',RCH:'US Air Force Mobility'};
@@ -526,7 +538,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function render(list){
     var seen={}, c=map.getCenter(), vb=map.getBounds().pad(0.25), arr=[];
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
-    arr.sort(function(a,b){return a._d-b._d}); if(arr.length>150) arr=arr.slice(0,150);
+    arr.sort(function(a,b){return a._d-b._d}); if(arr.length>(map.getZoom()<7?70:150)) arr=arr.slice(0,map.getZoom()<7?70:150);
     arr.forEach(function(p){
       seen[p.hex]=1;
       var ll=[p.lat,p.lon], inView=vb.contains(ll)||p.hex===selected;
@@ -541,7 +553,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         if(t.casing){ if(sel) t.casing.setLatLngs(t.pts); else {map.removeLayer(t.casing);t.casing=null} }
       }else if(t.line&&!inView){map.removeLayer(t.line);t.line=null; if(t.casing){map.removeLayer(t.casing);t.casing=null}}
       if(inView&&routeMode!=='off') needRoute(p);
-      drawRoute(p,routeMode==='all'?inView:(routeMode==='sel'&&sel));
+      drawRoute(p,routeMode==='all'?(inView&&map.getZoom()>=6):(routeMode==='sel'&&sel));
       var key=[Math.round((p.track||0)/3),altColor(p.alt_baro),sel?1:0,name(p),p.alt_baro==='ground'?'g':(p.alt_baro==null?'':uAlt(p.alt_baro)),units].join('|');
       if(planes[p.hex]){ planes[p.hex].setLatLng(ll); if(lastKey[p.hex]!==key){planes[p.hex].setIcon(icon(p));lastKey[p.hex]=key} }
       else{
