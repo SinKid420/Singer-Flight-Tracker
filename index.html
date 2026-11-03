@@ -223,10 +223,11 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <label class="setrow" for="lgwx">Rain key<select id="lgwx" aria-label="Rain key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
-    <details class="folder" id="rfolder"><summary>Radar &amp; routes</summary>
+    <details class="folder" id="rfolder"><summary>Radar, routes &amp; planes</summary>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
       <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="all">All planes</option><option value="sel">Selected only</option><option value="off">Hide</option></select></label>
+      <label class="setrow" for="maxpl">Planes shown<select id="maxpl" aria-label="Planes shown"><option value="15">Closest 15</option><option value="30">Closest 30</option><option value="50">Closest 50</option><option value="100">Closest 100</option><option value="150">Closest 150</option></select></label>
     </details>
     <details class="folder" id="cfolder"><summary>Compass</summary>
       <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -534,11 +535,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(sel&&!x.chips) x.chips=[chip([r.o.la,r.o.lo],r.o.c,col),chip([r.d.la,r.d.lo],r.d.c,col)];
     if(!sel&&x.chips){x.chips.forEach(function(c){map.removeLayer(c)});x.chips=null}
   }
-  var lastKey={};
+  var lastKey={}, maxPlanes=30;
+  try{var mpv=parseInt(localStorage.getItem('sky-maxplanes'),10); if(mpv>=5&&mpv<=300) maxPlanes=mpv}catch(e){}
   function render(list){
     var seen={}, c=map.getCenter(), vb=map.getBounds().pad(0.25), arr=[];
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
-    arr.sort(function(a,b){return a._d-b._d}); if(arr.length>(map.getZoom()<7?70:150)) arr=arr.slice(0,map.getZoom()<7?70:150);
+    arr.sort(function(a,b){return a._d-b._d}); if(arr.length>maxPlanes){ var keep=arr.slice(0,maxPlanes); if(selected&&!keep.some(function(q){return q.hex===selected})){ var sp=arr.filter(function(q){return q.hex===selected})[0]; if(sp) keep.push(sp) } arr=keep }
     arr.forEach(function(p){
       seen[p.hex]=1;
       var ll=[p.lat,p.lon], inView=vb.contains(ll)||p.hex===selected;
@@ -567,6 +569,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(selected&&!seen[selected]) selected=null;
     renderDock();
   }
+  (function(){var mp=document.getElementById('maxpl'); if(mp){ if(!mp.querySelector('[value="'+maxPlanes+'"]')){var o=document.createElement('option');o.value=maxPlanes;o.textContent='Closest '+maxPlanes;mp.appendChild(o)} mp.value=String(maxPlanes); mp.onchange=function(){maxPlanes=+mp.value;try{localStorage.setItem('sky-maxplanes',mp.value)}catch(e){} render(lastData); if(lastData.length) setStat('<em>'+Math.min(lastData.length,maxPlanes)+(Math.min(lastData.length,maxPlanes)===1?' plane':' planes')+'</em><br>'+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}))} }})();
   (function(){var sel=document.getElementById('routemode'); if(!sel) return; sel.value=routeMode; sel.onchange=function(){routeMode=sel.value;try{localStorage.setItem('sky-routemode',routeMode)}catch(e){} render(lastData)}})();
 
   var photos={};
@@ -721,7 +724,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       render(lastData);
       var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
       var warn=good.length<on.length?' · '+good.length+'/'+on.length:'';
-      setStat('<em>'+lastData.length+(lastData.length===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
+      setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,refreshMs);
