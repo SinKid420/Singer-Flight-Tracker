@@ -219,6 +219,10 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <label class="setrow" for="lgwx">Rain key<select id="lgwx" aria-label="Rain key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
+    <details class="folder" id="rfolder"><summary>Radar</summary>
+      <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
+      <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
+    </details>
     <details class="folder" id="cfolder"><summary>Compass</summary>
       <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="cshow">Compass dial<select id="cshow" aria-label="Compass dial"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -326,6 +330,48 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function refreshWx(){Object.keys(wxLayers).forEach(function(k){wxLayers[k].setParams({_ts:Date.now()})})}
   setInterval(refreshWx,300000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden) refreshWx()});
+  // ---- Wider radar: US (NEXRAD, Iowa Mesonet) + Canada/US/Mexico/world (RainViewer), animated, no keys
+  var IEM='https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913';
+  var RVHOST='https://tilecache.rainviewer.com', rvPaths=[], rvStamp=0;
+  var rcfg={src:'auto',loop:'1'};
+  try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop)}catch(e){}
+  var RSTEPS=6, frames=[], cur=0, tmr=null, radOp=.62, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
+  function want(k){ var v=rcfg.src; return v==='auto'||v===k }
+  function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,attribution:attr}) }
+  function clearFrames(){ frames.forEach(function(f){ ['rv','iem'].forEach(function(k){ if(f[k]) map.removeLayer(f[k]) }) }); frames=[] }
+  function buildFrame(st){ // st = steps of 10 minutes back from now
+    var f={st:st}, b=Math.floor(Date.now()/300000);
+    if(want('mx')&&rvPaths.length>st){ f.rv=mk(RVHOST+rvPaths[rvPaths.length-1-st]+'/256/{z}/{x}/{y}/2/1_1.png',4,7,'Radar: RainViewer'); f.rv.addTo(map) }
+    if(want('us')){ f.iem=mk(IEM+(st?'-m'+(st*10<10?'0':'')+(st*10)+'m':'')+'/{z}/{x}/{y}.png?b='+b,5,10,'NOAA/IEM'); f.iem.addTo(map) }
+    return f }
+  function setFrame(i){ cur=i; frames.forEach(function(f,j){ ['rv','iem'].forEach(function(k){ if(f[k]) f[k].setOpacity(j===i?radOp:0) }) });
+    if(wxTxt){ var st=frames[i]?frames[i].st:0; wxTxt.textContent=(rcfg.loop==='1'&&frames.length>1&&st)?('Radar · '+(st*10)+' min ago'):baseTxt } }
+  function step(){ if(document.hidden||document.body.classList.contains('moving')||frames.length<2) return;
+    var n=cur+1; if(n>=frames.length) n=0; setFrame(n); clearTimeout(tmr); tmr=setTimeout(step,n===frames.length-1?1800:650) }
+  function applyRadar(){
+    clearTimeout(tmr); clearFrames();
+    ['rain','snow'].forEach(function(k){ var on=want('ca'); if(on&&!map.hasLayer(wxLayers[k])) wxLayers[k].addTo(map); if(!on&&map.hasLayer(wxLayers[k])) map.removeLayer(wxLayers[k]) });
+    if(rcfg.src==='off'){ setFrame(0); return }
+    var n=rcfg.loop==='1'?RSTEPS:1; for(var st=n-1;st>=0;st--) frames.push(buildFrame(st));
+    setFrame(frames.length-1);
+    if(frames.length>1) tmr=setTimeout(function(){ setFrame(0); tmr=setTimeout(step,650) },2500);
+  }
+  function loadRV(){ fetch('https://api.rainviewer.com/public/weather-maps.json').then(function(r){return r.json()}).then(function(j){
+      var p=(j&&j.radar&&j.radar.past)||[]; if(!p.length) return; var t=p[p.length-1].time;
+      if(t===rvStamp) return; rvStamp=t; rvPaths=p.map(function(x){return x.path}); applyRadar();
+    }).catch(function(){}) }
+  function radarTick(){ if(want('us')) applyRadar(); loadRV() }
+  (function(){ var a=document.getElementById('radsrc'), b=document.getElementById('radloop'); if(!a||!b) return;
+    a.value=rcfg.src; b.value=rcfg.loop;
+    function save(){ try{localStorage.setItem('sky-radar',JSON.stringify(rcfg))}catch(e){} }
+    a.onchange=function(){ rcfg.src=a.value; save(); applyRadar() };
+    b.onchange=function(){ rcfg.loop=b.value; save(); applyRadar() };
+  })();
+  applyRadar(); loadRV(); setInterval(radarTick,300000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ loadRV(); if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,650) } } });
+  map.on('moveend zoomend',function(){ if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,900) } });
+  // one Settings folder open at a time so the sheet stays on one screen
+  [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ if(d.open) [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(o){ if(o!==d) o.open=false }) }) });
 
   // Location dot with a soft red halo
   var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
