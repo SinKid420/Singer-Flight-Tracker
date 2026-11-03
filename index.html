@@ -34,7 +34,7 @@ button{cursor:pointer}
 button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* floating pill at the top, like the Google Maps search bar */
-.pill{position:absolute;z-index:700;top:10px;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));
+.pill{position:absolute;z-index:700;top:16px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);
   display:flex;align-items:center;gap:6px;height:48px;padding:0 6px 0 16px;background:var(--bg);border-radius:24px;box-shadow:var(--shadow);min-width:0}
 h1{font:500 16px/1 var(--font);margin:0;white-space:nowrap;color:var(--fg)}
 h1 b{color:var(--accent);font-weight:500}
@@ -47,7 +47,7 @@ h1 b{color:var(--accent);font-weight:500}
 .icon-btn:hover{background:var(--accent-bg)}
 
 /* map-style chips */
-.chips{position:absolute;z-index:700;top:68px;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px;pointer-events:none;flex-wrap:wrap}
+.chips{position:absolute;z-index:700;top:72px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;gap:8px;pointer-events:none;flex-wrap:wrap}
 .chips>*{pointer-events:auto}
 .seg{display:flex;background:var(--bg);border-radius:18px;box-shadow:var(--shadow);padding:2px}
 .seg button{border-radius:16px;padding:8px 10px;min-height:36px;font-size:12px;color:var(--dim);background:transparent}
@@ -87,7 +87,7 @@ h1 b{color:var(--accent);font-weight:500}
 .leaflet-control-attribution a{color:#ff8a80!important}
 
 /* planes and labels */
-.plane{transition:transform .9s linear;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+.plane{transition:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
 .glide .leaflet-marker-icon{transition:transform var(--glide,1s) linear}
 #map{--lf:#202124;--ld:#5f6368;--lh:#ffffff}
 #map.sat{--lf:#ffffff;--ld:#dfe3e8;--lh:#000000}
@@ -100,8 +100,8 @@ h1 b{color:var(--accent);font-weight:500}
 .nolabels .lbl:not(.sel){display:none}
 
 /* bottom sheet */
-.dock{flex:0 0 auto;position:relative;z-index:800;background:var(--bg);border-radius:16px 16px 0 0;box-shadow:0 -2px 10px rgba(0,0,0,.6);
-  padding:8px max(14px,env(safe-area-inset-left,0px)) 10px max(14px,env(safe-area-inset-right,0px))}
+.dock{position:absolute;left:0;right:0;bottom:0;z-index:800;background:var(--bg);border-radius:16px 16px 0 0;box-shadow:0 -2px 10px rgba(0,0,0,.6);
+  padding:8px max(14px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
 .dock::before{content:"";display:block;width:32px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 8px}
 .card{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
 .cs{font:500 24px/1.1 var(--font);color:var(--fg);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -123,6 +123,29 @@ h1 b{color:var(--accent);font-weight:500}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.gear{width:40px;height:40px;border-radius:50%;padding:0;display:grid;place-items:center;color:var(--dim);background:var(--bg);box-shadow:var(--shadow)}
+.subh{font:500 12px var(--font);color:var(--dim);margin:12px 0 6px;letter-spacing:.04em;text-transform:uppercase}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--chip);border-radius:8px;padding:6px 6px 6px 12px;margin-bottom:6px;font-size:14px}
+.setrow select{background:var(--bg);border-radius:16px;padding:9px 10px;min-height:40px;font-size:14px}
+/* compass: glass dial, top-right */
+.compass{position:absolute;z-index:700;top:16px;right:max(16px,env(safe-area-inset-right,0px));width:72px;height:72px;border-radius:50%;padding:0;color:#fff;
+  background:rgba(18,18,22,.42);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)}
+.compass svg{display:block;width:100%;height:100%;overflow:visible}
+.compass text{font:700 10px var(--font);fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:2px}
+.compass .north{fill:#ff3b30}
+.compass .tick{stroke:rgba(255,255,255,.65);stroke-width:1;stroke-linecap:round}
+.hdg{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:5px;min-width:44px;text-align:center;padding:3px 8px;border-radius:12px;font:500 11px/1.1 var(--font);font-variant-numeric:tabular-nums;letter-spacing:.03em;color:#fff;
+  background:rgba(18,18,22,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.22)}
+.compass:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.folder{background:var(--chip);border-radius:8px;margin-bottom:6px;padding:0 6px 6px}
+.folder summary{cursor:pointer;list-style:none;font-size:14px;font-weight:500;padding:12px 6px;min-height:44px;display:flex;align-items:center;justify-content:space-between}
+.folder summary::-webkit-details-marker{display:none}
+.folder summary::after{content:'›';font-size:20px;color:var(--dim);transform:rotate(90deg);transition:transform .2s}
+.folder[open] summary::after{transform:rotate(-90deg)}
+.folder .setrow{background:var(--bg)}
+.folder .setrow select{background:var(--chip)}
+.setbtn{width:100%;min-height:44px;border-radius:8px;background:var(--bg);color:var(--accent);font-weight:500;font-size:14px;margin-top:2px}
 .ph{grid-column:2;grid-row:2/4;position:relative;display:block;width:104px;height:60px;border-radius:8px;overflow:hidden;background:var(--chip)}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ph i{position:absolute;left:0;right:0;bottom:0;padding:8px 4px 2px;font:400 8px/1.1 var(--font);font-style:normal;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -143,34 +166,46 @@ h1 b{color:var(--accent);font-weight:500}
     <div class="pill">
       <h1>Sky<b>Overhead</b></h1>
       <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading flights…</div>
-      <select id="radius" aria-label="Search radius">
-        <option value="25">25 nm</option>
-        <option value="50">50 nm</option>
-        <option value="100" selected>100 nm</option>
-        <option value="150">150 nm</option>
-      </select>
       <button class="icon-btn" id="locate" aria-label="Use my location"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.9 3A9 9 0 0013 3.1V1h-2v2.1A9 9 0 003.1 11H1v2h2.1A9 9 0 0011 20.9V23h2v-2.1a9 9 0 007.9-7.9H23v-2h-2.1zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg></button>
     </div>
     <div class="chips">
       <div class="seg" role="group" aria-label="Map style">
         <button data-b="map" aria-pressed="true">Map</button><button data-b="sat" aria-pressed="false">Satellite</button><button data-b="terrain" aria-pressed="false">Terrain</button>
       </div>
-      <label class="refresh">Refresh<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
-      <label class="refresh">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
+      <button class="gear" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
     </div>
     <div class="legends">
       <div class="legend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
       <div class="legend wxlegend" id="wxlegend"><div id="wxlegtxt">Live rain, mm/h</div><img id="wxlegimg" alt="Rain intensity scale"></div>
     </div>
+    <button class="compass" id="compass" aria-label="Compass. Tap to point the map north">
+      <svg viewBox="0 0 72 72" aria-hidden="true"><g id="dial">
+        <line class="tick" x1="36" y1="3.5" x2="36" y2="7"/><line class="tick" x1="36" y1="68.5" x2="36" y2="65"/><line class="tick" x1="3.5" y1="36" x2="7" y2="36"/><line class="tick" x1="68.5" y1="36" x2="65" y2="36"/>
+        <line class="tick" x1="52.25" y1="7.8" x2="50.5" y2="10.8"/><line class="tick" x1="64.2" y1="19.75" x2="61.2" y2="21.5"/><line class="tick" x1="64.2" y1="52.25" x2="61.2" y2="50.5"/><line class="tick" x1="52.25" y1="64.2" x2="50.5" y2="61.2"/>
+        <line class="tick" x1="19.75" y1="64.2" x2="21.5" y2="61.2"/><line class="tick" x1="7.8" y1="52.25" x2="10.8" y2="50.5"/><line class="tick" x1="7.8" y1="19.75" x2="10.8" y2="21.5"/><line class="tick" x1="19.75" y1="7.8" x2="21.5" y2="10.8"/>
+        <text class="north" x="36" y="17">N</text><text x="55" y="36">E</text><text x="36" y="55">S</text><text x="17" y="36">W</text>
+      </g><path d="M36 25.5c.9 0 1.4 1 1.4 2.2v4.6l5.8 3.5v1.6l-5.8-1.7v3.4l1.7 1.3v1.1L36 40.7l-3.1.8v-1.1l1.7-1.3v-3.4l-5.8 1.7v-1.6l5.8-3.5v-4.6c0-1.2.5-2.2 1.4-2.2z" fill="#fff" stroke="rgba(0,0,0,.5)" stroke-width=".8" stroke-linejoin="round"/></svg>
+      <span class="hdg" id="hdg">000°</span>
+    </button>
   </div>
-  <div class="dock" id="dock">
-    <div id="dhead"><input id="q" type="search" placeholder="Search callsign, airline or aircraft" autocomplete="off" autocapitalize="off" enterkeyhint="search" aria-label="Search planes"></div>
+  <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
   </div>
 </div>
 <div class="sheet-bg" id="fsheet" hidden>
   <div class="sheet" role="dialog" aria-label="Feed status">
-    <div class="sheet-head"><b>Flight feeds</b><button class="close" id="fclose" aria-label="Close">✕</button></div>
+    <div class="sheet-head"><b>Settings</b><button class="close" id="fclose" aria-label="Close">✕</button></div>
+    <label class="setrow" for="radius">Search radius<select id="radius" aria-label="Search radius"><option value="0">25 nm</option><option value="1">50 nm</option><option value="2" selected>100 nm</option><option value="3">150 nm</option></select></label>
+    <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
+    <label class="setrow" for="units">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
+    <details class="folder" id="cfolder"><summary>Compass</summary>
+      <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
+      <label class="setrow" for="cshow">Compass dial<select id="cshow" aria-label="Compass dial"><option value="1">Show</option><option value="0">Hide</option></select></label>
+      <label class="setrow" for="cspin">Needle smoothing<select id="cspin" aria-label="Needle smoothing"><option value="55">Smooth</option><option value="25">Quick</option><option value="1">Off</option></select></label>
+      <button class="setbtn" id="cnorth" type="button">Point map north</button>
+      <div class="subh" style="margin-top:8px;text-transform:none;letter-spacing:0">Tap the dial to point north. Turn the map with two fingers.</div>
+    </details>
+    <div class="subh">Flight feeds</div>
     <div id="flist" class="flist"></div>
     <p class="fhelp" id="fhelp"></p>
     <p class="fhelp" id="fenv"></p>
@@ -181,6 +216,7 @@ h1 b{color:var(--accent);font-weight:500}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
 <script>
 if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function(){document.getElementById('stat').textContent='Map library blocked. Reload with a connection.'})}
 (function(){
@@ -198,7 +234,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4}).setView([me.lat,me.lon],8);
+  var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
   L.control.zoom({position:'bottomright'}).addTo(map);
 
@@ -313,7 +349,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   }
   function icon(p){
     var c=altColor(p.alt_baro), sel=p.hex===selected, s=sel?34:26, H=44, off=(H-s)/2;
-    var svg='<svg class="plane" style="position:absolute;left:'+off+'px;top:'+off+'px;transform:rotate('+(p.track||0)+'deg)" width="'+s+'" height="'+s+'" viewBox="0 0 24 24">'+
+    var svg='<svg class="plane" style="position:absolute;left:'+off+'px;top:'+off+'px;transform:rotate(calc('+(p.track||0)+'deg - var(--bearing,0deg)))" width="'+s+'" height="'+s+'" viewBox="0 0 24 24">'+
       (sel?'<circle cx="12" cy="12" r="11.2" fill="rgba(255,59,48,.2)" stroke="#ff3b30" stroke-width="1"/>':'')+
       '<path transform="'+(sel?'translate(3.6 3.6) scale(.7)':'')+'" d="M12 2c.8 0 1.3.9 1.3 2v5.2l7.7 4.6v2l-7.7-2.3v4.4l2.2 1.7V21L12 20l-3.5 1v-1.4l2.2-1.7v-4.4L3 15.8v-2l7.7-4.6V4c0-1.1.5-2 1.3-2z" fill="'+c+'" stroke="#ffffff" stroke-width="'+(sel?1.8:1.3)+'" stroke-linejoin="round" paint-order="stroke"/></svg>';
     var alt=p.alt_baro==='ground'?'GND':(p.alt_baro==null?'':uAlt(p.alt_baro)+' '+altUnit());
@@ -362,19 +398,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     look('https://api.planespotters.net/pub/photos/hex/'+encodeURIComponent(h)).then(function(a){return a&&a.src?a:(p.r?look('https://api.planespotters.net/pub/photos/reg/'+encodeURIComponent(p.r)):null)}).then(function(a){if(a&&a.src){photos[h]=a;if(selected===h)renderDock()}});
     return null;
   }
-  function matches(){
-    var q=(document.getElementById('q').value||'').trim().toLowerCase().replace(/\s+/g,'');
-    var all=lastData.filter(function(x){return x.lat!=null}).map(function(x){x._d=distNm(me.lat,me.lon,x.lat,x.lon);return x});
-    all.sort(function(a,b){return a._d-b._d});
-    var out=q?all.filter(function(x){
-      return [name(x),x.r,x.t,x.hex,airlineOf(x),typeName(x)].join(' ').toLowerCase().replace(/\s+/g,'').indexOf(q)>-1;
-    }):all;
-    return {q:q,total:all.length,list:out.slice(0,12),count:out.length};
-  }
   function renderDock(){
-    var body=document.getElementById('dbody'), head=document.getElementById('dhead');
+    var body=document.getElementById('dbody'), dock=document.getElementById('dock');
     var p=lastData.filter(function(x){return x.hex===selected})[0];
-    head.hidden=!!p;
+    dock.hidden=!p;
     if(p){
       var d=distNm(me.lat,me.lon,p.lat,p.lon), cs=(p.flight||'').trim();
       var vs=p.baro_rate?(p.baro_rate>0?'▲ ':'▼ ')+uVs(p.baro_rate):'level';
@@ -392,20 +419,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       document.getElementById('cl').onclick=function(){select(null)};
       return;
     }
-    var m=matches();
-    document.getElementById('q').placeholder=m.total?'Search '+m.total+(m.total===1?' plane':' planes')+' by callsign or airline':'Search callsign, airline or aircraft';
-    var html='<div class="list">';
-    if(!m.list.length) html+='<div class="empty">'+(m.q?'No plane matches that search.':'No aircraft reporting in this radius right now. Try a wider radius.')+'</div>';
-    m.list.forEach(function(x){
-      html+='<button class="row" data-h="'+esc(x.hex)+'"><b>'+esc(name(x))+'</b><span>'+esc(airlineOf(x)||typeName(x)||'—')+'</span><span>'+uAlt(x.alt_baro)+(x.alt_baro==='ground'?'':' '+altUnit())+'</span><span>'+uDist(x._d)+' '+distUnit()+'</span></button>';
-    });
-    body.innerHTML=html+'</div>';
-    Array.prototype.forEach.call(body.querySelectorAll('.row'),function(b){b.onclick=function(){select(b.getAttribute('data-h'),true)}});
+    body.innerHTML='';
   }
 
   function select(h,pan){
     selected=h;
-    if(h){var qi=document.getElementById('q');qi.value='';qi.blur()}
     render(lastData);
     if(h&&pan&&planes[h]) map.panTo(planes[h].getLatLng());
   }
@@ -418,10 +436,49 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     });
     select(best);
   });
-  document.getElementById('q').addEventListener('input',renderDock);
-  document.getElementById('q').addEventListener('keydown',function(e){
-    if(e.key==='Enter'){var m=matches();if(m.list[0]) select(m.list[0].hex,true)}
-  });
+
+  // Compass: the dial turns with the map. Smoothing keeps the needle steady while two fingers rotate the map.
+  var dialEl=document.getElementById('dial'), hdgEl=document.getElementById('hdg'), mapEl=document.getElementById('map');
+  var tau=55, shown=0, lastT=performance.now(), lastDeg=null, lastTxt='', resetting=false;
+  function wrap(a){return ((a+180)%360+360)%360-180}
+  function compassTick(){
+    var b=map.getBearing?map.getBearing():0; if(typeof b!=='number'||b!==b) b=0;
+    var now=performance.now(), dt=Math.min(100,now-lastT); lastT=now;
+    var d=wrap(b-shown); shown=Math.abs(d)<0.05?b:shown+d*(1-Math.exp(-dt/tau));
+    var deg=Math.round(shown*10)/10;
+    if(deg!==lastDeg){lastDeg=deg;dialEl.setAttribute('transform','rotate('+(-deg)+' 36 36)')}
+    var n=((Math.round(b)%360)+360)%360, t=('00'+n).slice(-3)+'°';
+    if(t!==lastTxt){lastTxt=t;hdgEl.textContent=t;mapEl.style.setProperty('--bearing',b+'deg')}
+    requestAnimationFrame(compassTick);
+  }
+  function resetNorth(){
+    if(!map.setBearing||resetting) return;
+    var b0=wrap(map.getBearing()), t0=performance.now(), dur=350;
+    if(Math.abs(b0)<0.5){map.setBearing(0);return}
+    resetting=true;
+    (function step(now){
+      var k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
+      map.setBearing(b0*(1-e));
+      if(k<1) requestAnimationFrame(step); else {map.setBearing(0);resetting=false}
+    })(t0);
+  }
+  document.getElementById('compass').onclick=resetNorth;
+  (function(){
+    var K='sky-compass', cfg={cread:'1',cshow:'1',cspin:'55'};
+    try{var r=JSON.parse(localStorage.getItem(K)||'{}');for(var k in cfg) if(r[k]!=null) cfg[k]=String(r[k])}catch(e){}
+    function apply(){
+      document.getElementById('compass').hidden=cfg.cshow==='0';
+      hdgEl.hidden=cfg.cread==='0';
+      tau=+cfg.cspin||55;
+    }
+    ['cread','cshow','cspin'].forEach(function(id){
+      var el=document.getElementById(id); el.value=cfg[id];
+      el.onchange=function(){cfg[id]=el.value;try{localStorage.setItem(K,JSON.stringify(cfg))}catch(e){}apply()};
+    });
+    document.getElementById('cnorth').onclick=resetNorth;
+    apply();
+  })();
+  requestAnimationFrame(compassTick);
 
   function setStat(text,err){
     document.getElementById('stat').innerHTML='<i class="live'+(err?' err':'')+'"></i>'+text;
@@ -550,6 +607,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   }
   function openSheet(){envLine();document.getElementById('relay').value=relay;document.getElementById('apikey').value=apiKey;document.getElementById('fsheet').hidden=false;runTest()}
   document.getElementById('stat').onclick=openSheet;
+  document.getElementById('gear').onclick=openSheet;
   document.getElementById('stat').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openSheet()}};
   document.getElementById('fclose').onclick=function(){document.getElementById('fsheet').hidden=true};
   document.getElementById('ftest').onclick=function(e){e.preventDefault();runTest()};
