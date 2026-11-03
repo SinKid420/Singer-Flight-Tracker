@@ -418,8 +418,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         '<div><small>Heading</small><span>'+(p.track!=null?Math.round(p.track)+'°':'—')+'</span></div>'+
         '<div><small>From you</small><span>'+uDist(d,1)+' '+distUnit()+'</span></div></div>'+
         '<div class="meta">Climb: '+vs+'</div>'+(near?'<div class="meta" style="color:var(--fg)">'+esc(near)+'</div>':'')+
-        '<div class="links">'+(cs?'<a href="https://www.flightradar24.com/'+encodeURIComponent(cs)+'" target="_blank" rel="noopener">Open in FR24</a>':'')+
-        '<a class="alt" href="https://globe.adsb.lol/?icao='+encodeURIComponent(p.hex)+'" target="_blank" rel="noopener">Full track</a></div></div>';
+        '</div>';
       document.getElementById('cl').onclick=function(){select(null)};
       return;
     }
