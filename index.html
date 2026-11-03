@@ -250,6 +250,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
+  L.GridLayer.prototype.options.keepBuffer=4; L.GridLayer.prototype.options.updateInterval=100;
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
   var tempEl=null, tempC=null, tcfg='C';
@@ -331,6 +332,27 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   map.on('zoomend',syncRing); map.whenReady(syncRing);
   map.on('movestart zoomstart',function(){document.body.classList.add('moving')});
   map.on('moveend zoomend',function(){document.body.classList.remove('moving')});
+  var pre={}, preT=0;
+  function preloadNear(){
+    if(navigator.connection&&navigator.connection.saveData) return;
+    var z=map.getZoom(); if(z!==Math.round(z)) return;
+    var bb=map.getBounds().pad(.3), n=0, cnt=0; for(var k in pre) cnt++; if(cnt>1500) pre={};
+    [z+1,z-1].forEach(function(zz){
+      n=0;
+      if(zz<map.getMinZoom()||zz>map.getMaxZoom()) return;
+      baseLayers.forEach(function(lay){
+        if(!lay.getTileUrl||!map.hasLayer(lay)) return;
+        var nz=Math.min(zz,lay.options.maxNativeZoom||zz), sz=1<<nz;
+        var nw=map.project(bb.getNorthWest(),nz).divideBy(256).floor(), se=map.project(bb.getSouthEast(),nz).divideBy(256).floor();
+        for(var x=nw.x;x<=se.x&&n<48;x++) for(var y=nw.y;y<=se.y&&n<48;y++){
+          if(y<0||y>=sz) continue;
+          var u=lay.getTileUrl({x:((x%sz)+sz)%sz,y:y,z:nz}); if(pre[u]) continue; pre[u]=1; n++; (new Image()).src=u;
+        }
+      });
+    });
+  }
+  function schedulePreload(){clearTimeout(preT); preT=setTimeout(preloadNear,400)}
+  map.on('moveend zoomend',schedulePreload); map.whenReady(function(){setTimeout(preloadNear,1500)});
   // ---- Plain-English names ----
   var AIRLINES={ACA:'Air Canada',ROU:'Air Canada Rouge',JZA:'Jazz (Air Canada Express)',WJA:'WestJet',WEN:'WestJet Encore',WSW:'Swoop',POE:'Porter',FLE:'Flair',SWG:'Sunwing',TSC:'Air Transat',CJT:'Cargojet',PCO:'Pacific Coastal',KFA:'Kelowna Flightcraft',HAL:'Hawaiian',AAL:'American',DAL:'Delta',UAL:'United',SWA:'Southwest',ASA:'Alaska Airlines',QXE:'Horizon Air',SKW:'SkyWest',JBU:'JetBlue',NKS:'Spirit',FFT:'Frontier',AAY:'Allegiant',EDV:'Endeavor Air',RPA:'Republic',ENY:'Envoy',GJS:'GoJet',SCX:'Sun Country',FDX:'FedEx',UPS:'UPS',GTI:'Atlas Air',ABX:'ABX Air',KAL:'Korean Air',AAR:'Asiana',ANA:'All Nippon',JAL:'Japan Airlines',CPA:'Cathay Pacific',CAL:'China Airlines',EVA:'EVA Air',CCA:'Air China',CES:'China Eastern',CSN:'China Southern',UAE:'Emirates',QTR:'Qatar Airways',ETD:'Etihad',BAW:'British Airways',AFR:'Air France',DLH:'Lufthansa',KLM:'KLM',VIR:'Virgin Atlantic',SAS:'SAS',FIN:'Finnair',ICE:'Icelandair',THY:'Turkish Airlines',QFA:'Qantas',ANZ:'Air New Zealand',AMX:'Aeromexico',VOI:'Volaris',AVA:'Avianca',LAN:'LATAM',EJA:'NetJets',LXJ:'Flexjet',CFC:'Canadian Forces',RCH:'US Air Force Mobility'};
   var TYPES={B737:'Boeing 737',B738:'Boeing 737-800',B739:'Boeing 737-900',B37M:'Boeing 737 MAX 7',B38M:'Boeing 737 MAX 8',B39M:'Boeing 737 MAX 9',B752:'Boeing 757-200',B753:'Boeing 757-300',B762:'Boeing 767-200',B763:'Boeing 767-300',B764:'Boeing 767-400',B772:'Boeing 777-200',B77L:'Boeing 777-200LR',B77W:'Boeing 777-300ER',B788:'Boeing 787-8',B789:'Boeing 787-9',B78X:'Boeing 787-10',B744:'Boeing 747-400',B748:'Boeing 747-8',A318:'Airbus A318',A319:'Airbus A319',A320:'Airbus A320',A321:'Airbus A321',A19N:'Airbus A319neo',A20N:'Airbus A320neo',A21N:'Airbus A321neo',A332:'Airbus A330-200',A333:'Airbus A330-300',A339:'Airbus A330-900',A359:'Airbus A350-900',A35K:'Airbus A350-1000',A388:'Airbus A380',BCS1:'Airbus A220-100',BCS3:'Airbus A220-300',E170:'Embraer 170',E75L:'Embraer 175',E75S:'Embraer 175',E190:'Embraer 190',E195:'Embraer 195',CRJ2:'Bombardier CRJ-200',CRJ7:'Bombardier CRJ-700',CRJ9:'Bombardier CRJ-900',CRJX:'Bombardier CRJ-1000',DH8A:'Dash 8-100',DH8B:'Dash 8-200',DH8C:'Dash 8-300',DH8D:'Dash 8 Q400',AT72:'ATR 72',AT76:'ATR 72-600',DHC2:'DHC-2 Beaver',DHC3:'DHC-3 Otter',DHC6:'DHC-6 Twin Otter',C172:'Cessna 172',C182:'Cessna 182',C206:'Cessna 206',C208:'Cessna Caravan',PC12:'Pilatus PC-12',PA28:'Piper Cherokee',BE20:'King Air 200',B350:'King Air 350',GLF4:'Gulfstream IV',GLF5:'Gulfstream V',GLEX:'Bombardier Global Express',CL60:'Challenger 600',C56X:'Citation Excel',R44:'Robinson R44',B06:'Bell 206',C130:'Lockheed C-130 Hercules',C17:'Boeing C-17 Globemaster',K35R:'Boeing KC-135',P8:'Boeing P-8 Poseidon'};
