@@ -89,12 +89,12 @@ h1 b{color:var(--accent);font-weight:500}
 /* planes and labels */
 .plane{transition:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
 .glide .leaflet-marker-icon{transition:transform var(--glide,1s) linear}
-#map{--lf:#202124;--ld:#5f6368;--lh:#ffffff}
-#map.sat{--lf:#ffffff;--ld:#dfe3e8;--lh:#000000}
-.lbl{position:absolute;top:50%;transform:translateY(-50%);pointer-events:none;white-space:nowrap;line-height:1.1;
-  text-shadow:0 0 3px var(--lh),0 0 3px var(--lh),0 0 5px var(--lh)}
-.lbl b{display:block;font:500 11px var(--font);color:var(--lf)}
-.lbl i{display:block;font:400 10px var(--font);color:var(--ld);font-style:normal;font-variant-numeric:tabular-nums}
+#map{--lf:#111214;--ld:#3c4043;--lh:#ffffff}
+#map.sat{--lf:#ffffff;--ld:#ffffff;--lh:#000000}
+.lbl{position:absolute;top:50%;transform:translateY(-50%);pointer-events:none;white-space:nowrap;line-height:1.15;
+  paint-order:stroke fill;-webkit-text-stroke:3.5px var(--lh);text-shadow:0 0 4px var(--lh),0 0 6px var(--lh)}
+.lbl b{display:block;font:700 13px var(--font);color:var(--lf)}
+.lbl i{display:block;font:500 12px var(--font);color:var(--ld);font-style:normal;font-variant-numeric:tabular-nums}
 .lbl.sel b{color:#d32f2f}
 #map.sat .lbl.sel b{color:#ff8a80}
 .nolabels .lbl:not(.sel){display:none}
@@ -123,6 +123,17 @@ h1 b{color:var(--accent);font-weight:500}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.tempctl{width:72px;height:72px;border-radius:50%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff;margin:0 16px 8px 0!important;pointer-events:auto;
+  background:rgba(18,18,22,.42);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)}
+.tempctl b{font:700 24px/1 var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tempctl span{font:500 10px/1 var(--font);letter-spacing:.03em;opacity:.9}
+.leaflet-control-zoom{margin-right:16px!important}
+body.moving .tempctl{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,18,22,.72)}
+.me{pointer-events:none}
+.me i{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,#ff3b30 4.5px 9px,rgba(255,59,48,.24) 9.5px 17px,transparent 17.5px)}
+.leaflet-marker-icon.me{transition:none!important}
+body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,18,22,.72)}
 .gear{width:40px;height:40px;border-radius:50%;padding:0;display:grid;place-items:center;color:var(--dim);background:var(--bg);box-shadow:var(--shadow)}
 .subh{font:500 12px var(--font);color:var(--dim);margin:12px 0 6px;letter-spacing:.04em;text-transform:uppercase}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--chip);border-radius:8px;padding:6px 6px 6px 12px;margin-bottom:6px;font-size:14px}
@@ -198,6 +209,7 @@ h1 b{color:var(--accent);font-weight:500}
     <label class="setrow" for="radius">Search radius<select id="radius" aria-label="Search radius"><option value="0">25 nm</option><option value="1">50 nm</option><option value="2" selected>100 nm</option><option value="3">150 nm</option></select></label>
     <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
     <label class="setrow" for="units">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
+    <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
     <details class="folder" id="cfolder"><summary>Compass</summary>
       <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="cshow">Compass dial<select id="cshow" aria-label="Compass dial"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -236,13 +248,21 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
+  var tempEl=null, tempC=null, tcfg='C';
+  try{var tv=localStorage.getItem('sky-temp'); if(tv==='F'||tv==='off') tcfg=tv}catch(e){}
+  var TempCtl=L.Control.extend({options:{position:'bottomright'},onAdd:function(){var d=L.DomUtil.create('div','tempctl');d.setAttribute('aria-label','Current temperature');d.innerHTML='<b id="tval">--°</b><span id="tcap">now</span>';L.DomEvent.disableClickPropagation(d);tempEl=d;d.hidden=tcfg==='off';return d}});
+  new TempCtl().addTo(map);
+  function showTemp(){var v=document.getElementById('tval'),c=document.getElementById('tcap'); if(!v||!tempEl) return; tempEl.hidden=tcfg==='off'; if(tempC==null){v.textContent='--°';c.textContent='now';return} var t=tcfg==='F'?tempC*9/5+32:tempC; v.textContent=Math.round(t)+'°'; c.textContent=tcfg==='F'?'°F now':'°C now'}
+  function loadTemp(){ if(tcfg==='off') return; fetch('https://api.open-meteo.com/v1/forecast?latitude='+me.lat.toFixed(3)+'&longitude='+me.lon.toFixed(3)+'&current=temperature_2m').then(function(r){return r.json()}).then(function(j){ if(j&&j.current&&typeof j.current.temperature_2m==='number'){tempC=j.current.temperature_2m;showTemp()} }).catch(function(){}) }
+  setTimeout(function(){var sel=document.getElementById('ctemp'); if(sel){sel.value=tcfg; sel.onchange=function(){tcfg=sel.value;try{localStorage.setItem('sky-temp',tcfg)}catch(e){} showTemp(); if(tempC==null) loadTemp()}} showTemp(); loadTemp()},0);
+  setInterval(loadTemp,600000);
   L.control.zoom({position:'bottomright'}).addTo(map);
 
   // Free tile sets that look like Google Maps. Real Google tiles need a paid key and are not allowed here.
   var ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
   var BASES={
-    map:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, HERE, Garmin, OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}},
+    map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
       L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
@@ -289,12 +309,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   document.addEventListener('visibilitychange',function(){if(!document.hidden) refreshWx()});
 
   // Location dot with a soft red halo
-  var meHalo = L.circleMarker([me.lat,me.lon],{radius:16,stroke:false,fillColor:'#ff3b30',fillOpacity:.22,interactive:false}).addTo(map);
-  var meMark = L.circleMarker([me.lat,me.lon],{radius:7,color:'#ff3b30',weight:4,fillColor:'#ffffff',fillOpacity:1,interactive:false}).addTo(map);
+  var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
+  var meHalo = {setLatLng:function(){return meHalo}};
   var ring = L.circle([me.lat,me.lon],{radius:radiusNm*1852,color:'#ff3b30',weight:1.5,opacity:.6,fill:false,dashArray:'5 7',interactive:false}).addTo(map);
 
   function syncLabels(){document.getElementById('map').classList.toggle('nolabels',map.getZoom()<7)}
   map.on('zoomend',syncLabels);
+  function syncRing(){var el=ring.getElement&&ring.getElement(); if(el) el.style.display=map.getZoom()>=10?'none':''}
+  map.on('zoomend',syncRing); map.whenReady(syncRing);
+  map.on('movestart zoomstart',function(){document.body.classList.add('moving')});
+  map.on('moveend zoomend',function(){document.body.classList.remove('moving')});
   // ---- Plain-English names ----
   var AIRLINES={ACA:'Air Canada',ROU:'Air Canada Rouge',JZA:'Jazz (Air Canada Express)',WJA:'WestJet',WEN:'WestJet Encore',WSW:'Swoop',POE:'Porter',FLE:'Flair',SWG:'Sunwing',TSC:'Air Transat',CJT:'Cargojet',PCO:'Pacific Coastal',KFA:'Kelowna Flightcraft',HAL:'Hawaiian',AAL:'American',DAL:'Delta',UAL:'United',SWA:'Southwest',ASA:'Alaska Airlines',QXE:'Horizon Air',SKW:'SkyWest',JBU:'JetBlue',NKS:'Spirit',FFT:'Frontier',AAY:'Allegiant',EDV:'Endeavor Air',RPA:'Republic',ENY:'Envoy',GJS:'GoJet',SCX:'Sun Country',FDX:'FedEx',UPS:'UPS',GTI:'Atlas Air',ABX:'ABX Air',KAL:'Korean Air',AAR:'Asiana',ANA:'All Nippon',JAL:'Japan Airlines',CPA:'Cathay Pacific',CAL:'China Airlines',EVA:'EVA Air',CCA:'Air China',CES:'China Eastern',CSN:'China Southern',UAE:'Emirates',QTR:'Qatar Airways',ETD:'Etihad',BAW:'British Airways',AFR:'Air France',DLH:'Lufthansa',KLM:'KLM',VIR:'Virgin Atlantic',SAS:'SAS',FIN:'Finnair',ICE:'Icelandair',THY:'Turkish Airlines',QFA:'Qantas',ANZ:'Air New Zealand',AMX:'Aeromexico',VOI:'Volaris',AVA:'Avianca',LAN:'LATAM',EJA:'NetJets',LXJ:'Flexjet',CFC:'Canadian Forces',RCH:'US Air Force Mobility'};
   var TYPES={B737:'Boeing 737',B738:'Boeing 737-800',B739:'Boeing 737-900',B37M:'Boeing 737 MAX 7',B38M:'Boeing 737 MAX 8',B39M:'Boeing 737 MAX 9',B752:'Boeing 757-200',B753:'Boeing 757-300',B762:'Boeing 767-200',B763:'Boeing 767-300',B764:'Boeing 767-400',B772:'Boeing 777-200',B77L:'Boeing 777-200LR',B77W:'Boeing 777-300ER',B788:'Boeing 787-8',B789:'Boeing 787-9',B78X:'Boeing 787-10',B744:'Boeing 747-400',B748:'Boeing 747-8',A318:'Airbus A318',A319:'Airbus A319',A320:'Airbus A320',A321:'Airbus A321',A19N:'Airbus A319neo',A20N:'Airbus A320neo',A21N:'Airbus A321neo',A332:'Airbus A330-200',A333:'Airbus A330-300',A339:'Airbus A330-900',A359:'Airbus A350-900',A35K:'Airbus A350-1000',A388:'Airbus A380',BCS1:'Airbus A220-100',BCS3:'Airbus A220-300',E170:'Embraer 170',E75L:'Embraer 175',E75S:'Embraer 175',E190:'Embraer 190',E195:'Embraer 195',CRJ2:'Bombardier CRJ-200',CRJ7:'Bombardier CRJ-700',CRJ9:'Bombardier CRJ-900',CRJX:'Bombardier CRJ-1000',DH8A:'Dash 8-100',DH8B:'Dash 8-200',DH8C:'Dash 8-300',DH8D:'Dash 8 Q400',AT72:'ATR 72',AT76:'ATR 72-600',DHC2:'DHC-2 Beaver',DHC3:'DHC-3 Otter',DHC6:'DHC-6 Twin Otter',C172:'Cessna 172',C182:'Cessna 182',C206:'Cessna 206',C208:'Cessna Caravan',PC12:'Pilatus PC-12',PA28:'Piper Cherokee',BE20:'King Air 200',B350:'King Air 350',GLF4:'Gulfstream IV',GLF5:'Gulfstream V',GLEX:'Bombardier Global Express',CL60:'Challenger 600',C56X:'Citation Excel',R44:'Robinson R44',B06:'Bell 206',C130:'Lockheed C-130 Hercules',C17:'Boeing C-17 Globemaster',K35R:'Boeing KC-135',P8:'Boeing P-8 Poseidon'};
@@ -455,11 +479,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(!map.setBearing||resetting) return;
     var b0=wrap(map.getBearing()), t0=performance.now(), dur=350;
     if(Math.abs(b0)<0.5){map.setBearing(0);return}
-    resetting=true;
+    resetting=true; mapEl.parentNode.classList.remove('glide');
     (function step(now){
       var k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
       map.setBearing(b0*(1-e));
-      if(k<1) requestAnimationFrame(step); else {map.setBearing(0);resetting=false}
+      if(k<1) requestAnimationFrame(step); else {map.setBearing(0);resetting=false;mapEl.parentNode.classList.add('glide')}
     })(t0);
   }
   document.getElementById('compass').onclick=resetNorth;
@@ -549,7 +573,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   document.getElementById('map').parentNode.classList.add('glide');
 
   function recenter(){
-    meMark.setLatLng([me.lat,me.lon]); meHalo.setLatLng([me.lat,me.lon]); ring.setLatLng([me.lat,me.lon]).setRadius(radiusNm*1852);
+    meMark.setLatLng([me.lat,me.lon]); meHalo.setLatLng([me.lat,me.lon]); loadTemp(); ring.setLatLng([me.lat,me.lon]).setRadius(radiusNm*1852);
     map.fitBounds(ring.getBounds(),{padding:[10,10]});
     Object.keys(trails).forEach(function(h){trails[h].pts=[]});
     poll();
