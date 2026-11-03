@@ -62,7 +62,6 @@ h1 b{color:var(--accent);font-weight:500}
 .wxlegend div{white-space:nowrap}
 .wxlegend{pointer-events:auto}
 .cloudblend{mix-blend-mode:screen}
-body.moving .cloudblend{mix-blend-mode:normal}
 body.zooming .lbl,body.far .lbl{display:none}
 body.zooming .glide .leaflet-marker-icon{transition:none}
 [hidden]{display:none!important}
@@ -94,6 +93,10 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 .glide .leaflet-marker-icon{transition:transform var(--glide,1s) linear}
 #map{--lf:#111214;--ld:#3c4043;--lh:#ffffff}
 #map.sat{--lf:#ffffff;--ld:#ffffff;--lh:#000000}
+#map.night{--lf:#ffffff;--ld:#e8eaed;--lh:#000000;background:#14161a}
+#map.night:not(.sat) .basel{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.85)}
+#map.night.sat .basel{filter:brightness(.55) saturate(.9)}
+#map .basel{transition:filter .4s}
 .lbl{position:absolute;top:50%;transform:translateY(-50%);pointer-events:none;white-space:nowrap;line-height:1.15;
   paint-order:stroke fill;-webkit-text-stroke:3.5px var(--lh);text-shadow:0 0 4px var(--lh),0 0 6px var(--lh)}
 .lbl b{display:block;font:700 13px var(--font);color:var(--lf)}
@@ -223,7 +226,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <label class="setrow" for="lgwx">Rain key<select id="lgwx" aria-label="Rain key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
-    <details class="folder" id="rfolder"><summary>Radar, routes &amp; planes</summary>
+    <details class="folder" id="rfolder"><summary>Map options</summary>
+      <label class="setrow" for="maptheme">Map theme<select id="maptheme" aria-label="Map theme"><option value="day">Day</option><option value="night">Night</option><option value="auto">Auto (sunset)</option></select></label>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
       <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="all">All planes</option><option value="sel">Selected only</option><option value="off">Hide</option></select></label>
@@ -304,7 +308,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     baseLayers.forEach(function(l){map.removeLayer(l)});
     baseLayers=BASES[key].layers();
     baseLayers.forEach(function(l){l.addTo(map)});
-    baseKey=key;
+    baseKey=key; if(baseLayers[0]&&baseLayers[0].getContainer) baseLayers[0].getContainer().classList.add('basel');
     document.getElementById('map').classList.toggle('sat',BASES[key].sat);
     Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
       b.setAttribute('aria-pressed',b.getAttribute('data-b')===key?'true':'false');
@@ -385,6 +389,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   map.on('zoomend',function(){ document.body.classList.remove('zooming'); document.body.classList.toggle('far',map.getZoom()<8) });
   map.on('moveend zoomend',function(){ clearTimeout(parkT); parkT=setTimeout(unparkRadar,1500) });
   map.whenReady(function(){ document.body.classList.toggle('far',map.getZoom()<8) });
+  // Day / night map theme (Auto follows the sun at your location)
+  var themeMode='day';
+  try{var tmv=localStorage.getItem('sky-theme'); if(tmv==='day'||tmv==='night'||tmv==='auto') themeMode=tmv}catch(e){}
+  function sunAlt(lat,lon,t){var D=Math.PI/180,n=t/86400000+2440587.5-2451545.0,Lm=(280.46+0.9856474*n)%360,g=((357.528+0.9856003*n)%360)*D,lam=(Lm+1.915*Math.sin(g)+0.02*Math.sin(2*g))*D,eps=23.439*D,dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam)),gm=(18.697374558+24.06570982441908*n)%24,ha=(gm*15+lon)*D-ra;return Math.asin(Math.sin(lat*D)*Math.sin(dec)+Math.cos(lat*D)*Math.cos(dec)*Math.cos(ha))/D}
+  function applyTheme(){var night=themeMode==='night'||(themeMode==='auto'&&sunAlt(me.lat,me.lon,Date.now())<-1); document.getElementById('map').classList.toggle('night',night)}
+  (function(){var sel=document.getElementById('maptheme'); if(sel){sel.value=themeMode; sel.onchange=function(){themeMode=sel.value;try{localStorage.setItem('sky-theme',themeMode)}catch(e){} applyTheme()}} })();
+  applyTheme(); setInterval(applyTheme,300000);
   // one Settings folder open at a time so the sheet stays on one screen
   [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ if(d.open) [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(o){ if(o!==d) o.open=false }) }) });
 
