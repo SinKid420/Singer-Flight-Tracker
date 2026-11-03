@@ -621,8 +621,14 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   if(!apiKey) apiKey=DEFAULT_KEY;
   function active(){return SOURCES.filter(function(s){return s.needsKey?!!apiKey:!!relay})}
   function viaRelay(u){return relay?relay+(relay.indexOf('?')>-1?'&':'?')+'u='+encodeURIComponent(u):u}
+  function query(){
+    var c=map.getCenter(), b=map.getBounds(), view=distNm(c.lat,c.lng,b.getNorthEast().lat,b.getNorthEast().lng), home=distNm(me.lat,me.lon,c.lat,c.lng)<5;
+    var r=Math.max(view,home?radiusNm:0); r=Math.max(25,Math.min(250,Math.ceil(r)));
+    return {lat:(home?me.lat:c.lat).toFixed(4),lon:(home?me.lon:c.lng).toFixed(4),r:r};
+  }
   function fetchSource(s){
-    return fetch(s.needsKey?s.url(me.lat.toFixed(4),me.lon.toFixed(4),Math.round(radiusNm)):viaRelay(s.url(me.lat.toFixed(4),me.lon.toFixed(4),Math.round(radiusNm))),s.needsKey?{headers:{'X-Api-Key':apiKey}}:undefined)
+    var Q=query(), u=s.url(Q.lat,Q.lon,Q.r);
+    return fetch(s.needsKey?u:viaRelay(u),s.needsKey?{headers:{'X-Api-Key':apiKey}}:undefined)
       .then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
       .then(function(j){return {ok:true,ac:j.ac||j.aircraft||[]}})
       .catch(function(e){return {ok:false,err:e&&e.message}});
@@ -651,6 +657,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,refreshMs);
     document.getElementById('map').parentNode.style.setProperty('--glide',(refreshMs/1000)+'s');}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){clearTimeout(timer);poll()}});
+  var movT=null;
+  map.on('moveend',function(){clearTimeout(movT);movT=setTimeout(function(){if(!busy&&!document.hidden){clearTimeout(timer);poll()}},700)});
   map.on('zoomstart movestart',function(){document.getElementById('map').parentNode.classList.remove('glide')});
   map.on('zoomend moveend',function(){document.getElementById('map').parentNode.classList.add('glide')});
   var rate=document.getElementById('rate');
