@@ -757,7 +757,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       }
       failCount=0;
       lastData=merge(good.map(function(r){return r.ac}));
-      render(lastData); showWelcome(lastData.length?false:'empty');
+      render(lastData); showWelcome(false);
       var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
       var warn=good.length<on.length?' · '+good.length+'/'+on.length:'';
       setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
