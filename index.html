@@ -123,6 +123,8 @@ h1 b{color:var(--accent);font-weight:500}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.wxlegend{order:-1}
+.legends{bottom:46px}
 .tempctl{width:72px;height:72px;border-radius:50%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff;margin:0 16px 8px 0!important;pointer-events:auto;
   background:rgba(18,18,22,.42);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
   border:1px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)}
@@ -186,7 +188,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <button class="gear" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
     </div>
     <div class="legends">
-      <div class="legend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
+      <div class="legend" id="altlegend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
       <div class="legend wxlegend" id="wxlegend"><div id="wxlegtxt">Live rain, mm/h</div><img id="wxlegimg" alt="Rain intensity scale"></div>
     </div>
     <button class="compass" id="compass" aria-label="Compass. Tap to point the map north">
@@ -209,6 +211,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <label class="setrow" for="radius">Search radius<select id="radius" aria-label="Search radius"><option value="0">25 nm</option><option value="1">50 nm</option><option value="2" selected>100 nm</option><option value="3">150 nm</option></select></label>
     <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
     <label class="setrow" for="units">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
+    <label class="setrow" for="lgwx">Rain key<select id="lgwx" aria-label="Rain key"><option value="1">Show</option><option value="0">Hide</option></select></label>
+    <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
     <details class="folder" id="cfolder"><summary>Compass</summary>
       <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -256,6 +260,14 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function loadTemp(){ if(tcfg==='off') return; fetch('https://api.open-meteo.com/v1/forecast?latitude='+me.lat.toFixed(3)+'&longitude='+me.lon.toFixed(3)+'&current=temperature_2m').then(function(r){return r.json()}).then(function(j){ if(j&&j.current&&typeof j.current.temperature_2m==='number'){tempC=j.current.temperature_2m;showTemp()} }).catch(function(){}) }
   setTimeout(function(){var sel=document.getElementById('ctemp'); if(sel){sel.value=tcfg; sel.onchange=function(){tcfg=sel.value;try{localStorage.setItem('sky-temp',tcfg)}catch(e){} showTemp(); if(tempC==null) loadTemp()}} showTemp(); loadTemp()},0);
   setInterval(loadTemp,600000);
+  (function(){
+    var K='sky-keys', cfg={lgwx:'1',lgalt:'1'}, els={lgwx:document.getElementById('wxlegend'),lgalt:document.getElementById('altlegend')};
+    try{var r=JSON.parse(localStorage.getItem(K)||'{}');for(var k in cfg) if(r[k]!=null) cfg[k]=String(r[k])}catch(e){}
+    Object.keys(cfg).forEach(function(id){
+      var sel=document.getElementById(id); els[id].hidden=cfg[id]==='0'; sel.value=cfg[id];
+      sel.onchange=function(){cfg[id]=sel.value;els[id].hidden=sel.value==='0';try{localStorage.setItem(K,JSON.stringify(cfg))}catch(e){}};
+    });
+  })();
   L.control.zoom({position:'bottomright'}).addTo(map);
 
   // Free tile sets that look like Google Maps. Real Google tiles need a paid key and are not allowed here.
