@@ -241,7 +241,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="maptheme">Map theme<select id="maptheme" aria-label="Map theme"><option value="day">Day</option><option value="night">Night</option><option value="auto">Auto (sunset)</option></select></label>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
-      <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="all">All planes</option><option value="sel">Selected only</option><option value="off">Hide</option></select></label>
+      <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="near">Nearest 5 + short stubs</option><option value="all">Full route, all planes</option><option value="sel">Selected only</option><option value="off">Hide</option></select></label>
       <label class="setrow" for="maxpl">Planes shown<select id="maxpl" aria-label="Planes shown"><option value="15">Closest 15</option><option value="30">Closest 30</option><option value="50">Closest 50</option><option value="100">Closest 100</option><option value="150">Closest 150</option></select></label>
     </details>
     <details class="folder" id="cfolder"><summary>Compass</summary>
@@ -512,9 +512,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
   // ---- Routes: where each plane came from and where it is going (adsbdb.com, no key), cached on this phone
-  var routes={}, rpend={}, rq=[], rbusy=0, routeMode='all', rl={}, rsave=null, rdraw=null;
+  var routes={}, rpend={}, rq=[], rbusy=0, routeMode='near', rl={}, rsave=null, rdraw=null;
   try{routes=JSON.parse(localStorage.getItem('sky-routes')||'{}')||{}}catch(e){routes={}}
-  try{var rmv=localStorage.getItem('sky-routemode'); if(rmv==='all'||rmv==='sel'||rmv==='off') routeMode=rmv}catch(e){}
+  try{var rmv=localStorage.getItem('sky-routemode'); if(rmv==='near'||rmv==='all'||rmv==='sel'||rmv==='off') routeMode=rmv}catch(e){}
   var pc={}, pcn=0; function pcol(h){h=String(h||''); if(!pc[h]){ pc[h]='hsl('+Math.round((pcn++*137.508)%360)+',88%,50%)' } return pc[h]}
   function csOf(p){return (p.flight||'').trim().toUpperCase()}
   function routeOf(p){var r=routes[csOf(p)];return r&&r.v?r.v:null}
@@ -545,14 +545,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     return out}
   function chip(ll,txt,col){return L.marker(ll,{icon:L.divIcon({className:'',html:'<span class="apchip" style="background:'+col+'">'+esc(txt)+'</span>',iconSize:[0,0]}),interactive:false,keyboard:false,zIndexOffset:-200}).addTo(map)}
   function dropRoute(h){var x=rl[h]; if(!x) return; map.removeLayer(x.past); map.removeLayer(x.fut); if(x.chips) x.chips.forEach(function(c){map.removeLayer(c)}); delete rl[h]}
-  function drawRoute(p,show){
+  function drawRoute(p,show,full){
     var h=p.hex, r=show&&p.alt_baro!=='ground'?routeOf(p):null;
     if(r){ var tot=distNm(r.o.la,r.o.lo,r.d.la,r.d.lo); if(distNm(r.o.la,r.o.lo,p.lat,p.lon)+distNm(p.lat,p.lon,r.d.la,r.d.lo)>tot*1.5+60) r=null }
     if(!r){dropRoute(h);return}
     var col=pcol(h), sel=h===selected, x=rl[h];
     if(!x) x=rl[h]={past:L.polyline([],{color:col,weight:2,opacity:.5,interactive:false}).addTo(map),fut:L.polyline([],{color:col,weight:2.6,opacity:.95,dashArray:'7 7',interactive:false}).addTo(map)};
-    x.past.setLatLngs(gc([r.o.la,r.o.lo],[p.lat,p.lon],12)); x.fut.setLatLngs(gc([p.lat,p.lon],[r.d.la,r.d.lo],20));
-    x.past.setStyle({weight:sel?3.5:2}); x.fut.setStyle({weight:sel?4:2.6});
+    var fut=gc([p.lat,p.lon],[r.d.la,r.d.lo],20);
+    if(full){ x.past.setLatLngs(gc([r.o.la,r.o.lo],[p.lat,p.lon],12)); x.fut.setLatLngs(fut) }
+    else { var rem=distNm(p.lat,p.lon,r.d.la,r.d.lo), k=Math.max(1,Math.min(20,Math.ceil(20*Math.min(1,25/Math.max(rem,1))))); x.past.setLatLngs([]); x.fut.setLatLngs(fut.slice(0,k+1)) }
+    x.past.setStyle({weight:sel?3.5:2}); x.fut.setStyle({weight:sel?4:2.6,opacity:full?.95:.6});
     if(sel&&!x.chips) x.chips=[chip([r.o.la,r.o.lo],r.o.c,col),chip([r.d.la,r.d.lo],r.d.c,col)];
     if(!sel&&x.chips){x.chips.forEach(function(c){map.removeLayer(c)});x.chips=null}
   }
@@ -562,7 +564,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var seen={}, c=map.getCenter(), vb=map.getBounds().pad(0.25), arr=[];
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
     arr.sort(function(a,b){return a._d-b._d}); if(arr.length>maxPlanes){ var keep=arr.slice(0,maxPlanes); if(selected&&!keep.some(function(q){return q.hex===selected})){ var sp=arr.filter(function(q){return q.hex===selected})[0]; if(sp) keep.push(sp) } arr=keep }
-    arr.forEach(function(p){
+    arr.forEach(function(p,idx){
       seen[p.hex]=1;
       var ll=[p.lat,p.lon], inView=vb.contains(ll)||p.hex===selected;
       var t=trails[p.hex]; if(!t) t=trails[p.hex]={pts:[],line:null,casing:null};
@@ -576,7 +578,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         if(t.casing){ if(sel) t.casing.setLatLngs(t.pts); else {map.removeLayer(t.casing);t.casing=null} }
       }else if(t.line&&!inView){map.removeLayer(t.line);t.line=null; if(t.casing){map.removeLayer(t.casing);t.casing=null}}
       if(inView&&routeMode!=='off') needRoute(p);
-      drawRoute(p,routeMode==='all'?(inView&&map.getZoom()>=6):(routeMode==='sel'&&sel));
+      drawRoute(p,routeMode==='off'?false:(routeMode==='sel'?sel:(inView&&(map.getZoom()>=6||sel))),sel||routeMode==='all'||(routeMode==='near'&&idx<5));
       var key=[Math.round((p.track||0)/3),altColor(p.alt_baro),sel?1:0,name(p),p.alt_baro==='ground'?'g':(p.alt_baro==null?'':uAlt(p.alt_baro)),units].join('|');
       if(planes[p.hex]){ planes[p.hex].setLatLng(ll); if(lastKey[p.hex]!==key){planes[p.hex].setIcon(icon(p));lastKey[p.hex]=key} }
       else{
