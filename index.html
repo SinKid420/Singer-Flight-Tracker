@@ -674,7 +674,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var v=vrate(p), cells=[
       ['Phase',phase(p).replace('Departure climb','Climb out')],
       ['Vert. speed',v==null?'—':(v>0?'▲':v<0?'▼':'')+uVs(v)],
-      ['AP altitude',p.nav_altitude_mcp!=null?uAlt(p.nav_altitude_mcp)+' '+altUnit():(p.nav_altitude_fms!=null?uAlt(p.nav_altitude_fms)+' '+altUnit():'—')],
+      ['AP altitude',p.nav_altitude_mcp!=null?uAlt(Math.round(p.nav_altitude_mcp/100)*100)+' '+altUnit():(p.nav_altitude_fms!=null?uAlt(Math.round(p.nav_altitude_fms/100)*100)+' '+altUnit():'—')],
       ['AP heading',p.nav_heading!=null?Math.round(p.nav_heading)+'°':'—'],
       ['AP modes',p.nav_modes&&p.nav_modes.length?p.nav_modes.map(function(m){return MODES[m]||m}).join(' '):'—'],
       ['Altimeter',p.nav_qnh!=null?Math.round(p.nav_qnh)+' hPa':'—'],
@@ -696,11 +696,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     return r?r.v:null }
   function aircraftHtml(p){
     var a=acRec(p.hex), rt=routes[csOf(p)], al=rt&&rt.al;
-    var html='<div class="grid g8">'+cell('Registration',p.r||(a&&a.rg)||'')+cell('Type code',p.t||(a&&a.it)||'')+cell('Maker',a?(a.mf||''):(a===0?'':'…'))+cell('Mode-S hex',String(p.hex||'').toUpperCase())+'</div>';
+    var html='<div class="grid g8">'+cell('Registration',p.r||(a&&a.rg)||'')+cell('Type code',p.t||(a&&a.it)||'')+cell('Maker',a?(a.mf||''):(a===0?((typeName(p)&&typeName(p)!==p.t)?typeName(p).split(' ')[0]:''):'…'))+cell('Mode-S hex',String(p.hex||'').toUpperCase())+'</div>';
     var lines=[];
     if(a){ if(a.ty) lines.push('Model: <b>'+esc([a.mf,a.ty].filter(Boolean).join(' '))+'</b>'+(typeName(p)?' ('+esc(typeName(p))+')':''));
       if(a.ow) lines.push('Owner / operator: <b>'+esc(a.ow)+'</b>'); if(a.cn) lines.push('Registered in: <b>'+esc(a.cn)+'</b>'+(a.fl?' · operator code '+esc(a.fl):'')); }
-    else if(a===null) lines.push('Looking up the aircraft record…'); else lines.push('No public record for this aircraft');
+    else if(a===null) lines.push('Looking up the aircraft record…'); else { if(typeName(p)) lines.push('Model: <b>'+esc(typeName(p))+'</b>'); lines.push('Owner not listed in the free aircraft database'); }
     if(al) lines.push('Airline: <b>'+esc(al.n)+'</b>'+esc([al.i&&al.a?' ('+al.i+' / '+al.a+')':(al.i?' ('+al.i+')':''),al.c?' · '+al.c:'',al.k?' · radio "'+al.k+'"':''].join('')));
     else if(airlineOf(p)) lines.push('Airline: <b>'+esc(airlineOf(p))+'</b>');
     return html+lines.slice(0,4).map(function(l){return '<div class="meta">'+l+'</div>'}).join('');
@@ -885,12 +885,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     return Promise.all(on.map(fetchSource)).then(function(res){
       var good=res.filter(function(r){return r.ok});
       if(!good.length){
+        if(lastData.length&&res.every(function(r){return r.err==='429'})){ slow=Math.min(slow+1,4); slowUntil=Date.now()+refreshMs*Math.pow(2,slow); setStat('Feed busy<br>retrying…',true); return }
         failCount++; if(failCount>1) showWelcome('error');
         var code=res.map(function(r){return r.err}).filter(function(c){return /^\d+$/.test(c||'')})[0];
         setStat(!navigator.onLine?'No internet<br>check connection':(failCount>1?'Feed error<br>tap for fix':'Connecting…'),true);
         return;
       }
-      failCount=0;
+      failCount=0; slow=0; slowUntil=0;
       lastData=merge(good.map(function(r){return r.ac}));
       render(lastData); showWelcome(false);
       var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
@@ -898,11 +899,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
   }
-  function schedule(){clearTimeout(timer);timer=setTimeout(poll,refreshMs);
+  var slow=0, slowUntil=0;
+  function schedule(){clearTimeout(timer);timer=setTimeout(poll,slow?refreshMs*Math.pow(2,slow):refreshMs);
     document.getElementById('map').parentNode.style.setProperty('--glide',(refreshMs/1000)+'s');}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){clearTimeout(timer);poll()}});
   var movT=null;
-  map.on('moveend',function(){clearTimeout(movT);movT=setTimeout(function(){if(!busy&&!document.hidden){clearTimeout(timer);poll()}},700)});
+  map.on('moveend',function(){clearTimeout(movT);movT=setTimeout(function(){if(!busy&&!document.hidden&&Date.now()>=slowUntil){clearTimeout(timer);poll()}},700)});
   map.on('zoomstart movestart',function(){document.getElementById('map').parentNode.classList.remove('glide')});
   map.on('zoomend moveend',function(){document.getElementById('map').parentNode.classList.add('glide')});
   var rate=document.getElementById('rate');
