@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: mediastream:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Sky Overhead</title>
+<title>Singers Flight Tracker</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0e0e10">
 <script>if(window.top!==window.self){try{window.top.location.replace(window.self.location.href)}catch(e){document.documentElement.innerHTML=''}}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sky Overhead">
+<meta name="apple-mobile-web-app-title" content="Singers Flight Tracker">
 <link rel="icon" href="logo-512.png" type="image/png">
 <link rel="apple-touch-icon" href="logo-512.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -40,7 +40,7 @@ button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outlin
 .pill{position:absolute;z-index:700;top:16px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);
   display:flex;align-items:center;gap:6px;height:48px;padding:0 6px 0 16px;background:var(--bg);border-radius:24px;box-shadow:var(--shadow);min-width:0}
 h1{font:500 16px/1 var(--font);margin:0;white-space:nowrap;color:var(--fg)}
-h1 b{color:var(--accent);font-weight:500}
+h1 b{color:var(--accent);font-weight:500;display:block;font-size:12px;margin-top:2px}
 .stat{font-size:11px;line-height:1.25;color:var(--dim);min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
 .stat em{font-style:normal;color:var(--fg);font-weight:500}
 .stat .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:5px;vertical-align:1px}
@@ -236,7 +236,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   <div class="mapwrap">
     <div id="map" role="application" aria-label="Live flight map"></div>
     <div class="pill">
-      <h1>Sky<b>Overhead</b></h1>
+      <h1>Singers<b>Flight Tracker</b></h1>
       <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading…</div>
       <button class="icon-btn" id="locate" aria-label="Use my location"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.9 3A9 9 0 0013 3.1V1h-2v2.1A9 9 0 003.1 11H1v2h2.1A9 9 0 0011 20.9V23h2v-2.1a9 9 0 007.9-7.9H23v-2h-2.1zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg></button>
     </div>
@@ -267,8 +267,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   </div>
 </div>
 <div class="sheet-bg" id="skysheet" hidden>
-  <div class="sheet" role="dialog" aria-label="Sky right now">
-    <div class="sheet-head"><b>Sky right now</b><button class="close" id="skyx" aria-label="Close">✕</button></div>
+  <div class="sheet" role="dialog" aria-label="Around you now">
+    <div class="sheet-head"><b>Around you now</b><button class="close" id="skyx" aria-label="Close">✕</button></div>
     <div id="skybody"></div>
   </div>
 </div>
@@ -877,7 +877,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function showWelcome(mode){
     var w=document.getElementById('welcome'); if(!w) return;
     if(!mode){w.hidden=true;return}
-    var T={setup:['Welcome to Sky Overhead','To see live planes the app needs a free flight-feed key. It takes about a minute.','Set up feeds'],
+    var T={setup:['Welcome to Singers Flight Tracker','To see live planes the app needs a free flight-feed key. It takes about a minute.','Set up feeds'],
       error:['Can\u2019t reach the feeds','Check your connection, or open Settings to fix your key.','Open Settings'],
       empty:['No planes nearby','Nothing in range right now. Zoom out, or raise the search radius in Settings.','']}[mode];
     document.getElementById('wtitle').textContent=T[0]; document.getElementById('wtext').textContent=T[1];
