@@ -395,9 +395,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function unparkRadar(){ if(!parked) return; parked=false; frames.forEach(function(f,j){ if(j!==cur) ['rv','iem'].forEach(function(k){ if(f[k]) f[k].addTo(map) }) }); clearTimeout(tmr); tmr=setTimeout(step,1200) }
   map.on('zoomstart movestart',function(){ clearTimeout(parkT); parkRadar(); });
   map.on('zoomstart',function(){ document.body.classList.add('zooming') });
-  map.on('zoomend',function(){ document.body.classList.remove('zooming'); document.body.classList.toggle('far',map.getZoom()<8) });
+  map.on('zoomend',function(){ document.body.classList.remove('zooming'); document.body.classList.toggle('far',map.getZoom()<6) });
   map.on('moveend zoomend',function(){ clearTimeout(parkT); parkT=setTimeout(unparkRadar,1500) });
-  map.whenReady(function(){ document.body.classList.toggle('far',map.getZoom()<8) });
+  map.whenReady(function(){ document.body.classList.toggle('far',map.getZoom()<6) });
   [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ document.querySelector('#fsheet .sheet').classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) }) });
   // Day / night map theme (Auto follows the sun at your location)
   var themeMode='day';
