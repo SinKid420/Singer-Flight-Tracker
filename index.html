@@ -276,9 +276,6 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var SOURCES = [
     {id:'FlyItalyADSB',needsKey:true,url:function(a,b,r){return 'https://api.flyitalyadsb.com/api/aircraft/v2/lat/'+a+'/lon/'+b+'/dist/'+r}},
     {id:'adsb.lol',url:function(a,b,r){return 'https://api.adsb.lol/v2/point/'+a+'/'+b+'/'+r}},
-    {id:'adsb.fi',url:function(a,b,r){return 'https://opendata.adsb.fi/api/v2/lat/'+a+'/lon/'+b+'/dist/'+r}},
-    {id:'adsb.one',url:function(a,b,r){return 'https://api.adsb.one/v2/point/'+a+'/'+b+'/'+r}},
-    {id:'airplanes.live',url:function(a,b,r){return 'https://api.airplanes.live/v2/point/'+a+'/'+b+'/'+r}}
   ];
   var src = 0;
 
@@ -307,12 +304,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}},
+      {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'}),
+      L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol, adsb.fi · Photos: Planespotters.net'})]}}
+      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
   var baseLayers=[], baseKey='map';
   function setBase(key){
@@ -715,7 +712,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   // Personal FlyItalyADSB key, used until you paste a different one on the Feeds screen. Empty in the website build.
   var DEFAULT_KEY='';
   try{relay=localStorage.getItem('sky-relay')||'';apiKey=localStorage.getItem('sky-key')||''}catch(e){}
-  var DEFAULT_RELAY=''; if(!relay) relay=DEFAULT_RELAY;
+  var DEFAULT_RELAY='https://skyrelay.joshuasinger123.workers.dev/'; if(!relay) relay=DEFAULT_RELAY;
   try{var qrl=new URLSearchParams(location.search).get('relay'); if(qrl&&/^https:\/\/[^\s"'<>]+$/.test(qrl)){ if(confirm('Use this relay for flight data?\n'+qrl)){relay=qrl;localStorage.setItem('sky-relay',qrl)} history.replaceState(null,'',location.pathname) }}catch(e){}
   if(!apiKey) apiKey=DEFAULT_KEY;
   function active(){return SOURCES.filter(function(s){return s.needsKey?!!apiKey:!!relay})}
@@ -830,8 +827,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         if(r.ok) good++; if(r.blocked) blocked++;
         list.children[i].innerHTML='<b>'+SOURCES[i].id+'<em class="'+(r.ok?'ok':'no')+'" style="font-style:normal">'+(r.ok?'OK':'Not working')+'</em></b><span'+(r.blocked?' class="rb"':'')+'>'+esc(r.text)+'</span>';
       });
-      help.textContent=good?'At least one feed is working. adsb.lol, adsb.fi, adsb.one and airplanes.live need a relay because they do not let web pages read them.':
-        (blocked||!apiKey?'Get a free FlyItalyADSB key (it is emailed to you, no approval) and paste it below. adsb.lol, adsb.fi, adsb.one and airplanes.live only work through a relay.':'Check your connection and try again.');
+      help.textContent=good?'At least one feed is working. adsb.lol need a relay because they do not let web pages read them.':
+        (blocked||!apiKey?'Get a free FlyItalyADSB key (it is emailed to you, no approval) and paste it below. adsb.lol only work through a relay.':'Check your connection and try again.');
     });
   }
   function envLine(){
