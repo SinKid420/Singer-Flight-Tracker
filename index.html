@@ -892,7 +892,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     return Promise.all(on.map(fetchSource)).then(function(res){
       var good=res.filter(function(r){return r.ok});
       if(!good.length){
-        if(lastData.length&&res.every(function(r){return r.err==='429'})){ slow=Math.min(slow+1,4); slowUntil=Date.now()+refreshMs*Math.pow(2,slow); setStat('Feed busy<br>retrying…',true); return }
+        if(res.every(function(r){return r.err==='429'})){ slow=Math.min(slow+1,4); slowUntil=Date.now()+refreshMs*Math.pow(2,slow); setStat('Feed busy<br>retrying…',true); return }
         failCount++; if(failCount>1) showWelcome('error');
         var code=res.map(function(r){return r.err}).filter(function(c){return /^\d+$/.test(c||'')})[0];
         setStat(!navigator.onLine?'No internet<br>check connection':(failCount>1?'Feed error<br>tap for fix':'Connecting…'),true);
