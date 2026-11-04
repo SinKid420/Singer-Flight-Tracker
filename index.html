@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: mediastream:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sky Overhead</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0e0e10">
+<script>if(window.top!==window.self){try{window.top.location.replace(window.self.location.href)}catch(e){document.documentElement.innerHTML=''}}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Sky Overhead">
 <link rel="icon" href="logo-512.png" type="image/png">
 <link rel="apple-touch-icon" href="logo-512.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous" referrerpolicy="no-referrer">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <style>
 /* Layout: full-bleed map, floating search-style pill and map-style chips on top, white bottom sheet below. One phone screen, no page scroll. */
@@ -304,8 +306,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js" integrity="sha384-MtIdllebpZyms2pw9K3YJl8BEqrKNQCdSFAySjeglab6z2PkeFdF4Lb9cDsnxQuG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function(){document.getElementById('stat').textContent='Map library blocked. Reload with a connection.'})}
 (function(){
@@ -835,11 +837,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var byHex={};
     lists.forEach(function(list){
       list.forEach(function(p){
-        if(p.lat==null||p.lon==null||!p.hex) return;
-        var old=byHex[p.hex];
+        if(!p||typeof p!=='object'||!/^~?[0-9a-f]{6}$/i.test(String(p.hex||''))) return;
+        if(typeof p.lat!=='number'||typeof p.lon!=='number'||!isFinite(p.lat)||!isFinite(p.lon)||Math.abs(p.lat)>90||Math.abs(p.lon)>180) return;
+        ['gs','track','baro_rate','geom_rate','alt_geom','nav_heading','nav_altitude_mcp','nav_altitude_fms','nav_qnh','ias','tas','mach','oat','wd','ws','seen','messages'].forEach(function(k){if(p[k]!=null&&(typeof p[k]!=='number'||!isFinite(p[k]))) delete p[k]});
+        if(p.alt_baro!=null&&p.alt_baro!=='ground'&&(typeof p.alt_baro!=='number'||!isFinite(p.alt_baro))) delete p.alt_baro;
+        ['flight','r','t','squawk','category','emergency','desc','type'].forEach(function(k){if(p[k]!=null) p[k]=String(p[k]).slice(0,40)});
+        if(p.nav_modes!=null&&!Array.isArray(p.nav_modes)) delete p.nav_modes;
+        var old=Object.prototype.hasOwnProperty.call(byHex,p.hex)?byHex[p.hex]:null;
         if(!old){byHex[p.hex]=p;return}
         var win=age(p)<age(old)?p:old, lose=win===p?old:p;
-        Object.keys(lose).forEach(function(k){if(win[k]==null&&lose[k]!=null)win[k]=lose[k]});
+        Object.keys(lose).forEach(function(k){if(k!=='__proto__'&&k!=='constructor'&&k!=='prototype'&&win[k]==null&&lose[k]!=null)win[k]=lose[k]});
         byHex[p.hex]=win;
       });
     });
@@ -850,8 +857,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   // Personal FlyItalyADSB key, used until you paste a different one on the Feeds screen. Empty in the website build.
   var DEFAULT_KEY='';
   try{relay=localStorage.getItem('sky-relay')||'';apiKey=localStorage.getItem('sky-key')||''}catch(e){}
-  var DEFAULT_RELAY='https://skyrelay.joshuasinger123.workers.dev/'; if(!relay) relay=DEFAULT_RELAY;
-  try{var qrl=new URLSearchParams(location.search).get('relay'); if(qrl&&/^https:\/\/[^\s"'<>]+$/.test(qrl)){ if(confirm('Use this relay for flight data?\n'+qrl)){relay=qrl;localStorage.setItem('sky-relay',qrl)} history.replaceState(null,'',location.pathname) }}catch(e){}
+  var DEFAULT_RELAY='https://skyrelay.joshuasinger123.workers.dev/'; if(!relay||!/^https:\/\//i.test(relay)) relay=DEFAULT_RELAY;
+  try{var qrl=new URLSearchParams(location.search).get('relay'); if(qrl&&/^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w\-./]*)?$/i.test(qrl)&&qrl.length<200){ if(confirm('Use this relay for flight data?\n\n'+qrl+'\n\nOnly say OK if you set this relay up yourself. A relay sees which area of the map you are viewing.')){relay=qrl;localStorage.setItem('sky-relay',qrl)} history.replaceState(null,'',location.pathname) }}catch(e){}
   if(!apiKey) apiKey=DEFAULT_KEY;
   function active(){return SOURCES.filter(function(s){return s.needsKey?!!apiKey:!!relay})}
   function viaRelay(u){return relay?relay+(relay.indexOf('?')>-1?'&':'?')+'u='+encodeURIComponent(u):u}
@@ -990,8 +997,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   document.getElementById('ftest').onclick=function(e){e.preventDefault();runTest()};
   document.getElementById('fsave').onclick=function(e){
     e.preventDefault();
-    relay=document.getElementById('relay').value.trim();
-    apiKey=document.getElementById('apikey').value.trim();
+    relay=document.getElementById('relay').value.trim(); if(relay&&!/^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w\-./?=&]*)?$/i.test(relay)) relay=DEFAULT_RELAY;
+    apiKey=document.getElementById('apikey').value.trim().replace(/[^\w\-.]/g,'').slice(0,200);
     try{localStorage.setItem('sky-relay',relay);localStorage.setItem('sky-key',apiKey)}catch(err){}
     runTest(); clearTimeout(timer); busy=false; poll();
   };
