@@ -354,11 +354,27 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   // Free tile sets that look like Google Maps. Real Google tiles need a paid key and are not allowed here.
   var ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+  // Satellite at the sharpest detail Esri has for each spot: asks Esri's coverage map which zoom levels exist there,
+  // and where the finest level is missing it enlarges the closest sharper-than-default level instead of showing a blank tile.
+  var esriAvail={};
+  function esriHas(z,y,x){ var r0=Math.floor(y/32)*32, c0=Math.floor(x/32)*32, k=z+'/'+r0+'/'+c0;
+    if(!esriAvail[k]) esriAvail[k]=fetch(ESRI+'World_Imagery/MapServer/tilemap/'+z+'/'+r0+'/'+c0+'/32/32').then(function(r){return r.ok?r.json():null}).then(function(j){return j&&j.data&&j.data.length===1024&&!j.adjusted?j.data:null}).catch(function(){return null});
+    return esriAvail[k].then(function(d){ return d?d[(y-r0)*32+(x-c0)]===1:true }) }
+  function esriBest(c){ if(c.z<=17) return Promise.resolve(c.z); var z=c.z;
+    function tryZ(){ if(z<=17) return Promise.resolve(17); var f=Math.pow(2,c.z-z); return esriHas(z,Math.floor(c.y/f),Math.floor(c.x/f)).then(function(ok){ if(ok) return z; z--; return tryZ() }) }
+    return tryZ() }
+  var EsriSmart=L.TileLayer.extend({ createTile:function(c,done){ var tile=document.createElement('div'), self=this, px=this.getTileSize().x;
+    esriBest(c).then(function(z){ var f=Math.pow(2,c.z-z), ax=Math.floor(c.x/f), ay=Math.floor(c.y/f), img=document.createElement('img');
+      img.alt=''; img.setAttribute('role','presentation'); img.decoding='async';
+      img.style.cssText='position:absolute;max-width:none;width:'+(px*f)+'px;height:'+(px*f)+'px;left:'+(-(c.x-ax*f)*px)+'px;top:'+(-(c.y-ay*f)*px)+'px';
+      img.onload=function(){done(null,tile)}; img.onerror=function(e){done(e,tile)};
+      img.src=ESRI+'World_Imagery/MapServer/tile/'+z+'/'+ay+'/'+ax; tile.appendChild(img) });
+    tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } });
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
+      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
