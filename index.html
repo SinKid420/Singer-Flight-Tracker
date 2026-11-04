@@ -241,7 +241,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="maptheme">Map theme<select id="maptheme" aria-label="Map theme"><option value="day">Day</option><option value="night">Night</option><option value="auto">Auto (sunset)</option></select></label>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
-      <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="near">Nearest 5 + short stubs</option><option value="all">Full route, all planes</option><option value="sel">Selected only</option><option value="off">Hide</option></select></label>
+      <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="sel">Tapped plane only</option><option value="off">Hide</option></select></label>
       <label class="setrow" for="maxpl">Planes shown<select id="maxpl" aria-label="Planes shown"><option value="15">Closest 15</option><option value="30">Closest 30</option><option value="50">Closest 50</option><option value="100">Closest 100</option><option value="150">Closest 150</option></select></label>
     </details>
     <details class="folder" id="cfolder"><summary>Compass</summary>
@@ -512,9 +512,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 
   // ---- Routes: where each plane came from and where it is going (adsbdb.com, no key), cached on this phone
-  var routes={}, rpend={}, rq=[], rbusy=0, routeMode='near', rl={}, rsave=null, rdraw=null;
+  var routes={}, rpend={}, rq=[], rbusy=0, routeMode='sel', rl={}, rsave=null, rdraw=null;
   try{routes=JSON.parse(localStorage.getItem('sky-routes')||'{}')||{}}catch(e){routes={}}
-  try{var rmv=localStorage.getItem('sky-routemode'); if(rmv==='near'||rmv==='all'||rmv==='sel'||rmv==='off') routeMode=rmv}catch(e){}
+  try{var rmv=localStorage.getItem('sky-routemode'); if(rmv==='sel'||rmv==='off') routeMode=rmv}catch(e){}
   var pc={}, pcn=0; function pcol(h){h=String(h||''); if(!pc[h]){ pc[h]='hsl('+Math.round((pcn++*137.508)%360)+',88%,50%)' } return pc[h]}
   function csOf(p){return (p.flight||'').trim().toUpperCase()}
   function routeOf(p){var r=routes[csOf(p)];return r&&r.v?r.v:null}
@@ -577,7 +577,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         if(sel&&!t.casing) t.casing=L.polyline([],{color:'#ffffff',weight:8,opacity:.85,lineCap:'round',lineJoin:'round',interactive:false}).addTo(map).bringToBack();
         if(t.casing){ if(sel) t.casing.setLatLngs(t.pts); else {map.removeLayer(t.casing);t.casing=null} }
       }else if(t.line&&!inView){map.removeLayer(t.line);t.line=null; if(t.casing){map.removeLayer(t.casing);t.casing=null}}
-      if(inView&&routeMode!=='off') needRoute(p);
+      if(sel&&routeMode!=='off') needRoute(p);
       drawRoute(p,routeMode==='off'?false:(routeMode==='sel'?sel:(inView&&(map.getZoom()>=6||sel))),sel||routeMode==='all'||(routeMode==='near'&&idx<5));
       var key=[Math.round((p.track||0)/3),altColor(p.alt_baro),sel?1:0,name(p),p.alt_baro==='ground'?'g':(p.alt_baro==null?'':uAlt(p.alt_baro)),units].join('|');
       if(planes[p.hex]){ planes[p.hex].setLatLng(ll); if(lastKey[p.hex]!==key){planes[p.hex].setIcon(icon(p));lastKey[p.hex]=key} }
