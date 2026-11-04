@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo-maskable-3.png" alt="Singers Flight Tracker app icon" width="180">
+  <img src="logo-512.png" alt="Singers Flight Tracker logo" width="200">
 </p>
 
 <h1 align="center">Singers Flight Tracker</h1>
