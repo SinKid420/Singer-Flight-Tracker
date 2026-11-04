@@ -172,7 +172,9 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .artag .ring{width:16px;height:16px;border:2px solid var(--c,#ff3b30);border-radius:50%;margin-top:-1px;box-shadow:0 0 6px var(--c,#ff3b30)}
 .artag.far .box{opacity:.75;font-size:10px;padding:2px 5px}.artag.far .box b{font-size:11px}
 .artag.sel .box{background:rgba(255,59,48,.9);color:#fff}
-.aredge{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:700 11px/1.2 var(--font);color:#fff;background:rgba(10,10,12,.72);border-radius:12px;padding:4px 8px;white-space:nowrap;pointer-events:none}
+#aredges{position:absolute;left:8px;right:8px;bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 40px);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;pointer-events:none}
+.aredge{font:700 11px/1.2 var(--font);color:#fff;background:rgba(10,10,12,.78);border-radius:12px;padding:5px 9px;white-space:nowrap}
+.artag.nobox .box,.artag.nobox .stem{visibility:hidden}
 #arhud{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:max(12px,env(safe-area-inset-top,0px)) 12px 10px;background:linear-gradient(rgba(0,0,0,.7),transparent);color:#fff;font:600 13px/1.3 var(--font)}
 #arhud div{flex:1;min-width:0}#arhud b{font-size:16px}
 #arclose{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font:700 18px/1 var(--font);padding:0;flex:none}
@@ -211,7 +213,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 #q:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .empty{color:var(--dim);font-size:13px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.plane,.glide .leaflet-marker-icon{transition:none}}
-@media (max-width:400px){.seg button{padding:6px 8px}h1{font-size:15px}.pill{padding-left:12px;gap:4px}.stat{font-size:10px}}
+@media (max-width:400px){.chips{gap:6px}.seg button{padding:6px 7px}h1{font-size:15px}.pill{padding-left:12px;gap:4px}.stat{font-size:10px}}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
@@ -883,9 +885,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var box=document.createElement('div'); box.id='ar'; box.hidden=true; box.setAttribute('role','dialog'); box.setAttribute('aria-label','AR plane finder');
     box.innerHTML='<video id="arvid" playsinline muted autoplay></video><div id="arlay"></div>'+
       '<div id="arhud"><div><b id="arhead">--°</b> <span id="arcount"></span><br><span id="armsg">Point your phone at the sky</span></div><button id="arclose" aria-label="Close AR">✕</button></div>'+
-      '<div id="arhint">Tap a label for details · drag sideways to line labels up with a plane you can see</div><div id="arcard" hidden></div>';
+      '<div id="aredges"></div><div id="arhint">Tap a label for details · drag sideways to line labels up with a plane you can see</div><div id="arcard" hidden></div>';
     document.body.appendChild(box);
-    var vid=box.querySelector('#arvid'), lay=box.querySelector('#arlay'), card=box.querySelector('#arcard'), hint=box.querySelector('#arhint');
+    var vid=box.querySelector('#arvid'), lay=box.querySelector('#arlay'), card=box.querySelector('#arcard'), hint=box.querySelector('#arhint'), edgeBox=box.querySelector('#aredges'), camErr='';
     var headEl=box.querySelector('#arhead'), cntEl=box.querySelector('#arcount'), msgEl=box.querySelector('#armsg');
     var stream=null, raf=0, on=false, gotOri=false, absOri=false, basis=null, tags={}, edges=[], pick=null, elev=null, dataRef=null, dataT=0;
     var off=0; try{off=parseFloat(localStorage.getItem('sky-aroff'))||0}catch(e){}
@@ -921,7 +923,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       if(!basis){ msgEl.textContent=gotOri?'Hold steady…':'No motion sensor found – AR needs a phone with a compass'; return }
       var hd=(Math.atan2(basis.f[0],basis.f[1])/D+off+360)%360, el=Math.asin(Math.max(-1,Math.min(1,basis.f[2])))/D;
       headEl.textContent='Facing '+Math.round(hd)+'° '+DIRS[Math.round(hd/45)%8];
-      msgEl.textContent=el<-5?'Tilt up toward the sky':(absOri?'Tilt '+(el>=0?'up ':'down ')+Math.abs(Math.round(el))+'°':'Compass not absolute – drag sideways to align');
+      msgEl.textContent=camErr||(el<-5?'Tilt up toward the sky':(absOri?'Tilt '+(el>=0?'up ':'down ')+Math.abs(Math.round(el))+'°':'Compass not absolute – drag sideways to align'));
       var list=(lastData||[]).map(function(p){var q=enu(p,now);return q?{p:p,q:q}:null}).filter(Boolean).sort(function(a,b){return a.q.d-b.q.d}).slice(0,40);
       list.forEach(function(it,idx){
         var p=it.p, v=it.q.v, l=Math.hypot(v[0],v[1],v[2])||1, x=(v[0]*basis.r[0]+v[1]*basis.r[1]+v[2]*basis.r[2])/l, y=(v[0]*basis.u[0]+v[1]*basis.u[1]+v[2]*basis.u[2])/l, z=(v[0]*basis.f[0]+v[1]*basis.f[1]+v[2]*basis.f[2])/l;
@@ -930,19 +932,20 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
           var t=tags[p.hex]; if(!t){t=tags[p.hex]=document.createElement('div');t.className='artag';t.innerHTML='<div class="box"></div><div class="stem"></div><div class="ring"></div>';lay.appendChild(t);(function(h){t.onclick=function(ev){ev.stopPropagation();showCard(h)}})(p.hex)}
           var far=idx>7, alt=p.alt_baro==='ground'?'GND':uAlt(p.alt_baro)+' '+altUnit(), ty=typeName(p);
           var html='<b>'+esc(name(p))+'</b>'+(far?'':esc(ty?ty+' · ':'')) +alt+' · '+fmtD(it.q.d);
-          if(t._h!==html){t.firstChild.innerHTML=html;t._h=html}
+          if(t._h!==html){t.firstChild.innerHTML=html;t._h=html;t._w=0}
           t.className='artag'+(far?' far':'')+(p.hex===pick?' sel':''); t.style.setProperty('--c',pcol(p.hex));
-          var bw=far?96:150, bh=far?30:42, ty2=sy;
-          for(var k=0;k<4;k++){var hit=placed.some(function(r){return Math.abs(r.x-sx)<(r.w+bw)/2&&Math.abs(r.y-ty2)<(r.h+bh)/2});if(!hit)break;ty2-=bh+4}
-          placed.push({x:sx,y:ty2,w:bw,h:bh}); t.lastChild.previousSibling.style.height=(14+sy-ty2)+'px';
-          t.style.transform='translate('+Math.round(sx)+'px,'+Math.round(ty2+8)+'px) translate(-50%,-100%)'; t.style.display=''; seen[p.hex]=1; vis++;
+          if(!t._w){t._w=t.firstChild.offsetWidth||(far?96:150);t._bh=t.firstChild.offsetHeight||(far?30:42)}
+          var bw=t._w, bh=t._bh, bx=Math.max(bw/2+4,Math.min(W-bw/2-4,sx)), ty2=sy-22-bh/2;
+          var hit=false; for(var k=0;k<4;k++){hit=placed.some(function(r){return Math.abs(r.x-bx)<(r.w+bw)/2+4&&Math.abs(r.y-ty2)<(r.h+bh)/2+3});if(!hit)break;ty2-=bh+5} t.classList.toggle('nobox',hit); t.style.zIndex=100-idx;
+          if(!hit) placed.push({x:bx,y:ty2,w:bw,h:bh}); t.lastChild.previousSibling.style.height=Math.max(6,sy-ty2-bh/2-8)+'px'; t.firstChild.style.transform='translateX('+Math.round(bx-sx)+'px)';
+          t.style.transform='translate('+Math.round(sx)+'px,'+Math.round(sy+8)+'px) translate(-50%,-100%)'; t.style.display=''; seen[p.hex]=1; vis++;
         } else if(offs.length<3&&idx<10) offs.push({p:p,x:x,y:y,d:it.q.d});
       });
       Object.keys(tags).forEach(function(h){if(!seen[h]){tags[h].remove();delete tags[h]}});
-      edges.forEach(function(e){e.remove()}); edges=[];
-      offs.forEach(function(o){var a=Math.atan2(-o.y,o.x), cx=W/2+Math.cos(a)*(W/2-60), cy=H/2+Math.sin(a)*(H/2-90), e=document.createElement('div');
+      edges.forEach(function(e){e.remove()}); edges=[]; edgeBox.hidden=!!pick;
+      offs.forEach(function(o){var a=Math.atan2(-o.y,o.x), e=document.createElement('div');
         var ar=['→','↘','↓','↙','←','↖','↑','↗'][(Math.round(a/(Math.PI/4))+8)%8];
-        e.className='aredge'; e.textContent=ar+' '+name(o.p)+' · '+fmtD(o.d); e.style.transform='translate('+Math.round(cx)+'px,'+Math.round(cy)+'px) translate(-50%,-50%)'; lay.appendChild(e); edges.push(e)});
+        e.className='aredge'; e.textContent=ar+' '+name(o.p)+' · '+fmtD(o.d); edgeBox.appendChild(e); edges.push(e)});
       cntEl.textContent=vis?'· '+vis+' in view':'';
       if(pick) fillCard();
     }
@@ -963,13 +966,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     function endDrag(){if(dx0==null)return;dx0=null;off=((off+540)%360)-180;try{localStorage.setItem('sky-aroff',off.toFixed(1))}catch(e){}}
     box.addEventListener('pointerup',endDrag); box.addEventListener('pointercancel',endDrag);
     function start(){
-      on=true; box.hidden=false; basis=null; gotOri=false; absOri=false; pick=null; card.hidden=true; hint.hidden=false; msgEl.textContent='Starting camera…';
+      on=true; box.hidden=false; basis=null; camErr=''; gotOri=false; absOri=false; pick=null; card.hidden=true; hint.hidden=false; msgEl.textContent='Starting camera…';
       if(elev==null) fetch('https://api.open-meteo.com/v1/elevation?latitude='+me.lat.toFixed(4)+'&longitude='+me.lon.toFixed(4)).then(function(r){return r.json()}).then(function(j){if(j&&j.elevation) elev=j.elevation[0]+1.5}).catch(function(){});
       var perm=(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)?DeviceOrientationEvent.requestPermission().catch(function(){}):Promise.resolve();
       perm.then(function(){ window.addEventListener('deviceorientationabsolute',oriAbs); window.addEventListener('deviceorientation',oriRel) });
       if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
         navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(st){ if(!on){st.getTracks().forEach(function(t){t.stop()});return} stream=st; vid.srcObject=st; vid.play().catch(function(){}) })
-          .catch(function(){ msgEl.textContent='Camera blocked – labels still work, allow the camera to see the sky' });
+          .catch(function(){ camErr='Camera blocked – allow it to see the sky (labels still work)' });
       }
       raf=requestAnimationFrame(frame);
       if(history.pushState) history.pushState({ar:1},'');
