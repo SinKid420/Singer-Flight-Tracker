@@ -751,7 +751,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     document.getElementById('skybody').innerHTML=h; document.getElementById('skysheet').hidden=false;
   }
   // ---- Next overhead: the plane that will pass closest to you in the next 30 minutes, with an optional buzz ----
-  var nxAlert=false, nxBuzzed={}, nxCur=null; try{nxAlert=localStorage.getItem('sky-ovalert')==='1'}catch(e){}
+  var nxAlert=false, nxBuzzed={}, nxCur=null, nxNone=false, nxHideT=null; try{nxAlert=localStorage.getItem('sky-ovalert')==='1'}catch(e){}
   function nextOver(){ var best=null, now=Date.now(), k=Math.cos(me.lat*Math.PI/180);
     (lastData||[]).forEach(function(p){ if(p.alt_baro==='ground'||p.gs==null||p.track==null||p.gs<60) return;
       var pos=mPos(motion[p.hex]||{lat:p.lat,lon:p.lon},now), dx=(pos[1]-me.lon)*60*k, dy=(pos[0]-me.lat)*60, vx=p.gs*Math.sin(p.track*Math.PI/180), vy=p.gs*Math.cos(p.track*Math.PI/180);
@@ -762,8 +762,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function updateNext(){ var el=document.getElementById('nextov'); if(!el) return; var em=document.getElementById('emerg');
     el.style.top=(em&&!em.hidden)?(em.offsetTop+em.offsetHeight+6)+'px':'';
     var b=nextOver(), tx=document.getElementById('nxtxt');
-    if(!lastData||!lastData.length){el.hidden=true;return} el.hidden=false;
-    if(!b){ nxCur=null; tx.innerHTML='<span class="l1">No planes heading over you soon</span><small>Checks the next 30 minutes</small>'; return }
+    if(!lastData||!lastData.length){el.hidden=true;return}
+    if(!b){ nxCur=null; if(!nxNone){ nxNone=true; tx.innerHTML='<span class="l1">No planes heading over you soon</span><small>Checks the next 30 minutes</small>'; el.hidden=false; clearTimeout(nxHideT); nxHideT=setTimeout(function(){ if(nxNone) el.hidden=true },3000) } return }
+    nxNone=false; clearTimeout(nxHideT); el.hidden=false;
     var p=b.p, alt=p.alt_baro!=null&&p.alt_baro!=='ground'?p.alt_baro:0, up=Math.round(Math.atan((alt/6076)/Math.max(b.d,0.05))*180/Math.PI);
     var when=b.mins<0.5?'over you now':'over you in '+(b.mins<1.5?'1 min':Math.round(b.mins)+' min');
     nxCur=p.hex;
