@@ -133,6 +133,13 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+#nextov{position:absolute;z-index:790;top:120px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;align-items:center;gap:6px;background:var(--bg);color:var(--fg);border-radius:12px;padding:5px 5px 5px 10px;font:500 12px/1.3 var(--font);box-shadow:var(--shadow);cursor:pointer;min-height:40px;box-sizing:border-box}
+#nextov[hidden]{display:none}#nextov>span{flex:1;min-width:0}#nextov b{color:var(--accent);font-weight:600}
+#nextov small{display:block;color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nextov .l1{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nxbell{width:32px;height:32px;border-radius:50%;padding:0;background:var(--chip);color:var(--fg);font-size:15px;line-height:1;flex:none}
+#nxbell.on{background:var(--accent-bg);box-shadow:inset 0 0 0 1.5px var(--accent)}
+#nextov.flash{animation:nxf .9s 4}@keyframes nxf{50%{background:#c62828;color:#fff}}
 .dtabs{grid-column:1/-1;display:flex;gap:3px;background:var(--chip);border-radius:10px;padding:2px;margin-top:2px}
 .dtabs button{flex:1;height:30px;border-radius:8px;padding:0;font:600 12px var(--font);color:var(--dim);background:transparent}
 .dtabs button.on{background:var(--bg);color:var(--fg)}
@@ -261,6 +268,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     </button>
   </div>
   <div class="welcome" id="welcome" hidden><b id="wtitle"></b><p id="wtext"></p><button type="button" id="wbtn"></button></div>
+  <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
@@ -314,7 +322,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   if(typeof L==='undefined') return;
   // Default: Grand Forks, BC. Replaced by your GPS position if the browser allows it.
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
-  var refreshMs = 3000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
+  var refreshMs = 5000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
   // Independent volunteer ADS-B networks. Each returns the same readsb-style JSON; results are merged by aircraft id.
   // FlyItalyADSB allows web pages to read it (free personal key). The others work only through a relay.
   var SOURCES = [
@@ -604,6 +612,14 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   }
   var lastKey={}, maxPlanes=30;
   try{var mpv=parseInt(localStorage.getItem('sky-maxplanes'),10); if(mpv>=5&&mpv<=300) maxPlanes=mpv}catch(e){}
+  // Planes keep moving between feed updates: each one is carried forward along its heading at its real speed.
+  var motion={}, mLast=0;
+  function mPos(m,now){ if(!m||!m.gs||m.trk==null||m.gnd) return m?[m.lat,m.lon]:[0,0]; var dt=Math.min(60,Math.max(0,(now-m.t)/1000)), d=m.gs*0.5144*dt, t=m.trk*Math.PI/180;
+    return [m.lat+d*Math.cos(t)/111320, m.lon+d*Math.sin(t)/(111320*Math.cos(m.lat*Math.PI/180))] }
+  function motionTick(now){ requestAnimationFrame(motionTick);
+    if(now-mLast<100||document.hidden||document.body.classList.contains('zooming')||document.body.classList.contains('moving')) return; mLast=now;
+    var t=Date.now(); for(var h in planes){ var m=motion[h]; if(m&&m.gs&&!m.gnd) planes[h].setLatLng(mPos(m,t)) } }
+  requestAnimationFrame(motionTick);
   function render(list){
     var seen={}, c=map.getCenter(), vb=map.getBounds().pad(0.25), arr=[];
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
@@ -611,6 +627,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     arr.forEach(function(p,idx){
       seen[p.hex]=1;
       var ll=[p.lat,p.lon], inView=vb.contains(ll)||p.hex===selected;
+      var ag=age(p); motion[p.hex]={lat:p.lat,lon:p.lon,t:Date.now()-(ag<60?ag*1000:0),gs:p.gs,trk:p.track,gnd:p.alt_baro==='ground'};
       var t=trails[p.hex]; if(!t) t=trails[p.hex]={pts:[],line:null,casing:null};
       var last=t.pts[t.pts.length-1];
       if(!last||last[0]!==p.lat||last[1]!==p.lon){t.pts.push(ll);if(t.pts.length>60)t.pts.shift();}
@@ -624,14 +641,14 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       if(sel&&routeMode!=='off') needRoute(p);
       drawRoute(p,routeMode==='off'?false:(routeMode==='sel'?sel:(inView&&(map.getZoom()>=6||sel))),sel||routeMode==='all'||(routeMode==='near'&&idx<5));
       var key=[Math.round((p.track||0)/3),altColor(p.alt_baro),sel?1:0,name(p),p.alt_baro==='ground'?'g':(p.alt_baro==null?'':uAlt(p.alt_baro)),units].join('|');
-      if(planes[p.hex]){ planes[p.hex].setLatLng(ll); if(lastKey[p.hex]!==key){planes[p.hex].setIcon(icon(p));lastKey[p.hex]=key} }
+      if(planes[p.hex]){ planes[p.hex].setLatLng(mPos(motion[p.hex],Date.now())); if(lastKey[p.hex]!==key){planes[p.hex].setIcon(icon(p));lastKey[p.hex]=key} }
       else{
-        planes[p.hex]=L.marker(ll,{icon:icon(p),keyboard:true,title:name(p)}).addTo(map)
+        planes[p.hex]=L.marker(mPos(motion[p.hex],Date.now()),{icon:icon(p),keyboard:true,title:name(p)}).addTo(map)
           .on('click',(function(h){return function(){select(h)}})(p.hex)); lastKey[p.hex]=key;
       }
     });
     Object.keys(planes).forEach(function(h){
-      if(!seen[h]){map.removeLayer(planes[h]);delete planes[h];delete lastKey[h];dropRoute(h);if(trails[h]){if(trails[h].line)map.removeLayer(trails[h].line);if(trails[h].casing)map.removeLayer(trails[h].casing);delete trails[h];}}
+      if(!seen[h]){map.removeLayer(planes[h]);delete planes[h];delete lastKey[h];delete motion[h];dropRoute(h);if(trails[h]){if(trails[h].line)map.removeLayer(trails[h].line);if(trails[h].casing)map.removeLayer(trails[h].casing);delete trails[h];}}
     });
     if(selected&&!seen[selected]) selected=null;
     renderDock();
@@ -733,8 +750,35 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     h+='<div class="skynote">Counts the planes shown on your map. Tap Settings for feeds and limits.</div>';
     document.getElementById('skybody').innerHTML=h; document.getElementById('skysheet').hidden=false;
   }
+  // ---- Next overhead: the plane that will pass closest to you in the next 30 minutes, with an optional buzz ----
+  var nxAlert=false, nxBuzzed={}, nxCur=null; try{nxAlert=localStorage.getItem('sky-ovalert')==='1'}catch(e){}
+  function nextOver(){ var best=null, now=Date.now(), k=Math.cos(me.lat*Math.PI/180);
+    (lastData||[]).forEach(function(p){ if(p.alt_baro==='ground'||p.gs==null||p.track==null||p.gs<60) return;
+      var pos=mPos(motion[p.hex]||{lat:p.lat,lon:p.lon},now), dx=(pos[1]-me.lon)*60*k, dy=(pos[0]-me.lat)*60, vx=p.gs*Math.sin(p.track*Math.PI/180), vy=p.gs*Math.cos(p.track*Math.PI/180);
+      var t=-(dx*vx+dy*vy)/(vx*vx+vy*vy), now0=Math.sqrt(dx*dx+dy*dy); if(t<0){ if(now0>3) return; t=0 }
+      var mins=t*60; if(mins>30) return; var cx=dx+vx*t, cy=dy+vy*t, d=Math.sqrt(cx*cx+cy*cy); if(d>15) return;
+      var sc=d+mins*0.15; if(!best||sc<best.s) best={p:p,mins:mins,d:d,s:sc} });
+    return best }
+  function updateNext(){ var el=document.getElementById('nextov'); if(!el) return; var em=document.getElementById('emerg');
+    el.style.top=(em&&!em.hidden)?(em.offsetTop+em.offsetHeight+6)+'px':'';
+    var b=nextOver(), tx=document.getElementById('nxtxt');
+    if(!lastData||!lastData.length){el.hidden=true;return} el.hidden=false;
+    if(!b){ nxCur=null; tx.innerHTML='<span class="l1">No planes heading over you soon</span><small>Checks the next 30 minutes</small>'; return }
+    var p=b.p, alt=p.alt_baro!=null&&p.alt_baro!=='ground'?p.alt_baro:0, up=Math.round(Math.atan((alt/6076)/Math.max(b.d,0.05))*180/Math.PI);
+    var when=b.mins<0.5?'over you now':'over you in '+(b.mins<1.5?'1 min':Math.round(b.mins)+' min');
+    nxCur=p.hex;
+    tx.innerHTML='<span class="l1"><b>'+esc(name(p))+'</b> '+esc(when)+'</span><small>'+esc([p.t||typeName(p),uDist(b.d,1)+' '+distUnit()+' away',alt?uAlt(alt)+' '+altUnit():'',up>0?up+'° up':''].filter(Boolean).join(' · '))+'</small>';
+    if(nxAlert&&b.mins<=2&&b.d<=3&&!nxBuzzed[p.hex]){ nxBuzzed[p.hex]=Date.now(); try{navigator.vibrate&&navigator.vibrate([250,120,250])}catch(e){} el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash') }
+  }
+  (function(){ var el=document.getElementById('nextov'), bell=document.getElementById('nxbell'); if(!el||!bell) return;
+    function paint(){ bell.textContent=nxAlert?'🔔':'🔕'; bell.classList.toggle('on',nxAlert); bell.setAttribute('aria-pressed',String(nxAlert)) } paint();
+    bell.onclick=function(e){ e.stopPropagation(); nxAlert=!nxAlert; try{localStorage.setItem('sky-ovalert',nxAlert?'1':'0')}catch(err){} if(nxAlert){try{navigator.vibrate&&navigator.vibrate(60)}catch(err){}} paint() };
+    el.onclick=function(){ if(nxCur) select(nxCur,true) };
+    el.onkeydown=function(e){ if((e.key==='Enter'||e.key===' ')&&nxCur){e.preventDefault();select(nxCur,true)} };
+    setInterval(function(){ if(!document.hidden) updateNext() },5000);
+  })();
   function renderDock(){
-    checkAlerts();
+    checkAlerts(); updateNext();
     var body=document.getElementById('dbody'), dock=document.getElementById('dock');
     var p=lastData.filter(function(x){return x.hex===selected})[0];
     dock.hidden=!p;
@@ -908,7 +952,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   }
   var slow=0, slowUntil=0;
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,slow?refreshMs*Math.pow(2,slow):refreshMs);
-    document.getElementById('map').parentNode.style.setProperty('--glide',(refreshMs/1000)+'s');}
+    document.getElementById('map').parentNode.style.setProperty('--glide','.12s');}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){clearTimeout(timer);poll()}});
   var movT=null;
   map.on('moveend',function(){clearTimeout(movT);movT=setTimeout(function(){if(!busy&&!document.hidden&&Date.now()>=slowUntil){clearTimeout(timer);poll()}},700)});
