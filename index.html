@@ -137,8 +137,6 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 .sidebtn svg{width:22px;height:22px}.sidebtn.on{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent);color:var(--accent)}
 #spacebtn{top:122px}#aptbtn{top:174px}
 #firebtn{top:226px}
-#musbtn{top:278px}
-#mustoast{position:absolute;z-index:700;top:288px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 52px);background:var(--bg);color:var(--fg);border-radius:12px;padding:5px 10px;font:600 12px var(--font);box-shadow:var(--shadow);white-space:nowrap;pointer-events:none}
 .firemk{position:absolute;transform:translate(-50%,-50%);width:var(--sz,22px);height:var(--sz,22px);border-radius:50%;background:var(--c);border:1.5px solid #fff;display:grid;place-items:center;font-size:calc(var(--sz,22px)*.58);line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .firemk::after{content:'';position:absolute;inset:-8px}
 .firepill{display:inline-block;font:700 11px var(--font);color:#fff;border-radius:8px;padding:2px 7px;margin-left:6px;vertical-align:middle}
@@ -301,8 +299,6 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   <button class="sidebtn" id="spacebtn" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
   <button class="sidebtn" id="aptbtn" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
   <button class="sidebtn" id="firebtn" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
-  <button class="sidebtn" id="musbtn" aria-label="Lounge music: play or pause" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🎵</span></button>
-  <div id="mustoast" role="status" hidden></div>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div class="dock" id="dock" hidden>
@@ -389,11 +385,6 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_firePer">Fire outlines<select id="s_firePer"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_fireAc">Firefighting planes<select id="s_fireAc"><option value="1">Highlight</option><option value="0">Off</option></select></label>
     </details>
-    <details class="folder" id="mufolder"><summary>Music</summary>
-      <label class="setrow" for="s_musTrack">Track<select id="s_musTrack"><option value="0">Showroom Lights</option><option value="1">Night Cruise</option><option value="2">Garage Lounge</option><option value="shuffle">Shuffle all</option></select></label>
-      <label class="setrow" for="s_musVol">Volume<select id="s_musVol"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select></label>
-      <p class="fhelp" style="margin:6px">Original tracks made live on your phone. Tap 🎵 on the map to play or pause.</p>
-    </details>
     <details class="folder" id="ffolder"><summary>Flight feeds &amp; key</summary>
     <div id="flist" class="flist"></div>
     <p class="fhelp" id="fhelp"></p>
@@ -415,7 +406,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
   // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
   try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
-  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',musTrack:'shuffle',musVol:'med'};
+  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1'};
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
   var refreshMs = 5000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
@@ -1424,87 +1415,6 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   setInterval(function(){ if(fireOn&&!document.hidden) loadFires(true) },600000);
   paintFireBtn(); if(fireOn) setTimeout(function(){loadFires(true)},1500);
 
-  // ---- Lounge music: three original tracks, played live by a small synth on the phone (no music files) ----
-  var MUS=(function(){
-    var ac=null, master=null, rev=null, nbuf=null, playing=false, tmr=null, abs=0, t0=0, tk=null, cyc=0, prevLead=76, rng=Math.random;
-    var TYPES={maj9:[4,7,11,14],m9:[3,7,10,14],d13:[4,10,14,21],sus:[5,10,14,19],hd:[3,6,10,13],alt:[4,10,13,15],maj7:[4,7,11,16],m11:[3,10,14,17]};
-    function C(r,t){ return {r:r,t:t} }
-    var TRACKS=[
-      {name:'Showroom Lights',bpm:98,groove:[0,.1,0,.1],key:61,scale:[0,2,4,7,9,11],
-       prog:[C(66,'maj9'),C(65,'m9'),C(63,'m9'),C(68,'d13'),C(61,'maj9'),C(70,'m9'),C(63,'m11'),C(68,'sus')],
-       comp:[[0,2],[3,1],[6,2],[10,2],[14,1]], bass:[[0,'R',3],[3,'R',1],[6,'5',2],[8,'R',2],[10,'O',1],[11,'7',2],[14,'A',2]],
-       kick:'x.....x.x.....x.', snare:'....x..g....x..g', hat:'x.xxx.xxx.xxx.xx', pad:false},
-      {name:'Night Cruise',bpm:82,groove:[0,.3,.62,.45],key:65,scale:[0,3,5,7,10,2],
-       prog:[C(65,'m9'),C(70,'m9'),C(63,'d13'),C(68,'maj9'),C(61,'maj9'),C(67,'hd'),C(60,'alt'),C(60,'alt')],
-       comp:[[0,6],[7,2],[10,5]], bass:[[0,'R',4],[6,'5',2],[8,'7',2],[10,'O',2],[14,'A',2]],
-       kick:'x.........x.....', snare:'....r.......r...', hat:'b.o.b.o.b.o.b.oo', pad:true},
-      {name:'Garage Lounge',bpm:112,groove:[0,.06,0,.06],key:69,scale:[0,2,4,7,9],
-       prog:[C(69,'maj9'),C(66,'m9'),C(71,'m9'),C(64,'d13'),C(61,'m9'),C(66,'d13'),C(71,'m9'),C(64,'sus')],
-       comp:[[0,2],[3,2],[6,2],[10,2],[12,3]], bass:[[0,'R',3],[6,'5',1],[7,'5',1],[8,'R',3],[14,'5',2]],
-       kick:'x.....x.x.....x.', snare:'r..r..r...r..r..', hat:'xxxxxxxxxxxxxxxx', pad:true}];
-    function mtof(m){ return 440*Math.pow(2,(m-69)/12) }
-    function voicing(c){ return TYPES[c.t].map(function(i){ var n=c.r+i; while(n>72) n-=12; while(n<55) n+=12; return n }).sort(function(a,b){return a-b}) }
-    function init(){ var A=window.AudioContext||window.webkitAudioContext; if(!A) return false; ac=new A();
-      var comp=ac.createDynamicsCompressor(); comp.threshold.value=-16; comp.ratio.value=3; master=ac.createGain(); master.gain.value=0; master.connect(comp); comp.connect(ac.destination);
-      rev=ac.createConvolver(); var n=Math.floor(ac.sampleRate*2.2), b=ac.createBuffer(2,n,ac.sampleRate); for(var c=0;c<2;c++){ var d=b.getChannelData(c); for(var i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3) } rev.buffer=b;
-      var rg=ac.createGain(); rg.gain.value=.25; rev.connect(rg); rg.connect(master);
-      var nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate), nd=nb.getChannelData(0); for(var j=0;j<nd.length;j++) nd[j]=Math.random()*2-1; nbuf=nb; return true }
-    function out(node,wet,pan){ var last=node; if(pan&&ac.createStereoPanner){ var p=ac.createStereoPanner(); p.pan.value=pan; node.connect(p); last=p } last.connect(master); if(wet){ var w=ac.createGain(); w.gain.value=wet; last.connect(w); w.connect(rev) } }
-    function ep(m,t,dur,vel){ var f=mtof(m), c=ac.createOscillator(), mo=ac.createOscillator(), mg=ac.createGain(), ti=ac.createOscillator(), tg=ac.createGain(), g=ac.createGain();
-      c.frequency.value=f; mo.frequency.value=f; mg.gain.setValueAtTime(f*1.6*vel,t); mg.gain.exponentialRampToValueAtTime(f*.12,t+.7); mo.connect(mg); mg.connect(c.frequency);
-      ti.frequency.value=f*7.02; tg.gain.setValueAtTime(.035*vel,t); tg.gain.exponentialRampToValueAtTime(.0001,t+.12); ti.connect(tg); tg.connect(g);
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.11*vel,t+.006); g.gain.exponentialRampToValueAtTime(.045*vel,t+.6); g.gain.setTargetAtTime(.0001,t+dur,.18); c.connect(g);
-      out(g,.45,((m%12)/11-.5)*.5); [c,mo,ti].forEach(function(o){ o.start(t); o.stop(t+dur+1.2) }) }
-    function bass(m,t,dur,vel){ var o=ac.createOscillator(), o2=ac.createOscillator(), fl=ac.createBiquadFilter(), g=ac.createGain(); o.type='triangle'; o.frequency.value=mtof(m); o2.frequency.value=mtof(m);
-      fl.type='lowpass'; fl.Q.value=2; fl.frequency.setValueAtTime(1000,t); fl.frequency.exponentialRampToValueAtTime(240,t+.25);
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.3*vel,t+.01); g.gain.exponentialRampToValueAtTime(.12*vel,t+Math.max(.05,dur*.8)); g.gain.setTargetAtTime(.0001,t+dur,.04);
-      o.connect(fl); o2.connect(fl); fl.connect(g); out(g,.04,0); [o,o2].forEach(function(x){ x.start(t); x.stop(t+dur+.4) }) }
-    function pad(ms,t,dur){ var fl=ac.createBiquadFilter(), g=ac.createGain(); fl.type='lowpass'; fl.frequency.value=1300; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.022,t+.9); g.gain.setTargetAtTime(0,t+dur-.2,.5); fl.connect(g); out(g,.9,0);
-      ms.forEach(function(m){ [-7,7].forEach(function(dt){ var o=ac.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m); o.detune.value=dt; o.connect(fl); o.start(t); o.stop(t+dur+2) }) }) }
-    function lead(m,t,dur,vel){ var f=mtof(m), o=ac.createOscillator(), o2=ac.createOscillator(), v=ac.createOscillator(), vg=ac.createGain(), fl=ac.createBiquadFilter(), g=ac.createGain();
-      o.type='square'; o2.type='sine'; o.frequency.value=f; o2.frequency.value=f*2; v.frequency.value=5.2; vg.gain.setValueAtTime(0,t); vg.gain.linearRampToValueAtTime(f*.007,t+Math.min(.35,dur)); v.connect(vg); vg.connect(o.frequency);
-      fl.type='lowpass'; fl.frequency.value=1700; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.045*vel,t+.03); g.gain.setTargetAtTime(.0001,t+dur,.09);
-      var g2=ac.createGain(); g2.gain.value=.25; o.connect(fl); o2.connect(g2); g2.connect(fl); fl.connect(g); out(g,.55,.15); [o,o2,v].forEach(function(x){ x.start(t); x.stop(t+dur+.6) }) }
-    function hit(k,t,vel){
-      if(k==='K'){ var o=ac.createOscillator(), g=ac.createGain(); o.frequency.setValueAtTime(115,t); o.frequency.exponentialRampToValueAtTime(42,t+.12); g.gain.setValueAtTime(.45*vel,t); g.gain.exponentialRampToValueAtTime(.0001,t+.32); o.connect(g); out(g,0,0); o.start(t); o.stop(t+.35); return }
-      var s=ac.createBufferSource(), fl=ac.createBiquadFilter(), g=ac.createGain(), len=.3, wet=.1, pan=0; s.buffer=nbuf;
-      if(k==='h'){ fl.type='highpass'; fl.frequency.value=7500; g.gain.setValueAtTime(.045*vel,t); g.gain.exponentialRampToValueAtTime(.0001,t+.045); pan=.3 }
-      else if(k==='o'){ fl.type='highpass'; fl.frequency.value=6500; g.gain.setValueAtTime(.035*vel,t); g.gain.exponentialRampToValueAtTime(.0001,t+.3); pan=.3 }
-      else if(k==='b'){ fl.type='bandpass'; fl.frequency.value=3000; fl.Q.value=.6; g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(.05*vel,t+.05); g.gain.exponentialRampToValueAtTime(.0001,t+.22); pan=-.2 }
-      else if(k==='r'){ fl.type='bandpass'; fl.frequency.value=2600; fl.Q.value=5; g.gain.setValueAtTime(.16*vel,t); g.gain.exponentialRampToValueAtTime(.0001,t+.05); pan=-.15 }
-      else { fl.type='bandpass'; fl.frequency.value=1900; fl.Q.value=.7; var sv=k==='g'?.05:.2; g.gain.setValueAtTime(sv*vel,t); g.gain.exponentialRampToValueAtTime(.0001,t+.17); wet=.22;
-        var o3=ac.createOscillator(), og=ac.createGain(); o3.frequency.value=185; og.gain.setValueAtTime(sv*.5*vel,t); og.gain.exponentialRampToValueAtTime(.0001,t+.07); o3.connect(og); out(og,.2,0); o3.start(t); o3.stop(t+.1) }
-      s.connect(fl); fl.connect(g); out(g,wet,pan); s.start(t,Math.random()*.6); s.stop(t+len) }
-    function deg(c,d,next){ var r=36+((c.r-36)%12+12)%12; if(r>43) r-=12; if(d==='R') return r; if(d==='5') return r+7; if(d==='O') return r+12; if(d==='7') return r+(/^(maj)/.test(c.t)?11:10); if(d==='A'){ var nr=36+((next.r-36)%12+12)%12; if(nr>43) nr-=12; return nr+(rng()<.5?-1:1) } return r }
-    function leadBar(tr,c,bar,tBar,st){ var pats=[[[0,3],[4,2],[6,2],[10,4]],[[2,2],[4,2],[7,1],[8,6]],[[0,6],[8,2],[11,1],[12,4]],[[3,1],[4,3],[8,2],[10,1],[11,3]]], p=pats[Math.floor(rng()*pats.length)];
-      if(bar%2===1&&rng()<.35) return; var tones=voicing(c).map(function(n){return n%12}).concat([(c.r)%12]);
-      p.forEach(function(e,i){ var target=prevLead+Math.round((rng()-.5)*6); var best=null, bd=99;
-        for(var m=68;m<=86;m++){ var pc=((m-tr.key)%12+12)%12, inScale=tr.scale.indexOf(pc)>-1, ct=tones.indexOf(m%12)>-1; if(!inScale&&!ct) continue; if((e[0]===0||e[0]===8)&&!ct) continue; var dd=Math.abs(m-target)+(ct?0:.5); if(dd<bd){bd=dd;best=m} }
-        if(best==null) return; prevLead=best; lead(best,tBar+e[0]*st,e[1]*st*.95,i===0?1:.8+rng()*.2) }) }
-    function playStep(i,t){ var tr=tk, st=60/tr.bpm/4, s16=i%16, bar=Math.floor(i/16), pb=bar%tr.prog.length, c=tr.prog[pb], next=tr.prog[(pb+1)%tr.prog.length], cycle=Math.floor(bar/tr.prog.length), fill=pb===tr.prog.length-1&&s16>=12;
-      if(s16===0){ if(tr.pad) pad(voicing(c).map(function(n){return n-12}),t,st*16); if(cycle%2===1) leadBar(tr,c,bar,t,st) }
-      tr.comp.forEach(function(e){ if(e[0]===s16){ var v=voicing(c), vel=.7+rng()*.25; v.forEach(function(n,j){ ep(n,t+j*.008,e[1]*st,vel) }) } });
-      tr.bass.forEach(function(e){ if(e[0]===s16&&!(rng()<.12&&s16>0)) bass(deg(c,e[1],next),t,e[2]*st*.9,.9) });
-      if(tr.kick[s16]==='x') hit('K',t,1);
-      var sn=tr.snare[s16]; if(fill){ if(rng()<.75) hit(tr.snare.indexOf('x')<0?'r':'s',t,.35+(s16-12)*.18) } else if(sn==='x') hit('s',t,1); else if(sn==='g') hit('g',t,1); else if(sn==='r') hit('r',t,1);
-      var h=tr.hat[s16]; if(h==='x') hit('h',t,s16%4===0?1:(s16%2===0?.75:.5)); else if(h==='o') hit('o',t,.8); else if(h==='b') hit('b',t,1) }
-    function sched(){ if(!playing) return; var st=60/tk.bpm/4; while(true){ var t=t0+abs*st+tk.groove[abs%4]*st; if(t>ac.currentTime+.15) break; if(t>ac.currentTime-.05) playStep(abs,t); abs++ } }
-    var listeners=[]; function emit(){ listeners.forEach(function(f){ f(playing,tk) }) }
-    function vol(v){ return {low:.35,med:.6,high:.9}[v]||.6 }
-    function pick(sel){ if(sel==='shuffle'||!/^[0-2]$/.test(String(sel))) return TRACKS[Math.floor(Math.random()*TRACKS.length)]; return TRACKS[+sel] }
-    function start(sel,v){ if(!ac&&!init()) return false; if(ac.state==='suspended') ac.resume(); tk=pick(sel); abs=0; t0=ac.currentTime+.12; prevLead=76; playing=true;
-      master.gain.cancelScheduledValues(ac.currentTime); master.gain.setValueAtTime(master.gain.value,ac.currentTime); master.gain.linearRampToValueAtTime(vol(v),ac.currentTime+1.2);
-      clearInterval(tmr); tmr=setInterval(function(){ sched(); if(sel==='shuffle'&&abs>=tk.prog.length*16*4){ start('shuffle',v) } },25); sched(); emit(); return true }
-    function stop(){ if(!ac||!playing) return; playing=false; clearInterval(tmr); master.gain.cancelScheduledValues(ac.currentTime); master.gain.setValueAtTime(master.gain.value,ac.currentTime); master.gain.linearRampToValueAtTime(0,ac.currentTime+.6); emit() }
-    function setVol(v){ if(ac&&playing){ master.gain.cancelScheduledValues(ac.currentTime); master.gain.linearRampToValueAtTime(vol(v),ac.currentTime+.3) } }
-    document.addEventListener('visibilitychange',function(){ if(!ac) return; if(document.hidden){ if(playing) ac.suspend() } else if(playing){ ac.resume(); t0=ac.currentTime+.1-abs*(60/tk.bpm/4) } });
-    return {start:start,stop:stop,setVol:setVol,on:function(f){listeners.push(f)},playing:function(){return playing},names:TRACKS.map(function(x){return x.name})} })();
-  (function(){ var btn=document.getElementById('musbtn'), toast=document.getElementById('mustoast'); if(!btn) return; var tt=null;
-    function paint(on,tr){ btn.classList.toggle('on',on); btn.setAttribute('aria-pressed',String(on)); if(on&&tr&&toast){ toast.textContent='♪ '+tr.name; toast.hidden=false; clearTimeout(tt); tt=setTimeout(function(){toast.hidden=true},2600) } else if(toast&&!on) toast.hidden=true }
-    MUS.on(paint);
-    btn.onclick=function(){ if(MUS.playing()) MUS.stop(); else MUS.start(cfg2.musTrack,cfg2.musVol) };
-  })();
-
   // ---- AR: hold the phone up to the sky and the camera labels the planes you are looking at ----
   (function(){
     var btn=document.getElementById('arbtn'); if(!btn) return;
@@ -1620,8 +1530,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     btn.onclick=start; box.querySelector('#arclose').onclick=function(){stop()};
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
-  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_musTrack','musTrack'],['s_musVol','musVol']];
-    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(k==='musVol') MUS.setVol(cfg2.musVol); if(k==='musTrack'&&MUS.playing()) MUS.start(cfg2.musTrack,cfg2.musVol) }
+  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc']];
+    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } }
     B.forEach(function(b){ var el=document.getElementById(b[0]); if(!el) return; el.value=String(cfg2[b[1]]); el.onchange=function(){ cfg2[b[1]]=el.value; saveCfg2(); changed(b[1]) } });
     var sm=document.getElementById('s_issmap'), sa=document.getElementById('s_satar'), ap=document.getElementById('s_apt'), rb=document.getElementById('s_arreset');
     function saveSpace(){ try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} }
