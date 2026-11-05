@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: mediastream:; connect-src 'self' https:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: mediastream:; connect-src 'self' https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Singers Flight Tracker</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -139,6 +139,32 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 #firebtn{top:226px}
 #roadbtn{top:278px}
 #ferrybtn{top:330px}
+#hubbtn{top:382px;color:#c62828;font-weight:800}
+#hubbtn.alert1{box-shadow:var(--shadow),inset 0 0 0 2.5px #fb8c00}
+#hubbtn.alert2{background:#c62828;color:#fff;animation:hubp 1.6s infinite}
+@keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
+.hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.hubrow{background:var(--chip);border-radius:10px;margin-bottom:5px}
+.hubhd{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px 10px;background:none;color:var(--fg);font:500 13px var(--font);text-align:left;border-radius:10px}
+.hubhd span:last-child{font-weight:600;white-space:nowrap}
+.hubdt{padding:0 10px 8px;font-size:12px;line-height:1.35;color:var(--dim);max-height:34vh;overflow:auto}
+.hubdt .row2{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.hubdt .row2 span:last-child{text-align:right;white-space:nowrap}
+.hubdt b{color:var(--fg)}
+.hubtx{white-space:pre-line;max-height:16vh;overflow:auto;margin:3px 0}
+#v3d{position:fixed;inset:0;z-index:3000;background:#000}
+#v3d[hidden]{display:none}
+#v3map{position:absolute;inset:0}
+#v3top{position:absolute;z-index:2;top:calc(10px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:flex-start}
+#v3hud{flex:1;min-width:0;background:rgba(0,0,0,.55);color:#fff;border-radius:12px;padding:8px 12px;font:500 12px/1.35 var(--font)}
+#v3hud b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#v3hud span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#v3msg{position:absolute;z-index:2;left:50%;top:45%;transform:translate(-50%,-50%);background:rgba(0,0,0,.6);color:#fff;padding:10px 14px;border-radius:12px;font:600 14px var(--font);max-width:80%;text-align:center}
+#v3msg[hidden]{display:none}
+#v3bar{position:absolute;z-index:2;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:8px}
+#v3bar button{height:44px;padding:0 16px;border-radius:22px;background:rgba(0,0,0,.6);color:#fff;font:600 13px var(--font)}
+.cbtns{display:flex;gap:6px;justify-self:end}
+.v3btn{font:700 12px var(--font)!important;color:var(--accent)!important}
 .firemk{position:absolute;transform:translate(-50%,-50%);width:var(--sz,22px);height:var(--sz,22px);border-radius:50%;background:var(--c);border:1.5px solid #fff;display:grid;place-items:center;font-size:calc(var(--sz,22px)*.58);line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
 .firemk::after{content:'';position:absolute;inset:-8px}
 .firepill{display:inline-block;font:700 11px var(--font);color:#fff;border-radius:8px;padding:2px 7px;margin-left:6px;vertical-align:middle}
@@ -303,6 +329,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   <button class="sidebtn" id="firebtn" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
   <button class="sidebtn" id="roadbtn" aria-label="Roads: highway cameras, closures and pass reports" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🚗</span></button>
   <button class="sidebtn" id="ferrybtn" aria-label="BC Ferries: next sailings and space left" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⛴</span></button>
+  <button class="sidebtn" id="hubbtn" aria-label="Emergency hub: evacuations, alerts, fires, air quality and closures">SOS</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div class="dock" id="dock" hidden>
@@ -332,6 +359,12 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   <div class="sheet" role="dialog" aria-label="Roads and ferries">
     <div class="sheet-head"><b id="roadtitle">Road</b><button class="close" id="roadx" aria-label="Close">✕</button></div>
     <div id="roadbody"></div>
+  </div>
+</div>
+<div class="sheet-bg" id="hubsheet" hidden>
+  <div class="sheet" role="dialog" aria-label="Emergency hub">
+    <div class="sheet-head"><b>Emergency hub</b><button class="close" id="hubx" aria-label="Close">✕</button></div>
+    <div id="hubbody"></div>
   </div>
 </div>
 <div class="sheet-bg" id="skysheet" hidden>
@@ -412,6 +445,15 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_ferryCam">Terminal camera<select id="s_ferryCam"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_ferryJump">Jump to ferries<select id="s_ferryJump"><option value="1">When turned on</option><option value="0">Never</option></select></label>
     </details>
+    <details class="folder" id="hbfolder"><summary>Emergency hub</summary>
+      <label class="setrow" for="s_hubKm">Area checked<select id="s_hubKm"><option value="50">50 km</option><option value="100">100 km</option><option value="200">200 km</option></select></label>
+      <label class="setrow" for="s_hubAuto">Check for alerts<select id="s_hubAuto"><option value="1">Every 10 min</option><option value="0">Only when opened</option></select></label>
+      <label class="setrow" for="s_hubBadge">Warning colour on SOS<select id="s_hubBadge"><option value="1">Show</option><option value="0">Hide</option></select></label>
+    </details>
+    <details class="folder" id="v3folder"><summary>3D view</summary>
+      <label class="setrow" for="s_v3Ex">Mountains<select id="s_v3Ex"><option value="1">Real height</option><option value="1.5">Exaggerated</option></select></label>
+      <label class="setrow" for="s_v3Fps">Motion<select id="s_v3Fps"><option value="smooth">Smooth</option><option value="save">Battery saver</option></select></label>
+    </details>
     <details class="folder" id="ffolder"><summary>Flight feeds &amp; key</summary>
     <div id="flist" class="flist"></div>
     <p class="fhelp" id="fhelp"></p>
@@ -433,7 +475,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
   // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
   try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
-  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1'};
+  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth'};
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
   var refreshMs = 5000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
@@ -921,7 +963,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var near=cpaText(p), ph=getPhoto(p); if(ph&&!/^https:\/\//.test(ph.src||'')) ph=null; var phHtml=ph?'<a class="ph" href="'+esc(/^https:\/\//.test(ph.link||'')?ph.link:'https://www.planespotters.net/')+'" target="_blank" rel="noopener" aria-label="Photo on Planespotters.net"><img src="'+esc(ph.src)+'" alt="Photo of '+esc(name(p))+'" decoding="async" onerror="this.parentNode.remove()"><i>'+esc(ph.by?'Photo: '+ph.by:'Planespotters.net')+'</i></a>':'';
       if(dockHex!==p.hex){dockHex=p.hex;dtab=cfg2.dtab}
       var tabs='<div class="dtabs" role="tablist">'+[['ov','Overview'],['ck','Cockpit'],['ac','Aircraft']].map(function(t){return '<button role="tab" data-t="'+t[0]+'" aria-selected="'+(dtab===t[0])+'"'+(dtab===t[0]?' class="on"':'')+'>'+t[1]+'</button>'}).join('')+'</div>';
-      var head='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><button class="close" id="cl" aria-label="Close">✕</button>'+
+      var head='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><span class="cbtns"><button class="close v3btn" id="v3b" aria-label="3D view from this plane">3D</button><button class="close" id="cl" aria-label="Close">✕</button></span>'+
         phHtml+'<div class="meta m1" style="color:var(--fg)">'+esc(who)+'</div>'+(function(){ var ft=fireTag(p); return ft?'<div class="meta m1 fireline">🔥 '+esc(ft.text)+'</div>':'' })()+(more?'<div class="meta m1">'+esc(more)+'</div>':'');
       var bodyHtml;
       if(dtab==='ck') bodyHtml=cockpitHtml(p);
@@ -934,7 +976,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         '<div class="meta">'+esc(phase(p))+' · '+vs+'</div>'+(eta?'<div class="meta" style="color:var(--fg)">'+esc(eta)+'</div>':'')+(near?'<div class="meta" style="color:var(--fg)">'+esc(near)+'</div>':''); }
       var html=head+tabs+bodyHtml+'</div>';
       if(body._h!==html||!body.firstChild){body.innerHTML=html;body._h=html}
-      var clb=document.getElementById('cl'); if(clb) clb.onclick=function(){select(null)};
+      var clb=document.getElementById('cl'); if(clb) clb.onclick=function(){select(null)}; var v3b=document.getElementById('v3b'); if(v3b) v3b.onclick=function(){ V3D.open(p.hex) };
       [].forEach.call(body.querySelectorAll('.dtabs button'),function(bt){bt.onclick=function(){dtab=bt.getAttribute('data-t');renderDock()}});
       if(dtab==='ac') acRec(p.hex);
       return;
@@ -1533,6 +1575,127 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     paint(); if(roadOn) setTimeout(function(){ loadRoads(true) },1800); if(ferryOn) setTimeout(function(){ drawFerries(); loadFerries() },1800);
   })();
 
+  // ---- Emergency hub: evacuations, weather warnings, nearby fires, air quality and road closures in one place ----
+  (function(){
+    var btn=document.getElementById('hubbtn'), sheetEl=document.getElementById('hubsheet'), body=document.getElementById('hubbody'); if(!btn||!sheetEl) return;
+    var hubLayer=L.layerGroup().addTo(map), H={t:0}, open=-1, busy=false, evacPolys=[];
+    var BCWS='https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/', WFIGS='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/', WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
+    function gj(u,o){ return fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }
+    function kmBox(km){ var dl=km/111, dn=km/(111*Math.cos(me.lat*Math.PI/180)); return {s:me.lat-dl,n:me.lat+dl,w:me.lon-dn,e:me.lon+dn} }
+    function env(b){ return '&geometry='+encodeURIComponent([b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(','))+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json' }
+    function bear(la,lo,la2,lo2){ var r=Math.PI/180, y=Math.sin((lo2-lo)*r)*Math.cos(la2*r), x=Math.cos(la*r)*Math.sin(la2*r)-Math.sin(la*r)*Math.cos(la2*r)*Math.cos((lo2-lo)*r); return (Math.atan2(y,x)/r+360)%360 }
+    function where(la,lo){ var d=distNm(me.lat,me.lon,la,lo); return uDist(d)+' '+distUnit()+' '+cmp(bear(me.lat,me.lon,la,lo)) }
+    function inRing(pt,ring){ var x=pt[0], y=pt[1], ins=false; for(var i=0,j=ring.length-1;i<ring.length;j=i++){ var xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1]; if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) ins=!ins } return ins }
+    function km(){ return +cfg2.hubKm||100 }
+    function gather(){ if(busy) return Promise.resolve(); busy=true; var R=km(), b=kmBox(R), bf=kmBox(Math.min(R,60)), inBC=b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60, inUS=me.lat<49.2&&me.lat>18&&me.lon<-66, jobs={};
+      jobs.evac=inBC?gj(BCWS+'Evacuation_Orders_and_Alerts/FeatureServer/0/query?where=1%3D1&outFields=EVENT_NAME,EVENT_TYPE,ORDER_ALERT_NAME,ORDER_ALERT_STATUS,ISSUING_AGENCY,DATE_MODIFIED&maxAllowableOffset=0.002&geometryPrecision=4&resultRecordCount=200'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes||{}, rings=(f.geometry&&f.geometry.rings)||[], c=[0,0], n=0, inside=false;
+          rings.forEach(function(rg){ rg.forEach(function(p){c[0]+=p[0];c[1]+=p[1];n++}); if(inRing([me.lon,me.lat],rg)) inside=!inside }); if(n){c[0]/=n;c[1]/=n}
+          return {order:a.ORDER_ALERT_STATUS==='Order',name:a.ORDER_ALERT_NAME||a.EVENT_NAME||'Area',event:a.EVENT_NAME,type:a.EVENT_TYPE,agency:a.ISSUING_AGENCY,upd:a.DATE_MODIFIED,rings:rings,lat:c[1],lon:c[0],inside:inside} }) }):Promise.resolve([]);
+      var pb=[me.lon-.05,me.lat-.05,me.lon+.05,me.lat+.05].map(function(v){return v.toFixed(3)}).join(',');
+      jobs.wxc=gj('https://api.weather.gc.ca/collections/weather-alerts/items?f=json&lang=en&limit=20&bbox='+pb).then(function(j){ var seen={}; return (j&&j.features||[]).map(function(f){return f.properties||{}}).filter(function(p){ var k=p.alert_name_en; if(!k||seen[k]||/ended|cancel/i.test((p.status_en||'')+(p.alert_type||''))) return false; seen[k]=1; return true })
+        .map(function(p){ return {name:String(p.alert_name_en||'').replace(/^./,function(c){return c.toUpperCase()}),level:/warning/i.test(p.alert_type||p.alert_name_en)?2:/watch/i.test(p.alert_type||'')?1:0,text:String(p.alert_text_en||'').slice(0,900),until:p.expiration_datetime,area:p.feature_name_en,src:'Environment Canada'} }) });
+      jobs.wxu=inUS?gj('https://api.weather.gov/alerts/active?point='+me.lat.toFixed(4)+','+me.lon.toFixed(4),{headers:{'Accept':'application/geo+json'}}).then(function(j){ return (j&&j.features||[]).map(function(f){ var p=f.properties||{}; return {name:p.event||'Alert',level:/Extreme|Severe/.test(p.severity||'')||/Warning/.test(p.event||'')?2:/Watch/.test(p.event||'')?1:0,text:String((p.headline||'')+'\n\n'+(p.description||'')).slice(0,900),until:p.expires,area:p.areaDesc,src:'US National Weather Service'} }) }):Promise.resolve([]);
+      jobs.fires=Promise.all([
+        inBC?gj(BCWS+'BCWS_ActiveFires_PublicView/FeatureServer/0/query?where='+encodeURIComponent("FIRE_STATUS<>'Out'")+'&outFields=INCIDENT_NAME,FIRE_NUMBER,FIRE_STATUS,CURRENT_SIZE,GEOGRAPHIC_DESCRIPTION'+env(bf)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {name:(a.INCIDENT_NAME&&a.INCIDENT_NAME!==a.FIRE_NUMBER?a.INCIDENT_NAME:a.GEOGRAPHIC_DESCRIPTION||a.FIRE_NUMBER),status:a.FIRE_STATUS,ha:+a.CURRENT_SIZE||0,lat:g.y,lon:g.x} }) }):[],
+        inUS?gj(WFIGS+'WFIGS_Incident_Locations_Current/FeatureServer/0/query?where='+encodeURIComponent("IncidentTypeCategory='WF' AND FireOutDateTime IS NULL AND (PercentContained IS NULL OR PercentContained<100)")+'&outFields=IncidentName,IncidentSize,PercentContained'+env(bf)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {name:a.IncidentName,status:a.PercentContained==null?'Not contained':Math.round(a.PercentContained)+'% contained',ha:(+a.IncidentSize||0)*.4047,lat:g.y,lon:g.x} }) }):[]
+      ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(f){return isFinite(f.lat)}).map(function(f){ f.d=distNm(me.lat,me.lon,f.lat,f.lon); return f }).sort(function(a,b){return a.d-b.d}) });
+      jobs.air=gj('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+me.lat.toFixed(3)+'&longitude='+me.lon.toFixed(3)+'&current=us_aqi,pm2_5&hourly=us_aqi,pm2_5&forecast_hours=24&timezone=auto').then(function(j){ if(!j||!j.current) return null; var h=(j.hourly&&j.hourly.us_aqi)||[], mx=0, mt=null; h.forEach(function(v,i){ if(v>mx){mx=v;mt=j.hourly.time[i]} }); return {aqi:j.current.us_aqi,pm:j.current.pm2_5,max:mx,maxAt:mt} });
+      jobs.roads=Promise.all([
+        inBC?gj('https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500&bbox='+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')).then(function(j){ return (j&&j.events||[]).filter(function(e){ return (e.roads||[]).some(function(r){return /CLOSED/.test(r.state||'')}) }).map(function(e){ var g=e.geography||{}, c=g.type==='Point'?g.coordinates:(g.coordinates&&g.coordinates[0]); return {road:(e.roads||[]).map(function(r){return r.name}).filter(Boolean).slice(0,2).join(', '),text:String(e.description||'').slice(0,300),lat:c&&c[1],lon:c&&c[0]} }) }):[],
+        inUS?gj(WS+'TravelInfoRoadAlerts/FeatureServer/0/query?where=RoadClosedFlag%3D1&outFields=Road,RoadDirection,HeadlineMessage'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {road:[a.Road,a.RoadDirection].filter(Boolean).join(' '),text:String(a.HeadlineMessage||'').slice(0,300),lat:g.y,lon:g.x} }) }):[]
+      ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(x){return isFinite(x.lat)}) });
+      var keys=Object.keys(jobs);
+      return Promise.all(keys.map(function(k){return jobs[k]})).then(function(r){ keys.forEach(function(k,i){ H[k]=r[i] }); H.wx=[].concat(H.wxc||[],H.wxu||[]).sort(function(a,b){return b.level-a.level}); H.t=Date.now(); busy=false; paint(); if(!sheetEl.hidden) render() }).catch(function(){ busy=false }) }
+    function aqiWord(a){ return a==null?'—':a<=50?'Good':a<=100?'Moderate':a<=150?'Unhealthy for sensitive groups':a<=200?'Unhealthy':a<=300?'Very unhealthy':'Hazardous' }
+    function aqiCol(a){ return a==null?'var(--dim)':a<=50?'#43a047':a<=100?'#fbc02d':a<=150?'#fb8c00':a<=200?'#e53935':'#8e24aa' }
+    function level(){ var L=0, why='';
+      var ev=H.evac||[], ins=ev.filter(function(e){return e.inside}); if(ins.some(function(e){return e.order})) return {L:3,why:'You are inside an EVACUATION ORDER area'}; if(ins.length){ L=2; why='You are inside an evacuation alert area' }
+      if(L<2&&ev.some(function(e){return e.order})){ L=2; why='Evacuation order nearby' } else if(L<1&&ev.length){ L=1; why='Evacuation alert nearby' }
+      var w=H.wx||[]; if(w.some(function(x){return x.level===2})&&L<2){ L=2; why=w.filter(function(x){return x.level===2})[0].name } else if(w.length&&L<1){ L=1; why=w[0].name }
+      var f=(H.fires||[])[0]; if(f&&f.d<5.4&&L<2){ L=2; why='Wildfire within 10 km' } else if(f&&f.d<16.2&&L<1){ L=1; why='Wildfire within 30 km' }
+      var a=H.air; if(a&&a.aqi>150&&L<2){ L=2; why='Unhealthy air' } else if(a&&a.aqi>100&&L<1){ L=1; why='Smoky or poor air' }
+      if((H.roads||[]).length&&L<1){ L=1; why='Road closures nearby' }
+      return {L:L,why:why||'No alerts near you right now'} }
+    function paint(){ var lv=H.t?level().L:0; btn.classList.toggle('alert1',cfg2.hubBadge==='1'&&lv===1); btn.classList.toggle('alert2',cfg2.hubBadge==='1'&&lv>=2) }
+    function row(i,icon,title,right,col,detail){ return '<div class="hubrow'+(open===i?' open':'')+'"><button class="hubhd" data-i="'+i+'" aria-expanded="'+(open===i)+'"><span>'+icon+' <b>'+title+'</b></span><span style="color:'+(col||'var(--dim)')+'">'+right+'</span></button>'+(open===i?'<div class="hubdt">'+detail+'</div>':'')+'</div>' }
+    function render(){ if(!H.t){ body.innerHTML='<div class="ssec">Checking alerts near you…</div>'; return }
+      var lv=level(), cols=['#43a047','#fbc02d','#fb8c00','#c62828'], h='<div class="hubban" style="background:'+cols[lv.L]+'">'+(lv.L?'⚠ ':'✓ ')+esc(lv.why)+'</div>';
+      var ev=H.evac||[], ords=ev.filter(function(e){return e.order}).length;
+      h+=row(0,'🏠','Evacuations',ev.length?(ords?ords+' order'+(ords>1?'s':''):'')+(ords&&ev.length-ords?', ':'')+(ev.length-ords?(ev.length-ords)+' alert'+(ev.length-ords>1?'s':''):''):'None',ev.length?(ords?'#e53935':'#fb8c00'):'#43a047',
+        ev.length?ev.slice(0,6).map(function(e){ return '<div class="row2"><span><b style="color:'+(e.order?'#e53935':'#fb8c00')+'">'+(e.order?'ORDER':'Alert')+'</b> '+esc(e.name)+(e.inside?' <b>· you are inside</b>':'')+'<br><small>'+esc([e.type,e.agency].filter(Boolean).join(' · '))+'</small></span><span>'+(e.inside?'here':esc(where(e.lat,e.lon)))+'</span></div>' }).join(''):'No evacuation orders or alerts within '+km()+' km (BC only).');
+      var w=H.wx||[];
+      h+=row(1,'🌩','Weather alerts',w.length?w.length+' active':'None',w.some(function(x){return x.level===2})?'#e53935':w.length?'#fb8c00':'#43a047',
+        w.length?w.slice(0,3).map(function(x){ return '<div style="margin-bottom:6px"><b>'+esc(x.name)+'</b>'+(x.until?' <small>until '+esc(new Date(x.until).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'}))+'</small>':'')+'<div class="hubtx">'+esc(x.text)+'</div><small>'+esc(x.src)+'</small></div>' }).join(''):'No weather warnings, watches or statements for your location.');
+      var f=H.fires||[];
+      h+=row(2,'🔥','Wildfires',f.length?f.length+' · closest '+uDist(f[0].d)+' '+distUnit():'None near',f.length?(f[0].d<16.2?'#e53935':'#fb8c00'):'#43a047',
+        f.length?f.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.name||'Wildfire')+'</b><br><small>'+esc(x.status||'')+(x.ha?' · '+Math.round(x.ha).toLocaleString()+' ha':'')+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No active wildfires within '+Math.min(km(),60)+' km.');
+      var a=H.air;
+      h+=row(3,'😷','Air quality',a?Math.round(a.aqi)+' · '+aqiWord(a.aqi):'—',a?aqiCol(a.aqi):null,
+        a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.');
+      var rd=H.roads||[];
+      h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
+        rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(x.text.slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
+      h+='<div class="abtns" style="margin-top:6px"><a href="#" id="hubmap" class="pri" role="button">🗺 Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer">EmergencyInfoBC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer">DriveBC</a></div>';
+      h+='<div class="skynote">In danger? Call 911. Always follow official orders. Checked '+esc(new Date(H.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))+' · '+km()+' km around you</div>';
+      body.innerHTML=h;
+      [].forEach.call(body.querySelectorAll('.hubhd'),function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); open=open===i?-1:i; render() } });
+      var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() } }
+    function showOnMap(){ hubLayer.clearLayers(); (H.evac||[]).forEach(function(e){ var c=e.order?'#e53935':'#fb8c00'; e.rings.forEach(function(rg){ L.polygon(rg.map(function(p){return [p[1],p[0]]}),{color:c,weight:2,fillColor:c,fillOpacity:.25}).bindTooltip((e.order?'Evacuation ORDER: ':'Evacuation alert: ')+e.name).addTo(hubLayer) }) });
+      var fb=document.getElementById('firebtn'); if(fb&&!fb.classList.contains('on')) fb.click();
+      var rb=document.getElementById('roadbtn'); if(rb&&!rb.classList.contains('on')) rb.click();
+      sheetEl.hidden=true; var b=kmBox(Math.min(km(),60)); map.fitBounds([[b.s,b.w],[b.n,b.e]]) }
+    btn.onclick=function(){ sheetEl.hidden=false; render(); if(!H.t||Date.now()-H.t>120000) gather() };
+    document.getElementById('hubx').onclick=function(){ sheetEl.hidden=true };
+    sheetEl.onclick=function(e){ if(e.target===sheetEl) sheetEl.hidden=true };
+    setTimeout(function(){ if(cfg2.hubAuto==='1') gather() },8000);
+    setInterval(function(){ if(!document.hidden&&cfg2.hubAuto==='1') gather() },600000);
+    window.__hub={refresh:function(){ H.t=0; gather() },paint:paint,clear:function(){ hubLayer.clearLayers() }};
+  })();
+  // ---- 3D ride-along: real terrain and satellite imagery seen from the plane (MapLibre, loaded only when opened) ----
+  var V3D=(function(){
+    var JS='https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js', JSSRI='sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj';
+    var CSS='https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css', CSSSRI='sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V';
+    var box=null, m3=null, hex=null, look=0, raf=0, tmr=null, loading=null, ready=false, lastT=0, lost=0;
+    function lib(){ if(window.maplibregl) return Promise.resolve(); if(loading) return loading;
+      loading=new Promise(function(res,rej){ var l=document.createElement('link'); l.rel='stylesheet'; l.href=CSS; l.integrity=CSSSRI; l.crossOrigin='anonymous'; l.referrerPolicy='no-referrer'; document.head.appendChild(l);
+        var s=document.createElement('script'); s.src=JS; s.integrity=JSSRI; s.crossOrigin='anonymous'; s.referrerPolicy='no-referrer'; s.onload=function(){res()}; s.onerror=function(){ loading=null; rej(new Error('load')) }; document.head.appendChild(s) }); return loading }
+    function build(){ box=document.createElement('div'); box.id='v3d'; box.setAttribute('role','dialog'); box.setAttribute('aria-label','3D view from the plane');
+      box.innerHTML='<div id="v3map"></div><div id="v3top"><div id="v3hud"><b id="v3cs">—</b><span id="v3st"></span></div><button class="close" id="v3x" aria-label="Close 3D view">✕</button></div>'+
+        '<div id="v3msg" hidden></div><div id="v3bar"><button id="v3l" aria-label="Look left">◀ Left</button><button id="v3c" aria-label="Look ahead">Ahead</button><button id="v3r" aria-label="Look right">Right ▶</button></div>';
+      document.body.appendChild(box);
+      document.getElementById('v3x').onclick=close;
+      document.getElementById('v3l').onclick=function(){ look=(look-60+360)%360; tick(true) };
+      document.getElementById('v3r').onclick=function(){ look=(look+60)%360; tick(true) };
+      document.getElementById('v3c').onclick=function(){ look=0; tick(true) } }
+    function msg(t){ var m=document.getElementById('v3msg'); if(!m) return; m.textContent=t||''; m.hidden=!t }
+    function dest(lat,lon,brg,dm){ var R=6371000, d=dm/R, b=brg*Math.PI/180, la=lat*Math.PI/180, lo=lon*Math.PI/180;
+      var la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(b)), lo2=lo+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2)); return [lo2*180/Math.PI,la2*180/Math.PI] }
+    function plane(){ var p=(lastData||[]).filter(function(x){return x.hex===hex})[0]; return p }
+    function tick(force){ if(!m3||!ready||!box||box.hidden) return; var now=performance.now(); if(!force&&cfg2.v3Fps==='save'&&now-lastT<250) return; lastT=now;
+      var p=plane(); if(!p){ if(!lost) lost=Date.now(); msg(Date.now()-lost>15000?'Signal lost. This plane is out of range.':'Waiting for the plane…'); return } lost=0;
+      var pos=mPos(motion[p.hex]||{lat:p.lat,lon:p.lon},Date.now()), lat=pos[0], lon=pos[1], ex=+cfg2.v3Ex||1;
+      var gnd=p.alt_baro==='ground', altM=gnd?0:(typeof p.alt_geom==='number'?p.alt_geom:p.alt_baro||0)*0.3048;
+      var terr=0; try{ terr=m3.queryTerrainElevation([lon,lat])||0 }catch(e){}
+      var cam=gnd?terr+4:Math.max(altM*ex,terr+60), agl=Math.max(30,cam-terr), hdg=((p.track||0)+look)%360;
+      var dist=Math.min(40000,Math.max(1500,agl*9)), tgt=dest(lat,lon,hdg,dist);
+      try{ var fc=m3.getFreeCameraOptions(); fc.position=maplibregl.MercatorCoordinate.fromLngLat([lon,lat],cam); fc.lookAtPoint(tgt); m3.setFreeCameraOptions(fc) }catch(e){}
+      msg(gnd?'On the ground':''); document.getElementById('v3cs').textContent=name(p)+(look?' · looking '+(look===60?'right':look===300?'left':look===120?'right-back':look===240?'left-back':'back'):'');
+      document.getElementById('v3st').textContent=[gnd?'GND':uAlt(p.alt_baro)+' '+altUnit(),uSpd(p.gs)+' '+spdUnit(),Math.round(p.track||0)+'°',typeName(p)||p.t||''].filter(Boolean).join(' · ') }
+    function loop(){ if(!box||box.hidden) return; tick(false); raf=requestAnimationFrame(loop) }
+    function init(){ var p=plane()||{lat:me.lat,lon:me.lon};
+      m3=new maplibregl.Map({container:'v3map',interactive:false,maxPitch:85,center:[p.lon,p.lat],zoom:11,pitch:75,attributionControl:{compact:true},
+        style:{version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},
+          dem:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:13,attribution:'Terrain: Mapzen, AWS Open Data'}},
+          layers:[{id:'bg',type:'background',paint:{'background-color':'#a9c9e8'}},{id:'sat',type:'raster',source:'sat'}],terrain:{source:'dem',exaggeration:+cfg2.v3Ex||1}}});
+      m3.on('load',function(){ ready=true; try{ m3.setSky({'sky-color':'#5b9be0','horizon-color':'#d6e7f6','fog-color':'#e3edf6','sky-horizon-blend':.5,'horizon-fog-blend':.6,'fog-ground-blend':.35}) }catch(e){} msg(''); tick(true) });
+      m3.on('error',function(){}) }
+    function openFor(h){ hex=h; look=0; lost=0; if(!box) build(); box.hidden=false; document.body.classList.add('v3on'); msg('Loading 3D terrain…');
+      lib().then(function(){ if(typeof maplibregl.supported==='function'&&!maplibregl.supported()){ msg('Your phone’s browser cannot show 3D maps.'); return } if(!m3){ ready=false; try{ init() }catch(e){ m3=null; msg('Your phone’s browser cannot show 3D maps.'); return } } else { m3.setTerrain({source:'dem',exaggeration:+cfg2.v3Ex||1}); m3.resize() } cancelAnimationFrame(raf); loop() })
+        .catch(function(){ msg('3D view could not load. Check your connection and try again.') }) }
+    function close(){ if(box) box.hidden=true; document.body.classList.remove('v3on'); cancelAnimationFrame(raf); if(m3){ try{ m3.remove() }catch(e){} m3=null; ready=false } }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&box&&!box.hidden) close() });
+    return {open:openFor,close:close} })();
+
   // ---- AR: hold the phone up to the sky and the camera labels the planes you are looking at ----
   (function(){
     var btn=document.getElementById('arbtn'); if(!btn) return;
@@ -1648,8 +1811,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     btn.onclick=start; box.querySelector('#arclose').onclick=function(){stop()};
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
-  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump']];
-    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry() }
+  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps']];
+    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry(); if(/^hub/.test(k)&&window.__hub){ if(k==='hubBadge') window.__hub.paint(); else window.__hub.refresh() } }
     B.forEach(function(b){ var el=document.getElementById(b[0]); if(!el) return; el.value=String(cfg2[b[1]]); el.onchange=function(){ cfg2[b[1]]=el.value; saveCfg2(); changed(b[1]) } });
     var sm=document.getElementById('s_issmap'), sa=document.getElementById('s_satar'), ap=document.getElementById('s_apt'), rb=document.getElementById('s_arreset');
     function saveSpace(){ try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} }
