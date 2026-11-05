@@ -278,7 +278,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .folder summary::-webkit-details-marker{display:none}
 .folder summary::after{content:'›';font-size:20px;color:var(--dim);transform:rotate(90deg);transition:transform .2s}
 .folder[open] summary::after{transform:rotate(-90deg)}
-.folder .setrow{background:var(--bg)}
+.folder .setrow{background:var(--bg);padding:4px 6px 4px 12px;margin-bottom:4px}.folder .setrow select{min-height:36px;padding:7px 10px}
 .folder .setrow select{background:var(--chip)}
 .setbtn{width:100%;min-height:44px;border-radius:8px;background:var(--bg);color:var(--accent);font-weight:500;font-size:14px;margin-top:2px}
 .ph{grid-column:2;grid-row:2/4;position:relative;display:block;width:104px;height:60px;border-radius:8px;overflow:hidden;background:var(--chip)}
@@ -384,13 +384,14 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
     <label class="setrow" for="s_declutter">Zoomed out<select id="s_declutter"><option value="1">Show only key items</option><option value="0">Show everything</option></select></label>
+    <label class="setrow" for="s_nearRef">Nearest to<select id="s_nearRef"><option value="me">Me</option><option value="map">Map centre</option></select></label>
     </details>
     <details class="folder" id="rfolder"><summary>Map &amp; radar</summary>
       <label class="setrow" for="maptheme">Map theme<select id="maptheme" aria-label="Map theme"><option value="day">Day</option><option value="night">Night</option><option value="auto">Auto (sunset)</option></select></label>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
       <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="sel">Tapped plane only</option><option value="off">Hide</option></select></label>
-      <label class="setrow" for="maxpl">Planes shown<select id="maxpl" aria-label="Planes shown"><option value="15">Closest 15</option><option value="30">Closest 30</option><option value="50">Closest 50</option><option value="100">Closest 100</option><option value="150">Closest 150</option></select></label>
+      <label class="setrow" for="maxpl">Planes shown<select id="maxpl" aria-label="Planes shown"><option value="5">Closest 5</option><option value="10">Closest 10</option><option value="15">Closest 15</option><option value="30">Closest 30</option><option value="50">Closest 50</option><option value="100">Closest 100</option><option value="150">Closest 150</option><option value="250">Closest 250</option></select></label>
     </details>
     <details class="folder" id="cfolder"><summary>Compass</summary>
       <label class="setrow" for="cread">Heading readout<select id="cread" aria-label="Heading readout"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -422,12 +423,16 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_adir">"A" airport icons<select id="s_adir"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_atype">Icons for<select id="s_atype"><option value="all">All airports</option><option value="big">Main airports only</option></select></label>
       <label class="setrow" for="s_aptBad">Weather tags for<select id="s_aptBad"><option value="0">All</option><option value="1">Only poor weather</option></select></label>
+      <label class="setrow" for="s_aMax">"A" icons shown<select id="s_aMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option></select></label>
+      <label class="setrow" for="s_wxMax">Weather tags shown<select id="s_wxMax"><option value="auto">Auto</option><option value="all">All</option><option value="20">Nearest 20</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
     </details>
     <details class="folder" id="wffolder"><summary>Wildfires</summary>
       <label class="setrow" for="s_fire">Fires on map<select id="s_fire"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_fireAll">Which fires<select id="s_fireAll"><option value="0">Burning now</option><option value="1">All this year</option></select></label>
       <label class="setrow" for="s_firePer">Fire outlines<select id="s_firePer"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_fireAc">Firefighting planes<select id="s_fireAc"><option value="1">Highlight</option><option value="0">Off</option></select></label>
+      <label class="setrow" for="s_fireKm">Fires within<select id="s_fireKm"><option value="map">Whole map</option><option value="500">500 km of me</option><option value="250">250 km of me</option><option value="100">100 km of me</option><option value="50">50 km of me</option></select></label>
+      <label class="setrow" for="s_fireMax">Fires shown<select id="s_fireMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
     </details>
     <details class="folder" id="rdfolder"><summary>Roads (DriveBC &amp; WSDOT)</summary>
       <label class="setrow" for="s_road">Road info on map<select id="s_road"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -437,6 +442,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_roadCons">Construction<select id="s_roadCons"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_roadPass">Mountain passes (WA)<select id="s_roadPass"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_roadWA">Washington roads<select id="s_roadWA"><option value="1">Include</option><option value="0">BC only</option></select></label>
+      <label class="setrow" for="s_camMax">Cameras shown<select id="s_camMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
+      <label class="setrow" for="s_evtMax">Events shown<select id="s_evtMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
     </details>
     <details class="folder" id="bfolder"><summary>BC Ferries</summary>
       <label class="setrow" for="s_ferry">Terminals on map<select id="s_ferry"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -445,6 +452,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_ferryFill">Show space as<select id="s_ferryFill"><option value="car">Car space left</option><option value="full">How full</option></select></label>
       <label class="setrow" for="s_ferryCam">Terminal camera<select id="s_ferryCam"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_ferryJump">Jump to ferries<select id="s_ferryJump"><option value="1">When turned on</option><option value="0">Never</option></select></label>
+      <label class="setrow" for="s_ferryMax">Terminals shown<select id="s_ferryMax"><option value="all">All</option><option value="5">Nearest 5</option><option value="3">Nearest 3</option><option value="1">Nearest 1</option><option value="home">My terminal only</option></select></label>
     </details>
     <details class="folder" id="hbfolder"><summary>Emergency hub</summary>
       <label class="setrow" for="s_hubKm">Area checked<select id="s_hubKm"><option value="50">50 km</option><option value="100">100 km</option><option value="200">200 km</option></select></label>
@@ -476,7 +484,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
   // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
   try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
-  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1'};
+  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all'};
+  function nearPt(){ if(cfg2.nearRef==='map'&&typeof map!=='undefined'){ var c=map.getCenter(); return [c.lat,c.lng] } return [me.lat,me.lon] }
+  function capN(v,d){ return v==='all'?(d||1e9):(+v||d||1e9) }
+  function byNear(p){ return function(a,b){ return distNm(p[0],p[1],a.lat,a.lon)-distNm(p[0],p[1],b.lat,b.lon) } }
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
   var refreshMs = 5000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
@@ -1319,7 +1330,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(n0-s0>11||e0-w0>19){aptLayer.clearLayers();return}
     fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[s0,w0,n0,e0].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){
       if(!Array.isArray(list)) return; aptLayer.clearLayers(); aptShown={};
-      if(cfg2.declutter==='1'&&map.getZoom()<10){ var cc=map.getCenter(); list=list.filter(function(m){return m&&typeof m.lat==='number'&&typeof m.lon==='number'}).sort(function(a,b){return distNm(cc.lat,cc.lng,a.lat,a.lon)-distNm(cc.lat,cc.lng,b.lat,b.lon)}).slice(0,15) }
+      var wm=cfg2.wxMax==='auto'?(cfg2.declutter==='1'&&map.getZoom()<10?15:0):cfg2.wxMax==='all'?0:+cfg2.wxMax; if(wm){ var cc=cfg2.wxMax==='auto'?[map.getCenter().lat,map.getCenter().lng]:nearPt(); list=list.filter(function(m){return m&&typeof m.lat==='number'&&typeof m.lon==='number'}).sort(function(a,b){return distNm(cc[0],cc[1],a.lat,a.lon)-distNm(cc[0],cc[1],b.lat,b.lon)}).slice(0,wm) }
       list.forEach(function(m){ if(!m||typeof m.lat!=='number'||typeof m.lon!=='number'||!/^[A-Z0-9]{3,4}$/.test(m.icaoId||'')||(m.visib==null&&!m.fltCat)) return; aptData[m.icaoId]=m; var c=fltCat(m); if(cfg2.aptOnlyBad==='1'&&c==='VFR') return;
         aptShown[m.icaoId]=1; L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }); drawDir() }).catch(function(){}) }
   function zoomClass(){ document.body.classList.toggle('zout',cfg2.declutter==='1'&&map.getZoom()<7) }
@@ -1339,8 +1350,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     Promise.all(keys.map(getTile)).then(function(arrs){ if(g!==dirGen) return; dirList=[].concat.apply([],arrs); drawDir() }) }
   function drawDir(){ dirLayer.clearLayers(); if(cfg2.adir!=='1') return; var z=map.getZoom(); if(z<6) return; var b=map.getBounds().pad(0.1), n=0;
     var bigOnly=cfg2.atype==='big';
-    for(var i=0;i<dirList.length&&n<500;i++){ var r=dirList[i]; var dc=cfg2.declutter==='1'?1:0, mz=r[1]==='L'?6+dc:(r[1]==='M'||r[9])?9+dc:11+dc; if(z<mz||(bigOnly&&mz>9)) continue; if(!b.contains([r[3],r[4]])) continue; if(aptShown[r[14]]||aptShown[r[0]]) continue; n++;
-      (function(r){ var big=r[1]==='L'||r[1]==='M'; L.marker([r[3],r[4]],{icon:L.divIcon({className:'',html:'<span class="amk'+(big?' big':'')+'" role="button" aria-label="'+esc(r[2])+'">A</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:big?-350:-400,title:r[2]}).on('click',function(){openDir(dirRec(r))}).addTo(dirLayer) })(r) } }
+    var cand=[]; for(var i=0;i<dirList.length&&n<3000;i++){ var r=dirList[i]; var dc=cfg2.declutter==='1'?1:0, mz=r[1]==='L'?6+dc:(r[1]==='M'||r[9])?9+dc:11+dc; if(z<mz||(bigOnly&&mz>9)) continue; if(!b.contains([r[3],r[4]])) continue; if(aptShown[r[14]]||aptShown[r[0]]) continue; n++; cand.push(r) }
+    var np=nearPt(); cand.sort(function(a,c){ return distNm(np[0],np[1],a[3],a[4])-distNm(np[0],np[1],c[3],c[4]) }); cand.slice(0,capN(cfg2.aMax,500)).forEach(function(r){
+      (function(r){ var big=r[1]==='L'||r[1]==='M'; L.marker([r[3],r[4]],{icon:L.divIcon({className:'',html:'<span class="amk'+(big?' big':'')+'" role="button" aria-label="'+esc(r[2])+'">A</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:big?-350:-400,title:r[2]}).on('click',function(){openDir(dirRec(r))}).addTo(dirLayer) })(r) }) }
   setTimeout(loadDir,1200);
   function findDir(icao,lat,lon){ return getTile(tileKey(lat,lon)).then(function(a){ var best=null, bd=1e9; a.forEach(function(r){ if(r[14]===icao||r[0]===icao){ var d=distNm(lat,lon,r[3],r[4]); if(d<bd){bd=d;best=r} } }); return best?dirRec(best):null }) }
   function openDir(rec){ aInfo=rec; aptSel=null; aptTab='info'; document.getElementById('aptsheet').hidden=false;
@@ -1465,7 +1477,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     Promise.all(pj).then(function(rs){ if(g!==fireGen) return; perLayer.clearLayers(); [].concat.apply([],rs).forEach(function(p){ if(!Array.isArray(p.rings)) return; var rings=p.rings.map(function(r){return r.map(function(pt){return [pt[1],pt[0]]})});
       L.polygon(rings,{color:p.c,weight:1.5,fillColor:p.c,fillOpacity:.18,interactive:false}).addTo(perLayer) }) }) }
   function fireColor(f){ return f.src==='bc'?(FSTAT[f.status]||'#e53935'):(f.pc>=100?'#fbc02d':f.pc>=50?'#fb8c00':'#e53935') }
-  function drawFires(){ fireLayer.clearLayers(); fires.filter(function(f){ var z=map.getZoom(); return cfg2.declutter!=='1'||z>=9||f.note||f.ha>=(z>=8?10:z>=7?100:1000) }).sort(function(a,b){return b.ha-a.ha}).slice(0,300).reverse().forEach(function(f){ var sz=f.ha>10000?30:f.ha>1000?26:f.ha>100?22:18;
+  function drawFires(){ fireLayer.clearLayers(); fires.filter(function(f){ var z=map.getZoom(); return cfg2.declutter!=='1'||z>=9||f.note||f.ha>=(z>=8?10:z>=7?100:1000) }).filter(function(f){ return cfg2.fireKm==='map'||distNm(me.lat,me.lon,f.lat,f.lon)<=(+cfg2.fireKm)/1.852 }).sort(cfg2.fireMax==='all'?function(a,b){return b.ha-a.ha}:byNear(nearPt())).slice(0,capN(cfg2.fireMax,300)).sort(function(a,b){return b.ha-a.ha}).reverse().forEach(function(f){ var sz=f.ha>10000?30:f.ha>1000?26:f.ha>100?22:18;
       L.marker([f.lat,f.lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(f.name)+' fire" style="--c:'+fireColor(f)+';--sz:'+sz+'px">🔥</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-200,title:f.name}).on('click',function(){openFire(f)}).addTo(fireLayer) });
     if(fireSel&&!document.getElementById('firesheet').hidden) fireRender() }
   function fmtArea(ha){ if(!ha) return '—'; return units==='av'?Math.round(ha*2.47105).toLocaleString()+' acres':(ha<10?ha.toFixed(1):Math.round(ha).toLocaleString())+' ha' }
@@ -1515,11 +1527,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var camJobs=[]; if(cfg2.roadCams==='1'&&z>=(cfg2.declutter==='1'?10:8)){
         if(inBC) camJobs.push((dbcCams?Promise.resolve(dbcCams):gj('drivebc-cams.json').then(function(a){ dbcCams=Array.isArray(a)?a:[]; return dbcCams })).then(function(a){ return a.filter(function(c){return c[2]>b.s&&c[2]<b.n&&c[3]>b.w&&c[3]<b.e}).map(function(c){ return {src:'DriveBC',lat:c[2],lon:c[3],name:c[1],hwy:c[4],dir:c[5],elev:c[6],cap:c[7],img:'https://www.drivebc.ca/images/'+(+c[0])+'.jpg'} }) }));
         if(inWA) camJobs.push(gj(WS+'TravelInfoCamerasWeather/FeatureServer/0/query?where=1%3D1&outFields=CameraTitle,ImageURL,CompassDirection&resultRecordCount=400'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes||{}, gm=f.geometry||{}, u=https(a.ImageURL); if(!u||typeof gm.x!=='number') return null; return {src:'WSDOT',lat:gm.y,lon:gm.x,name:a.CameraTitle,dir:a.CompassDirection,img:u} }).filter(Boolean) })) }
-      Promise.all(jobs).then(function(rs){ if(g!==rGen) return; roadLayer.clearLayers(); var all=[].concat.apply([],rs);
+      Promise.all(jobs).then(function(rs){ if(g!==rGen) return; roadLayer.clearLayers(); var all=[].concat.apply([],rs), en=0, em=capN(cfg2.evtMax); if(em<1e9) all.sort(byNear(nearPt()));
         all.forEach(function(it){ if(it.k==='pass'){ if(cfg2.declutter==='1'&&map.getZoom()<8) return; var bad=/snow|ice|chain|closed|compact/i.test((it.a.RoadCondition||'')+' '+(it.a.PublicMessage1||'')+' '+(it.a.PublicMessage2||'')); pin.call(roadLayer,it.lat,it.lon,bad?'#fb8c00':'#43a047','🏔',22,it.a.PassName||'Mountain pass',function(){openPass(it.a)},-240); return }
-          if(cfg2.roadEvt==='major'&&!it.closed&&!it.major) return; var zz=map.getZoom(); if(cfg2.declutter==='1'&&((zz<8&&!it.closed)||(zz<10&&!it.closed&&!it.major))) return; if(cfg2.roadCons==='0'&&!it.closed&&/construct|maint/.test(it.type)) return;
+          if(cfg2.roadEvt==='major'&&!it.closed&&!it.major) return; var zz=map.getZoom(); if(cfg2.declutter==='1'&&((zz<8&&!it.closed)||(zz<10&&!it.closed&&!it.major))) return; if(cfg2.roadCons==='0'&&!it.closed&&/construct|maint/.test(it.type)) return; if(++en>em) return;
           pin.call(roadLayer,it.lat,it.lon,it.closed?'#e53935':it.major?'#fb8c00':'#fbc02d',it.closed?'⛔':/construct|maint/.test(it.type)?'🚧':'⚠️',it.closed?22:18,(it.road||'Road')+' '+it.type,function(){openEvent(it)},it.closed?-230:-260) }) });
-      Promise.all(camJobs).then(function(rs){ if(g!==rGen) return; camLayer.clearLayers(); camList=[].concat.apply([],rs).slice(0,300);
+      Promise.all(camJobs).then(function(rs){ if(g!==rGen) return; camLayer.clearLayers(); camList=[].concat.apply([],rs).filter(function(c){return isFinite(c.lat)&&isFinite(c.lon)}).sort(byNear(nearPt())).slice(0,capN(cfg2.camMax,300));
         camList.forEach(function(c){ pin.call(camLayer,c.lat,c.lon,'#37474f','📷',20,c.name||'Highway camera',function(){openCam(c)},-270) }) }) }
     function openCam(c){ sel=c; var near=camList.filter(function(x){return x!==c}).map(function(x){return {x:x,d:distNm(c.lat,c.lon,x.lat,x.lon)}}).sort(function(a,b){return a.d-b.d}).slice(0,3);
       var src=c.img+(c.img.indexOf('?')>-1?'&':'?')+'t='+Math.floor(Date.now()/60000);
@@ -1544,7 +1556,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var fData=null, fT=0, fTerm=null, fRoute=null, fCam=0;
     function loadFerries(){ if(!ferryOn){ ferryLayer.clearLayers(); return Promise.resolve() } if(fData&&Date.now()-fT<180000) return Promise.resolve(fData);
       return gj('https://www.bcferriesapi.ca/v2/capacity/').then(function(j){ if(j&&Array.isArray(j.routes)){ fData=j.routes; fT=Date.now() } drawFerries(); if(fTerm&&!document.getElementById('roadsheet').hidden) ferryRender(); return fData }) }
-    function drawFerries(){ ferryLayer.clearLayers(); if(!ferryOn) return; Object.keys(TERM).forEach(function(k){ var t=TERM[k]; if(t.length<3) return; pin.call(ferryLayer,t[1],t[2],'#1565c0','⛴',24,t[0]+' ferry terminal',function(){ fTerm=k; fRoute=null; fCam=0; ferryRender(); loadFerries() },-150) }) }
+    function drawFerries(){ ferryLayer.clearLayers(); if(!ferryOn) return; var fp=nearPt(), ks=Object.keys(TERM).filter(function(k){return TERM[k].length>=3}).sort(function(a,b){ return distNm(fp[0],fp[1],TERM[a][1],TERM[a][2])-distNm(fp[0],fp[1],TERM[b][1],TERM[b][2]) });
+      if(cfg2.ferryMax==='home') ks=TERM[cfg2.ferryHome]?[cfg2.ferryHome]:ks.slice(0,1); else ks=ks.slice(0,capN(cfg2.ferryMax));
+      ks.forEach(function(k){ var t=TERM[k]; pin.call(ferryLayer,t[1],t[2],'#1565c0','⛴',24,t[0]+' ferry terminal',function(){ fTerm=k; fRoute=null; fCam=0; ferryRender(); loadFerries() },-150) }) }
     function fillCol(p){ return p>=90?'#e53935':p>=60?'#fb8c00':'#43a047' }
     function ferryRender(){ var k=fTerm, t=TERM[k]; if(!t) return; var routes=(fData||[]).filter(function(r){return r.fromTerminalCode===k});
       if(!fRoute||!routes.some(function(r){return r.routeCode===fRoute})) fRoute=routes[0]&&routes[0].routeCode;
@@ -1577,7 +1591,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     document.getElementById('roadsheet').onclick=function(e){ if(e.target===this){ this.hidden=true; fTerm=null } };
     map.on('moveend',function(){ clearTimeout(rT); rT=setTimeout(function(){ loadRoads(false) },900) });
     setInterval(function(){ if(document.hidden) return; if(roadOn) loadRoads(true); if(ferryOn) loadFerries() },180000);
-    window.__roads={reload:function(){ loadRoads(true) },ferry:function(){ if(fTerm&&!document.getElementById('roadsheet').hidden) ferryRender() }};
+    window.__roads={reload:function(){ loadRoads(true) },ferries:function(){ drawFerries() },ferry:function(){ if(fTerm&&!document.getElementById('roadsheet').hidden) ferryRender() }};
     paint(); if(roadOn) setTimeout(function(){ loadRoads(true) },1800); if(ferryOn) setTimeout(function(){ drawFerries(); loadFerries() },1800);
   })();
 
@@ -1817,8 +1831,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     btn.onclick=start; box.querySelector('#arclose').onclick=function(){stop()};
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
-  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps'],['s_declutter','declutter']];
-    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry(); if(/^hub/.test(k)&&window.__hub){ if(k==='hubBadge') window.__hub.paint(); else window.__hub.refresh() } if(k==='declutter'){ zoomClass(); loadDir(); loadApts(); loadFires(true); if(window.__roads) window.__roads.reload() } }
+  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps'],['s_declutter','declutter'],['s_nearRef','nearRef'],['s_aMax','aMax'],['s_wxMax','wxMax'],['s_fireKm','fireKm'],['s_fireMax','fireMax'],['s_camMax','camMax'],['s_evtMax','evtMax'],['s_ferryMax','ferryMax']];
+    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry(); if(/^hub/.test(k)&&window.__hub){ if(k==='hubBadge') window.__hub.paint(); else window.__hub.refresh() } if(k==='declutter'){ zoomClass(); loadDir(); loadApts(); loadFires(true); if(window.__roads) window.__roads.reload() }
+      if(k==='nearRef'||k==='aMax') drawDir(); if(k==='nearRef'||k==='wxMax') loadApts(); if(k==='nearRef'||k==='fireKm'||k==='fireMax') drawFires();
+      if((k==='nearRef'||k==='camMax'||k==='evtMax')&&window.__roads) window.__roads.reload(); if((k==='nearRef'||k==='ferryMax')&&window.__roads&&window.__roads.ferries) window.__roads.ferries() }
     B.forEach(function(b){ var el=document.getElementById(b[0]); if(!el) return; el.value=String(cfg2[b[1]]); el.onchange=function(){ cfg2[b[1]]=el.value; saveCfg2(); changed(b[1]) } });
     var sm=document.getElementById('s_issmap'), sa=document.getElementById('s_satar'), ap=document.getElementById('s_apt'), rb=document.getElementById('s_arreset');
     function saveSpace(){ try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} }
