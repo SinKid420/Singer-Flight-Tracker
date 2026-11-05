@@ -1229,7 +1229,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(function(){loadApts();loadDir()},800)});
   // ---- Airport directory: every airport and airstrip (OurAirports data, stored with the app in 10° tiles) ----
   var dirLayer=L.layerGroup().addTo(map), dirTiles={}, aptShown={}, aInfo=null, aExtra={}, ATYPE={L:'Large airport',M:'Medium airport',S:'Small airport',W:'Seaplane base'};
-  function dirRec(r){ return {id:r[0],ty:r[1],name:r[2],lat:r[3],lon:r[4],elev:r[5],city:r[6],region:r[7],iata:r[8],sched:r[9],home:r[10],wiki:r[11],rws:r[12]||[],fqs:r[13]||[],icao:r[14],cc:r[15]} }
+  function dirRec(r){ return {id:r[0],ty:r[1],name:r[2],lat:r[3],lon:r[4],elev:r[5],city:r[6],region:r[7],iata:r[8],sched:r[9],home:r[10],wiki:r[11],rws:r[12]||[],fqs:r[13]||[],icao:r[14],cc:r[15],tel:r[16]||''} }
   function tileKey(la,lo){ return Math.floor(la/10)+'_'+Math.floor(lo/10) }
   function getTile(k){ if(dirTiles[k]) return dirTiles[k]; if(!/^-?\d{1,2}_-?\d{1,2}$/.test(k)) return Promise.resolve([]);
     var p=fetch('apt/'+k+'.json').then(function(r){return r.ok?r.json():[]}).then(function(a){ a=Array.isArray(a)?a:[]; dirTiles[k]=Promise.resolve(a); return a }).catch(function(){ delete dirTiles[k]; return [] });
@@ -1255,7 +1255,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function cleanUrl(u){ u=String(u||'').trim(); return /^https?:\/\/[^\s"<>]{3,200}$/i.test(u)?u:'' }
   function moreInfo(rec){ var key=rec.id; if(aExtra[key]) return; var x=aExtra[key]={pend:2}, qDone={};
     function fin(){ x.pend--; trySite(); done() }
-    function trySite(){ if(x.tel||x.siteDone||!relay) return; var w=x.web||cleanUrl(rec.home); if(!w){ return } x.siteDone=1; x.pend++;
+    function trySite(){ if(x.tel||rec.tel||x.siteDone||!relay) return; var w=x.web||cleanUrl(rec.home); if(!w){ return } x.siteDone=1; x.pend++;
       fetch(relay+(relay.indexOf('?')>-1?'&':'?')+'phone='+encodeURIComponent(w)).then(function(r){return r.ok?r.json():null}).then(function(j){ var p=j&&Array.isArray(j.phones)?j.phones:[]; for(var i=0;i<p.length&&!x.tel;i++) x.tel=cleanTel(p[i]); if(x.tel) x.telSrc='website' }).catch(function(){}).then(fin) }
     if(rec.home) setTimeout(trySite,0);
     function done(){ if(aInfo&&aInfo.id===key&&aptTab==='info') aptRender() }
@@ -1275,14 +1275,14 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     h+='</div>';
     var rw=a.rws[0], FQO=['TWR','CTAF','ATF','UNIC','MF','AFIS','GND','ATIS','AWOS','ASOS'], fq=a.fqs.slice().sort(function(p,q){ function o(f){ var i=FQO.indexOf(String(f[0]).toUpperCase()); return i<0?99:i } return o(p)-o(q) }).slice(0,1);
     h+='<div class="wxg">'+[['Elevation',a.elev!=null?ft(a.elev):'—'],['Runways',a.rws.length?String(a.rws.length):'—'],['Longest',rw&&rw[1]?ft(rw[1]):'—'],['Surface',rw?surf(rw[2])+(rw[3]?', lit':''):'—'],['Airline flights',a.sched?'Yes':'No'],['Radio',fq.length?fq.map(function(f){return f[0]+' '+f[1]}).join(', '):'—']].map(function(y){return '<div><small>'+y[0]+'</small><span>'+esc(y[1])+'</span></div>'}).join('')+'</div>';
-    var tel=x.tel, web=x.web||cleanUrl(a.home);
-    h+='<div class="ssec"><div class="row2"><span>Phone</span><span>'+(tel?'<a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'" style="color:var(--accent)">'+esc(tel)+'</a>'+(x.telSrc?' <small style="color:var(--dim)">from website</small>':''):(x.pend>0?'Looking up…':'Not listed'))+'</span></div>'+
+    var tel=cleanTel(a.tel)||x.tel, web=x.web||cleanUrl(a.home), tsrc=cleanTel(a.tel)?'airport manager':x.telSrc?'from website':'';
+    h+='<div class="ssec"><div class="row2"><span>Phone</span><span>'+(tel?'<a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'" style="color:var(--accent)">'+esc(tel)+'</a>'+(tsrc?' <small style="color:var(--dim)">'+tsrc+'</small>':''):(x.pend>0?'Looking up…':'Not listed'))+'</span></div>'+
       (x.hours?'<div class="row2"><span>Hours</span><span>'+esc(x.hours)+'</span></div>':'')+(x.op?'<div class="row2"><span>Operator</span><span style="white-space:normal">'+esc(x.op)+'</span></div>':'')+'</div>';
     var q=encodeURIComponent(a.name+(a.city?' '+a.city:''));
     h+='<div class="abtns">'+(tel?'<a class="pri" href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">📞 Call</a>':'<a class="pri" href="https://www.google.com/maps/search/?api=1&amp;query='+q+'" target="_blank" rel="noopener">📞 Find phone</a>')+
       '<a href="https://www.google.com/maps/dir/?api=1&amp;destination='+a.lat+','+a.lon+'" target="_blank" rel="noopener">🧭 Directions</a>'+
       (web?'<a href="'+esc(web)+'" target="_blank" rel="noopener noreferrer">🌐 Website</a>':(x.wurl?'<a href="'+esc(x.wurl)+'" target="_blank" rel="noopener noreferrer">📖 Wikipedia</a>':'<a href="https://www.google.com/search?q='+q+'+airport" target="_blank" rel="noopener noreferrer">🔎 Search</a>'))+'</div>';
-    h+='<div class="skynote">Airport data: OurAirports · description: Wikipedia · contact: airport website, OpenStreetMap and Wikidata</div>';
+    h+='<div class="skynote">Airport data: OurAirports · description: Wikipedia · phone: FAA, airport website, OpenStreetMap</div>';
     return h }
   var SURF={ASP:'Asphalt',ASPH:'Asphalt',CON:'Concrete',CONC:'Concrete',GRS:'Grass',GRVL:'Gravel',GRV:'Gravel',GRAVEL:'Gravel',TURF:'Grass',DIRT:'Dirt',WATER:'Water',SAND:'Sand',SNOW:'Snow',ICE:'Ice',PEM:'Paved',BIT:'Paved',UNK:'Unknown'};
   function surf(sv){ sv=String(sv||'').toUpperCase(); for(var k in SURF) if(sv.indexOf(k)===0) return SURF[k]; return sv?sv.charAt(0)+sv.slice(1).toLowerCase():'—' }
