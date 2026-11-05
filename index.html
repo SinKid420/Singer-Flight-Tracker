@@ -1103,7 +1103,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(c&&Date.now()-c.t<6*3600000) return Promise.resolve(c.d);
     return fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP='+g+'&FORMAT=tle').then(function(r){if(!r.ok) throw new Error(r.status); return r.text()}).then(function(t){ if(t.length>400000) t=t.slice(0,400000); try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }).catch(function(){ return c?c.d:'' }) }
   function parseTle(t,tag){ var L=String(t||'').split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean), out=[], i=0;
-    while(i+2<L.length){ if(L[i+1].charAt(0)==='1'&&L[i+2].charAt(0)==='2'){ try{ var rec=satellite.twoline2satrec(L[i+1],L[i+2]); if(!rec.error) out.push({name:L[i].replace(/\s+/g,' ').slice(0,28),id:L[i+1].slice(2,7).trim(),rec:rec,tag:tag}) }catch(e){} i+=3 } else i++ }
+    while(i+2<L.length){ if(L[i+1].charAt(0)==='1'&&L[i+2].charAt(0)==='2'){ try{ var rec=satellite.twoline2satrec(L[i+1],L[i+2]); var nm=L[i].replace(/\s+/g,' ').replace(/ R\/B$/,' rocket stage').slice(0,28); if(!rec.error&&!/\bDEB\b/.test(nm)) out.push({name:nm,id:L[i+1].slice(2,7).trim(),rec:rec,tag:tag}) }catch(e){} i+=3 } else i++ }
     return out }
   function loadSats(){ if(satReady) return satReady;
     satReady=loadSatJs().then(function(){ return Promise.all([tleGroup('stations'),tleGroup('visual'),tleGroup('last-30-days')]) }).then(function(r){ var seen={}, all=[];
@@ -1140,7 +1140,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function magLat(){ var p=80.7*DEG, l=-72.7*DEG, a=me.lat*DEG, o=me.lon*DEG; return Math.asin(Math.sin(a)*Math.sin(p)+Math.cos(a)*Math.cos(p)*Math.cos(o-l))/DEG }
   var SHOWERS=[[0,3,'Quadrantids',110],[3,22,'Lyrids',18],[4,6,'Eta Aquariids',50],[6,30,'Delta Aquariids',25],[7,12,'Perseids',100],[9,8,'Draconids',10],[9,21,'Orionids',20],[10,17,'Leonids',15],[11,14,'Geminids',150],[11,22,'Ursids',10]];
   function nextShower(){ var now=new Date(), best=null; SHOWERS.forEach(function(s){ for(var y=now.getFullYear();y<=now.getFullYear()+1;y++){ var d=new Date(y,s[0],s[1],22); if(d.getTime()>now.getTime()-2*86400000){ if(!best||d<best.d) best={d:d,n:s[2],z:s[3]}; break } } }); return best }
-  function fmtT(d){ var t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}), day=new Date(); day.setHours(0,0,0,0); var dd=Math.floor((d-day)/86400000); return (dd===0?'Today ':dd===1?'Tomorrow ':d.toLocaleDateString([], {weekday:'short'})+' ')+t }
+  function fmtT(d){ var t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}), day=new Date(); day.setHours(0,0,0,0); var dd=Math.floor((d-day)/86400000); return (dd===0?'Today ':dd===1?'Tmrw ':d.toLocaleDateString([], {weekday:'short'})+' ')+t }
   var spaceTok=0;
   function openSpace(){ try{localStorage.setItem('sky-space-used','1')}catch(e){} var body=document.getElementById('spacebody'), tok=++spaceTok; document.getElementById('spacesheet').hidden=false;
     body.innerHTML='<div class="ssec">Loading satellites and space weather…</div>';
@@ -1159,7 +1159,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(pl==null) h+=sats.length?'Working out passes…':'—';
     else { var vis=pl.filter(function(p){return p.vis}).sort(function(a,b){return a.start-b.start}).slice(0,4);
       if(!vis.length){ var nx=pl.filter(function(p){return p.s.id==='25544'}).sort(function(a,b){return a.start-b.start})[0]; h+='No bright passes in darkness soon.'+(nx?' Next ISS flyover: '+esc(fmtT(nx.start))+' (daylight or in shadow).':'') }
-      vis.forEach(function(p){ var mins=Math.max(1,Math.round((p.end-p.start)/60000)); h+='<div class="row2"><span><b>'+esc(p.s.id==='25544'?'ISS':p.s.name)+'</b> '+cmp(p.az0)+' → '+cmp(p.az1)+' · up to '+Math.round(p.max)+'°</span><span>'+esc(fmtT(p.start))+' · '+mins+' min</span></div>' }) }
+      vis.forEach(function(p){ var mins=Math.max(1,Math.round((p.end-p.start)/60000)); h+='<div class="row2"><span><b>'+esc(p.s.id==='25544'?'ISS':p.s.name)+'</b> '+cmp(p.az0)+'→'+cmp(p.az1)+' · '+Math.round(p.max)+'° up</span><span>'+esc(fmtT(p.start))+' · '+mins+'m</span></div>' }) }
     h+='</div><div class="ssec"><h4>Northern lights</h4>';
     if(!kp||!kp.length) h+='Space weather could not load.';
     else { var now=Date.now(), past=kp.filter(function(r){return r.t<=now}), cur=past.length?past[past.length-1].kp:0, mx=Math.max.apply(null,kp.filter(function(r){return r.t>now&&r.t<now+86400000}).map(function(r){return r.kp}).concat([cur]));
@@ -1181,7 +1181,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function visMi(v){ if(v==null) return null; var n=parseFloat(String(v).replace('+','')); return isFinite(n)?n:null }
   function ceilFt(cl){ var c=null; (cl||[]).forEach(function(x){ if(x&&/^(BKN|OVC|OVX|VV)$/.test(x.cover)&&typeof x.base==='number'&&(c==null||x.base<c)) c=x.base }); return c }
   function fltCat(m){ if(m&&CATC[m.fltCat]) return m.fltCat; var c=ceilFt(m&&m.clouds), v=visMi(m&&m.visib); if(c==null) c=99999; if(v==null) v=10; return (c<500||v<1)?'LIFR':(c<1000||v<3)?'IFR':(c<=3000||v<=5)?'MVFR':'VFR' }
-  function loadApts(){ if(!aptOn){aptLayer.clearLayers();return} if(map.getZoom()<7){aptLayer.clearLayers();return}
+  function loadApts(){ if(!aptOn){aptLayer.clearLayers();return} if(map.getZoom()<6){aptLayer.clearLayers();return}
     var b=map.getBounds(), s0=Math.max(-90,b.getSouth()), n0=Math.min(90,b.getNorth()), w0=Math.max(-180,b.getWest()), e0=Math.min(180,b.getEast());
     if(n0-s0>11||e0-w0>19){aptLayer.clearLayers();return}
     fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[s0,w0,n0,e0].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){
@@ -1190,7 +1190,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }) }).catch(function(){}) }
   map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(loadApts,800)});
   function paintAptBtn(){ var b=document.getElementById('aptbtn'); b.classList.toggle('on',aptOn); b.setAttribute('aria-pressed',String(aptOn)) }
-  document.getElementById('aptbtn').onclick=function(){ aptOn=!aptOn; try{localStorage.setItem('sky-apt',aptOn?'1':'0')}catch(e){} paintAptBtn(); if(aptOn&&map.getZoom()<7) map.setZoom(8); else loadApts() };
+  document.getElementById('aptbtn').onclick=function(){ aptOn=!aptOn; try{localStorage.setItem('sky-apt',aptOn?'1':'0')}catch(e){} paintAptBtn(); if(aptOn&&map.getZoom()<6) map.setZoom(7); else loadApts() };
   paintAptBtn(); if(aptOn) setTimeout(loadApts,1500);
   var WXC={TS:'thunderstorm',SH:'showers',FZ:'freezing',RA:'rain',SN:'snow',DZ:'drizzle',GR:'hail',GS:'small hail',PL:'ice pellets',SG:'snow grains',IC:'ice crystals',UP:'precipitation',FG:'fog',BR:'mist',HZ:'haze',FU:'smoke',DU:'dust',SA:'sand',VA:'volcanic ash',SQ:'squalls',FC:'funnel cloud',BL:'blowing',DR:'drifting',MI:'shallow',BC:'patches of',PR:'partial',VC:'nearby'};
   function wxWords(w){ if(!w) return ''; return String(w).split(/\s+/).slice(0,3).map(function(tok){ var pre=tok.charAt(0)==='-'?'light ':tok.charAt(0)==='+'?'heavy ':''; tok=tok.replace(/^[-+]/,''); var parts=[]; for(var i=0;i<tok.length;i+=2){ var c=tok.substr(i,2); if(WXC[c]) parts.push(WXC[c]) } return parts.length?pre+parts.join(' '):'' }).filter(Boolean).join(', ') }
@@ -1198,7 +1198,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function ft(v){ return units==='av'?Math.round(v).toLocaleString()+' ft':Math.round(v*0.3048/10*10).toLocaleString()+' m' }
   function skyWords(cl){ var c=(cl||[]).filter(function(x){return x&&COVER[x.cover]}); if(!c.length) return 'Clear'; var x=c[c.length-1]; return COVER[x.cover]+(typeof x.base==='number'?' '+ft(x.base):'') }
   function windWords(m){ var s=typeof m.wspd==='number'?m.wspd:null; if(s==null) return '—'; if(s===0) return 'Calm'; var u=units==='av'?Math.round(s)+' kt':Math.round(s*1.852)+' km/h', d=m.wdir==='VRB'||m.wdir==null?'variable':'from '+cmp(+m.wdir); return u+' '+d+(typeof m.wgst==='number'?', gusts '+(units==='av'?Math.round(m.wgst)+' kt':Math.round(m.wgst*1.852)+' km/h'):'') }
-  function visWords(v){ var n=visMi(v); if(n==null) return '—'; var plus=String(v).indexOf('+')>-1||n>=10; return units==='av'?(n>=10?'10+ mi':n+' mi'):(plus?'16+ km':(n*1.609).toFixed(n<3?1:0)+' km') }
+  function visWords(v){ var n=visMi(v); if(n==null) return '—'; var plus=String(v).indexOf('+')>-1; return units==='av'?(n+(plus?'+':'')+' mi'):((n*1.609).toFixed(n<3?1:0)+(plus?'+':'')+' km') }
   function tempWords(c){ if(typeof c!=='number') return '—'; return tcfg==='F'?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C' }
   function loadTaf(id){ var c=tafCache[id]; if(c&&Date.now()-c.t<600000) return Promise.resolve(c.d);
     return fetch(viaRelay('https://aviationweather.gov/api/data/taf?ids='+id+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(j){ var d=Array.isArray(j)&&j[0]&&Array.isArray(j[0].fcsts)?j[0].fcsts:null; tafCache[id]={t:Date.now(),d:d}; return d }).catch(function(){return null}) }
