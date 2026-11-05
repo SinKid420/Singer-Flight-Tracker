@@ -291,6 +291,12 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .empty{color:var(--dim);font-size:13px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.plane,.glide .leaflet-marker-icon{transition:none}}
 @media (max-width:400px){.chips{gap:6px}.seg button{padding:6px 7px}h1{font-size:15px}.pill{padding-left:12px;gap:4px}.stat{font-size:10px}}
+.pill{top:10px;height:34px;padding:0 0 0 4px;background:none;box-shadow:none;pointer-events:none}
+.pill>*{pointer-events:auto}.pill .stat{flex:0 1 auto;margin-left:8px;font-size:12px;color:var(--fg);font-weight:500}
+.pill h1,.pill .stat{text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 6px var(--bg)}
+#stat:not(.bad) em,#stat:not(.bad) em+br,#stat:not(.bad) .live{display:none}
+.pill .icon-btn{width:34px;height:34px;background:var(--bg);box-shadow:var(--shadow);flex:none}
+.chips{top:50px}#nextov,#emerg{top:100px}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
@@ -1061,7 +1067,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   cKick(); map.on('rotate',cKick); setInterval(cKick,1000);
 
   function setStat(text,err){
-    document.getElementById('stat').innerHTML='<i class="live'+(err?' err':'')+'"></i>'+text;
+    var st=document.getElementById('stat'); st.innerHTML='<i class="live'+(err?' err':'')+'"></i>'+text; st.classList.toggle('bad',!!err);
   }
 
   function age(p){return p.seen_pos!=null?p.seen_pos:(p.seen!=null?p.seen:99)}
