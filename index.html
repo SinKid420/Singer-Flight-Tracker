@@ -14,7 +14,6 @@
 <link rel="icon" href="logo-512.png" type="image/png">
 <link rel="apple-touch-icon" href="logo-512.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous" referrerpolicy="no-referrer">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <style>
 /* Layout: full-bleed map, floating search-style pill and map-style chips on top, white bottom sheet below. One phone screen, no page scroll. */
 :root{
@@ -142,7 +141,7 @@ body.zout .mk .lbl:not(.sel){display:none}
 #ferrybtn{top:330px}
 #hubbtn{top:382px;color:#c62828;font-weight:800}
 #hubbtn.alert1{box-shadow:var(--shadow),inset 0 0 0 2.5px #fb8c00}
-#hubbtn.alert2{background:#c62828;color:#fff;animation:hubp 1.6s infinite}
+#hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
 .hubrow{background:var(--chip);border-radius:10px;margin-bottom:5px}
@@ -227,7 +226,7 @@ body:has(#fsheet:not([hidden])) .welcome{display:none}
 .wxlegend{order:-1}
 .legends{bottom:46px}
 .tempctl{width:72px;height:72px;border-radius:50%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#fff;margin:0 16px 8px 0!important;pointer-events:auto;
-  background:rgba(18,18,22,.42);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  background:rgba(18,18,22,.68);
   border:1px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)}
 .tempctl b{font:700 24px/1 var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .tempctl span{font:500 10px/1 var(--font);letter-spacing:.03em;opacity:.9}
@@ -265,14 +264,14 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .setrow select{background:var(--bg);border-radius:16px;padding:9px 10px;min-height:40px;font-size:14px}
 /* compass: glass dial, top-right */
 .compass{position:absolute;z-index:700;top:16px;right:max(16px,env(safe-area-inset-right,0px));width:72px;height:72px;border-radius:50%;padding:0;color:#fff;
-  background:rgba(18,18,22,.42);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);
+  background:rgba(18,18,22,.68);
   border:1px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)}
 .compass svg{display:block;width:100%;height:100%;overflow:visible}
 .compass text{font:700 10px var(--font);fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:2px}
 .compass .north{fill:#ff3b30}
 .compass .tick{stroke:rgba(255,255,255,.65);stroke-width:1;stroke-linecap:round}
 .hdg{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:5px;min-width:44px;text-align:center;padding:3px 8px;border-radius:12px;font:500 11px/1.1 var(--font);font-variant-numeric:tabular-nums;letter-spacing:.03em;color:#fff;
-  background:rgba(18,18,22,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.22)}
+  background:rgba(18,18,22,.72);border:1px solid rgba(255,255,255,.22)}
 .compass:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .folder{background:var(--chip);border-radius:8px;margin-bottom:6px;padding:0 6px 6px}
 .folder summary{cursor:pointer;list-style:none;font-size:14px;font-weight:500;padding:12px 6px;min-height:44px;display:flex;align-items:center;justify-content:space-between}
@@ -489,7 +488,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.GridLayer.prototype.options.keepBuffer=2; L.GridLayer.prototype.options.updateInterval=100;
+  L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
   var tempEl=null, tempC=null, tcfg='C';
@@ -568,7 +567,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function wxOp(k){return Math.min(1,wxOpacity*(WX[k].boost||1))}
   ['cloud','rain','snow'].forEach(function(k){
     var w=WX[k];
-    wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',opacity:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
+    wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',tileSize:512,zoomOffset:-1,updateWhenIdle:true,opacity:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
   });
   (function(){var img=document.getElementById('wxlegimg');img.onerror=function(){img.hidden=true};img.src=WX.rain.legend})();
   // New frames arrive every 6 to 10 minutes. A changing parameter makes the browser fetch fresh tiles.
@@ -580,8 +579,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var RVHOST='https://tilecache.rainviewer.com', rvPaths=[], rvStamp=0;
   var rcfg={src:'auto',loop:'1'};
   try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop)}catch(e){}
-  var RSTEPS=6, frames=[], cur=0, tmr=null, radOp=.62, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
-  function want(k){ var v=rcfg.src; return v==='auto'||v===k }
+  var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=.62, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
+  function want(k){ var v=rcfg.src; if(k==='mx'&&v==='auto'){ var c=map.getCenter(); if(c.lat>24&&c.lat<58&&c.lng>-135&&c.lng<-52) return false } return v==='auto'||v===k }
+  var lazyT=null;
   function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,attribution:attr}) }
   function clearFrames(){ frames.forEach(function(f){ ['rv','iem'].forEach(function(k){ if(f[k]) map.removeLayer(f[k]) }) }); frames=[] }
   function buildFrame(st){ // st = steps of 10 minutes back from now
@@ -597,9 +597,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     clearTimeout(tmr); clearFrames(); parked=false;
     ['rain','snow'].forEach(function(k){ var on=want('ca'); if(on&&!map.hasLayer(wxLayers[k])) wxLayers[k].addTo(map); if(!on&&map.hasLayer(wxLayers[k])) map.removeLayer(wxLayers[k]) });
     if(rcfg.src==='off'){ setFrame(0); return }
-    var n=rcfg.loop==='1'?RSTEPS:1; for(var st=n-1;st>=0;st--) frames.push(buildFrame(st));
-    setFrame(frames.length-1);
-    if(frames.length>1) tmr=setTimeout(function(){ setFrame(0); tmr=setTimeout(step,650) },2500);
+    clearTimeout(lazyT); frames.push(buildFrame(0)); setFrame(0); if(rcfg.loop!=='1') return;
+    var stp=1; (function more(){ if(stp>=RSTEPS){ tmr=setTimeout(function(){ setFrame(0); tmr=setTimeout(step,650) },1500); return }
+      if(document.hidden||parked||document.body.classList.contains('moving')){ lazyT=setTimeout(more,2000); return }
+      frames.unshift(buildFrame(stp)); cur++; stp++; lazyT=setTimeout(more,1200) })();
   }
   function loadRV(force){ fetch('https://api.rainviewer.com/public/weather-maps.json').then(function(r){return r.json()}).then(function(j){
       var p=(j&&j.radar&&j.radar.past)||[]; if(!p.length){ if(force) applyRadar(); return } var t=p[p.length-1].time;
@@ -1332,7 +1333,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var p=fetch('apt/'+k+'.json').then(function(r){return r.ok?r.json():[]}).then(function(a){ a=Array.isArray(a)?a:[]; dirTiles[k]=Promise.resolve(a); return a }).catch(function(){ delete dirTiles[k]; return [] });
     dirTiles[k]=p; return p }
   var dirGen=0, dirList=[];
-  function loadDir(){ var z=map.getZoom(), g=++dirGen; if(cfg2.adir!=='1'||z<6){ dirList=[]; dirLayer.clearLayers(); return }
+  function loadDir(){ var z=map.getZoom(), g=++dirGen; if(cfg2.adir!=='1'||z<(cfg2.declutter==='1'?7:6)){ dirList=[]; dirLayer.clearLayers(); return }
     var b=map.getBounds(), ks={}; for(var la=Math.floor(Math.max(-90,b.getSouth())/10);la<=Math.floor(Math.min(89.99,b.getNorth())/10);la++) for(var lo=Math.floor(Math.max(-180,b.getWest())/10);lo<=Math.floor(Math.min(179.99,b.getEast())/10);lo++) ks[la+'_'+lo]=1;
     var keys=Object.keys(ks); if(keys.length>6){ dirList=[]; dirLayer.clearLayers(); return }
     Promise.all(keys.map(getTile)).then(function(arrs){ if(g!==dirGen) return; dirList=[].concat.apply([],arrs); drawDir() }) }
