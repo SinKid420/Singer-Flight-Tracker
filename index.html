@@ -1240,8 +1240,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var keys=Object.keys(ks); if(keys.length>6){ dirList=[]; dirLayer.clearLayers(); return }
     Promise.all(keys.map(getTile)).then(function(arrs){ if(g!==dirGen) return; dirList=[].concat.apply([],arrs); drawDir() }) }
   function drawDir(){ dirLayer.clearLayers(); if(cfg2.adir!=='1') return; var z=map.getZoom(); if(z<6) return; var b=map.getBounds().pad(0.1), n=0;
-    var bigOnly=cfg2.atype==='big'||z<8;
-    for(var i=0;i<dirList.length&&n<500;i++){ var r=dirList[i]; if(bigOnly&&r[1]!=='L'&&r[1]!=='M') continue; if(!b.contains([r[3],r[4]])) continue; if(aptShown[r[14]]||aptShown[r[0]]) continue; n++;
+    var bigOnly=cfg2.atype==='big';
+    for(var i=0;i<dirList.length&&n<500;i++){ var r=dirList[i]; var mz=r[1]==='L'?6:(r[1]==='M'||r[9])?9:11; if(z<mz||(bigOnly&&mz>9)) continue; if(!b.contains([r[3],r[4]])) continue; if(aptShown[r[14]]||aptShown[r[0]]) continue; n++;
       (function(r){ var big=r[1]==='L'||r[1]==='M'; L.marker([r[3],r[4]],{icon:L.divIcon({className:'',html:'<span class="amk'+(big?' big':'')+'" role="button" aria-label="'+esc(r[2])+'">A</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:big?-350:-400,title:r[2]}).on('click',function(){openDir(dirRec(r))}).addTo(dirLayer) })(r) } }
   setTimeout(loadDir,1200);
   function findDir(icao,lat,lon){ return getTile(tileKey(lat,lon)).then(function(a){ var best=null, bd=1e9; a.forEach(function(r){ if(r[14]===icao||r[0]===icao){ var d=distNm(lat,lon,r[3],r[4]); if(d<bd){bd=d;best=r} } }); return best?dirRec(best):null }) }
@@ -1251,10 +1251,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function aptHead(){ var t=document.getElementById('apttitle'), m=aptSel&&aptData[aptSel], c=m?fltCat(m):null, nm=aInfo?aInfo.name:(m&&m.name)||aptSel||'Airport';
     t.innerHTML='<span style="display:inline-block;max-width:calc(100vw - 140px);font-size:16px;line-height:1.2;vertical-align:middle;overflow:hidden;max-height:2.4em">'+esc(nm)+'</span>'+(c?'<span class="catpill" style="background:'+CATC[c]+'">'+c+'</span>':'');
     [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){ var t2=b.getAttribute('data-t'); b.hidden=(t2==='wx'&&!m)||(t2==='info'&&!aInfo) }) }
-  function cleanTel(t){ t=String(t||'').split(/[;,]/)[0].trim(); return /^[+\d][\d\s().\-]{5,24}$/.test(t)?t:'' }
+  function cleanTel(t){ t=String(t||'').split(/[;,]/)[0].trim(); return /^[+(\d][\d\s().\-]{5,24}$/.test(t)?t:'' }
   function cleanUrl(u){ u=String(u||'').trim(); return /^https?:\/\/[^\s"<>]{3,200}$/i.test(u)?u:'' }
   function moreInfo(rec){ var key=rec.id; if(aExtra[key]) return; var x=aExtra[key]={pend:2}, qDone={};
-    function fin(){ x.pend--; done() }
+    function fin(){ x.pend--; trySite(); done() }
+    function trySite(){ if(x.tel||x.siteDone||!relay) return; var w=x.web||cleanUrl(rec.home); if(!w){ return } x.siteDone=1; x.pend++;
+      fetch(relay+(relay.indexOf('?')>-1?'&':'?')+'phone='+encodeURIComponent(w)).then(function(r){return r.ok?r.json():null}).then(function(j){ var p=j&&Array.isArray(j.phones)?j.phones:[]; for(var i=0;i<p.length&&!x.tel;i++) x.tel=cleanTel(p[i]); if(x.tel) x.telSrc='website' }).catch(function(){}).then(fin) }
+    if(rec.home) setTimeout(trySite,0);
     function done(){ if(aInfo&&aInfo.id===key&&aptTab==='info') aptRender() }
     function wsum(t){ if(!t||x.ext) return Promise.resolve(null); return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t)).then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j||j.type==='disambiguation'||x.ext) return null; x.ext=String(j.extract||'').slice(0,600); x.thumb=j.thumbnail&&/^https:\/\/upload\.wikimedia\.org\//.test(j.thumbnail.source)?j.thumbnail.source:''; x.wurl=j.content_urls&&j.content_urls.mobile&&cleanUrl(j.content_urls.mobile.page); done(); return j.wikibase_item }).catch(function(){return null}) }
     function wd(q){ if(!q||!/^Q\d+$/.test(q)||qDone[q]) return Promise.resolve(); qDone[q]=1; return fetch('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+q+'&props=claims|sitelinks|descriptions&languages=en&sitefilter=enwiki&format=json&origin=*').then(function(r){return r.ok?r.json():null}).then(function(j){ var e=j&&j.entities&&j.entities[q]; if(!e) return; var c=e.claims||{};
@@ -1273,13 +1276,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var rw=a.rws[0], FQO=['TWR','CTAF','ATF','UNIC','MF','AFIS','GND','ATIS','AWOS','ASOS'], fq=a.fqs.slice().sort(function(p,q){ function o(f){ var i=FQO.indexOf(String(f[0]).toUpperCase()); return i<0?99:i } return o(p)-o(q) }).slice(0,1);
     h+='<div class="wxg">'+[['Elevation',a.elev!=null?ft(a.elev):'—'],['Runways',a.rws.length?String(a.rws.length):'—'],['Longest',rw&&rw[1]?ft(rw[1]):'—'],['Surface',rw?surf(rw[2])+(rw[3]?', lit':''):'—'],['Airline flights',a.sched?'Yes':'No'],['Radio',fq.length?fq.map(function(f){return f[0]+' '+f[1]}).join(', '):'—']].map(function(y){return '<div><small>'+y[0]+'</small><span>'+esc(y[1])+'</span></div>'}).join('')+'</div>';
     var tel=x.tel, web=x.web||cleanUrl(a.home);
-    h+='<div class="ssec"><div class="row2"><span>Phone</span><span>'+(tel?'<a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'" style="color:var(--accent)">'+esc(tel)+'</a>':(x.pend>0?'Looking up…':'Not listed'))+'</span></div>'+
+    h+='<div class="ssec"><div class="row2"><span>Phone</span><span>'+(tel?'<a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'" style="color:var(--accent)">'+esc(tel)+'</a>'+(x.telSrc?' <small style="color:var(--dim)">from website</small>':''):(x.pend>0?'Looking up…':'Not listed'))+'</span></div>'+
       (x.hours?'<div class="row2"><span>Hours</span><span>'+esc(x.hours)+'</span></div>':'')+(x.op?'<div class="row2"><span>Operator</span><span style="white-space:normal">'+esc(x.op)+'</span></div>':'')+'</div>';
     var q=encodeURIComponent(a.name+(a.city?' '+a.city:''));
     h+='<div class="abtns">'+(tel?'<a class="pri" href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">📞 Call</a>':'<a class="pri" href="https://www.google.com/maps/search/?api=1&amp;query='+q+'" target="_blank" rel="noopener">📞 Find phone</a>')+
       '<a href="https://www.google.com/maps/dir/?api=1&amp;destination='+a.lat+','+a.lon+'" target="_blank" rel="noopener">🧭 Directions</a>'+
       (web?'<a href="'+esc(web)+'" target="_blank" rel="noopener noreferrer">🌐 Website</a>':(x.wurl?'<a href="'+esc(x.wurl)+'" target="_blank" rel="noopener noreferrer">📖 Wikipedia</a>':'<a href="https://www.google.com/search?q='+q+'+airport" target="_blank" rel="noopener noreferrer">🔎 Search</a>'))+'</div>';
-    h+='<div class="skynote">Airport data: OurAirports · description: Wikipedia · contact: OpenStreetMap and Wikidata</div>';
+    h+='<div class="skynote">Airport data: OurAirports · description: Wikipedia · contact: airport website, OpenStreetMap and Wikidata</div>';
     return h }
   var SURF={ASP:'Asphalt',ASPH:'Asphalt',CON:'Concrete',CONC:'Concrete',GRS:'Grass',GRVL:'Gravel',GRV:'Gravel',GRAVEL:'Gravel',TURF:'Grass',DIRT:'Dirt',WATER:'Water',SAND:'Sand',SNOW:'Snow',ICE:'Ice',PEM:'Paved',BIT:'Paved',UNK:'Unknown'};
   function surf(sv){ sv=String(sv||'').toUpperCase(); for(var k in SURF) if(sv.indexOf(k)===0) return SURF[k]; return sv?sv.charAt(0)+sv.slice(1).toLowerCase():'—' }
