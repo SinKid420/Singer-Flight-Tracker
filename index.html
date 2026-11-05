@@ -528,18 +528,18 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     setFrame(frames.length-1);
     if(frames.length>1) tmr=setTimeout(function(){ setFrame(0); tmr=setTimeout(step,650) },2500);
   }
-  function loadRV(){ fetch('https://api.rainviewer.com/public/weather-maps.json').then(function(r){return r.json()}).then(function(j){
-      var p=(j&&j.radar&&j.radar.past)||[]; if(!p.length) return; var t=p[p.length-1].time;
-      if(t===rvStamp) return; rvStamp=t; rvPaths=p.map(function(x){return x.path}); applyRadar();
-    }).catch(function(){}) }
-  function radarTick(){ if(want('us')) applyRadar(); loadRV() }
+  function loadRV(force){ fetch('https://api.rainviewer.com/public/weather-maps.json').then(function(r){return r.json()}).then(function(j){
+      var p=(j&&j.radar&&j.radar.past)||[]; if(!p.length){ if(force) applyRadar(); return } var t=p[p.length-1].time;
+      if(t===rvStamp){ if(force) applyRadar(); return } rvStamp=t; rvPaths=p.map(function(x){return x.path}); applyRadar();
+    }).catch(function(){ if(force) applyRadar() }) }
+  function radarTick(){ if(!document.hidden) loadRV(want('us')) }
   (function(){ var a=document.getElementById('radsrc'), b=document.getElementById('radloop'); if(!a||!b) return;
     a.value=rcfg.src; b.value=rcfg.loop;
     function save(){ try{localStorage.setItem('sky-radar',JSON.stringify(rcfg))}catch(e){} }
     a.onchange=function(){ rcfg.src=a.value; save(); applyRadar() };
     b.onchange=function(){ rcfg.loop=b.value; save(); applyRadar() };
   })();
-  setTimeout(function(){applyRadar(); loadRV()},4000); setInterval(radarTick,300000);
+  setTimeout(function(){ loadRV(true) },4000); setInterval(radarTick,300000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ loadRV(); if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,650) } } });
   map.on('moveend zoomend',function(){ if(frames.length>1){ clearTimeout(tmr); tmr=setTimeout(step,900) } });
   // While you pan or zoom, keep only the visible radar frame loaded; the rest return when you stop
@@ -717,10 +717,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var motion={}, mLast=0;
   function mPos(m,now){ if(!m||!m.gs||m.trk==null||m.gnd) return m?[m.lat,m.lon]:[0,0]; var dt=Math.min(60,Math.max(0,(now-m.t)/1000)), d=m.gs*0.5144*dt, t=m.trk*Math.PI/180;
     return [m.lat+d*Math.cos(t)/111320, m.lon+d*Math.sin(t)/(111320*Math.cos(m.lat*Math.PI/180))] }
-  function motionTick(now){ requestAnimationFrame(motionTick);
-    if(now-mLast<100||document.hidden||document.body.classList.contains('zooming')||document.body.classList.contains('moving')) return; mLast=now;
-    var t=Date.now(); for(var h in planes){ var m=motion[h]; if(m&&m.gs&&!m.gnd) planes[h].setLatLng(mPos(m,t)) } }
-  requestAnimationFrame(motionTick);
+  function motionTick(all){ if(document.hidden||document.body.classList.contains('zooming')||document.body.classList.contains('moving')) return; mLast++;
+    var n=0; for(var k in planes) n++; if(all!==true&&n>60&&(mLast&1)) return;
+    var t=Date.now(), vb=map.getBounds().pad(0.15); for(var h in planes){ var m=motion[h]; if(m&&m.gs&&!m.gnd){ var ll=mPos(m,t); if(all===true||h===selected||vb.contains(ll)) planes[h].setLatLng(ll) } } }
+  setInterval(motionTick,100); map.on('moveend zoomend',function(){ motionTick(true) });
   function render(list){
     var seen={}, c=map.getCenter(), vb=map.getBounds().pad(0.25), arr=[];
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
@@ -940,8 +940,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(deg!==lastDeg){lastDeg=deg;dialEl.setAttribute('transform','rotate('+(-deg)+' 36 36)')}
     var n=((Math.round(b)%360)+360)%360, t=('00'+n).slice(-3)+'°';
     if(t!==lastTxt){lastTxt=t;hdgEl.textContent=t;mapEl.style.setProperty('--bearing',b+'deg')}
-    requestAnimationFrame(compassTick);
+    if(Math.abs(wrap(b-shown))>0.05) requestAnimationFrame(compassTick); else cRun=false;
   }
+  var cRun=false; function cKick(){ if(cRun) return; cRun=true; lastT=performance.now(); requestAnimationFrame(compassTick) }
   function resetNorth(){
     if(!map.setBearing||resetting) return;
     var b0=wrap(map.getBearing()), t0=performance.now(), dur=350;
@@ -972,7 +973,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     document.getElementById('cnorth').onclick=resetNorth;
     apply();
   })();
-  requestAnimationFrame(compassTick);
+  cKick(); map.on('rotate',cKick); setInterval(cKick,1000);
 
   function setStat(text,err){
     document.getElementById('stat').innerHTML='<i class="live'+(err?' err':'')+'"></i>'+text;
