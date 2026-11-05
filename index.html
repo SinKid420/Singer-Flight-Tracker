@@ -161,7 +161,7 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 #v3hud span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #v3msg{position:absolute;z-index:2;left:50%;top:45%;transform:translate(-50%,-50%);background:rgba(0,0,0,.6);color:#fff;padding:10px 14px;border-radius:12px;font:600 14px var(--font);max-width:80%;text-align:center}
 #v3msg[hidden]{display:none}
-#v3bar{position:absolute;z-index:2;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:8px}
+#v3bar{position:absolute;z-index:2;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:8px}
 #v3bar button{height:44px;padding:0 16px;border-radius:22px;background:rgba(0,0,0,.6);color:#fff;font:600 13px var(--font)}
 .cbtns{display:flex;gap:6px;justify-self:end}
 .v3btn{font:700 12px var(--font)!important;color:var(--accent)!important}
@@ -1629,9 +1629,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var f=H.fires||[];
       h+=row(2,'🔥','Wildfires',f.length?f.length+' · closest '+uDist(f[0].d)+' '+distUnit():'None near',f.length?(f[0].d<16.2?'#e53935':'#fb8c00'):'#43a047',
         f.length?f.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.name||'Wildfire')+'</b><br><small>'+esc(x.status||'')+(x.ha?' · '+Math.round(x.ha).toLocaleString()+' ha':'')+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No active wildfires within '+Math.min(km(),60)+' km.');
-      var a=H.air;
-      h+=row(3,'😷','Air quality',a?Math.round(a.aqi)+' · '+aqiWord(a.aqi):'—',a?aqiCol(a.aqi):null,
-        a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.');
+      var a=H.air, aqw=(H.wx||[]).some(function(x){return /air quality|smoke/i.test(x.name)});
+      h+=row(3,'😷','Air quality',aqw?'Warning issued':a?Math.round(a.aqi)+' · '+aqiWord(a.aqi):'—',aqw?'#fb8c00':a?aqiCol(a.aqi):null,
+        (aqw?'<div style="margin-bottom:6px"><b style="color:#fb8c00">Official air quality warning in effect.</b> See Weather alerts for details.</div>':'')+(a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.'));
       var rd=H.roads||[];
       h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
         rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(x.text.slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
