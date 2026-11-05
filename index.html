@@ -419,7 +419,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var src = 0;
 
   L.GridLayer.prototype.options.keepBuffer=2; L.GridLayer.prototype.options.updateInterval=100;
-  var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:4,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
+  var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix(false);
   var tempEl=null, tempC=null, tcfg='C';
   try{var tv=localStorage.getItem('sky-temp'); if(tv==='F'||tv==='off') tcfg=tv}catch(e){}
