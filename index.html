@@ -404,6 +404,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   if(typeof L==='undefined') return;
   // Default: Grand Forks, BC. Replaced by your GPS position if the browser allows it.
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
+  // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
+  try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
   var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1'};
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
@@ -1090,7 +1092,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function locate(auto){
     if(!navigator.geolocation){setStat('No location<br>using default');return}
     navigator.geolocation.getCurrentPosition(function(pos){
-      me.lat=pos.coords.latitude; me.lon=pos.coords.longitude; me.label='you'; recenter(auto===true&&touched);
+      var nl=pos.coords.latitude, nn=pos.coords.longitude, moved=distNm(me.lat,me.lon,nl,nn);
+      me.lat=nl; me.lon=nn; me.label='you'; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){}
+      recenter(auto===true&&(touched||moved<0.3));
     },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
   document.getElementById('locate').onclick=function(){locate(false)};
