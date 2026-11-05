@@ -1186,7 +1186,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(n0-s0>11||e0-w0>19){aptLayer.clearLayers();return}
     fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[s0,w0,n0,e0].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){
       if(!Array.isArray(list)) return; aptLayer.clearLayers();
-      list.forEach(function(m){ if(!m||typeof m.lat!=='number'||typeof m.lon!=='number'||!/^[A-Z0-9]{3,4}$/.test(m.icaoId||'')) return; aptData[m.icaoId]=m; var c=fltCat(m);
+      list.forEach(function(m){ if(!m||typeof m.lat!=='number'||typeof m.lon!=='number'||!/^[A-Z0-9]{3,4}$/.test(m.icaoId||'')||(m.visib==null&&!m.fltCat)) return; aptData[m.icaoId]=m; var c=fltCat(m);
         L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }) }).catch(function(){}) }
   map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(loadApts,800)});
   function paintAptBtn(){ var b=document.getElementById('aptbtn'); b.classList.toggle('on',aptOn); b.setAttribute('aria-pressed',String(aptOn)) }
