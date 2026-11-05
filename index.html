@@ -143,6 +143,14 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 .ssec b{color:var(--fg);font-weight:500}.ssec .row2{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.ssec .row2 span:last-child{text-align:right;white-space:nowrap}
 .ssec .good{color:var(--good)}.ssec .bad{color:var(--bad)}
 .stog{display:flex;gap:6px;margin-top:4px}.stog button{flex:1;height:34px;border-radius:9px;background:var(--chip);color:var(--dim);font:600 12px var(--font)}.stog button.on{background:var(--accent-bg);color:var(--accent)}
+.amk{position:absolute;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;box-sizing:border-box;background:rgba(18,20,26,.72);border:1px solid rgba(255,255,255,.6);color:#fff;font:700 9px/13px var(--font);text-align:center;cursor:pointer;opacity:.85}
+.amk.big{width:18px;height:18px;line-height:16px;font-size:10.5px;background:rgba(36,108,214,.9);border-color:#fff;opacity:1}
+.amk::after{content:'';position:absolute;inset:-9px}
+.ainfo .ahd{display:flex;gap:10px;align-items:flex-start}.ainfo .ahd img{width:64px;height:48px;object-fit:cover;border-radius:6px;flex:none}
+.ainfo .ext{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px}
+.abtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:6px}
+.abtns a{display:flex;align-items:center;justify-content:center;gap:4px;height:40px;border-radius:10px;background:var(--chip);color:var(--fg);font:600 12px var(--font);text-decoration:none;white-space:nowrap;overflow:hidden}
+.abtns a.pri{background:var(--accent);color:#fff}
 .catpill{display:inline-block;font:700 11px var(--font);color:#fff;border-radius:8px;padding:2px 7px;margin-left:6px;vertical-align:middle}
 .wxg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:6px}.wxg div{background:var(--chip);border-radius:8px;padding:5px 7px;min-width:0}
 .wxg small{display:block;font-size:10px;color:var(--dim)}.wxg span{display:block;font:500 13px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -300,7 +308,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 <div class="sheet-bg" id="aptsheet" hidden>
   <div class="sheet" role="dialog" aria-label="Airport">
     <div class="sheet-head"><b id="apttitle">Airport</b><button class="close" id="aptx" aria-label="Close">✕</button></div>
-    <div class="dtabs" role="tablist" id="apttabs"><button role="tab" data-t="wx" class="on">Weather</button><button role="tab" data-t="board">Arrivals &amp; departures</button></div>
+    <div class="dtabs" role="tablist" id="apttabs"><button role="tab" data-t="info" class="on">Info</button><button role="tab" data-t="wx">Weather</button><button role="tab" data-t="board">Arrivals</button></div>
     <div id="aptbody" style="margin-top:8px"></div>
   </div>
 </div>
@@ -354,8 +362,10 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <label class="setrow" for="s_passAll">Passes listed<select id="s_passAll"><option value="0">Only ones you can see</option><option value="1">Add all ISS passes</option></select></label>
     </details>
     <details class="folder" id="apfolder"><summary>Airports</summary>
-      <label class="setrow" for="s_apt">Airports on map<select id="s_apt"><option value="1">Show</option><option value="0">Hide</option></select></label>
-      <label class="setrow" for="s_aptBad">Which airports<select id="s_aptBad"><option value="0">All</option><option value="1">Only poor weather</option></select></label>
+      <label class="setrow" for="s_apt">Weather tags (APT)<select id="s_apt"><option value="1">Show</option><option value="0">Hide</option></select></label>
+      <label class="setrow" for="s_adir">"A" airport icons<select id="s_adir"><option value="1">Show</option><option value="0">Hide</option></select></label>
+      <label class="setrow" for="s_atype">Icons for<select id="s_atype"><option value="all">All airports</option><option value="big">Main airports only</option></select></label>
+      <label class="setrow" for="s_aptBad">Weather tags for<select id="s_aptBad"><option value="0">All</option><option value="1">Only poor weather</option></select></label>
     </details>
     <details class="folder" id="ffolder"><summary>Flight feeds &amp; key</summary>
     <div id="flist" class="flist"></div>
@@ -376,7 +386,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   if(typeof L==='undefined') return;
   // Default: Grand Forks, BC. Replaced by your GPS position if the browser allows it.
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
-  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov'};
+  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all'};
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
   var refreshMs = 5000, timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
@@ -1209,14 +1219,70 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function visMi(v){ if(v==null) return null; var n=parseFloat(String(v).replace('+','')); return isFinite(n)?n:null }
   function ceilFt(cl){ var c=null; (cl||[]).forEach(function(x){ if(x&&/^(BKN|OVC|OVX|VV)$/.test(x.cover)&&typeof x.base==='number'&&(c==null||x.base<c)) c=x.base }); return c }
   function fltCat(m){ if(m&&CATC[m.fltCat]) return m.fltCat; var c=ceilFt(m&&m.clouds), v=visMi(m&&m.visib); if(c==null) c=99999; if(v==null) v=10; return (c<500||v<1)?'LIFR':(c<1000||v<3)?'IFR':(c<=3000||v<=5)?'MVFR':'VFR' }
-  function loadApts(){ if(!aptOn){aptLayer.clearLayers();return} if(map.getZoom()<6){aptLayer.clearLayers();return}
+  function loadApts(){ if(!aptOn||map.getZoom()<6){aptLayer.clearLayers();aptShown={};drawDir();return}
     var b=map.getBounds(), s0=Math.max(-90,b.getSouth()), n0=Math.min(90,b.getNorth()), w0=Math.max(-180,b.getWest()), e0=Math.min(180,b.getEast());
     if(n0-s0>11||e0-w0>19){aptLayer.clearLayers();return}
     fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[s0,w0,n0,e0].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){
-      if(!Array.isArray(list)) return; aptLayer.clearLayers();
+      if(!Array.isArray(list)) return; aptLayer.clearLayers(); aptShown={};
       list.forEach(function(m){ if(!m||typeof m.lat!=='number'||typeof m.lon!=='number'||!/^[A-Z0-9]{3,4}$/.test(m.icaoId||'')||(m.visib==null&&!m.fltCat)) return; aptData[m.icaoId]=m; var c=fltCat(m); if(cfg2.aptOnlyBad==='1'&&c==='VFR') return;
-        L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }) }).catch(function(){}) }
-  map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(loadApts,800)});
+        aptShown[m.icaoId]=1; L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }); drawDir() }).catch(function(){}) }
+  map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(function(){loadApts();loadDir()},800)});
+  // ---- Airport directory: every airport and airstrip (OurAirports data, stored with the app in 10° tiles) ----
+  var dirLayer=L.layerGroup().addTo(map), dirTiles={}, aptShown={}, aInfo=null, aExtra={}, ATYPE={L:'Large airport',M:'Medium airport',S:'Small airport',W:'Seaplane base'};
+  function dirRec(r){ return {id:r[0],ty:r[1],name:r[2],lat:r[3],lon:r[4],elev:r[5],city:r[6],region:r[7],iata:r[8],sched:r[9],home:r[10],wiki:r[11],rws:r[12]||[],fqs:r[13]||[],icao:r[14],cc:r[15]} }
+  function tileKey(la,lo){ return Math.floor(la/10)+'_'+Math.floor(lo/10) }
+  function getTile(k){ if(dirTiles[k]) return dirTiles[k]; if(!/^-?\d{1,2}_-?\d{1,2}$/.test(k)) return Promise.resolve([]);
+    var p=fetch('apt/'+k+'.json').then(function(r){return r.ok?r.json():[]}).then(function(a){ a=Array.isArray(a)?a:[]; dirTiles[k]=Promise.resolve(a); return a }).catch(function(){ delete dirTiles[k]; return [] });
+    dirTiles[k]=p; return p }
+  var dirGen=0, dirList=[];
+  function loadDir(){ var z=map.getZoom(), g=++dirGen; if(cfg2.adir!=='1'||z<6){ dirList=[]; dirLayer.clearLayers(); return }
+    var b=map.getBounds(), ks={}; for(var la=Math.floor(Math.max(-90,b.getSouth())/10);la<=Math.floor(Math.min(89.99,b.getNorth())/10);la++) for(var lo=Math.floor(Math.max(-180,b.getWest())/10);lo<=Math.floor(Math.min(179.99,b.getEast())/10);lo++) ks[la+'_'+lo]=1;
+    var keys=Object.keys(ks); if(keys.length>6){ dirList=[]; dirLayer.clearLayers(); return }
+    Promise.all(keys.map(getTile)).then(function(arrs){ if(g!==dirGen) return; dirList=[].concat.apply([],arrs); drawDir() }) }
+  function drawDir(){ dirLayer.clearLayers(); if(cfg2.adir!=='1') return; var z=map.getZoom(); if(z<6) return; var b=map.getBounds().pad(0.1), n=0;
+    var bigOnly=cfg2.atype==='big'||z<8;
+    for(var i=0;i<dirList.length&&n<500;i++){ var r=dirList[i]; if(bigOnly&&r[1]!=='L'&&r[1]!=='M') continue; if(!b.contains([r[3],r[4]])) continue; if(aptShown[r[14]]||aptShown[r[0]]) continue; n++;
+      (function(r){ var big=r[1]==='L'||r[1]==='M'; L.marker([r[3],r[4]],{icon:L.divIcon({className:'',html:'<span class="amk'+(big?' big':'')+'" role="button" aria-label="'+esc(r[2])+'">A</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:big?-350:-400,title:r[2]}).on('click',function(){openDir(dirRec(r))}).addTo(dirLayer) })(r) } }
+  setTimeout(loadDir,1200);
+  function findDir(icao,lat,lon){ return getTile(tileKey(lat,lon)).then(function(a){ var best=null, bd=1e9; a.forEach(function(r){ if(r[14]===icao||r[0]===icao){ var d=distNm(lat,lon,r[3],r[4]); if(d<bd){bd=d;best=r} } }); return best?dirRec(best):null }) }
+  function openDir(rec){ aInfo=rec; aptSel=null; aptTab='info'; document.getElementById('aptsheet').hidden=false;
+    var id=rec.icao||rec.id; if(aptData[id]) aptSel=id; aptHead(); aptRender(); moreInfo(rec);
+    if(!aptData[id]&&/^[A-Z0-9]{4}$/.test(id)){ var d=0.3; fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[rec.lat-d,rec.lon-d,rec.lat+d,rec.lon+d].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){ (list||[]).forEach(function(m){ if(m&&m.icaoId===id&&(m.visib!=null||m.fltCat)){ aptData[id]=m; if(aInfo===rec){ aptSel=id; aptHead(); aptRender() } } }) }).catch(function(){}) } }
+  function aptHead(){ var t=document.getElementById('apttitle'), m=aptSel&&aptData[aptSel], c=m?fltCat(m):null, nm=aInfo?aInfo.name:(m&&m.name)||aptSel||'Airport';
+    t.innerHTML='<span style="display:inline-block;max-width:calc(100vw - 140px);font-size:16px;line-height:1.2;vertical-align:middle;overflow:hidden;max-height:2.4em">'+esc(nm)+'</span>'+(c?'<span class="catpill" style="background:'+CATC[c]+'">'+c+'</span>':'');
+    [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){ var t2=b.getAttribute('data-t'); b.hidden=(t2==='wx'&&!m)||(t2==='info'&&!aInfo) }) }
+  function cleanTel(t){ t=String(t||'').split(/[;,]/)[0].trim(); return /^[+\d][\d\s().\-]{5,24}$/.test(t)?t:'' }
+  function cleanUrl(u){ u=String(u||'').trim(); return /^https?:\/\/[^\s"<>]{3,200}$/i.test(u)?u:'' }
+  function moreInfo(rec){ var key=rec.id; if(aExtra[key]) return; var x=aExtra[key]={pend:2}, qDone={};
+    function fin(){ x.pend--; done() }
+    function done(){ if(aInfo&&aInfo.id===key&&aptTab==='info') aptRender() }
+    function wsum(t){ if(!t||x.ext) return Promise.resolve(null); return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t)).then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j||j.type==='disambiguation'||x.ext) return null; x.ext=String(j.extract||'').slice(0,600); x.thumb=j.thumbnail&&/^https:\/\/upload\.wikimedia\.org\//.test(j.thumbnail.source)?j.thumbnail.source:''; x.wurl=j.content_urls&&j.content_urls.mobile&&cleanUrl(j.content_urls.mobile.page); done(); return j.wikibase_item }).catch(function(){return null}) }
+    function wd(q){ if(!q||!/^Q\d+$/.test(q)||qDone[q]) return Promise.resolve(); qDone[q]=1; return fetch('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+q+'&props=claims|sitelinks|descriptions&languages=en&sitefilter=enwiki&format=json&origin=*').then(function(r){return r.ok?r.json():null}).then(function(j){ var e=j&&j.entities&&j.entities[q]; if(!e) return; var c=e.claims||{};
+      function v(p){ var a=c[p]; return a&&a[0]&&a[0].mainsnak&&a[0].mainsnak.datavalue?a[0].mainsnak.datavalue.value:null }
+      if(!x.tel) x.tel=cleanTel(v('P1329')); if(!x.web) x.web=cleanUrl(v('P856')); var de=e.descriptions&&e.descriptions.en&&e.descriptions.en.value; if(de&&!x.wdesc) x.wdesc=String(de).slice(0,160); done(); var sl=e.sitelinks&&e.sitelinks.enwiki; if(sl&&sl.title) return wsum(sl.title) }).catch(function(){}) }
+    wsum(rec.wiki).then(wd).catch(function(){}).then(fin);
+    var nd=0.08;
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&extratags=1&limit=3&bounded=1&viewbox='+[rec.lon-nd,rec.lat+nd,rec.lon+nd,rec.lat-nd].map(function(v){return v.toFixed(4)}).join(',')+'&q='+encodeURIComponent(rec.name)).then(function(r){return r.ok?r.json():null}).then(function(j){ var el=(Array.isArray(j)?j:[]).filter(function(e){return e&&e.category==='aeroway'})[0]; if(!el) return; var t=el.extratags||{};
+      x.tel=cleanTel(t.phone||t['contact:phone'])||x.tel; x.web=x.web||cleanUrl(t.website||t['contact:website']); x.hours=String(t.opening_hours||'').slice(0,80); x.op=String(t.operator||'').slice(0,80); done();
+      var wt=/^en:(.{1,100})$/.exec(t.wikipedia||''); return wsum(wt?wt[1]:'').then(function(){ return wd(t.wikidata) }) }).catch(function(){}).then(fin) }
+  function infoHtml(a){ var x=aExtra[a.id]||{}, h='', d=distNm(me.lat,me.lon,a.lat,a.lon);
+    var codes=[a.icao||a.id,a.iata].filter(Boolean).join(' · ');
+    h+='<div class="ssec ainfo"><div class="ahd"><div style="flex:1;min-width:0"><b>'+esc(ATYPE[a.ty]||'Airport')+'</b> · '+esc(codes)+'<br>'+esc([a.city,(a.region||'').replace(/^[A-Z]{2}-/,'')].filter(Boolean).join(', '))+' · '+uDist(d)+' '+distUnit()+' away</div>'+(x.thumb?'<img src="'+esc(x.thumb)+'" alt="" referrerpolicy="no-referrer">':'')+'</div>';
+    h+=x.ext?'<div class="ext">'+esc(x.ext)+'</div>':(x.pend>0?'<div class="ext">Loading description…</div>':'<div class="ext">'+esc(x.wdesc?x.wdesc.charAt(0).toUpperCase()+x.wdesc.slice(1)+'.':a.sched?'Airport with scheduled airline service.':(a.ty==='S'?'Small airfield for private and light aircraft.':a.ty==='W'?'Water landing area for floatplanes.':'Public airport.'))+'</div>');
+    h+='</div>';
+    var rw=a.rws[0], FQO=['TWR','CTAF','ATF','UNIC','MF','AFIS','GND','ATIS','AWOS','ASOS'], fq=a.fqs.slice().sort(function(p,q){ function o(f){ var i=FQO.indexOf(String(f[0]).toUpperCase()); return i<0?99:i } return o(p)-o(q) }).slice(0,1);
+    h+='<div class="wxg">'+[['Elevation',a.elev!=null?ft(a.elev):'—'],['Runways',a.rws.length?String(a.rws.length):'—'],['Longest',rw&&rw[1]?ft(rw[1]):'—'],['Surface',rw?surf(rw[2])+(rw[3]?', lit':''):'—'],['Airline flights',a.sched?'Yes':'No'],['Radio',fq.length?fq.map(function(f){return f[0]+' '+f[1]}).join(', '):'—']].map(function(y){return '<div><small>'+y[0]+'</small><span>'+esc(y[1])+'</span></div>'}).join('')+'</div>';
+    var tel=x.tel, web=x.web||cleanUrl(a.home);
+    h+='<div class="ssec"><div class="row2"><span>Phone</span><span>'+(tel?'<a href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'" style="color:var(--accent)">'+esc(tel)+'</a>':(x.pend>0?'Looking up…':'Not listed'))+'</span></div>'+
+      (x.hours?'<div class="row2"><span>Hours</span><span>'+esc(x.hours)+'</span></div>':'')+(x.op?'<div class="row2"><span>Operator</span><span style="white-space:normal">'+esc(x.op)+'</span></div>':'')+'</div>';
+    var q=encodeURIComponent(a.name+(a.city?' '+a.city:''));
+    h+='<div class="abtns">'+(tel?'<a class="pri" href="tel:'+esc(tel.replace(/[^\d+]/g,''))+'">📞 Call</a>':'<a class="pri" href="https://www.google.com/maps/search/?api=1&amp;query='+q+'" target="_blank" rel="noopener">📞 Find phone</a>')+
+      '<a href="https://www.google.com/maps/dir/?api=1&amp;destination='+a.lat+','+a.lon+'" target="_blank" rel="noopener">🧭 Directions</a>'+
+      (web?'<a href="'+esc(web)+'" target="_blank" rel="noopener noreferrer">🌐 Website</a>':(x.wurl?'<a href="'+esc(x.wurl)+'" target="_blank" rel="noopener noreferrer">📖 Wikipedia</a>':'<a href="https://www.google.com/search?q='+q+'+airport" target="_blank" rel="noopener noreferrer">🔎 Search</a>'))+'</div>';
+    h+='<div class="skynote">Airport data: OurAirports · description: Wikipedia · contact: OpenStreetMap and Wikidata</div>';
+    return h }
+  var SURF={ASP:'Asphalt',ASPH:'Asphalt',CON:'Concrete',CONC:'Concrete',GRS:'Grass',GRVL:'Gravel',GRV:'Gravel',GRAVEL:'Gravel',TURF:'Grass',DIRT:'Dirt',WATER:'Water',SAND:'Sand',SNOW:'Snow',ICE:'Ice',PEM:'Paved',BIT:'Paved',UNK:'Unknown'};
+  function surf(sv){ sv=String(sv||'').toUpperCase(); for(var k in SURF) if(sv.indexOf(k)===0) return SURF[k]; return sv?sv.charAt(0)+sv.slice(1).toLowerCase():'—' }
   function paintAptBtn(){ var s2=document.getElementById('s_apt'); if(s2) s2.value=aptOn?'1':'0'; var b=document.getElementById('aptbtn'); b.classList.toggle('on',aptOn); b.setAttribute('aria-pressed',String(aptOn)) }
   document.getElementById('aptbtn').onclick=function(){ aptOn=!aptOn; try{localStorage.setItem('sky-apt',aptOn?'1':'0')}catch(e){} paintAptBtn(); if(aptOn&&map.getZoom()<6) map.setZoom(7); else loadApts() };
   paintAptBtn(); if(aptOn) setTimeout(loadApts,1500);
@@ -1230,14 +1296,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function tempWords(c){ if(typeof c!=='number') return '—'; return tcfg==='F'?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C' }
   function loadTaf(id){ var c=tafCache[id]; if(c&&Date.now()-c.t<600000) return Promise.resolve(c.d);
     return fetch(viaRelay('https://aviationweather.gov/api/data/taf?ids='+id+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(j){ var d=Array.isArray(j)&&j[0]&&Array.isArray(j[0].fcsts)?j[0].fcsts:null; tafCache[id]={t:Date.now(),d:d}; return d }).catch(function(){return null}) }
-  function openApt(id){ var m=aptData[id]; if(!m) return; aptSel=id; aptTab='wx'; document.getElementById('aptsheet').hidden=false;
-    var c=fltCat(m); document.getElementById('apttitle').innerHTML=esc(id)+'<span class="catpill" style="background:'+CATC[c]+'">'+c+'</span>';
+  function openApt(id){ var m=aptData[id]; if(!m) return; aptSel=id; aptTab='wx'; aInfo=null; document.getElementById('aptsheet').hidden=false; aptHead();
+    findDir(id,m.lat,m.lon).then(function(r){ if(!r||aptSel!==id||aInfo) return; aInfo=r; moreInfo(r); aptHead() });
     // ask for routes of planes near this airport so the board can fill in
     (lastData||[]).filter(function(p){return p.alt_baro!=='ground'}).map(function(p){return {p:p,d:distNm(m.lat,m.lon,p.lat,p.lon)}}).filter(function(x){return x.d<200}).sort(function(a,b){return a.d-b.d}).slice(0,15).forEach(function(x){needRoute(x.p)});
     aptRender(); loadTaf(id).then(function(){ if(aptSel===id&&aptTab==='wx') aptRender() }) }
-  function aptRender(){ var m=aptData[aptSel], body=document.getElementById('aptbody'); if(!m||!body) return;
+  function aptRender(){ var m=aptData[aptSel], body=document.getElementById('aptbody'); if(!body) return; if(!m&&aInfo) m={lat:aInfo.lat,lon:aInfo.lon,name:aInfo.name}; if(!m) return;
+    if(aptTab==='wx'&&!aptData[aptSel]) aptTab='info'; if(aptTab==='info'&&!aInfo) aptTab='wx';
     [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){b.classList.toggle('on',b.getAttribute('data-t')===aptTab)});
     var h='', c=fltCat(m);
+    if(aptTab==='info'){ h=infoHtml(aInfo) } else
     if(aptTab==='wx'){
       var age=typeof m.obsTime==='number'?Math.round((Date.now()/1000-m.obsTime)/60):null, wx=wxWords(m.wxString);
       h+='<div class="ssec" style="margin-bottom:6px"><b>'+esc(m.name||m.icaoId)+'</b><br>'+esc(CATW[c])+(age!=null&&age>=0?' · reported '+(age<1?'just now':age+' min ago'):'')+'</div>';
@@ -1265,8 +1333,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     }
     if(body._h!==h){ body.innerHTML=h; body._h=h; [].forEach.call(body.querySelectorAll('.brow'),function(r){ r.onclick=function(){ document.getElementById('aptsheet').hidden=true; aptSel=null; select(r.getAttribute('data-h'),true) } }) } }
   [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){ b.onclick=function(){ aptTab=b.getAttribute('data-t'); aptRender() } });
-  document.getElementById('aptx').onclick=function(){document.getElementById('aptsheet').hidden=true;aptSel=null};
-  document.getElementById('aptsheet').onclick=function(e){if(e.target===this){this.hidden=true;aptSel=null}};
+  document.getElementById('aptx').onclick=function(){document.getElementById('aptsheet').hidden=true;aptSel=null;aInfo=null};
+  document.getElementById('aptsheet').onclick=function(e){if(e.target===this){this.hidden=true;aptSel=null;aInfo=null}};
 
   // ---- AR: hold the phone up to the sky and the camera labels the planes you are looking at ----
   (function(){
@@ -1383,8 +1451,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     btn.onclick=start; box.querySelector('#arclose').onclick=function(){stop()};
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
-  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab']];
-    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts() }
+  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype']];
+    function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir() }
     B.forEach(function(b){ var el=document.getElementById(b[0]); if(!el) return; el.value=String(cfg2[b[1]]); el.onchange=function(){ cfg2[b[1]]=el.value; saveCfg2(); changed(b[1]) } });
     var sm=document.getElementById('s_issmap'), sa=document.getElementById('s_satar'), ap=document.getElementById('s_apt'), rb=document.getElementById('s_arreset');
     function saveSpace(){ try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} }
