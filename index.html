@@ -1510,7 +1510,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         var cams=(r.terminal&&r.terminal.webcams)||[], cam=cams[fCam%Math.max(1,cams.length)];
         if(cfg2.ferryCam==='1'&&cam&&https(cam.imageURL)) h+='<img id="fcam" src="'+esc(https(cam.imageURL)+'?t='+Math.floor(Date.now()/60000))+'" alt="'+esc(cam.label||'Terminal camera')+'" style="width:100%;max-height:28vh;object-fit:cover;border-radius:10px;display:block;cursor:pointer" referrerpolicy="no-referrer"><div class="skynote" style="margin-top:3px">📷 '+esc(cam.label||'')+(cams.length>1?' · tap photo for next camera':'')+'</div>';
         var su=/^https:\/\/www\.bcferries\.com\//.test(r.sourceURL||'')?r.sourceURL:'https://www.bcferries.com/current-conditions';
-        h+='<div class="abtns" style="grid-template-columns:1fr;margin-top:6px"><a class="pri" href="'+esc(su)+'" target="_blank" rel="noopener noreferrer">BC Ferries current conditions</a></div>' }
+        var toN=(TERM[r.toTerminalCode]||[r.toTerminalCode])[0];
+        h+='<div class="abtns" style="grid-template-columns:1fr 1fr;margin-top:6px"><a class="pri" href="https://www.bcferries.com/RouteSelectionPage" target="_blank" rel="noopener noreferrer">🎟 Buy tickets</a><a href="'+esc(su)+'" target="_blank" rel="noopener noreferrer">Current conditions</a></div>'+
+          '<div class="skynote" style="margin-top:0">Opens BC Ferries booking. Choose '+esc(t[0])+' → '+esc(toN)+' and your sailing there; payment is on their secure site.</div>' }
       h+='<div class="skynote">Sailings: BC Ferries via bcferriesapi.ca (unofficial, updates every few minutes)</div>';
       var b=sheet('<span style="font-size:16px">⛴ '+esc(t[0])+'</span>',h);
       [].forEach.call(b.querySelectorAll('[data-r]'),function(x){ x.onclick=function(){ fRoute=x.getAttribute('data-r'); fCam=0; ferryRender() } });
