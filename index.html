@@ -133,6 +133,20 @@ body.zooming .glide .leaflet-marker-icon{transition:none}
 .row span{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
 .row span:nth-child(3),.row span:nth-child(4){text-align:right}
 .mk{cursor:pointer}
+.sidebtn{position:absolute;z-index:700;right:max(16px,env(safe-area-inset-right,0px));width:44px;height:44px;border-radius:50%;padding:0;display:grid;place-items:center;background:var(--bg);color:var(--fg);box-shadow:var(--shadow);font:700 11px/1 var(--font)}
+.sidebtn svg{width:22px;height:22px}.sidebtn.on{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent);color:var(--accent)}
+#spacebtn{top:122px}#aptbtn{top:174px}
+.aptmk{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:3px;font:700 10px/1 var(--font);color:#fff;background:rgba(14,14,16,.82);border:1.5px solid var(--c);border-radius:9px;padding:2px 5px 2px 3px;white-space:nowrap;cursor:pointer}
+.aptmk::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--c)}
+.ssec{background:var(--chip);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.35;color:var(--dim)}
+.ssec h4{margin:0 0 3px;font:600 12px var(--font);color:var(--fg);text-transform:uppercase;letter-spacing:.4px}
+.ssec b{color:var(--fg);font-weight:500}.ssec .row2{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.ssec .row2 span:last-child{text-align:right;white-space:nowrap}
+.ssec .good{color:var(--good)}.ssec .bad{color:var(--bad)}
+.stog{display:flex;gap:6px;margin-top:4px}.stog button{flex:1;height:34px;border-radius:9px;background:var(--chip);color:var(--dim);font:600 12px var(--font)}.stog button.on{background:var(--accent-bg);color:var(--accent)}
+.catpill{display:inline-block;font:700 11px var(--font);color:#fff;border-radius:8px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+.wxg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:6px}.wxg div{background:var(--chip);border-radius:8px;padding:5px 7px;min-width:0}
+.wxg small{display:block;font-size:10px;color:var(--dim)}.wxg span{display:block;font:500 13px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:6px 2px;border-bottom:1px solid var(--chip);font-size:12px;cursor:pointer}.brow b{color:var(--accent);font-weight:600}.brow span:last-child{color:var(--dim);white-space:nowrap}
 #nextov{position:absolute;z-index:790;top:120px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;align-items:center;gap:6px;background:var(--bg);color:var(--fg);border-radius:12px;padding:5px 5px 5px 10px;font:500 12px/1.3 var(--font);box-shadow:var(--shadow);cursor:pointer;min-height:40px;box-sizing:border-box}
 #nextov[hidden]{display:none}#nextov>span{flex:1;min-width:0}#nextov b{color:var(--accent);font-weight:600}
 #nextov small{display:block;color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -268,10 +282,25 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     </button>
   </div>
   <div class="welcome" id="welcome" hidden><b id="wtitle"></b><p id="wtext"></p><button type="button" id="wbtn"></button></div>
+  <button class="sidebtn" id="spacebtn" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
+  <button class="sidebtn" id="aptbtn" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
+  </div>
+</div>
+<div class="sheet-bg" id="spacesheet" hidden>
+  <div class="sheet" role="dialog" aria-label="Space and night sky">
+    <div class="sheet-head"><b>Space &amp; night sky</b><button class="close" id="spacex" aria-label="Close">✕</button></div>
+    <div id="spacebody"></div>
+  </div>
+</div>
+<div class="sheet-bg" id="aptsheet" hidden>
+  <div class="sheet" role="dialog" aria-label="Airport">
+    <div class="sheet-head"><b id="apttitle">Airport</b><button class="close" id="aptx" aria-label="Close">✕</button></div>
+    <div class="dtabs" role="tablist" id="apttabs"><button role="tab" data-t="wx" class="on">Weather</button><button role="tab" data-t="board">Arrivals &amp; departures</button></div>
+    <div id="aptbody" style="margin-top:8px"></div>
   </div>
 </div>
 <div class="sheet-bg" id="skysheet" hidden>
@@ -795,7 +824,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     setInterval(function(){ if(!document.hidden) updateNext() },5000);
   })();
   function renderDock(){
-    checkAlerts(); updateNext();
+    checkAlerts(); updateNext(); if(aptSel&&aptTab==='board'&&!document.getElementById('aptsheet').hidden) aptRender();
     var body=document.getElementById('dbody'), dock=document.getElementById('dock');
     var p=lastData.filter(function(x){return x.hex===selected})[0];
     dock.hidden=!p;
@@ -1064,6 +1093,153 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     runTest(); clearTimeout(timer); busy=false; poll();
   };
   applyUnits(); syncLabels(); recenter(); locate(true);
+  // ---- Space & night sky: ISS and bright satellites (CelesTrak orbits + satellite.js), aurora (NOAA SWPC), meteor showers ----
+  var SATJS='https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js', SATSRI='sha384-e6V1JVpc+kVNTxT0gEOla7yL4c92Romsw7itPoipfzHbEjzUwPhTv6oeVDMHHzqT';
+  var sats=[], satReady=null, spaceCfg={map:true,ar:true}, issMks={}, DEG=Math.PI/180, CMP=['N','NE','E','SE','S','SW','W','NW'];
+  try{var scf=JSON.parse(localStorage.getItem('sky-space')||'{}'); if(scf.map===false) spaceCfg.map=false; if(scf.ar===false) spaceCfg.ar=false}catch(e){}
+  function cmp(a){return CMP[Math.round(((a%360)+360)%360/45)%8]}
+  function loadSatJs(){ return new Promise(function(res,rej){ if(window.satellite) return res(); var sc=document.createElement('script'); sc.src=SATJS; sc.integrity=SATSRI; sc.crossOrigin='anonymous'; sc.referrerPolicy='no-referrer'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc) }) }
+  function tleGroup(g){ var K='sky-tle-'+g, c=null; try{c=JSON.parse(localStorage.getItem(K)||'null')}catch(e){}
+    if(c&&Date.now()-c.t<6*3600000) return Promise.resolve(c.d);
+    return fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP='+g+'&FORMAT=tle').then(function(r){if(!r.ok) throw new Error(r.status); return r.text()}).then(function(t){ if(t.length>400000) t=t.slice(0,400000); try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }).catch(function(){ return c?c.d:'' }) }
+  function parseTle(t,tag){ var L=String(t||'').split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean), out=[], i=0;
+    while(i+2<L.length){ if(L[i+1].charAt(0)==='1'&&L[i+2].charAt(0)==='2'){ try{ var rec=satellite.twoline2satrec(L[i+1],L[i+2]); if(!rec.error) out.push({name:L[i].replace(/\s+/g,' ').slice(0,28),id:L[i+1].slice(2,7).trim(),rec:rec,tag:tag}) }catch(e){} i+=3 } else i++ }
+    return out }
+  function loadSats(){ if(satReady) return satReady;
+    satReady=loadSatJs().then(function(){ return Promise.all([tleGroup('stations'),tleGroup('visual'),tleGroup('last-30-days')]) }).then(function(r){ var seen={}, all=[];
+      parseTle(r[0],'station').concat(parseTle(r[1],'bright'),parseTle(r[2],'new').filter(function(x){return /^STARLINK/.test(x.name)})).forEach(function(x){ if(!seen[x.id]){seen[x.id]=1;all.push(x)} });
+      sats=all; issTick(); return all }).catch(function(e){ satReady=null; throw e }); return satReady }
+  function obsGd(){ return {latitude:me.lat*DEG, longitude:me.lon*DEG, height:0.5} }
+  function sunEci(d){ var n=d.getTime()/86400000+2440587.5-2451545.0, Lm=(280.46+0.9856474*n)*DEG, g=(357.528+0.9856003*n)*DEG, lam=Lm+(1.915*Math.sin(g)+0.02*Math.sin(2*g))*DEG, eps=23.439*DEG;
+    return [Math.cos(lam), Math.cos(eps)*Math.sin(lam), Math.sin(eps)*Math.sin(lam)] }
+  function sunlit(p,sun){ var d=p.x*sun[0]+p.y*sun[1]+p.z*sun[2]; if(d>0) return true; var x=p.x-d*sun[0], y=p.y-d*sun[1], z=p.z-d*sun[2]; return Math.sqrt(x*x+y*y+z*z)>6371 }
+  function look(sat,d,gmst,gd){ var pv=satellite.propagate(sat.rec,d); if(!pv||!pv.position||typeof pv.position!=='object') return null;
+    var ecf=satellite.eciToEcf(pv.position,gmst), la=satellite.ecfToLookAngles(gd,ecf), geo=satellite.eciToGeodetic(pv.position,gmst);
+    return {az:la.azimuth/DEG, el:la.elevation/DEG, range:la.rangeSat, h:geo.height, lat:geo.latitude/DEG, lon:geo.longitude/DEG, pos:pv.position, v:pv.velocity} }
+  function upNow(){ if(!window.satellite||!sats.length) return []; var d=new Date(), g=satellite.gstime(d), gd=obsGd(), sun=sunEci(d), dark=sunAlt(me.lat,me.lon,d.getTime())<-6, out=[];
+    sats.forEach(function(x){ var l=look(x,d,g,gd); if(l&&l.el>5){ l.s=x; l.lit=sunlit(l.pos,sun); l.vis=l.lit&&dark; out.push(l) } });
+    return out.sort(function(a,b){ return (b.s.tag==='station')-(a.s.tag==='station')||b.el-a.el }) }
+  function passes(x,hours,step,maxN){ var out=[], gd=obsGd(), t0=Date.now(), cur=null;
+    for(var t=0;t<=hours*3600;t+=step){ var d=new Date(t0+t*1000), l=look(x,d,satellite.gstime(d),gd); if(!l) continue;
+      if(l.el>10){ if(!cur) cur={s:x,start:d,az0:l.az,max:l.el,vis:false}; if(l.el>cur.max) cur.max=l.el;
+        if(!cur.vis&&sunlit(l.pos,sunEci(d))&&sunAlt(me.lat,me.lon,d.getTime())<-6) cur.vis=true; cur.end=d; cur.az1=l.az }
+      else if(cur){ out.push(cur); cur=null; if(out.length>=maxN) break } }
+    if(cur) out.push(cur); return out }
+  function issTick(){ var want=spaceCfg.map&&window.satellite&&sats.length; ['25544','48274'].forEach(function(id){ var x=sats.filter(function(q){return q.id===id})[0], mk=issMks[id];
+      if(!want||!x){ if(mk){map.removeLayer(mk);delete issMks[id]} return } var d=new Date(), l=look(x,d,satellite.gstime(d),obsGd()); if(!l) return;
+      var ll=[l.lat,l.lon], lbl=id==='25544'?'ISS':'Tiangong';
+      if(!mk) mk=issMks[id]=L.marker(ll,{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:#4fc3f7">🛰 '+lbl+'</span>',iconSize:[0,0]}),keyboard:false,interactive:true,bubblingMouseEvents:false,zIndexOffset:500}).on('click',openSpace).addTo(map);
+      else mk.setLatLng(ll) }) }
+  setInterval(function(){ if(!document.hidden&&sats.length) issTick() },3000);
+  try{ if(localStorage.getItem('sky-space-used')==='1'&&spaceCfg.map) setTimeout(function(){loadSats().catch(function(){})},6000) }catch(e){}
+  var kpCache=null;
+  function loadKp(){ if(kpCache&&Date.now()-kpCache.t<1800000) return Promise.resolve(kpCache.d);
+    return fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json').then(function(r){return r.ok?r.json():null}).then(function(j){ if(!Array.isArray(j)) return null;
+      var rows=j.filter(function(r){return r&&typeof r==='object'&&r.time_tag&&typeof r.kp==='number'}).map(function(r){return {t:Date.parse(r.time_tag+'Z'),kp:r.kp,obs:r.observed}});
+      kpCache={t:Date.now(),d:rows}; return rows }).catch(function(){return null}) }
+  function magLat(){ var p=80.7*DEG, l=-72.7*DEG, a=me.lat*DEG, o=me.lon*DEG; return Math.asin(Math.sin(a)*Math.sin(p)+Math.cos(a)*Math.cos(p)*Math.cos(o-l))/DEG }
+  var SHOWERS=[[0,3,'Quadrantids',110],[3,22,'Lyrids',18],[4,6,'Eta Aquariids',50],[6,30,'Delta Aquariids',25],[7,12,'Perseids',100],[9,8,'Draconids',10],[9,21,'Orionids',20],[10,17,'Leonids',15],[11,14,'Geminids',150],[11,22,'Ursids',10]];
+  function nextShower(){ var now=new Date(), best=null; SHOWERS.forEach(function(s){ for(var y=now.getFullYear();y<=now.getFullYear()+1;y++){ var d=new Date(y,s[0],s[1],22); if(d.getTime()>now.getTime()-2*86400000){ if(!best||d<best.d) best={d:d,n:s[2],z:s[3]}; break } } }); return best }
+  function fmtT(d){ var t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}), day=new Date(); day.setHours(0,0,0,0); var dd=Math.floor((d-day)/86400000); return (dd===0?'Today ':dd===1?'Tomorrow ':d.toLocaleDateString([], {weekday:'short'})+' ')+t }
+  var spaceTok=0;
+  function openSpace(){ try{localStorage.setItem('sky-space-used','1')}catch(e){} var body=document.getElementById('spacebody'), tok=++spaceTok; document.getElementById('spacesheet').hidden=false;
+    body.innerHTML='<div class="ssec">Loading satellites and space weather…</div>';
+    Promise.all([loadSats().catch(function(){return null}),loadKp()]).then(function(r){ if(tok!==spaceTok) return; renderSpace(r[1],null);
+      setTimeout(function(){ if(tok!==spaceTok||!sats.length) return; var list=[], todo=sats.filter(function(x){return x.tag!=='new'}), i=0;
+        (function chunk(){ if(tok!==spaceTok) return; var end=Math.min(i+15,todo.length); for(;i<end;i++){ var x=todo[i], ps=passes(x,x.tag==='station'?24:12,x.tag==='station'?30:60,4); ps.forEach(function(p){ if(x.tag==='station'||(p.vis&&p.max>=30)) list.push(p) }) }
+          if(i<todo.length) setTimeout(chunk,0); else renderSpace(r[1],list) })() },50) }) }
+  function renderSpace(kp,pl){ var body=document.getElementById('spacebody'); if(!body) return; var h='';
+    var up=upNow(), iss=sats.filter(function(x){return x.id==='25544'})[0], issL=null;
+    if(iss){ var d=new Date(); issL=look(iss,d,satellite.gstime(d),obsGd()) }
+    h+='<div class="ssec"><h4>Right now</h4>';
+    if(!sats.length) h+='Satellite data could not load. Check your connection and try again.';
+    else { if(issL) h+='<div class="row2"><span>🛰 <b>ISS</b> '+(issL.el>0?'is <b class="good">above you</b>, '+cmp(issL.az)+' · '+Math.round(issL.el)+'° up':'is '+Math.round(distNm(me.lat,me.lon,issL.lat,issL.lon)*1.852).toLocaleString()+' km away')+'</span><span>'+Math.round(issL.h)+' km up</span></div>';
+      h+='<div class="row2"><span><b>'+up.length+'</b> tracked satellites above you · <b>'+up.filter(function(x){return x.vis}).length+'</b> lit and visible</span><span></span></div>' }
+    h+='</div><div class="ssec"><h4>Next passes you can see</h4>';
+    if(pl==null) h+=sats.length?'Working out passes…':'—';
+    else { var vis=pl.filter(function(p){return p.vis}).sort(function(a,b){return a.start-b.start}).slice(0,4);
+      if(!vis.length){ var nx=pl.filter(function(p){return p.s.id==='25544'}).sort(function(a,b){return a.start-b.start})[0]; h+='No bright passes in darkness soon.'+(nx?' Next ISS flyover: '+esc(fmtT(nx.start))+' (daylight or in shadow).':'') }
+      vis.forEach(function(p){ var mins=Math.max(1,Math.round((p.end-p.start)/60000)); h+='<div class="row2"><span><b>'+esc(p.s.id==='25544'?'ISS':p.s.name)+'</b> '+cmp(p.az0)+' → '+cmp(p.az1)+' · up to '+Math.round(p.max)+'°</span><span>'+esc(fmtT(p.start))+' · '+mins+' min</span></div>' }) }
+    h+='</div><div class="ssec"><h4>Northern lights</h4>';
+    if(!kp||!kp.length) h+='Space weather could not load.';
+    else { var now=Date.now(), past=kp.filter(function(r){return r.t<=now}), cur=past.length?past[past.length-1].kp:0, mx=Math.max.apply(null,kp.filter(function(r){return r.t>now&&r.t<now+86400000}).map(function(r){return r.kp}).concat([cur]));
+      var need=Math.max(0,Math.min(9,(66-magLat())/2)), ch=mx>=need?['Good chance','good']:(mx>=need-1.5?['Possible, look north','']:['Low chance','bad']);
+      h+='<div class="row2"><span><b class="'+ch[1]+'">'+ch[0]+'</b> in the next 24 h</span><span>Kp '+cur.toFixed(1)+' now · up to '+mx.toFixed(1)+'</span></div><div>Your area needs about Kp '+Math.ceil(need)+'+ and a dark, clear sky.</div>' }
+    var ms=nextShower(); if(ms){ var dd=Math.round((ms.d-Date.now())/86400000); h+='</div><div class="ssec"><h4>Next meteor shower</h4><div class="row2"><span><b>'+ms.n+'</b> · up to '+ms.z+' an hour</span><span>'+(dd<=1?'peaking now':'peak '+ms.d.toLocaleDateString([], {month:'short',day:'numeric'}))+'</span></div>' }
+    h+='</div><div class="stog"><button data-k="map" class="'+(spaceCfg.map?'on':'')+'">ISS on map</button><button data-k="ar" class="'+(spaceCfg.ar?'on':'')+'">Satellites in AR</button></div>';
+    h+='<div class="skynote">Orbits: CelesTrak · Space weather: NOAA SWPC</div>';
+    body.innerHTML=h;
+    [].forEach.call(body.querySelectorAll('.stog button'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-k'); spaceCfg[k]=!spaceCfg[k]; b.classList.toggle('on',spaceCfg[k]); try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} issTick() } }) }
+  document.getElementById('spacebtn').onclick=openSpace;
+  document.getElementById('spacex').onclick=function(){spaceTok++;document.getElementById('spacesheet').hidden=true};
+  document.getElementById('spacesheet').onclick=function(e){if(e.target===this){spaceTok++;this.hidden=true}};
+
+  // ---- Airports: live weather (aviationweather.gov through the relay) and an arrivals/departures board ----
+  var aptOn=false, aptLayer=L.layerGroup().addTo(map), aptData={}, aptSel=null, aptTab='wx', aptT=null, tafCache={};
+  try{aptOn=localStorage.getItem('sky-apt')==='1'}catch(e){}
+  var CATC={VFR:'#34c759',MVFR:'#2f8cff',IFR:'#ff3b30',LIFR:'#d63bff'}, CATW={VFR:'Good flying weather',MVFR:'Marginal: low cloud or haze',IFR:'Poor: low cloud or fog',LIFR:'Very poor: very low cloud or fog'};
+  function visMi(v){ if(v==null) return null; var n=parseFloat(String(v).replace('+','')); return isFinite(n)?n:null }
+  function ceilFt(cl){ var c=null; (cl||[]).forEach(function(x){ if(x&&/^(BKN|OVC|OVX|VV)$/.test(x.cover)&&typeof x.base==='number'&&(c==null||x.base<c)) c=x.base }); return c }
+  function fltCat(m){ if(m&&CATC[m.fltCat]) return m.fltCat; var c=ceilFt(m&&m.clouds), v=visMi(m&&m.visib); if(c==null) c=99999; if(v==null) v=10; return (c<500||v<1)?'LIFR':(c<1000||v<3)?'IFR':(c<=3000||v<=5)?'MVFR':'VFR' }
+  function loadApts(){ if(!aptOn){aptLayer.clearLayers();return} if(map.getZoom()<7){aptLayer.clearLayers();return}
+    var b=map.getBounds(), s0=Math.max(-90,b.getSouth()), n0=Math.min(90,b.getNorth()), w0=Math.max(-180,b.getWest()), e0=Math.min(180,b.getEast());
+    if(n0-s0>11||e0-w0>19){aptLayer.clearLayers();return}
+    fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[s0,w0,n0,e0].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){
+      if(!Array.isArray(list)) return; aptLayer.clearLayers();
+      list.forEach(function(m){ if(!m||typeof m.lat!=='number'||typeof m.lon!=='number'||!/^[A-Z0-9]{3,4}$/.test(m.icaoId||'')) return; aptData[m.icaoId]=m; var c=fltCat(m);
+        L.marker([m.lat,m.lon],{icon:L.divIcon({className:'',html:'<span class="aptmk" style="--c:'+CATC[c]+'">'+esc(m.icaoId)+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-300}).on('click',function(){openApt(m.icaoId)}).addTo(aptLayer) }) }).catch(function(){}) }
+  map.on('moveend',function(){clearTimeout(aptT);aptT=setTimeout(loadApts,800)});
+  function paintAptBtn(){ var b=document.getElementById('aptbtn'); b.classList.toggle('on',aptOn); b.setAttribute('aria-pressed',String(aptOn)) }
+  document.getElementById('aptbtn').onclick=function(){ aptOn=!aptOn; try{localStorage.setItem('sky-apt',aptOn?'1':'0')}catch(e){} paintAptBtn(); if(aptOn&&map.getZoom()<7) map.setZoom(8); else loadApts() };
+  paintAptBtn(); if(aptOn) setTimeout(loadApts,1500);
+  var WXC={TS:'thunderstorm',SH:'showers',FZ:'freezing',RA:'rain',SN:'snow',DZ:'drizzle',GR:'hail',GS:'small hail',PL:'ice pellets',SG:'snow grains',IC:'ice crystals',UP:'precipitation',FG:'fog',BR:'mist',HZ:'haze',FU:'smoke',DU:'dust',SA:'sand',VA:'volcanic ash',SQ:'squalls',FC:'funnel cloud',BL:'blowing',DR:'drifting',MI:'shallow',BC:'patches of',PR:'partial',VC:'nearby'};
+  function wxWords(w){ if(!w) return ''; return String(w).split(/\s+/).slice(0,3).map(function(tok){ var pre=tok.charAt(0)==='-'?'light ':tok.charAt(0)==='+'?'heavy ':''; tok=tok.replace(/^[-+]/,''); var parts=[]; for(var i=0;i<tok.length;i+=2){ var c=tok.substr(i,2); if(WXC[c]) parts.push(WXC[c]) } return parts.length?pre+parts.join(' '):'' }).filter(Boolean).join(', ') }
+  var COVER={FEW:'Few clouds',SCT:'Scattered clouds',BKN:'Broken clouds',OVC:'Overcast',OVX:'Sky hidden',VV:'Sky hidden'};
+  function ft(v){ return units==='av'?Math.round(v).toLocaleString()+' ft':Math.round(v*0.3048/10*10).toLocaleString()+' m' }
+  function skyWords(cl){ var c=(cl||[]).filter(function(x){return x&&COVER[x.cover]}); if(!c.length) return 'Clear'; var x=c[c.length-1]; return COVER[x.cover]+(typeof x.base==='number'?' '+ft(x.base):'') }
+  function windWords(m){ var s=typeof m.wspd==='number'?m.wspd:null; if(s==null) return '—'; if(s===0) return 'Calm'; var u=units==='av'?Math.round(s)+' kt':Math.round(s*1.852)+' km/h', d=m.wdir==='VRB'||m.wdir==null?'variable':'from '+cmp(+m.wdir); return u+' '+d+(typeof m.wgst==='number'?', gusts '+(units==='av'?Math.round(m.wgst)+' kt':Math.round(m.wgst*1.852)+' km/h'):'') }
+  function visWords(v){ var n=visMi(v); if(n==null) return '—'; var plus=String(v).indexOf('+')>-1||n>=10; return units==='av'?(n>=10?'10+ mi':n+' mi'):(plus?'16+ km':(n*1.609).toFixed(n<3?1:0)+' km') }
+  function tempWords(c){ if(typeof c!=='number') return '—'; return tcfg==='F'?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C' }
+  function loadTaf(id){ var c=tafCache[id]; if(c&&Date.now()-c.t<600000) return Promise.resolve(c.d);
+    return fetch(viaRelay('https://aviationweather.gov/api/data/taf?ids='+id+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(j){ var d=Array.isArray(j)&&j[0]&&Array.isArray(j[0].fcsts)?j[0].fcsts:null; tafCache[id]={t:Date.now(),d:d}; return d }).catch(function(){return null}) }
+  function openApt(id){ var m=aptData[id]; if(!m) return; aptSel=id; aptTab='wx'; document.getElementById('aptsheet').hidden=false;
+    var c=fltCat(m); document.getElementById('apttitle').innerHTML=esc(id)+'<span class="catpill" style="background:'+CATC[c]+'">'+c+'</span>';
+    // ask for routes of planes near this airport so the board can fill in
+    (lastData||[]).filter(function(p){return p.alt_baro!=='ground'}).map(function(p){return {p:p,d:distNm(m.lat,m.lon,p.lat,p.lon)}}).filter(function(x){return x.d<200}).sort(function(a,b){return a.d-b.d}).slice(0,15).forEach(function(x){needRoute(x.p)});
+    aptRender(); loadTaf(id).then(function(){ if(aptSel===id&&aptTab==='wx') aptRender() }) }
+  function aptRender(){ var m=aptData[aptSel], body=document.getElementById('aptbody'); if(!m||!body) return;
+    [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){b.classList.toggle('on',b.getAttribute('data-t')===aptTab)});
+    var h='', c=fltCat(m);
+    if(aptTab==='wx'){
+      var age=typeof m.obsTime==='number'?Math.round((Date.now()/1000-m.obsTime)/60):null, wx=wxWords(m.wxString);
+      h+='<div class="ssec" style="margin-bottom:6px"><b>'+esc(m.name||m.icaoId)+'</b><br>'+esc(CATW[c])+(age!=null&&age>=0?' · reported '+(age<1?'just now':age+' min ago'):'')+'</div>';
+      h+='<div class="wxg">'+[['Wind',windWords(m)],['Visibility',visWords(m.visib)],['Sky',skyWords(m.clouds)],['Temperature',tempWords(m.temp)],['Pressure',typeof m.altim==='number'?Math.round(m.altim)+' hPa':'—'],['Weather',wx||'None']].map(function(x){return '<div><small>'+x[0]+'</small><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>';
+      var warn=[]; if(/TS/.test(m.wxString||'')) warn.push('Thunderstorm at the airport'); var cf=ceilFt(m.clouds); if(cf!=null&&cf<1000) warn.push('Very low cloud ('+ft(cf)+')'); if(typeof m.wgst==='number'&&m.wgst>=25) warn.push('Strong gusts'); var vm=visMi(m.visib); if(vm!=null&&vm<3) warn.push('Low visibility');
+      var f=(tafCache[aptSel]||{}).d;
+      if(f){ f.forEach(function(x){ if(/TS/.test(x.wxString||'')&&warn.indexOf('Thunderstorms in the forecast')<0) warn.push('Thunderstorms in the forecast') }) }
+      if(warn.length) h+='<div class="ssec"><span class="bad">⚠ '+esc(warn.slice(0,3).join(' · '))+'</span><br>These can cause delays.</div>';
+      h+='<div class="ssec"><h4>Forecast</h4>';
+      if(f===undefined) h+='Loading forecast…'; else if(!f||!f.length) h+='No forecast issued for this airport.';
+      else { var nowS=Date.now()/1000; f.filter(function(x){return typeof x.timeTo!=='number'||x.timeTo>nowS}).slice(0,4).forEach(function(x){ var fc=fltCat(x), t=typeof x.timeFrom==='number'?new Date(x.timeFrom*1000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'';
+          var bits=[x.fcstChange==='TEMPO'?'at times':(x.fcstChange==='PROB'?(x.probability||'')+'% chance':''),wxWords(x.wxString),skyWords(x.clouds),typeof x.wspd==='number'&&x.wspd>0?windWords(x):''].filter(Boolean).join(', ');
+          h+='<div class="row2"><span><b style="color:'+CATC[fc]+'">●</b> '+esc(bits||'No change')+'</span><span>'+esc(t?'from '+t:'')+'</span></div>' }) }
+      h+='</div><div class="skynote">Weather: aviationweather.gov (METAR/TAF)</div>';
+    } else {
+      var arr=[], dep=[];
+      (lastData||[]).forEach(function(p){ var r=routeOf(p); if(!r||p.alt_baro==='ground') return;
+        if(distNm(r.d.la,r.d.lo,m.lat,m.lon)<5){ var rem=distNm(p.lat,p.lon,r.d.la,r.d.lo); if(p.gs>60) arr.push({p:p,from:r.o.c,mins:rem/p.gs*60+(rem>60?9:(rem>15?4:1)),rem:rem}) }
+        else if(distNm(r.o.la,r.o.lo,m.lat,m.lon)<5){ dep.push({p:p,to:r.d.c,gone:distNm(p.lat,p.lon,m.lat,m.lon)}) } });
+      arr.sort(function(a,b){return a.mins-b.mins}); dep.sort(function(a,b){return a.gone-b.gone});
+      function rows(list,fn){ return list.slice(0,5).map(fn).join('') }
+      h+='<div class="ssec"><h4>Arriving</h4>'+(arr.length?rows(arr,function(x){ var t=new Date(Date.now()+x.mins*60000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}); return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> from '+esc(x.from)+' · '+esc(x.p.t||'')+'</span><span>lands ~'+esc(t)+'</span></div>' }):'No arrivals found nearby yet.')+'</div>';
+      h+='<div class="ssec"><h4>Departed</h4>'+(dep.length?rows(dep,function(x){ return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> to '+esc(x.to)+' · '+esc(x.p.t||'')+'</span><span>'+uDist(x.gone)+' '+distUnit()+' out</span></div>' }):'No recent departures found nearby.')+'</div>';
+      h+='<div class="skynote">Built from live planes and their routes around the airport. Airline gate and delay times need a paid feed.</div>';
+    }
+    if(body._h!==h){ body.innerHTML=h; body._h=h; [].forEach.call(body.querySelectorAll('.brow'),function(r){ r.onclick=function(){ document.getElementById('aptsheet').hidden=true; aptSel=null; select(r.getAttribute('data-h'),true) } }) } }
+  [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){ b.onclick=function(){ aptTab=b.getAttribute('data-t'); aptRender() } });
+  document.getElementById('aptx').onclick=function(){document.getElementById('aptsheet').hidden=true;aptSel=null};
+  document.getElementById('aptsheet').onclick=function(e){if(e.target===this){this.hidden=true;aptSel=null}};
+
   // ---- AR: hold the phone up to the sky and the camera labels the planes you are looking at ----
   (function(){
     var btn=document.getElementById('arbtn'); if(!btn) return;
@@ -1110,21 +1286,23 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       headEl.textContent='Facing '+Math.round(hd)+'° '+DIRS[Math.round(hd/45)%8];
       msgEl.textContent=camErr||(el<-5?'Tilt up toward the sky':(absOri?'Tilt '+(el>=0?'up ':'down ')+Math.abs(Math.round(el))+'°':'Compass not absolute – drag sideways to align'));
       var list=(lastData||[]).map(function(p){var q=enu(p,now);return q?{p:p,q:q}:null}).filter(Boolean).sort(function(a,b){return a.q.d-b.q.d}).slice(0,40);
+      if(spaceCfg.ar&&window.satellite&&sats.length){ if(!frame._st||now-frame._st>2000){frame._st=now;frame._su=upNow()} var o2=off*D;
+        frame._su.slice(0,12).forEach(function(l){ var E=Math.sin(l.az*D)*Math.cos(l.el*D), N=Math.cos(l.az*D)*Math.cos(l.el*D); list.push({p:{hex:'sat'+l.s.id,_sat:l},q:{v:[E*Math.cos(o2)-N*Math.sin(o2),E*Math.sin(o2)+N*Math.cos(o2),Math.sin(l.el*D)],d:l.range*1000}}) }) }
       list.forEach(function(it,idx){
         var p=it.p, v=it.q.v, l=Math.hypot(v[0],v[1],v[2])||1, x=(v[0]*basis.r[0]+v[1]*basis.r[1]+v[2]*basis.r[2])/l, y=(v[0]*basis.u[0]+v[1]*basis.u[1]+v[2]*basis.u[2])/l, z=(v[0]*basis.f[0]+v[1]*basis.f[1]+v[2]*basis.f[2])/l;
         var sx=W/2+x/z*fpx, sy=H/2-y/z*fpx;
         if(z>0.05&&sx>-40&&sx<W+40&&sy>-20&&sy<H+80){
           var t=tags[p.hex]; if(!t){t=tags[p.hex]=document.createElement('div');t.className='artag';t.innerHTML='<div class="box"></div><div class="stem"></div><div class="ring"></div>';lay.appendChild(t);(function(h){t.onclick=function(ev){ev.stopPropagation();showCard(h)}})(p.hex)}
-          var far=idx>7, alt=p.alt_baro==='ground'?'GND':uAlt(p.alt_baro)+' '+altUnit(), ty=typeName(p);
-          var html='<b>'+esc(name(p))+'</b>'+(far?'':esc(ty?ty+' · ':'')) +alt+' · '+fmtD(it.q.d);
+          var far=p._sat?(p._sat.s.tag!=='station'):idx>7, alt=p._sat?'':(p.alt_baro==='ground'?'GND':uAlt(p.alt_baro)+' '+altUnit()), ty=p._sat?'':typeName(p);
+          var html=p._sat?('<b>🛰 '+esc(p._sat.s.name)+'</b>'+Math.round(p._sat.h)+' km up · '+(p._sat.vis?'visible now':'not lit')):('<b>'+esc(name(p))+'</b>'+(far?'':esc(ty?ty+' · ':'')) +alt+' · '+fmtD(it.q.d));
           if(t._h!==html){t.firstChild.innerHTML=html;t._h=html;t._w=0}
-          t.className='artag'+(far?' far':'')+(p.hex===pick?' sel':''); t.style.setProperty('--c',pcol(p.hex));
+          t.className='artag'+(far?' far':'')+(p.hex===pick?' sel':''); t.style.setProperty('--c',p._sat?'#4fc3f7':pcol(p.hex));
           if(!t._w){t._w=t.firstChild.offsetWidth||(far?96:150);t._bh=t.firstChild.offsetHeight||(far?30:42)}
           var bw=t._w, bh=t._bh, bx=Math.max(bw/2+4,Math.min(W-bw/2-4,sx)), ty2=sy-22-bh/2;
           var hit=false; for(var k=0;k<4;k++){hit=placed.some(function(r){return Math.abs(r.x-bx)<(r.w+bw)/2+4&&Math.abs(r.y-ty2)<(r.h+bh)/2+3});if(!hit)break;ty2-=bh+5} t.classList.toggle('nobox',hit); t.style.zIndex=100-idx;
           if(!hit) placed.push({x:bx,y:ty2,w:bw,h:bh}); t.lastChild.previousSibling.style.height=Math.max(6,sy-ty2-bh/2-8)+'px'; t.firstChild.style.transform='translateX('+Math.round(bx-sx)+'px)';
           t.style.transform='translate('+Math.round(sx)+'px,'+Math.round(sy+8)+'px) translate(-50%,-100%)'; t.style.display=''; seen[p.hex]=1; vis++;
-        } else if(offs.length<3&&idx<10) offs.push({p:p,x:x,y:y,d:it.q.d});
+        } else if(!p._sat&&offs.length<3&&idx<10) offs.push({p:p,x:x,y:y,d:it.q.d});
       });
       Object.keys(tags).forEach(function(h){if(!seen[h]){tags[h].remove();delete tags[h]}});
       edges.forEach(function(e){e.remove()}); edges=[]; edgeBox.hidden=!!pick;
@@ -1134,8 +1312,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       cntEl.textContent=vis?'· '+vis+' in view':'';
       if(pick) fillCard();
     }
-    function findP(h){return (lastData||[]).filter(function(p){return p.hex===h})[0]}
+    function findP(h){ if(/^sat/.test(h)){ var l=(frame._su||[]).filter(function(x){return 'sat'+x.s.id===h})[0]; return l?{hex:h,_sat:l}:null } return (lastData||[]).filter(function(p){return p.hex===h})[0]}
     function fillCard(){var p=findP(pick); if(!p){card.hidden=true;pick=null;hint.hidden=false;return}
+      if(p._sat){ var L2=p._sat, sp=L2.v?Math.round(Math.hypot(L2.v.x,L2.v.y,L2.v.z)*3600):0, h2='<h3>🛰 '+esc(L2.s.name)+'</h3><div>'+esc(({station:'Space station',bright:'Bright satellite','new':'Starlink, recent launch'})[L2.s.tag]||'Satellite')+' · '+(L2.vis?'lit by the sun: look for a moving star':'in shadow or daylight: hard to see')+'</div><div class="g">'+
+        '<span>Height <b>'+Math.round(L2.h).toLocaleString()+' km</b></span><span>Speed <b>'+sp.toLocaleString()+' km/h</b></span><span>Look <b>'+DIRS[Math.round(L2.az/45)%8]+' · '+Math.round(L2.el)+'° up</b></span><span>Distance <b>'+Math.round(L2.range).toLocaleString()+' km</b></span></div><div class="acts"><button id="arx">Close</button></div>';
+        if(card._h!==h2){card.innerHTML=h2;card._h=h2;card.querySelector('#arx').onclick=function(){pick=null;card.hidden=true;hint.hidden=false}} return }
       var q=enu(p,Date.now()), rt=routeText(p), ty=typeName(p), html='<h3>'+esc(name(p))+'</h3><div>'+esc([ty,rt].filter(Boolean).join(' · ')||'Details loading…')+'</div><div class="g">'+
         '<span>Altitude <b>'+(p.alt_baro==='ground'?'GND':uAlt(p.alt_baro)+' '+altUnit())+'</b></span><span>Speed <b>'+(p.gs!=null?Math.round(units==='av'?p.gs:p.gs*1.852)+' '+spdUnit():'—')+'</b></span>'+
         '<span>Distance <b>'+(q?fmtD(q.d):'—')+'</b></span><span>Heading <b>'+(p.track!=null?Math.round(p.track)+'°':'—')+'</b></span></div><div class="acts"><button id="armap">Show on map</button><button id="arx">Close</button></div>';
@@ -1151,7 +1332,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     function endDrag(){if(dx0==null)return;dx0=null;off=((off+540)%360)-180;try{localStorage.setItem('sky-aroff',off.toFixed(1))}catch(e){}}
     box.addEventListener('pointerup',endDrag); box.addEventListener('pointercancel',endDrag);
     function start(){
-      on=true; box.hidden=false; basis=null; camErr=''; gotOri=false; absOri=false; pick=null; card.hidden=true; hint.hidden=false; msgEl.textContent='Starting camera…';
+      on=true; box.hidden=false; basis=null; camErr=''; if(spaceCfg.ar) loadSats().catch(function(){}); gotOri=false; absOri=false; pick=null; card.hidden=true; hint.hidden=false; msgEl.textContent='Starting camera…';
       if(elev==null) fetch('https://api.open-meteo.com/v1/elevation?latitude='+me.lat.toFixed(4)+'&longitude='+me.lon.toFixed(4)).then(function(r){return r.json()}).then(function(j){if(j&&j.elevation) elev=j.elevation[0]+1.5}).catch(function(){});
       var perm=(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)?DeviceOrientationEvent.requestPermission().catch(function(){}):Promise.resolve();
       perm.then(function(){ window.addEventListener('deviceorientationabsolute',oriAbs); window.addEventListener('deviceorientation',oriRel) });
