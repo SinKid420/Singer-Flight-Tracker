@@ -330,7 +330,7 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
 .pfuel{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:4px 0}.pfuel small{display:block;color:var(--dim);font-size:10.5px}.pfuel .pspark{height:22px;margin:0}.pfv{text-align:right}
 .pband{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:5px;align-items:center}.pband small{text-align:center;color:var(--dim)}.pq{text-align:center;border-radius:6px;padding:4px 0;color:#fff;font:600 12px var(--font);opacity:.6}.pq.now{opacity:1;box-shadow:0 0 0 2px var(--fg) inset}
 .pacc{background:var(--accent);color:#fff}#prepbody a{color:var(--accent)}#prepbody .phead{color:var(--fg)}
-#mtbtn.off{display:none!important}#fsheet .sheet:not(.fopen){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:6px;align-content:start}#fsheet .sheet:not(.fopen)>.sheet-head{grid-column:1/-1}#fsheet .sheet:not(.fopen) .folder summary{font-size:13px}#mtnbody .brow{padding:4px 2px}body.menuon .leaflet-control-zoom,body.menuon .tempctl{visibility:hidden}
+#mtbtn.off{display:none!important}#fsheet .sheet:not(.fopen){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:6px;align-content:start}#fsheet .sheet:not(.fopen)>.sheet-head{grid-column:1/-1}#fsheet .sheet:not(.fopen) .folder summary{font-size:13px}#mtnbody .brow{padding:4px 2px}body.menuon .leaflet-control-zoom,body.menuon .tempctl,body.menuon .leaflet-control-attribution{visibility:hidden}
 .ltmk{position:absolute;transform:translate(-50%,-50%);font-size:26px;line-height:1;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 5px rgba(255,214,0,.9));cursor:pointer}.ltmk.a0{animation:ltf 1.4s infinite}.ltmk.a1{opacity:.75;font-size:20px}.ltmk.a2{opacity:.5;font-size:17px}
 @keyframes ltf{0%,70%,100%{opacity:1}80%{opacity:.35}}
 #ltal,#ltnote{position:absolute;z-index:795;top:148px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;align-items:center;gap:6px;background:#f9a825;color:#111;border-radius:12px;padding:6px 6px 6px 12px;font:600 13px/1.3 var(--font);box-shadow:var(--shadow)}
@@ -380,6 +380,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <div class="welcome" id="welcome" hidden><b id="wtitle"></b><p id="wtext"></p><button type="button" id="wbtn"></button></div>
   <div id="tut" role="dialog" aria-label="Tip: open the menu"><div id="tutarrow"><span>Tap here for map layers &amp; tools</span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 10.5h11.2l-4.1-4.1L13.2 4.3 20.9 12l-7.7 7.7-2.1-2.1 4.1-4.1H4z"/></svg></div></div>
   <button class="sidebtn" id="menubtn" aria-label="Map layers and tools" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
+  <button class="sidebtn mi" id="planebtn" data-l="Planes" aria-label="Show planes on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">✈️</span></button>
   <button class="sidebtn mi" id="spacebtn" data-l="Space &amp; sky" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
   <button class="sidebtn mi" id="aptbtn" data-l="Airports" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
   <button class="sidebtn mi" id="firebtn" data-l="Wildfires" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
@@ -1214,6 +1215,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   }
   function poll(){
     if(busy||document.hidden) return schedule();
+    if(!planesOn){ if(lastData.length||Object.keys(planes).length){ lastData=[]; render([]) } showWelcome(false); setStat('<em>Planes off</em><br>'+new Date().toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'})); return schedule() }
     busy=true;
     var on=active();
     if(!on.length){busy=false;showWelcome('setup');setStat('Needs a feed<br>tap to set up',true);return schedule()}
@@ -1226,7 +1228,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         setStat(!navigator.onLine?'No internet<br>check connection':(failCount>1?'Feed error<br>tap for fix':'Connecting…'),true);
         return;
       }
-      failCount=0; slow=0; slowUntil=0;
+      failCount=0; slow=0; slowUntil=0; if(!planesOn) return;
       lastData=merge(good.map(function(r){return r.ac}));
       render(lastData); showWelcome(false);
       var t=new Date().toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'});
@@ -1234,7 +1236,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
   }
-  var slow=0, slowUntil=0;
+  var slow=0, slowUntil=0, planesOn=false;
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,slow?refreshMs*Math.pow(2,slow):refreshMs);
     document.getElementById('map').parentNode.style.setProperty('--glide','.12s');}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){clearTimeout(timer);poll()}});
@@ -1847,8 +1849,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     window.__fsr={set:set,load:load};
     if(baseKey==='fsr') set(true);
   })();
+  // ---- Planes on/off (off at start, so the app opens on a clean map) ----
+  (function(){ var b=document.getElementById('planebtn'); if(!b) return;
+    function paint(){ b.classList.toggle('on',planesOn); b.setAttribute('aria-pressed',planesOn?'true':'false') }
+    b.onclick=function(){ planesOn=!planesOn; paint();
+      if(planesOn){ if(!map.hasLayer(ring)) ring.addTo(map); slow=0; slowUntil=0 }
+      else { map.removeLayer(ring); lastData=[]; render([]); var nx=document.getElementById('nextov'); if(nx) nx.hidden=true; var em=document.getElementById('emerg'); if(em) em.hidden=true }
+      clearTimeout(timer); if(!busy) poll() };
+    map.removeLayer(ring); paint() })();
   (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
-    function setMenu(v){ if(v){ var n=0, hb=document.getElementById('hubbtn'); [hb].concat([].filter.call(document.querySelectorAll('.sidebtn.mi'),function(x){return x!==hb})).forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(218+n*42)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
+    function setMenu(v){ if(v){ var n=0, hb=document.getElementById('hubbtn'); [hb].concat([].filter.call(document.querySelectorAll('.sidebtn.mi'),function(x){return x!==hb})).forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(218+n*41)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
     mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
     kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
