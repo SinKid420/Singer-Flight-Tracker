@@ -1215,7 +1215,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       recenter(auto===true&&(touched||moved<0.3));
     },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
-  document.getElementById('locate').onclick=function(){locate(false)};
+  document.getElementById('locate').onclick=function(){ var b=this, z=Math.max(map.getZoom(),11); b.classList.add('on'); map.setView([me.lat,me.lon],z);
+    if(!navigator.geolocation){ b.classList.remove('on'); setStat('No location<br>using default',true); return }
+    navigator.geolocation.getCurrentPosition(function(pos){ b.classList.remove('on'); var nl=pos.coords.latitude, nn=pos.coords.longitude; me.lat=nl; me.lon=nn; me.label='you';
+      try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} recenter(true); map.setView([nl,nn],Math.max(map.getZoom(),11)) },
+      function(){ b.classList.remove('on'); setStat('Location off<br>turn on GPS',true) },{enableHighAccuracy:true,timeout:15000,maximumAge:20000}) };
 
   // Feed check: calls every feed once and explains what happened in plain words.
   function probe(s){
