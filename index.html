@@ -1858,7 +1858,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       clearTimeout(timer); if(!busy) poll() };
     map.removeLayer(ring); paint() })();
   (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
-    function setMenu(v){ if(v){ var n=0, hb=document.getElementById('hubbtn'); [hb].concat([].filter.call(document.querySelectorAll('.sidebtn.mi'),function(x){return x!==hb})).forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(218+n*41)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
+    function setMenu(v){ if(v){ var n=0, ORD=['roadbtn','firebtn','ltbtn','planebtn','spacebtn','aptbtn','mtbtn','ferrybtn','arbtn','hubbtn'], all=[].slice.call(document.querySelectorAll('.sidebtn.mi')); all.sort(function(a,b){ var i=ORD.indexOf(a.id), j=ORD.indexOf(b.id); return (i<0?50:i)-(j<0?50:j) }); all.forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(218+n*41)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
     mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
     kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
