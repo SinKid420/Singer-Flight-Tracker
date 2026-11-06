@@ -313,7 +313,7 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:170px}
 #fsrleg{position:absolute;z-index:700;left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px;display:grid;grid-template-columns:auto auto;gap:3px 10px;background:var(--bg);color:var(--fg);border-radius:10px;padding:6px 9px;box-shadow:var(--shadow);font:600 11px/1.3 var(--font);pointer-events:none}#fsrleg[hidden],body.keyon #fsrleg{display:none}
-#fsrleg span{white-space:nowrap}#fsrleg i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px}#fsrleg .lw{border-top:3px dashed #2e7d32}#fsrleg .lb{border-top:3px solid #1e88e5}#fsrleg .lm{border-top:2px solid #e53935}#fsrleg .lf{border-top:4px solid #a31515}
+#fsrleg span{white-space:nowrap}#fsrleg i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px}#fsrleg .lw{border-top:3px dashed #3ddc5a}#fsrleg .lb{border-top:3px solid #40a9ff}#fsrleg .lm{border-top:2px solid #ff3b30}#fsrleg .lf{border-top:5px solid #ff1744}
 #fsrleg small{grid-column:1/-1;color:var(--dim);font-weight:500}#fsrleg small[hidden]{display:none}
 #toolbtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:150px}body.toolon #toolbtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
 .sidebtn.ti{display:none;top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}body.toolon .sidebtn.ti{display:grid}#t_sled{bottom:202px}#t_supply{bottom:250px}#t_planet{bottom:298px}#t_comms{bottom:346px}
@@ -639,7 +639,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     sat:{sat:true,layers:function(){return [
       new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
-    fsr:{sat:false,layers:function(){return BASES.terrain.layers()}},
+    fsr:{sat:true,layers:function(){return BASES.sat.layers()}},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
@@ -1782,8 +1782,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   })();
   // ---- FSR map: forest service roads, back roads and trails from several free sources ----
   (function(){
-    var on=false, R=L.canvas({padding:.3}), lay={}, cache={}, seen={}, vg=null, vgP=null, mvT=null, leg=document.getElementById('fsrleg'), hint=document.getElementById('fsrhint');
-    var C={walk:'#2e7d32',bike:'#1e88e5',motor:'#e53935',fsr:'#a31515'};
+    var on=false, R=L.canvas({padding:.1,tolerance:6}), drawn={}, data={}, dataKeys=[], busy={}, seen={}, vg=null, vgP=null, mvT=null, leg=document.getElementById('fsrleg'), hint=document.getElementById('fsrhint');
+    var C={walk:'#3ddc5a',bike:'#40a9ff',motor:'#ff3b30',fsr:'#ff1744'};
     function inBC(b){ return b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60 }
     function inUS(b){ return b.s<49.05&&b.w<-104&&b.e>-125&&b.n>41 }
     function cap(s){ return String(s||'').toLowerCase().replace(/\b[a-z]/g,function(c){return c.toUpperCase()}) }
@@ -1793,7 +1793,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     function usTrail(p){ return p.terra_motorized==='Y'?'motor':(p.bicycle_managed||p.bicycle_accpt)?'bike':'walk' }
     var KIND={walk:'Walking trail',bike:'Biking trail',motor:'Motor vehicles'};
     var SRC=[
-      {k:'dra',z:13,g:0.05,area:inBC,src:'BC Digital Road Atlas',url:function(b){ return WFS('WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP',b,"ROAD_CLASS IN ('resource','unclassified','recreation','trail')",'DIGITAL_ROAD_ATLAS_LINE_ID,ROAD_CLASS,ROAD_NAME_FULL,ROAD_SURFACE') },
+      {k:'dra',z:14,g:0.05,area:inBC,src:'BC Digital Road Atlas',url:function(b){ return WFS('WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP',b,"ROAD_CLASS IN ('resource','unclassified','recreation','trail')",'DIGITAL_ROAD_ATLAS_LINE_ID,ROAD_CLASS,ROAD_NAME_FULL,ROAD_SURFACE') },
         id:function(f){ return f.properties.DIGITAL_ROAD_ATLAS_LINE_ID },
         st:function(p){ return p.ROAD_CLASS==='trail'?{color:C.walk,weight:2,opacity:.9,dashArray:'4,3'}:{color:C.motor,weight:1.8,opacity:.85} },
         pop:function(p){ return '<b>'+esc(p.ROAD_NAME_FULL||(p.ROAD_CLASS==='trail'?'Trail':'Back road'))+'</b><br>'+(p.ROAD_CLASS==='trail'?'Trail':cap(p.ROAD_CLASS)+' road')+(p.ROAD_SURFACE?' · '+esc(p.ROAD_SURFACE)+' surface':'') }},
@@ -1801,7 +1801,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         id:function(f){ return f.id }, st:function(){ return {color:C.walk,weight:2.6,opacity:.95,dashArray:'5,3'} },
         pop:function(p){ return '<b>'+esc(cap(p.PROJECT_NAME)||'Recreation trail')+'</b><br>'+esc(p.PROJECT_TYPE||'Recreation trail')+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'') }},
       {k:'fsr',z:10,g:0.25,area:inBC,src:'BC Forest Tenures (official FSR list)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',b,"RETIREMENT_DATE IS NULL AND FILE_TYPE_DESCRIPTION='Forest Service Road'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION') },
-        id:function(f){ return f.id }, st:function(){ return {color:C.fsr,weight:4,opacity:.9} },
+        id:function(f){ return f.id }, st:function(){ return {color:C.fsr,weight:5,opacity:.95} },
         pop:function(p){ return '<b>'+esc(cap(p.ROAD_SECTION_NAME)||'Forest Service Road')+' FSR</b><br>Forest Service Road · file '+esc(p.FOREST_FILE_ID||'')+(p.ROAD_SECTION_ID?' section '+esc(p.ROAD_SECTION_ID):'') }},
       {k:'usr',z:12,g:0.1,area:inUS,src:'US Forest Service roads',url:function(b){ return AGS('EDW_RoadBasic_01',b,"oper_maint_level NOT LIKE '1%'",'objectid,id,name,oper_maint_level,surface_type') },
         id:function(f){ return 'r'+(f.properties.objectid||f.id) }, st:function(p){ return {color:C.motor,weight:/^2/.test(p.oper_maint_level||'')?1.8:2.6,opacity:.85} },
@@ -1811,28 +1811,39 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         pop:function(p){ return '<b>'+esc(cap(p.trail_name)||'Forest trail')+'</b><br>'+KIND[usTrail(p)] }}
     ];
     function keys(s,b){ var g=s.g, out=[]; for(var y=Math.floor(b.s/g);y<=Math.floor(b.n/g);y++) for(var x=Math.floor(b.w/g);x<=Math.floor(b.e/g);x++) out.push([x,y]); return out }
-    function layerFor(s){ if(lay[s.k]) return lay[s.k]; seen[s.k]={};
-      return lay[s.k]=L.geoJSON(null,{renderer:R,interactive:true,style:function(f){ return s.st(f.properties||{}) },
-        filter:function(f){ var id=s.id(f); if(id==null) return true; if(seen[s.k][id]) return false; seen[s.k][id]=1; return true },
-        onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small>' },{closeButton:false}) }}) }
-    function load(){ if(!on) return; var z=map.getZoom(), bb=map.getBounds().pad(.15), b={s:bb.getSouth(),n:bb.getNorth(),w:bb.getWest(),e:bb.getEast()};
+    // each map square is drawn as its own small layer, and squares that leave the screen are dropped, so zooming and panning stay smooth
+    function opts(s,key){ return {renderer:R,smoothFactor:2,interactive:true,style:function(f){ return s.st(f.properties||{}) },
+      filter:function(f){ var id=s.id(f); if(id==null) return true; var m=seen[s.k]||(seen[s.k]={}); if(m[id]) return false; m[id]=key; return true },
+      onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small>' },{closeButton:false}) }} }
+    function draw(s,key){ if(drawn[key]||!data[key]) return; drawn[key]=L.geoJSON(data[key],opts(s,key)).addTo(map) }
+    function drop(key){ var l=drawn[key]; if(!l) return; map.removeLayer(l); delete drawn[key]; var k=key.split(':')[0], m=seen[k]; if(m) Object.keys(m).forEach(function(id){ if(m[id]===key) delete m[id] }) }
+    // thin out the line points (about 4 m accuracy) so redrawing on zoom stays quick
+    function rdp(p,t){ if(p.length<3) return p; var keepI=new Uint8Array(p.length), st=[[0,p.length-1]]; keepI[0]=keepI[p.length-1]=1;
+      while(st.length){ var r=st.pop(), a=p[r[0]], b=p[r[1]], dx=b[0]-a[0], dy=b[1]-a[1], d2=dx*dx+dy*dy, mx=0, mi=-1;
+        for(var i=r[0]+1;i<r[1];i++){ var q=p[i], u=d2?((q[0]-a[0])*dx+(q[1]-a[1])*dy)/d2:0; u=u<0?0:u>1?1:u; var ex=a[0]+u*dx-q[0], ey=a[1]+u*dy-q[1], e=ex*ex+ey*ey; if(e>mx){ mx=e; mi=i } }
+        if(mi>0&&mx>t*t){ keepI[mi]=1; st.push([r[0],mi],[mi,r[1]]) } }
+      var o=[]; for(var k=0;k<p.length;k++) if(keepI[k]) o.push([Math.round(p[k][0]*1e5)/1e5,Math.round(p[k][1]*1e5)/1e5]); return o }
+    function thin(j){ (j.features||[]).forEach(function(f){ var g=f.geometry; if(!g) return; if(g.type==='LineString') g.coordinates=rdp(g.coordinates,4e-5); else if(g.type==='MultiLineString') g.coordinates=g.coordinates.map(function(c){ return rdp(c,4e-5) }) }); return j }
+    function keep(key,j){ j=thin(j); data[key]=j; dataKeys.push(key); if(dataKeys.length>120){ var old=dataKeys.shift(); if(!drawn[old]) delete data[old] } }
+    function load(){ if(!on) return; var z=map.getZoom(), bb=map.getBounds().pad(.1), b={s:bb.getSouth(),n:bb.getNorth(),w:bb.getWest(),e:bb.getEast()}, want={};
       if(hint) hint.hidden=z>=12;
-      SRC.forEach(function(s){ var lg=layerFor(s);
-        if(z<s.z){ if(map.hasLayer(lg)) map.removeLayer(lg); return } if(!map.hasLayer(lg)) lg.addTo(map);
-        var ks=keys(s,b); if(ks.length>24) return;
-        ks.forEach(function(k){ var key=s.k+':'+k[0]+'_'+k[1]; if(cache[key]) return; var tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(!s.area(tb)){ cache[key]=1; return }
-          cache[key]=2; fetch(s.url(tb)).then(function(r){ return r.ok?r.json():null }).then(function(j){ cache[key]=1; if(j&&j.features&&on) lg.addData(j) }).catch(function(){ delete cache[key] }) }) }) }
+      SRC.forEach(function(s){ if(z<s.z) return; var ks=keys(s,b); if(ks.length>24) return;
+        ks.forEach(function(k){ var key=s.k+':'+k[0]+'_'+k[1], tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(!s.area(tb)) return; want[key]=1;
+          if(data[key]){ draw(s,key); return } if(busy[key]) return; busy[key]=1;
+          fetch(s.url(tb)).then(function(r){ return r.ok?r.json():null }).then(function(j){ delete busy[key]; if(!j||!j.features) return; keep(key,j); if(on&&wantNow[key]) draw(s,key) }).catch(function(){ delete busy[key] }) }) });
+      wantNow=want; Object.keys(drawn).forEach(function(key){ if(!want[key]) drop(key) }) }
+    var wantNow={};
     // OpenStreetMap trails and tracks (vector tiles), drawn only when zoomed in
     function osm(){ if(vg||vgP) return; vgP=new Promise(function(res,rej){ if(L.vectorGrid) return res(); var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.min.js'; s.integrity='sha384-QDTA8MXPewzk8Ryt7UyfUmk+WcHcVYLcxAydowJk1WPgwjdXOIlJIDz25ITLVwTl'; s.crossOrigin='anonymous'; s.onload=res; s.onerror=rej; document.head.appendChild(s) })
       .then(function(){ return fetch('https://tiles.openfreemap.org/planet').then(function(r){return r.json()}) }).then(function(tj){ var url=tj&&tj.tiles&&tj.tiles[0]; if(!url||!/^https:\/\/tiles\.openfreemap\.org\//.test(url)) throw 0;
         var hide=function(){return []}, st={}; ['water','waterway','landcover','landuse','mountain_peak','park','boundary','aeroway','building','water_name','transportation_name','place','housenumber','poi','aerodrome_label'].forEach(function(k){ st[k]=hide });
-        st.transportation=function(p){ if(p.class==='track') return {color:C.motor,weight:2,opacity:.85}; if(p.class==='path'){ if(p.subclass==='cycleway') return {color:C.bike,weight:2.4,opacity:.95}; if(p.subclass==='steps'||p.subclass==='platform'||p.subclass==='corridor') return []; return {color:C.walk,weight:2,opacity:.95,dashArray:'4,3'} } return [] };
+        st.transportation=function(p){ if(p.class==='track') return {color:C.motor,weight:2,opacity:.9}; if(p.class==='path'){ if(p.subclass==='cycleway') return {color:C.bike,weight:2.4,opacity:.95}; if(p.subclass==='steps'||p.subclass==='platform'||p.subclass==='corridor') return []; return {color:C.walk,weight:2,opacity:.95,dashArray:'4,3'} } return [] };
         vg=L.vectorGrid.protobuf(url,{vectorTileLayerStyles:st,maxNativeZoom:14,minZoom:12,interactive:false,rendererFactory:L.canvas.tile,attribution:'Trails © OpenStreetMap (OpenFreeMap)'}); if(on) vg.addTo(map) })
       .catch(function(){ vgP=null }) }
     function set(v){ if(v===on) return; on=v; if(leg) leg.hidden=!v;
       if(v){ map.attributionControl.addAttribution('Roads & trails: BC Gov (DataBC), USDA Forest Service'); osm(); if(vg) vg.addTo(map); load() }
-      else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(lay).forEach(function(k){ map.removeLayer(lay[k]) }); lay={}; cache={}; seen={} } }
-    map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(load,500) });
+      else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(drawn).forEach(drop); seen={}; wantNow={} } }
+    map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(load,350) });
     window.__fsr={set:set,load:load};
     if(baseKey==='fsr') set(true);
   })();
