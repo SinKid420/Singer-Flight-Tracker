@@ -308,6 +308,9 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
+#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:98px;color:var(--accent)}#gear{bottom:150px;color:var(--dim)}
+body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px}
+.pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
@@ -318,13 +321,13 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     <div class="pill">
       <h1>Singers<b>Flight Tracker</b></h1>
       <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading…</div>
-      <button class="icon-btn" id="locate" aria-label="Use my location"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.9 3A9 9 0 0013 3.1V1h-2v2.1A9 9 0 003.1 11H1v2h2.1A9 9 0 0011 20.9V23h2v-2.1a9 9 0 007.9-7.9H23v-2h-2.1zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg></button>
+      
     </div>
     <div class="chips">
       <div class="seg" role="group" aria-label="Map style">
         <button data-b="map" aria-pressed="true">Map</button><button data-b="sat" aria-pressed="false">Satellite</button><button data-b="terrain" aria-pressed="false">Terrain</button>
       </div>
-      <button class="gear" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
+      
     </div>
     <div class="legends" role="dialog" aria-label="Map key"><b class="kttl">Map key</b><span id="knone" hidden>Nothing to show. Turn on the rain or altitude key in Settings.</span>
       <div class="legend" id="altlegend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
@@ -349,6 +352,8 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
   <button class="sidebtn mi" id="ferrybtn" data-l="BC Ferries" aria-label="BC Ferries: next sailings and space left" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⛴</span></button>
   <button class="sidebtn mi arb" id="arbtn" data-l="AR sky camera" aria-label="AR camera: point at the sky to identify planes">AR</button>
   <button class="sidebtn mi" id="hubbtn" data-l="Emergency hub" aria-label="Emergency hub: evacuations, alerts, fires, air quality and closures">SOS</button>
+  <button class="sidebtn" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
+  <button class="sidebtn" id="locate" aria-label="Use my location"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.9 3A9 9 0 0013 3.1V1h-2v2.1A9 9 0 003.1 11H1v2h2.1A9 9 0 0011 20.9V23h2v-2.1a9 9 0 007.9-7.9H23v-2h-2.1zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg></button>
   <button class="sidebtn" id="keybtn" aria-label="Map key: rain and plane altitude" aria-expanded="false">KEY</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
@@ -859,7 +864,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(selected&&!seen[selected]) selected=null;
     renderDock();
   }
-  (function(){var mp=document.getElementById('maxpl'); if(mp){ if(!mp.querySelector('[value="'+maxPlanes+'"]')){var o=document.createElement('option');o.value=maxPlanes;o.textContent='Closest '+maxPlanes;mp.appendChild(o)} mp.value=String(maxPlanes); mp.onchange=function(){maxPlanes=+mp.value;try{localStorage.setItem('sky-maxplanes',mp.value)}catch(e){} render(lastData); if(lastData.length) setStat('<em>'+Math.min(lastData.length,maxPlanes)+(Math.min(lastData.length,maxPlanes)===1?' plane':' planes')+'</em><br>'+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}))} }})();
+  (function(){var mp=document.getElementById('maxpl'); if(mp){ if(!mp.querySelector('[value="'+maxPlanes+'"]')){var o=document.createElement('option');o.value=maxPlanes;o.textContent='Closest '+maxPlanes;mp.appendChild(o)} mp.value=String(maxPlanes); mp.onchange=function(){maxPlanes=+mp.value;try{localStorage.setItem('sky-maxplanes',mp.value)}catch(e){} render(lastData); if(lastData.length) setStat('<em>'+Math.min(lastData.length,maxPlanes)+(Math.min(lastData.length,maxPlanes)===1?' plane':' planes')+'</em><br>'+new Date().toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'}))} }})();
   (function(){var sel=document.getElementById('routemode'); if(!sel) return; sel.value=routeMode; sel.onchange=function(){routeMode=sel.value;try{localStorage.setItem('sky-routemode',routeMode)}catch(e){} render(lastData)}})();
 
   var photos={};
@@ -887,7 +892,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var tot=distNm(r.o.la,r.o.lo,r.d.la,r.d.lo), rem=distNm(p.lat,p.lon,r.d.la,r.d.lo);
     if(distNm(r.o.la,r.o.lo,p.lat,p.lon)+rem>tot*1.5+60) return '';
     var mins=rem/p.gs*60+(rem>60?9:(rem>15?4:1)), at=new Date(Date.now()+mins*60000);
-    return 'Lands at '+r.d.c+' in about '+fmtDur(mins)+' · ~'+at.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+' your time';
+    return 'Lands at '+r.d.c+' in about '+fmtDur(mins)+' · ~'+at.toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'})+' your time';
   }
   var CATS={A1:'Light plane',A2:'Small plane',A3:'Large jet',A4:'B757-size jet',A5:'Heavy jet',A6:'High performance',A7:'Helicopter',B1:'Glider',B2:'Balloon',B3:'Skydiver',B4:'Ultralight',B6:'Drone',B7:'Space vehicle',C1:'Emergency vehicle',C2:'Service vehicle',C3:'Obstacle'};
   var SQ={'7700':'Emergency','7600':'Radio failure','7500':'Hijack','1200':'VFR','7000':'VFR','2000':'No code assigned'};
@@ -1153,7 +1158,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       failCount=0; slow=0; slowUntil=0;
       lastData=merge(good.map(function(r){return r.ac}));
       render(lastData); showWelcome(false);
-      var t=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'});
+      var t=new Date().toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'});
       var warn=good.length<on.length?' · '+good.length+'/'+on.length:'';
       setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
     }).then(function(){busy=false;schedule()});
@@ -1304,7 +1309,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function magLat(){ var p=80.7*DEG, l=-72.7*DEG, a=me.lat*DEG, o=me.lon*DEG; return Math.asin(Math.sin(a)*Math.sin(p)+Math.cos(a)*Math.cos(p)*Math.cos(o-l))/DEG }
   var SHOWERS=[[0,3,'Quadrantids',110],[3,22,'Lyrids',18],[4,6,'Eta Aquariids',50],[6,30,'Delta Aquariids',25],[7,12,'Perseids',100],[9,8,'Draconids',10],[9,21,'Orionids',20],[10,17,'Leonids',15],[11,14,'Geminids',150],[11,22,'Ursids',10]];
   function nextShower(){ var now=new Date(), best=null; SHOWERS.forEach(function(s){ for(var y=now.getFullYear();y<=now.getFullYear()+1;y++){ var d=new Date(y,s[0],s[1],22); if(d.getTime()>now.getTime()-2*86400000){ if(!best||d<best.d) best={d:d,n:s[2],z:s[3]}; break } } }); return best }
-  function fmtT(d){ var t=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}), day=new Date(); day.setHours(0,0,0,0); var dd=Math.floor((d-day)/86400000); return (dd===0?'Today ':dd===1?'Tmrw ':d.toLocaleDateString([], {weekday:'short'})+' ')+t }
+  function fmtT(d){ var t=d.toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}), day=new Date(); day.setHours(0,0,0,0); var dd=Math.floor((d-day)/86400000); return (dd===0?'Today ':dd===1?'Tmrw ':d.toLocaleDateString([], {weekday:'short'})+' ')+t }
   var spaceTok=0;
   function openSpace(){ try{localStorage.setItem('sky-space-used','1')}catch(e){} var body=document.getElementById('spacebody'), tok=++spaceTok; document.getElementById('spacesheet').hidden=false;
     body.innerHTML='<div class="ssec">Loading satellites and space weather…</div>';
@@ -1460,7 +1465,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       if(warn.length) h+='<div class="ssec"><span class="bad">⚠ '+esc(warn.slice(0,3).join(' · '))+'</span><br>These can cause delays.</div>';
       h+='<div class="ssec"><h4>Forecast</h4>';
       if(f===undefined) h+='Loading forecast…'; else if(!f||!f.length) h+='No forecast issued for this airport.';
-      else { var nowS=Date.now()/1000; f.filter(function(x){return typeof x.timeTo!=='number'||x.timeTo>nowS}).slice(0,4).forEach(function(x){ var fc=fltCat(x), t=typeof x.timeFrom==='number'?new Date(x.timeFrom*1000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'';
+      else { var nowS=Date.now()/1000; f.filter(function(x){return typeof x.timeTo!=='number'||x.timeTo>nowS}).slice(0,4).forEach(function(x){ var fc=fltCat(x), t=typeof x.timeFrom==='number'?new Date(x.timeFrom*1000).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}):'';
           var bits=[x.fcstChange==='TEMPO'?'at times':(x.fcstChange==='PROB'?(x.probability||'')+'% chance':''),wxWords(x.wxString),skyWords(x.clouds),typeof x.wspd==='number'&&x.wspd>0?windWords(x):''].filter(Boolean).join(', ');
           h+='<div class="row2"><span><b style="color:'+CATC[fc]+'">●</b> '+esc(bits||'No change')+'</span><span>'+esc(t?'from '+t:'')+'</span></div>' }) }
       h+='</div><div class="skynote">Weather: aviationweather.gov (METAR/TAF)</div>';
@@ -1471,7 +1476,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         else if(distNm(r.o.la,r.o.lo,m.lat,m.lon)<5){ dep.push({p:p,to:r.d.c,gone:distNm(p.lat,p.lon,m.lat,m.lon)}) } });
       arr.sort(function(a,b){return a.mins-b.mins}); dep.sort(function(a,b){return a.gone-b.gone});
       function rows(list,fn){ return list.slice(0,5).map(fn).join('') }
-      h+='<div class="ssec"><h4>Arriving</h4>'+(arr.length?rows(arr,function(x){ var t=new Date(Date.now()+x.mins*60000).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}); return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> from '+esc(x.from)+' · '+esc(x.p.t||'')+'</span><span>lands ~'+esc(t)+'</span></div>' }):'No arrivals found nearby yet.')+'</div>';
+      h+='<div class="ssec"><h4>Arriving</h4>'+(arr.length?rows(arr,function(x){ var t=new Date(Date.now()+x.mins*60000).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}); return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> from '+esc(x.from)+' · '+esc(x.p.t||'')+'</span><span>lands ~'+esc(t)+'</span></div>' }):'No arrivals found nearby yet.')+'</div>';
       h+='<div class="ssec"><h4>Departed</h4>'+(dep.length?rows(dep,function(x){ return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> to '+esc(x.to)+' · '+esc(x.p.t||'')+'</span><span>'+uDist(x.gone)+' '+distUnit()+' out</span></div>' }):'No recent departures found nearby.')+'</div>';
       h+='<div class="skynote">Built from live planes and their routes around the airport. Airline gate and delay times need a paid feed.</div>';
     }
@@ -1682,12 +1687,12 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         f.length?f.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.name||'Wildfire')+'</b><br><small>'+esc(x.status||'')+(x.ha?' · '+Math.round(x.ha).toLocaleString()+' ha':'')+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No active wildfires within '+Math.min(km(),60)+' km.');
       var a=H.air, aqw=(H.wx||[]).some(function(x){return /air quality|smoke/i.test(x.name)});
       h+=row(3,'😷','Air quality',aqw?'Warning issued':a?Math.round(a.aqi)+' · '+aqiWord(a.aqi):'—',aqw?'#fb8c00':a?aqiCol(a.aqi):null,
-        (aqw?'<div style="margin-bottom:6px"><b style="color:#fb8c00">Official air quality warning in effect.</b> See Weather alerts for details.</div>':'')+(a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.'));
+        (aqw?'<div style="margin-bottom:6px"><b style="color:#fb8c00">Official air quality warning in effect.</b> See Weather alerts for details.</div>':'')+(a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {hour12:true,weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.'));
       var rd=H.roads||[];
       h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
         rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(x.text.slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
       h+='<div class="abtns" style="margin-top:6px"><a href="#" id="hubmap" class="pri" role="button">🗺 Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer">EmergencyInfoBC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer">DriveBC</a></div>';
-      h+='<div class="skynote">In danger? Call 911. Always follow official orders. Checked '+esc(new Date(H.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))+' · '+km()+' km around you</div>';
+      h+='<div class="skynote">In danger? Call 911. Always follow official orders. Checked '+esc(new Date(H.t).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}))+' · '+km()+' km around you</div>';
       body.innerHTML=h;
       [].forEach.call(body.querySelectorAll('.hubhd'),function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); open=open===i?-1:i; render() } });
       var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() } }
