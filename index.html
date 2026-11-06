@@ -297,6 +297,17 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 #stat:not(.bad) em,#stat:not(.bad) em+br,#stat:not(.bad) .live{display:none}
 .pill .icon-btn{width:34px;height:34px;background:var(--bg);box-shadow:var(--shadow);flex:none}
 .chips{top:50px}#nextov,#emerg{top:100px}
+#menubtn{top:120px}body.menuon #menubtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent);color:var(--accent)}
+#menubtn.alert1{box-shadow:var(--shadow),inset 0 0 0 2.5px #fb8c00}#menubtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
+.sidebtn.mi{display:none}body.menuon .sidebtn.mi{display:grid}
+#hubbtn{top:168px}#spacebtn{top:218px}#aptbtn{top:268px}#firebtn{top:318px}#roadbtn{top:368px}#ferrybtn{top:418px}#arbtn{top:468px}
+.sidebtn.mi::before{content:attr(data-l);position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--bg);color:var(--fg);font:500 12px/1 var(--font);padding:7px 10px;border-radius:12px;white-space:nowrap;box-shadow:var(--shadow);pointer-events:none}
+#keybtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:46px;font-size:10px;letter-spacing:.3px}body.keyon #keybtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent);color:var(--accent)}
+.legends{display:none}body.keyon .legends{display:flex;flex-direction:column;align-items:flex-start;left:max(10px,env(safe-area-inset-left,0px));right:auto;bottom:98px;max-width:calc(100% - 20px);padding:8px;gap:8px;background:var(--bg);border-radius:12px;box-shadow:var(--shadow);pointer-events:auto}
+.legends .kttl{font:600 13px/1 var(--font);color:var(--fg);order:-2}#knone{order:-2}body.keyon .legend{background:none;box-shadow:none;padding:2px 2px 0}#knone{font-size:12px;color:var(--dim);max-width:200px}#knone[hidden]{display:none}
+.leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
+.leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
+.leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
@@ -313,9 +324,9 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
       <div class="seg" role="group" aria-label="Map style">
         <button data-b="map" aria-pressed="true">Map</button><button data-b="sat" aria-pressed="false">Satellite</button><button data-b="terrain" aria-pressed="false">Terrain</button>
       </div>
-      <button class="gear arb" id="arbtn" aria-label="AR camera: point at the sky to identify planes">AR</button><button class="gear" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
+      <button class="gear" id="gear" aria-label="Settings"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 000-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 00-1.7-1L15 3.3h-4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 000 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" transform="translate(-1 0)"/></svg></button>
     </div>
-    <div class="legends">
+    <div class="legends" role="dialog" aria-label="Map key"><b class="kttl">Map key</b><span id="knone" hidden>Nothing to show. Turn on the rain or altitude key in Settings.</span>
       <div class="legend" id="altlegend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
       <div class="legend wxlegend" id="wxlegend"><div id="wxlegtxt">Live rain, mm/h</div><img id="wxlegimg" alt="Rain intensity scale"></div>
     </div>
@@ -330,12 +341,15 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
     </button>
   </div>
   <div class="welcome" id="welcome" hidden><b id="wtitle"></b><p id="wtext"></p><button type="button" id="wbtn"></button></div>
-  <button class="sidebtn" id="spacebtn" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
-  <button class="sidebtn" id="aptbtn" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
-  <button class="sidebtn" id="firebtn" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
-  <button class="sidebtn" id="roadbtn" aria-label="Roads: highway cameras, closures and pass reports" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🚗</span></button>
-  <button class="sidebtn" id="ferrybtn" aria-label="BC Ferries: next sailings and space left" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⛴</span></button>
-  <button class="sidebtn" id="hubbtn" aria-label="Emergency hub: evacuations, alerts, fires, air quality and closures">SOS</button>
+  <button class="sidebtn" id="menubtn" aria-label="Map layers and tools" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
+  <button class="sidebtn mi" id="spacebtn" data-l="Space &amp; sky" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
+  <button class="sidebtn mi" id="aptbtn" data-l="Airports" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
+  <button class="sidebtn mi" id="firebtn" data-l="Wildfires" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
+  <button class="sidebtn mi" id="roadbtn" data-l="Roads &amp; cameras" aria-label="Roads: highway cameras, closures and pass reports" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🚗</span></button>
+  <button class="sidebtn mi" id="ferrybtn" data-l="BC Ferries" aria-label="BC Ferries: next sailings and space left" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⛴</span></button>
+  <button class="sidebtn mi arb" id="arbtn" data-l="AR sky camera" aria-label="AR camera: point at the sky to identify planes">AR</button>
+  <button class="sidebtn mi" id="hubbtn" data-l="Emergency hub" aria-label="Emergency hub: evacuations, alerts, fires, air quality and closures">SOS</button>
+  <button class="sidebtn" id="keybtn" aria-label="Map key: rain and plane altitude" aria-expanded="false">KEY</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div class="dock" id="dock" hidden>
@@ -1321,6 +1335,17 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     body.innerHTML=h;
     [].forEach.call(body.querySelectorAll('.stog button'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-k'); spaceCfg[k]=!spaceCfg[k]; b.classList.toggle('on',spaceCfg[k]); var e1=document.getElementById(k==='map'?'s_issmap':'s_satar'); if(e1) e1.value=spaceCfg[k]?'1':'0'; try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} issTick() } }) }
   document.getElementById('spacebtn').onclick=openSpace;
+  (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
+    function setMenu(v){ document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
+    function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
+    mb.onclick=function(){ setKey(false); setMenu(!document.body.classList.contains('menuon')) };
+    kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
+    ['spacebtn','hubbtn','arbtn'].forEach(function(id){ var b=document.getElementById(id); if(b) b.addEventListener('click',function(){ setMenu(false) }) });
+    map.on('click dragstart',function(){ setMenu(false); setKey(false) });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ setMenu(false); setKey(false) } });
+    function mirror(){ mb.classList.toggle('alert1',hub.classList.contains('alert1')); mb.classList.toggle('alert2',hub.classList.contains('alert2')) }
+    if(hub&&window.MutationObserver){ new MutationObserver(mirror).observe(hub,{attributes:true,attributeFilter:['class']}); mirror() }
+  })();
   document.getElementById('spacex').onclick=function(){spaceTok++;document.getElementById('spacesheet').hidden=true};
   document.getElementById('spacesheet').onclick=function(e){if(e.target===this){spaceTok++;this.hidden=true}};
 
