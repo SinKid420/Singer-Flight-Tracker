@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: mediastream:; connect-src 'self' https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Singers Flight Tracker</title>
+<title>AwareBC</title>
+<meta name="author" content="Josh Singer">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0e0e10">
 <script>if(window.top!==window.self){try{window.top.location.replace(window.self.location.href)}catch(e){document.documentElement.innerHTML=''}}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Singers Flight Tracker">
-<link rel="icon" href="logo-512.png" type="image/png">
-<link rel="apple-touch-icon" href="logo-512.png">
+<meta name="apple-mobile-web-app-title" content="AwareBC">
+<link rel="icon" href="awarebc-512.png" type="image/png">
+<link rel="apple-touch-icon" href="awarebc-512.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb" crossorigin="anonymous" referrerpolicy="no-referrer">
 <style>
 /* Layout: full-bleed map, floating search-style pill and map-style chips on top, white bottom sheet below. One phone screen, no page scroll. */
@@ -347,6 +348,8 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 #hubbtn{top:218px}#spacebtn{top:260px}#aptbtn{top:302px}#firebtn{top:344px}#roadbtn{top:386px}#ferrybtn{top:428px}#arbtn{top:470px}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .gpspin{font-size:26px;line-height:30px;text-align:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}.gpsq{font:13px/1.35 var(--font);min-width:170px}.gpsb{display:flex;gap:8px;margin-top:8px}.gpsb button{flex:1;padding:8px 6px;border:0;border-radius:10px;font:600 13px var(--font);background:#e8eaed;color:#202124}.gpsb button[data-a=go]{background:#1a73e8;color:#fff}
+.about{text-align:center;font-size:12px;color:var(--dim);margin:14px 0 4px;line-height:1.5}.about b{color:var(--fg);font-size:13px}
+.leaflet-control-attribution{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-sizing:border-box}.leaflet-control-attribution.open{white-space:normal;background:rgba(14,14,16,.97)!important;padding:6px 8px!important;position:relative;z-index:1200}
 </style>
 </head>
 <body class="tuton">
@@ -354,7 +357,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <div class="mapwrap">
     <div id="map" role="application" aria-label="Live flight map"></div>
     <div class="pill">
-      <h1>Singers<b>Flight Tracker</b></h1>
+      <h1>AwareBC<b>by Josh Singer</b></h1>
       <div class="stat" id="stat" role="button" tabindex="0" aria-label="Feed status and settings"><i class="live" id="dot"></i>Loading…</div>
       
     </div>
@@ -512,7 +515,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
       <label class="setrow" for="s_aMax">"A" icons shown<select id="s_aMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option></select></label>
       <label class="setrow" for="s_wxMax">Weather tags shown<select id="s_wxMax"><option value="auto">Auto</option><option value="all">All</option><option value="20">Nearest 20</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
     </details>
-    <details class="folder" id="wffolder"><summary>Wildfires</summary>
+    <details class="folder" id="wffolder"><summary>WildfireBC</summary>
       <label class="setrow" for="s_fire">Fires on map<select id="s_fire"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_fireAll">Which fires<select id="s_fireAll"><option value="0">Burning now</option><option value="1">All this year</option></select></label>
       <label class="setrow" for="s_firePer">Fire outlines<select id="s_firePer"><option value="1">Show</option><option value="0">Hide</option></select></label>
@@ -528,7 +531,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
       <label class="setrow" for="s_mt">Winter mode<select id="s_mt"><option value="auto">Auto (Nov to Apr)</option><option value="on">Always on</option><option value="off">Off</option></select></label>
       <label class="setrow" for="s_mtPins">Passes &amp; ski hills<select id="s_mtPins"><option value="1">Show on map</option><option value="0">Hide</option></select></label>
     </details>
-    <details class="folder" id="rdfolder"><summary>Roads &amp; cameras</summary>
+    <details class="folder" id="rdfolder"><summary>DriveBC</summary>
       <label class="setrow" for="s_road">Road info on map<select id="s_road"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_roadCams">Highway cameras<select id="s_roadCams"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_camAuto">Camera photo<select id="s_camAuto"><option value="0">Refresh when opened</option><option value="1">Refresh every minute</option></select></label>
@@ -568,6 +571,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
     <label class="frelay" for="relay" style="margin-top:8px">Relay address (optional)<input id="relay" type="url" inputmode="url" placeholder="https://your-relay.workers.dev/"></label>
     <div class="links"><a href="#" id="ftest" role="button">Test feeds</a><a href="#" class="alt" id="fsave" role="button">Save</a></div>
     </details>
+    <p class="about"><b>AwareBC</b><br>Created by Josh Singer · © 2026</p>
   </div>
 </div>
 
@@ -598,7 +602,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
-  map.attributionControl.setPrefix(false);
+  map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
+  (function(){ var ac=map.attributionControl.getContainer(), t=null; ac.title='Tap to read all credits'; L.DomEvent.disableClickPropagation(ac); ac.addEventListener('click',function(e){ if(e.target.closest('a')&&ac.classList.contains('open')) return; e.preventDefault(); ac.classList.toggle('open'); clearTimeout(t); if(ac.classList.contains('open')) t=setTimeout(function(){ ac.classList.remove('open') },8000) }) })();
   var tempEl=null, tempC=null, tcfg='C';
   try{var tv=localStorage.getItem('sky-temp'); if(tv==='F'||tv==='off') tcfg=tv}catch(e){}
   var TempCtl=L.Control.extend({options:{position:'bottomright'},onAdd:function(){var d=L.DomUtil.create('div','tempctl');d.setAttribute('aria-label','Current temperature');d.innerHTML='<b id="tval">--°</b><span id="tcap">now</span>';L.DomEvent.disableClickPropagation(d);tempEl=d;d.hidden=tcfg==='off';return d}});
@@ -1223,7 +1228,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function showWelcome(mode){
     var w=document.getElementById('welcome'); if(!w) return;
     if(!mode){w.hidden=true;return}
-    var T={setup:['Welcome to Singers Flight Tracker','To see live planes the app needs a free flight-feed key. It takes about a minute.','Set up feeds'],
+    var T={setup:['Welcome to AwareBC','To see live planes the app needs a free flight-feed key. It takes about a minute.','Set up feeds'],
       error:['Can\u2019t reach the feeds','Check your connection, or open Settings to fix your key.','Open Settings'],
       empty:['No planes nearby','Nothing in range right now. Zoom out, or raise the search radius in Settings.','']}[mode];
     document.getElementById('wtitle').textContent=T[0]; document.getElementById('wtext').textContent=T[1];
@@ -1364,7 +1369,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function loadSatJs(){ return new Promise(function(res,rej){ if(window.satellite) return res(); var sc=document.createElement('script'); sc.src=SATJS; sc.integrity=SATSRI; sc.crossOrigin='anonymous'; sc.referrerPolicy='no-referrer'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc) }) }
   function tleGroup(g){ var K='sky-tle-'+g, c=null; try{c=JSON.parse(localStorage.getItem(K)||'null')}catch(e){}
     if(c&&Date.now()-c.t<6*3600000) return Promise.resolve(c.d);
-    return fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP='+g+'&FORMAT=tle').then(function(r){if(!r.ok) throw new Error(r.status); return r.text()}).then(function(t){ if(t.length>400000) t=t.slice(0,400000); try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }).catch(function(){ return c?c.d:'' }) }
+    return fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP='+g+'&FORMAT=tle').then(function(r){if(!r.ok) throw new Error(r.status); return r.text()}).then(function(t){ if(t.length>400000) t=t.slice(0,400000); try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }).catch(function(){ return c?c.d:altTle(g,K) }) }
+  function altTle(g,K){ var u='https://tle.ivanstanojevic.me/api/tle/', ids=g==='stations'?[25544,48274]:g==='visual'?[20580,27386,25994,27424,28654,33591,25338,39084,43013,37849]:null;
+    var ps=ids?ids.map(function(id){ return fetch(u+id).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }):[fetch(u+'?search=STARLINK&sort=id&sort-dir=desc&page-size=100').then(function(r){return r.ok?r.json():null}).catch(function(){return null})];
+    return Promise.all(ps).then(function(a){ var t=''; a.forEach(function(j){ if(!j) return; (j.member||[j]).forEach(function(m){ if(m&&m.line1&&m.line2) t+=String(m.name||'SAT').slice(0,40)+'\n'+m.line1+'\n'+m.line2+'\n' }) }); if(t) try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }) }
   function parseTle(t,tag){ var L=String(t||'').split(/\r?\n/).map(function(x){return x.trim()}).filter(Boolean), out=[], i=0;
     while(i+2<L.length){ if(L[i+1].charAt(0)==='1'&&L[i+2].charAt(0)==='2'){ try{ var rec=satellite.twoline2satrec(L[i+1],L[i+2]); var nm=L[i].replace(/\s+/g,' ').replace(/ R\/B$/,' rocket stage').slice(0,28); if(!rec.error&&!/\bDEB\b/.test(nm)) out.push({name:nm,id:L[i+1].slice(2,7).trim(),rec:rec,tag:tag}) }catch(e){} i+=3 } else i++ }
     return out }
@@ -1475,7 +1483,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         var msg='Lightning '+Math.max(1,Math.round(best))+' km from you (last 10 min)';
         if(bar){ document.getElementById('lttxt').textContent='⚡ '+msg; bar.hidden=false }
         try{ if(navigator.vibrate) navigator.vibrate([200,100,200]) }catch(e){}
-        try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('Singers Flight Tracker',{body:'⚡ '+msg,tag:'lightning'}) }catch(e){} }) }
+        try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('AwareBC',{body:'⚡ '+msg,tag:'lightning'}) }catch(e){} }) }
     function setLt(v){ ltOn=v; paint(); if(v){ map.attributionControl.addAttribution('Lightning © ECCC (CLDN)'); draw() } else { gen++; layer.clearLayers(); map.attributionControl.removeAttribution('Lightning © ECCC (CLDN)') } }
     if(btn) btn.onclick=function(){ setLt(!ltOn) };
     if(bar) bar.onclick=function(e){ if(e.target.id==='ltx'){ bar.hidden=true; return } bar.hidden=true; if(!ltOn) setLt(true); map.setView([me.lat,me.lon],Math.max(map.getZoom(),9)) };
@@ -1627,7 +1635,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         } else h+=tile('Mountain weather','—','No data yet');
         h+='</div>';
         var list=[].concat((rs[1]&&rs[1].list)||[],(rs[2]&&rs[2].list)||[]).sort(function(x,y){return x.k-y.k}).slice(0,6);
-        var rows=list.map(function(s){ return '<div class="row2 prow2"><span><b>'+esc(s.n)+'</b> <small>'+s.src+' · '+s.el.toLocaleString()+' m · '+kmTxt(s.k)+'</small></span><span>'+(s.d!=null?'<b>'+s.d+' cm</b>':'—')+(s.dd?' <small style="color:'+(s.dd>0?'#42a5f5':AMBER)+'">'+(s.dd>0?'+':'')+s.dd+' 24h</small>':'')+(typeof s.t==='number'?' · '+tC(s.t):'')+'</span></div>' }).join('');
+        var rows=list.map(function(s){ return '<div class="row2 prow2"><span><b>'+esc(s.n)+'</b> <small>'+s.src+' · '+s.el.toLocaleString()+' m · '+kmTxt(s.k)+'</small></span><span>'+(s.d!=null?'<b>'+s.d+' cm</b>':'—')+(s.dd?' <small style="color:'+(s.dd>0?'#42a5f5':AMBER)+'">'+(s.dd>0?'▲':'▼')+Math.abs(s.dd)+' cm/24h</small>':'')+(typeof s.t==='number'?' · '+tC(s.t):'')+'</span></div>' }).join('');
         var miss=(rs[2]&&rs[2].relay===false)?'<small style="display:block;margin-top:4px">BC stations need your relay update (v6).</small>':(rs[2]&&rs[2].fail?'<small style="display:block;margin-top:4px">'+(relayOld?'BC stations need your relay update (v6).':'BC stations unavailable right now.')+'</small>':'');
         h+=sec('Snow stations near you',(rows||'No stations within 250 km.')+miss);
         h+='<div class="skynote">Stations: BC River Forecast Centre & USDA SNOTEL · Ridge wind & inversion: Open-Meteo model'+(rs[0]?' · '+when(rs[0]):'')+'</div>';
@@ -1674,7 +1682,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     // ================= 2. SUPPLY CHAIN =================
     function gdelt(k,q,span,n){ if(!relay) return Promise.resolve({relay:false});
       var u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(q)+'&mode=artlist&format=json&sort=datedesc&timespan='+span+'&maxrecords='+n;
-      return cached('gd'+k,20,function(){ return T(viaRelay(u)).then(function(x){ var j; try{ j=JSON.parse(x) }catch(e){ j={articles:[]} } return (j.articles||[]).map(function(a){ return [String(a.title||'').slice(0,160),link(a.url),String(a.domain||'').slice(0,40),String(a.seendate||'')] }) }) }) }
+      var REL={port:/\b(port|ports|terminal|ship|ships|shipping|vessel|vessels|cargo|container|rail|freight|grain|tanker|longshore|dock|deltaport|rupert|roberts bank)/i,close:/airspace|border|no-fly|clos/i}[k];
+      function tidy(t){ return String(t||'').replace(/\s+([,.;:!?%)\]'’])/g,'$1').replace(/([(\[$])\s+/g,'$1').replace(/(['’])\s(?=(s|t|re|ll|ve|d|m)\b)/g,'$1').replace(/\b([A-Z])\.\s(?=[A-Z]\.)/g,'$1.').replace(/(\w) - (?=\w)/g,'$1-').slice(0,160) }
+      return cached('gd2'+k,20,function(){ var tries=0; function go(){ return T(viaRelay(u)).catch(function(e){ if(++tries>2) throw e; return new Promise(function(r){ setTimeout(r,6000*tries) }).then(go) }) } return go().then(function(x){ var j; try{ j=JSON.parse(x) }catch(e){ j={articles:[]} } return (j.articles||[]).filter(function(a){ return !REL||REL.test(a.title||'') }).map(function(a){ return [tidy(a.title),link(a.url),String(a.domain||'').slice(0,40),String(a.seendate||'')] }) }) }) }
     function gTime(s){ var m=/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(s||''); return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):0 }
     function heads(r,max){ return (r.d||[]).slice(0,max).map(function(a){ return '<a class="phead" href="'+esc(a[1]||'#')+'" target="_blank" rel="noopener noreferrer">'+esc(a[0]||'(no title)')+'<small>'+esc(a[2])+(gTime(a[3])?' · '+ago(gTime(a[3])):'')+'</small></a>' }).join('') }
     function supPorts(t){ gdelt('port','("Port of Vancouver" OR "Prince Rupert" OR Deltaport OR "Roberts Bank") (port OR terminal OR vessels OR ships OR cargo)','72h',8).then(function(r){
@@ -1761,7 +1771,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var msg=ext?'Carrington-class solar storm detected':'G'+d.g+' geomagnetic storm in progress (Kp '+(d.kp!=null?d.kp.toFixed(1):'?')+')', bar=document.getElementById('pral');
       if(bar){ document.getElementById('praltxt').textContent='☀️ '+msg; bar.hidden=false }
       try{ if(navigator.vibrate) navigator.vibrate([300,120,300,120,300]) }catch(e){}
-      try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('Singers Flight Tracker',{body:'☀️ '+msg,tag:'solar'}) }catch(e){} }) }
+      try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('AwareBC',{body:'☀️ '+msg,tag:'solar'}) }catch(e){} }) }
     (function(){ var bar=document.getElementById('pral'); if(bar) bar.onclick=function(e){ bar.hidden=true; if(e.target.id!=='pralx') open('planet',0) } })();
     setInterval(function(){ if(!document.hidden) solarCheck() },15*60000); setTimeout(solarCheck,9000);
 
@@ -2050,7 +2060,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function drawFires(){ fireLayer.clearLayers(); fires.filter(function(f){ var z=map.getZoom(); return cfg2.declutter!=='1'||z>=9||f.note||f.ha>=(z>=8?10:z>=7?100:1000) }).filter(function(f){ return cfg2.fireKm==='map'||distNm(me.lat,me.lon,f.lat,f.lon)<=(+cfg2.fireKm)/1.852 }).sort(cfg2.fireMax==='all'?function(a,b){return b.ha-a.ha}:byNear(nearPt())).slice(0,capN(cfg2.fireMax,300)).sort(function(a,b){return b.ha-a.ha}).reverse().forEach(function(f){ var sz=f.ha>10000?30:f.ha>1000?26:f.ha>100?22:18;
       L.marker([f.lat,f.lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(f.name)+' fire" style="--c:'+fireColor(f)+';--sz:'+sz+'px">🔥</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-200,title:f.name}).on('click',function(){openFire(f)}).addTo(fireLayer) });
     if(fireSel&&!document.getElementById('firesheet').hidden) fireRender() }
-  function fmtArea(ha){ if(!ha) return '—'; return units==='av'?Math.round(ha*2.47105).toLocaleString()+' acres':(ha<10?ha.toFixed(1):Math.round(ha).toLocaleString())+' ha' }
+  function fmtArea(ha){ if(!ha) return '—'; var ac=ha*2.47105; return units==='av'?(ac<1?'Under 1 acre':ac<10?ac.toFixed(1)+' acres':Math.round(ac).toLocaleString()+' acres'):(ha<10?ha.toFixed(1):Math.round(ha).toLocaleString())+' ha' }
   function openFire(f){ fireSel=f; document.getElementById('firesheet').hidden=false; fireRender() }
   function fireRender(){ var f=fireSel, body=document.getElementById('firebody'); if(!f||!body) return; var d=distNm(me.lat,me.lon,f.lat,f.lon);
     document.getElementById('firetitle').innerHTML='<span style="display:inline-block;max-width:calc(100vw - 170px);font-size:16px;line-height:1.2;vertical-align:middle;overflow:hidden;max-height:2.4em">'+esc(f.name)+'</span><span class="firepill" style="background:'+fireColor(f)+'">'+esc(f.status||'')+'</span>';
