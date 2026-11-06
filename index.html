@@ -312,12 +312,18 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:170px}
+#tut{position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}body:not(.tuton) #tut{display:none}
+body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
+#tutarrow{position:absolute;top:170px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 52px);height:44px;display:flex;align-items:center;gap:4px;color:#fff;animation:tutb 1s infinite}
+#tutarrow span{background:var(--accent);color:#fff;font:600 14px/1.2 var(--font);padding:9px 12px;border-radius:14px;box-shadow:var(--shadow);max-width:180px}
+#tutarrow svg{width:34px;height:34px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+@keyframes tutb{0%,55%{opacity:1}56%,100%{opacity:.15}}@keyframes tutp{0%,55%{box-shadow:var(--shadow),0 0 0 5px var(--accent)}56%,100%{box-shadow:var(--shadow)}}
 .sidebtn.mi{width:40px;height:40px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 2px)}.sidebtn.mi::before{right:48px}
 #hubbtn{top:218px}#spacebtn{top:260px}#aptbtn{top:302px}#firebtn{top:344px}#roadbtn{top:386px}#ferrybtn{top:428px}#arbtn{top:470px}
 @media (max-width:360px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
-<body>
+<body class="tuton">
 <div class="app">
   <div class="mapwrap">
     <div id="map" role="application" aria-label="Live flight map"></div>
@@ -347,6 +353,7 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
     </button>
   </div>
   <div class="welcome" id="welcome" hidden><b id="wtitle"></b><p id="wtext"></p><button type="button" id="wbtn"></button></div>
+  <div id="tut" role="dialog" aria-label="Tip: open the menu"><div id="tutarrow"><span>Tap here for map layers &amp; tools</span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 10.5h11.2l-4.1-4.1L13.2 4.3 20.9 12l-7.7 7.7-2.1-2.1 4.1-4.1H4z"/></svg></div></div>
   <button class="sidebtn" id="menubtn" aria-label="Map layers and tools" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
   <button class="sidebtn mi" id="spacebtn" data-l="Space &amp; sky" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
   <button class="sidebtn mi" id="aptbtn" data-l="Airports" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
@@ -1346,7 +1353,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
     function setMenu(v){ document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
-    mb.onclick=function(){ setKey(false); setMenu(!document.body.classList.contains('menuon')) };
+    mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
     kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
     ['spacebtn','hubbtn','arbtn'].forEach(function(id){ var b=document.getElementById(id); if(b) b.addEventListener('click',function(){ setMenu(false) }) });
     map.on('click dragstart',function(){ setMenu(false); setKey(false) });
@@ -1359,7 +1366,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   // ---- Airports: live weather (aviationweather.gov through the relay) and an arrivals/departures board ----
   var aptOn=false, aptLayer=L.layerGroup().addTo(map), aptData={}, aptSel=null, aptTab='wx', aptT=null, tafCache={};
-  try{aptOn=localStorage.getItem('sky-apt')==='1'}catch(e){}
+  aptOn=false;
   var CATC={VFR:'#34c759',MVFR:'#2f8cff',IFR:'#ff3b30',LIFR:'#d63bff'}, CATW={VFR:'Good flying weather',MVFR:'Marginal: low cloud or haze',IFR:'Poor: low cloud or fog',LIFR:'Very poor: very low cloud or fog'};
   function visMi(v){ if(v==null) return null; var n=parseFloat(String(v).replace('+','')); return isFinite(n)?n:null }
   function ceilFt(cl){ var c=null; (cl||[]).forEach(function(x){ if(x&&/^(BKN|OVC|OVX|VV)$/.test(x.cover)&&typeof x.base==='number'&&(c==null||x.base<c)) c=x.base }); return c }
@@ -1490,7 +1497,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   // ---- Wildfires: BC Wildfire Service and US (NIFC WFIGS) fires and outlines, plus firefighting aircraft ----
   var fireOn=false, fireLayer=L.layerGroup().addTo(map), perLayer=L.layerGroup().addTo(map), fires=[], fireT=null, fireGen=0, fireKey='', fireSel=null;
-  try{fireOn=localStorage.getItem('sky-fire')==='1'}catch(e){}
+  fireOn=false;
   var BCWS='https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/', WFIGS='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/';
   var FSTAT={'Out of Control':'#e53935','Being Held':'#fb8c00','Under Control':'#fbc02d','Out':'#8d8d8d'};
   var FFT={CL2P:1,CL2T:1,CL4T:1,CL5T:1,AT8T:1,AT6T:1,AT5T:1,AT3T:1,S2P:1,S2T:1,S64:1,KMAX:1,DC10:0};
@@ -1543,7 +1550,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   // ---- Roads (DriveBC + WSDOT) and BC Ferries ----
   (function(){
-    var roadOn=false, ferryOn=false; try{roadOn=localStorage.getItem('sky-road')==='1'; ferryOn=localStorage.getItem('sky-ferry')==='1'}catch(e){}
+    var roadOn=false, ferryOn=false;
     var roadLayer=L.layerGroup().addTo(map), camLayer=L.layerGroup().addTo(map), ferryLayer=L.layerGroup().addTo(map), dbcCams=null, rGen=0, rT=null, rKey='', sel=null, camList=[], camTmr=null;
     var WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
     function gj(u){ return fetch(u).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }
