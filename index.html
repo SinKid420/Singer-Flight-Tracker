@@ -312,6 +312,13 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:170px}
+#mtbtn.off{display:none!important}#fsheet .sheet:not(.fopen){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:6px;align-content:start}#fsheet .sheet:not(.fopen)>.sheet-head{grid-column:1/-1}#fsheet .sheet:not(.fopen) .folder summary{font-size:13px}#mtnbody .brow{padding:4px 2px}body.menuon .leaflet-control-zoom,body.menuon .tempctl{visibility:hidden}
+.ltmk{position:absolute;transform:translate(-50%,-50%);font-size:26px;line-height:1;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 5px rgba(255,214,0,.9));cursor:pointer}.ltmk.a0{animation:ltf 1.4s infinite}.ltmk.a1{opacity:.75;font-size:20px}.ltmk.a2{opacity:.5;font-size:17px}
+@keyframes ltf{0%,70%,100%{opacity:1}80%{opacity:.35}}
+#ltal,#ltnote{position:absolute;z-index:795;top:148px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;align-items:center;gap:6px;background:#f9a825;color:#111;border-radius:12px;padding:6px 6px 6px 12px;font:600 13px/1.3 var(--font);box-shadow:var(--shadow)}
+#ltal[hidden],#ltnote[hidden]{display:none}#ltal span{flex:1;min-width:0}#ltnote{padding:8px 12px;background:var(--bg);color:var(--fg)}
+#ltal button{width:30px;height:30px;border-radius:50%;padding:0;background:rgba(0,0,0,.15);color:#111;font:700 14px/1 var(--font);flex:none}
+.ltbtn2{display:block;width:100%;box-sizing:border-box;min-height:40px;margin-top:6px;border-radius:20px;background:var(--chip);color:var(--fg);font:600 13px/40px var(--font);text-align:center;text-decoration:none;border:0;cursor:pointer}
 #tut{position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}body:not(.tuton) #tut{display:none}
 body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 #tutarrow{position:absolute;top:170px;right:calc(max(16px,env(safe-area-inset-right,0px)) + 52px);height:44px;display:flex;align-items:center;gap:4px;color:#fff;animation:tutb 1s infinite}
@@ -358,7 +365,9 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <button class="sidebtn mi" id="spacebtn" data-l="Space &amp; sky" aria-label="Space and night sky: satellites, ISS, aurora, meteors"><span style="font-size:20px;line-height:1" aria-hidden="true">🛰</span></button>
   <button class="sidebtn mi" id="aptbtn" data-l="Airports" aria-label="Airports: weather and arrivals board" aria-pressed="false">APT</button>
   <button class="sidebtn mi" id="firebtn" data-l="Wildfires" aria-label="Wildfires: BC and US fires on the map" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🔥</span></button>
+  <button class="sidebtn mi" id="ltbtn" data-l="Lightning" aria-label="Lightning strikes" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⚡</span></button>
   <button class="sidebtn mi" id="roadbtn" data-l="Roads &amp; cameras" aria-label="Roads: highway cameras, closures and pass reports" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">🚗</span></button>
+  <button class="sidebtn mi off" id="mtbtn" data-l="Winter mountains" aria-label="Winter mountains: avalanche forecast, passes and ski hills" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">❄️</span></button>
   <button class="sidebtn mi" id="ferrybtn" data-l="BC Ferries" aria-label="BC Ferries: next sailings and space left" aria-pressed="false"><span style="font-size:19px;line-height:1" aria-hidden="true">⛴</span></button>
   <button class="sidebtn mi arb" id="arbtn" data-l="AR sky camera" aria-label="AR camera: point at the sky to identify planes">AR</button>
   <button class="sidebtn mi" id="hubbtn" data-l="Emergency hub" aria-label="Emergency hub: evacuations, alerts, fires, air quality and closures">SOS</button>
@@ -367,6 +376,8 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <button class="sidebtn" id="keybtn" aria-label="Map key: rain and plane altitude" aria-expanded="false">KEY</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
+  <div id="ltal" role="alert" hidden><span id="lttxt"></span><button id="ltx" aria-label="Dismiss lightning alert">✕</button></div>
+  <div id="ltnote" role="status" hidden>⚡ No lightning in view right now</div>
   <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
   </div>
@@ -394,6 +405,12 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <div class="sheet" role="dialog" aria-label="Roads and ferries">
     <div class="sheet-head"><b id="roadtitle">Road</b><button class="close" id="roadx" aria-label="Close">✕</button></div>
     <div id="roadbody"></div>
+  </div>
+</div>
+<div class="sheet-bg" id="mtnsheet" hidden>
+  <div class="sheet" role="dialog" aria-label="Winter mountains">
+    <div class="sheet-head"><b id="mtntitle">Winter mountains</b><button class="close" id="mtnx" aria-label="Close">✕</button></div>
+    <div id="mtnbody"></div>
   </div>
 </div>
 <div class="sheet-bg" id="hubsheet" hidden>
@@ -469,7 +486,15 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
       <label class="setrow" for="s_fireKm">Fires within<select id="s_fireKm"><option value="map">Whole map</option><option value="500">500 km of me</option><option value="250">250 km of me</option><option value="100">100 km of me</option><option value="50">50 km of me</option></select></label>
       <label class="setrow" for="s_fireMax">Fires shown<select id="s_fireMax"><option value="all">All</option><option value="50">Nearest 50</option><option value="25">Nearest 25</option><option value="10">Nearest 10</option><option value="5">Nearest 5</option></select></label>
     </details>
-    <details class="folder" id="rdfolder"><summary>Roads (DriveBC &amp; WSDOT)</summary>
+    <details class="folder" id="ltfolder"><summary>Lightning</summary>
+      <label class="setrow" for="s_ltAge">Bolts shown<select id="s_ltAge"><option value="10">Last 10 min</option><option value="30">Last 30 min</option><option value="60">Last hour</option></select></label>
+      <label class="setrow" for="s_ltAlert">Lightning alerts<select id="s_ltAlert"><option value="off">Off</option><option value="10">Within 10 km</option><option value="25">Within 25 km</option><option value="50">Within 50 km</option></select></label>
+    </details>
+    <details class="folder" id="mtfolder"><summary>Winter mountains</summary>
+      <label class="setrow" for="s_mt">Winter mode<select id="s_mt"><option value="auto">Auto (Nov to Apr)</option><option value="on">Always on</option><option value="off">Off</option></select></label>
+      <label class="setrow" for="s_mtPins">Passes &amp; ski hills<select id="s_mtPins"><option value="1">Show on map</option><option value="0">Hide</option></select></label>
+    </details>
+    <details class="folder" id="rdfolder"><summary>Roads &amp; cameras</summary>
       <label class="setrow" for="s_road">Road info on map<select id="s_road"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_roadCams">Highway cameras<select id="s_roadCams"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_camAuto">Camera photo<select id="s_camAuto"><option value="0">Refresh when opened</option><option value="1">Refresh every minute</option></select></label>
@@ -519,7 +544,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
   // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
   try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
-  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all'};
+  var cfg2={arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all',ltAge:'30',ltAlert:'off',mt:'auto',mtPins:'1'};
   function nearPt(){ if(cfg2.nearRef==='map'&&typeof map!=='undefined'){ var c=map.getCenter(); return [c.lat,c.lng] } return [me.lat,me.lon] }
   function capN(v,d){ return v==='all'?(d||1e9):(+v||d||1e9) }
   function byNear(p){ return function(a,b){ return distNm(p[0],p[1],a.lat,a.lon)-distNm(p[0],p[1],b.lat,b.lon) } }
@@ -1354,12 +1379,119 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     body.innerHTML=h;
     [].forEach.call(body.querySelectorAll('.stog button'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-k'); spaceCfg[k]=!spaceCfg[k]; b.classList.toggle('on',spaceCfg[k]); var e1=document.getElementById(k==='map'?'s_issmap':'s_satar'); if(e1) e1.value=spaceCfg[k]?'1':'0'; try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} issTick() } }) }
   document.getElementById('spacebtn').onclick=openSpace;
+  // ---- Lightning (Environment Canada CLDN, 10-minute flash density) ----
+  (function(){
+    var WMS='https://geo.weather.gc.ca/geomet?service=WMS&version=1.3.0', LYR='Lightning_2.5km_Density';
+    var ltOn=false, layer=L.layerGroup().addTo(map), tLatest=null, tAt=0, gen=0, tmr=null, lastAlert=0, lastAlertKm=1e9, cache={};
+    var btn=document.getElementById('ltbtn'), bar=document.getElementById('ltal');
+    function paint(){ if(btn){ btn.classList.toggle('on',ltOn); btn.setAttribute('aria-pressed',ltOn?'true':'false') } }
+    function latest(){ if(tLatest&&Date.now()-tAt<5*60000) return Promise.resolve(tLatest);
+      return fetch(WMS+'&request=GetCapabilities&layer='+LYR).then(function(r){return r.text()}).then(function(x){ var m=/default="(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"/.exec(x.slice(x.indexOf(LYR))); if(m){ tLatest=m[1]; tAt=Date.now() } return tLatest }) }
+    function iso(ms){ return new Date(ms).toISOString().replace(/\.\d+Z$/,'Z') }
+    // one 10-minute frame for a box -> list of [lat,lon] cells with lightning
+    function frame(s,w,n,e,time){ var W=Math.max(16,Math.min(640,Math.round((e-w)*111*Math.cos((s+n)/2*Math.PI/180)/2.5))), H=Math.max(16,Math.min(640,Math.round((n-s)*111/2.5)));
+      var u=WMS+'&request=GetMap&layers='+LYR+'&styles=&crs=EPSG:4326&bbox='+[s,w,n,e].map(function(v){return v.toFixed(3)}).join(',')+'&width='+W+'&height='+H+'&format=image/png&transparent=true&time='+time;
+      if(cache[u]) return Promise.resolve(cache[u]);
+      return fetch(u).then(function(r){ return r.ok?r.blob():null }).then(function(b){ if(!b||!/png/.test(b.type)) return []; return createImageBitmap(b).then(function(im){
+        var c=document.createElement('canvas'); c.width=W; c.height=H; var g=c.getContext('2d'); g.drawImage(im,0,0); var d=g.getImageData(0,0,W,H).data, out=[];
+        for(var y=0;y<H;y++) for(var x=0;x<W;x++){ if(d[(y*W+x)*4+3]>0) out.push([n-(y+.5)*(n-s)/H, w+(x+.5)*(e-w)/W]) }
+        var k=Object.keys(cache); if(k.length>40) delete cache[k[0]]; cache[u]=out; return out }) }).catch(function(){ return [] }) }
+    function frames(s,w,n,e,count){ return latest().then(function(t){ if(!t) return []; var t0=Date.parse(t), jobs=[];
+      for(var i=0;i<count;i++) jobs.push(frame(s,w,n,e,iso(t0-i*600000)));
+      return Promise.all(jobs).then(function(rs){ return {t:t0,frames:rs} }) }) }
+    function draw(){ var g=++gen; layer.clearLayers(); if(!ltOn) return; var z=map.getZoom(); if(z<4) return;
+      var b=map.getBounds().pad(0.1), s=Math.max(31.6,b.getSouth()), n=Math.min(73.7,b.getNorth()), w=Math.max(-156,b.getWest()), e=Math.min(-38.7,b.getEast()); if(s>=n||w>=e) return;
+      var cnt=cfg2.ltAge==='10'?1:cfg2.ltAge==='60'?6:3;
+      frames(s,w,n,e,cnt).then(function(res){ if(g!==gen||!res||!res.frames) return; var bins={};
+        res.frames.forEach(function(cells,age){ cells.forEach(function(c){ var p=map.latLngToContainerPoint(c), k=Math.floor(p.x/22)+'_'+Math.floor(p.y/22), o=bins[k];
+          if(!o) bins[k]={lat:c[0],lon:c[1],age:age,n:1}; else { o.n++; if(age<o.age){ o.age=age; o.lat=c[0]; o.lon=c[1] } } }) });
+        var list=Object.keys(bins).map(function(k){return bins[k]}).sort(function(a,b){return a.age-b.age}).slice(0,250), pt=[me.lat,me.lon];
+        list.forEach(function(o){ var mins=(o.age+1)*10, km=Math.round(distNm(pt[0],pt[1],o.lat,o.lon)*1.852);
+          L.marker([o.lat,o.lon],{icon:L.divIcon({className:'',html:'<span class="ltmk a'+Math.min(o.age,2)+'" role="img" aria-label="Lightning">⚡</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-200,title:'Lightning'})
+            .bindPopup('<b>⚡ Lightning</b><br>Within the last '+mins+' min<br>'+km+' km from you',{closeButton:false}).addTo(layer) });
+        setStatLt(list.length) }) }
+    function setStatLt(n){ var el=document.getElementById('ltnote'); if(!el) return; clearTimeout(setStatLt.t); el.hidden=!!n; if(!n) setStatLt.t=setTimeout(function(){ el.hidden=true },4000) }
+    // alerts: only when turned on in Settings
+    function check(){ var R=+cfg2.ltAlert; if(!R||document.hidden&&!('Notification' in window)) return;
+      var dLat=R/111, dLon=R/(111*Math.cos(me.lat*Math.PI/180));
+      frames(me.lat-dLat,me.lon-dLon,me.lat+dLat,me.lon+dLon,1).then(function(res){ if(!res||!res.frames) return; var best=1e9;
+        (res.frames[0]||[]).forEach(function(c){ var km=distNm(me.lat,me.lon,c[0],c[1])*1.852; if(km<best) best=km });
+        if(best>R) return; var now=Date.now(); if(now-lastAlert<30*60000&&best>lastAlertKm*0.6) return; lastAlert=now; lastAlertKm=best;
+        var msg='Lightning '+Math.max(1,Math.round(best))+' km from you (last 10 min)';
+        if(bar){ document.getElementById('lttxt').textContent='⚡ '+msg; bar.hidden=false }
+        try{ if(navigator.vibrate) navigator.vibrate([200,100,200]) }catch(e){}
+        try{ if(document.hidden&&'Notification' in window&&Notification.permission==='granted') new Notification('Singers Flight Tracker',{body:'⚡ '+msg,tag:'lightning'}) }catch(e){} }) }
+    function setLt(v){ ltOn=v; paint(); if(v){ map.attributionControl.addAttribution('Lightning © ECCC (CLDN)'); draw() } else { gen++; layer.clearLayers(); map.attributionControl.removeAttribution('Lightning © ECCC (CLDN)') } }
+    if(btn) btn.onclick=function(){ setLt(!ltOn) };
+    if(bar) bar.onclick=function(e){ if(e.target.id==='ltx'){ bar.hidden=true; return } bar.hidden=true; if(!ltOn) setLt(true); map.setView([me.lat,me.lon],Math.max(map.getZoom(),9)) };
+    var mT=null; map.on('moveend',function(){ if(!ltOn) return; clearTimeout(mT); mT=setTimeout(draw,700) });
+    setInterval(function(){ if(document.hidden) return; if(ltOn) draw(); check() },300000);
+    setTimeout(check,6000);
+    window.__lt={redraw:function(){ if(ltOn) draw() },alert:function(){ if(cfg2.ltAlert!=='off'&&'Notification' in window&&Notification.permission==='default'){ try{ Notification.requestPermission() }catch(e){} } check() },_frame:frame};
+    paint();
+  })();
+
+  // ---- Winter mountains: avalanche forecast, mountain passes, ski hills ----
+  (function(){
+    var PASS=[['Eholt Summit','3',49.1452,-118.5346,1000,247],['Paulson Summit','3',49.2416,-118.053,1529,174],['Anarchist Summit','3',49.0051,-119.3147,1139,64],['Strawberry Pass','3B',49.1763,-117.8611,1539,1159],['Kootenay Pass','3',49.0587,-117.0408,1781,5],['McCulloch','33',49.7577,-119.1261,1200,249]];
+    var HILL=[['Phoenix Mountain',49.098,-118.594,1500],['Red Mountain',49.104,-117.846,1700],['Big White',49.7317,-118.9431,1850],['Baldy Mountain',49.149,-119.23,1750]];
+    var btn=document.getElementById('mtbtn'), sh=document.getElementById('mtnsheet'), body=document.getElementById('mtnbody'), ttl=document.getElementById('mtntitle');
+    var on=false, layer=L.layerGroup().addTo(map), wx=null, wxAt=0, av=null, avAt=0;
+    function season(){ var m=new Date().getMonth(); return m>=10||m<=3 }
+    function active(){ return cfg2.mt==='on'||(cfg2.mt==='auto'&&season()) }
+    function show(){ if(btn) btn.classList.toggle('off',!active()); if(!active()&&on) setOn(false) }
+    function tU(c){ if(typeof c!=='number') return '—'; return (typeof tcfg!=='undefined'&&tcfg==='F')?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C' }
+    function cm(v){ return v<0.5?'0 cm':Math.round(v)+' cm' }
+    function txt(h){ var d=document.createElement('div'); d.innerHTML=String(h||''); return (d.textContent||'').replace(/\s+/g,' ').trim() }
+    var AVC={low:'#52ba4a',moderate:'#e6c700',considerable:'#f79218',high:'#ef1c29',extreme:'#111'};
+    function getWx(){ if(wx&&Date.now()-wxAt<20*60000) return Promise.resolve(wx); var all=PASS.map(function(p){return [p[2],p[3],p[4]]}).concat(HILL.map(function(h){return [h[1],h[2],h[3]]}));
+      var u='https://api.open-meteo.com/v1/forecast?latitude='+all.map(function(a){return a[0]}).join(',')+'&longitude='+all.map(function(a){return a[1]}).join(',')+'&elevation='+all.map(function(a){return a[2]}).join(',')+
+        '&current=temperature_2m,wind_speed_10m&hourly=snowfall,snow_depth&past_days=1&forecast_days=3&timezone=auto';
+      return fetch(u).then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j) return wx; var arr=Array.isArray(j)?j:[j], now=Date.now();
+        wx=arr.map(function(x){ var h=x.hourly||{}, past=0, next=0, dep=null;
+          (h.time||[]).forEach(function(s,i){ var ms=Date.parse(s+'Z')-(x.utc_offset_seconds||0)*1000, sf=+h.snowfall[i]||0; if(ms<=now&&ms>now-86400000) past+=sf; if(ms>now&&ms<=now+172800000) next+=sf; if(ms<=now&&h.snow_depth&&h.snow_depth[i]!=null) dep=h.snow_depth[i] });
+          return {t:x.current&&x.current.temperature_2m,w:x.current&&x.current.wind_speed_10m,past:past,next:next,dep:dep} }); wxAt=Date.now(); return wx }).catch(function(){ return wx }) }
+    function getAv(){ if(av&&Date.now()-avAt<60*60000) return Promise.resolve(av);
+      return fetch('https://api.avalanche.ca/forecasts/en/products/point?lat='+me.lat.toFixed(3)+'&long='+me.lon.toFixed(3)).then(function(r){return r.ok?r.json():null}).then(function(j){ if(j){ av=j; avAt=Date.now() } return av }).catch(function(){ return av }) }
+    function avHtml(j){ if(!j||!j.report) return '<div class="ssec"><h4>Avalanche danger</h4>No forecast for your area right now.</div>'; var r=j.report, d=(r.dangerRatings||[])[0], h='<div class="ssec"><h4>Avalanche danger</h4>';
+      if(d&&d.ratings){ ['alp','tln','btl'].forEach(function(k){ var x=d.ratings[k]; if(!x) return; var v=(x.rating&&x.rating.value)||'', c=AVC[v]||'#757575';
+        h+='<div class="row2"><span>'+esc(x.display||k)+'</span><span class="firepill" style="background:'+c+';color:'+(v==='moderate'?'#111':'#fff')+'">'+esc((x.rating&&x.rating.display)||'—')+'</span></div>' }) }
+      var hl=txt(r.highlights); if(hl) h+='<div style="margin-top:4px">'+esc(hl.length>120?hl.slice(0,117)+'…':hl)+'</div>';
+      var url=/^https:\/\/(www\.)?avalanche\.ca\/[^\s"<>]{0,200}$/.test(j.url||'')?j.url:'https://avalanche.ca/map';
+      h+='<div class="row2" style="margin-top:4px"><span>'+(r.dateIssued?'Issued '+esc(new Date(r.dateIssued).toLocaleDateString([], {month:'short',day:'numeric'})):'')+'</span><a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:var(--accent)">Full forecast ›</a></div></div>'; return h }
+    function rowP(p,i){ var w=(wx||[])[i]||{}; return '<div class="brow" data-k="p'+i+'"><span>🏔 '+esc(p[0])+' <small style="color:var(--dim)">Hwy '+esc(p[1])+'</small></span><span>'+tU(w.t)+(w.next>=1?' · ❄ '+cm(w.next)+' coming':'')+'</span></div>' }
+    function rowH(hl,i){ var w=(wx||[])[PASS.length+i]||{}; return '<div class="brow" data-k="h'+i+'"><span>⛷ '+esc(hl[0])+'</span><span>'+(w.past>=1?'❄ '+cm(w.past)+' new · ':'')+(w.dep>=0.01?Math.round(w.dep*100)+' cm base':tU(w.t))+'</span></div>' }
+    function bind(){ [].forEach.call(body.querySelectorAll('.brow'),function(r){ r.onclick=function(){ var k=r.getAttribute('data-k'); if(k[0]==='p') detailP(+k.slice(1)); else detailH(+k.slice(1)) } }); var bk=document.getElementById('mtback'); if(bk) bk.onclick=overview }
+    function overview(){ ttl.textContent='Winter mountains'; sh.hidden=false; body.innerHTML='<div class="ssec">Loading mountain conditions…</div>';
+      Promise.all([getAv(),getWx()]).then(function(){ var h=avHtml(av);
+        h+='<div class="ssec"><h4>Mountain passes</h4>'+PASS.map(rowP).join('')+'</div>';
+        h+='<div class="ssec"><h4>Ski hills</h4>'+HILL.map(rowH).join('')+'</div>';
+        h+='<div class="skynote">© Avalanche Canada · Open-Meteo (model) · DriveBC</div>'; body.innerHTML=h; bind() }) }
+    function detailP(i){ var p=PASS[i], w=(wx||[])[i]||{}; ttl.textContent=p[0]; var src='https://www.drivebc.ca/images/'+p[5]+'.jpg?t='+Math.floor(Date.now()/60000);
+      body.innerHTML='<img src="'+esc(src)+'" alt="Camera at '+esc(p[0])+'" style="width:100%;aspect-ratio:800/468;object-fit:contain;border-radius:10px;background:#000;display:block" referrerpolicy="no-referrer">'+
+        '<div id="mtts" style="position:relative;width:100%;aspect-ratio:205/18;overflow:hidden;background:#000;border-radius:8px;margin-top:6px"><img src="'+esc(src)+'" alt="" style="position:absolute;right:0;bottom:0;width:390.24%;max-width:none;height:auto" referrerpolicy="no-referrer"></div>'+
+        '<div class="ssec" style="margin-top:6px"><b>Hwy '+esc(p[1])+' · '+Math.round(p[4]*3.28084).toLocaleString()+' ft</b><br>Now '+tU(w.t)+(typeof w.w==='number'?' · wind '+Math.round(w.w)+' km/h':'')+'<br>Snow last 24 h: '+cm(w.past||0)+' · next 48 h: '+cm(w.next||0)+'</div>'+
+        '<button class="ltbtn2" id="mtback">‹ All mountains</button><div class="skynote">Weather is a model estimate for the summit. Check DriveBC before you go.</div>'; bind() }
+    function detailH(i){ var hl=HILL[i], w=(wx||[])[PASS.length+i]||{}; ttl.textContent=hl[0];
+      body.innerHTML='<div class="ssec"><h4>Snow (model estimate)</h4><div class="row2"><span>New snow, last 24 h</span><b>'+cm(w.past||0)+'</b></div><div class="row2"><span>Coming, next 48 h</span><b>'+cm(w.next||0)+'</b></div><div class="row2"><span>Snow on the ground</span><b>'+(w.dep!=null?Math.round(w.dep*100)+' cm':'—')+'</b></div><div class="row2"><span>Temperature now</span><b>'+tU(w.t)+'</b></div></div>'+
+        '<a class="ltbtn2" href="https://www.google.com/search?q='+encodeURIComponent(hl[0]+' BC snow report')+'" target="_blank" rel="noopener">Official snow report ›</a>'+
+        '<button class="ltbtn2" id="mtback">‹ All mountains</button><div class="skynote">Numbers come from a weather model for the upper mountain and can differ from the hill’s own report.</div>'; bind() }
+    function pins(){ layer.clearLayers(); if(!on||cfg2.mtPins!=='1') return;
+      PASS.forEach(function(p,i){ L.marker([p[2],p[3]],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(p[0])+'" style="--c:#546e7a;--sz:24px">🏔</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-240,title:p[0]}).on('click',function(){ sh.hidden=false; getWx().then(function(){ detailP(i) }) }).addTo(layer) });
+      HILL.forEach(function(hl,i){ L.marker([hl[1],hl[2]],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(hl[0])+'" style="--c:#1e88e5;--sz:24px">⛷</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:-240,title:hl[0]}).on('click',function(){ sh.hidden=false; getWx().then(function(){ detailH(i) }) }).addTo(layer) }) }
+    function setOn(v){ on=v; if(btn){ btn.classList.toggle('on',v); btn.setAttribute('aria-pressed',v?'true':'false') } pins() }
+    if(btn) btn.onclick=function(){ if(on){ setOn(false); return } setOn(true); overview() };
+    document.getElementById('mtnx').onclick=function(){ sh.hidden=true };
+    sh.onclick=function(e){ if(e.target===sh) sh.hidden=true };
+    window.__mtn={update:function(){ show(); pins() }};
+    show();
+  })();
   (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
-    function setMenu(v){ document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
+    function setMenu(v){ if(v){ var n=0, hb=document.getElementById('hubbtn'); [hb].concat([].filter.call(document.querySelectorAll('.sidebtn.mi'),function(x){return x!==hb})).forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(218+n*42)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
     mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
     kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
-    ['spacebtn','hubbtn','arbtn'].forEach(function(id){ var b=document.getElementById(id); if(b) b.addEventListener('click',function(){ setMenu(false) }) });
+    ['spacebtn','hubbtn','arbtn','mtbtn'].forEach(function(id){ var b=document.getElementById(id); if(b) b.addEventListener('click',function(){ setMenu(false) }) });
     map.on('click dragstart',function(){ setMenu(false); setKey(false) });
     document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ setMenu(false); setKey(false) } });
     function mirror(){ mb.classList.toggle('alert1',hub.classList.contains('alert1')); mb.classList.toggle('alert2',hub.classList.contains('alert2')) }
@@ -1882,10 +2014,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     btn.onclick=start; box.querySelector('#arclose').onclick=function(){stop()};
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
-  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps'],['s_declutter','declutter'],['s_nearRef','nearRef'],['s_aMax','aMax'],['s_wxMax','wxMax'],['s_fireKm','fireKm'],['s_fireMax','fireMax'],['s_camMax','camMax'],['s_evtMax','evtMax'],['s_ferryMax','ferryMax']];
+  (function(){ var B=[['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps'],['s_declutter','declutter'],['s_nearRef','nearRef'],['s_aMax','aMax'],['s_wxMax','wxMax'],['s_fireKm','fireKm'],['s_fireMax','fireMax'],['s_camMax','camMax'],['s_evtMax','evtMax'],['s_ferryMax','ferryMax'],['s_ltAge','ltAge'],['s_ltAlert','ltAlert'],['s_mt','mt'],['s_mtPins','mtPins']];
     function changed(k){ if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry(); if(/^hub/.test(k)&&window.__hub){ if(k==='hubBadge') window.__hub.paint(); else window.__hub.refresh() } if(k==='declutter'){ zoomClass(); loadDir(); loadApts(); loadFires(true); if(window.__roads) window.__roads.reload() }
       if(k==='nearRef'||k==='aMax') drawDir(); if(k==='nearRef'||k==='wxMax') loadApts(); if(k==='nearRef'||k==='fireKm'||k==='fireMax') drawFires();
-      if((k==='nearRef'||k==='camMax'||k==='evtMax')&&window.__roads) window.__roads.reload(); if((k==='nearRef'||k==='ferryMax')&&window.__roads&&window.__roads.ferries) window.__roads.ferries() }
+      if((k==='nearRef'||k==='camMax'||k==='evtMax')&&window.__roads) window.__roads.reload(); if((k==='nearRef'||k==='ferryMax')&&window.__roads&&window.__roads.ferries) window.__roads.ferries();
+      if(k==='ltAge'&&window.__lt) window.__lt.redraw(); if(k==='ltAlert'&&window.__lt) window.__lt.alert(); if((k==='mt'||k==='mtPins')&&window.__mtn) window.__mtn.update() }
     B.forEach(function(b){ var el=document.getElementById(b[0]); if(!el) return; el.value=String(cfg2[b[1]]); el.onchange=function(){ cfg2[b[1]]=el.value; saveCfg2(); changed(b[1]) } });
     var sm=document.getElementById('s_issmap'), sa=document.getElementById('s_satar'), ap=document.getElementById('s_apt'), rb=document.getElementById('s_arreset');
     function saveSpace(){ try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} }
