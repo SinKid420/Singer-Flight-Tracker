@@ -126,7 +126,7 @@
     var b=form.querySelector('.trpost'); b.disabled=true; b.textContent='Posting…';
     var k=key(), body={lat:F.pos.lat,lon:F.pos.lon,st:F.st,tg:F.tg,note:form.querySelector('textarea').value.trim().slice(0,200),by:nm,key:k,img:F.img,th:F.th};
     send(body).then(function(j){ form.hidden=true; toast('Report posted. Thanks!'); load(true); setTimeout(function(){ openCard(j.id) },900) })
-      .catch(function(e){ if(!navigator.onLine||/fetch|network/i.test(String(e.message))){ var q=lj('sky-trq',[]); q.push(body); while(q.length>3) q.shift(); ls('sky-trq',JSON.stringify(q)); form.hidden=true; toast('No signal: saved, it will post when you\'re back online') }
+      .catch(function(e){ if(!navigator.onLine||/fetch|network/i.test(String(e.message))){ var q=lj('sky-trq',[]); q.push(body); while(q.length>3) q.shift(); ls('sky-trq',JSON.stringify(q)); form.hidden=true; toast(navigator.onLine?'Reports server not reachable yet. Saved on this phone, it will post by itself.':'No signal: saved, it will post when you\'re back online') }
         else { b.disabled=false; b.textContent='Post report'; toast(e.message) } }) }
   function send(body){ return api('/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(j){ mine[j.id]=body.key; ls('sky-trmine',JSON.stringify(mine)); return j }) }
   var flushing=false; function flush(){ var q=lj('sky-trq',[]); if(!q.length||flushing||!navigator.onLine) return; flushing=true; var b=q[0];
