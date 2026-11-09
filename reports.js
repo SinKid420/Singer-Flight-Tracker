@@ -144,7 +144,7 @@
   function check(la,lo){ if(!on||!data.length) return; var now=Date.now(), best=null, bd=1e9;
     data.forEach(function(r){ if(r.st==='ok'||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
       var ahead=d<150||(hdg!=null&&adiff(hdg,brg(la,lo,r.lat,r.lon))<=50); if(ahead&&d<bd){ bd=d; best=r } });
-    if(best){ AL[best.id]=now; banner(best,bd) } }
+    if(best){ AL[best.id]=now; banner(best,bd); if(card.hidden&&form.hidden&&!document.body.classList.contains('menuon')&&!document.body.classList.contains('toolon')) openCard(best.id) } }
   function onFix(p){ var c=p.coords, la=c.latitude, lo=c.longitude;
     if(c.heading!=null&&isFinite(c.heading)&&(c.speed||0)>1.5) hdg=c.heading;
     else if(lastFix&&map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) hdg=brg(lastFix[0],lastFix[1],la,lo);
