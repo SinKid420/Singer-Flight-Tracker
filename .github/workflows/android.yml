@@ -1,0 +1,54 @@
+# AwareBC Android app (by Josh Singer): every change to the website builds a fresh test app.
+# Download it on your phone: https://github.com/SinKid420/Singer-Flight-Tracker/releases/download/android-test/AwareBC.apk
+name: Android app
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['README.md', 'reports-server/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Make the app files from the website
+        run: node app/prep.mjs web
+      - name: Add Capacitor and Android
+        working-directory: app/build
+        run: |
+          npm install --no-audit --no-fund
+          npx cap add android
+          node ../prep.mjs android
+          convert assets/icon-only.png -resize 1024x1024 assets/icon-only.png || true
+          npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#161618' --iconBackgroundColorDark '#161618' || echo "icon step skipped"
+          npx cap sync android
+      - name: Build the app
+        working-directory: app/build/android
+        env:
+          TEST_KEY: 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
+        run: |
+          # test-only signing key (kept the same so each new test app installs over the last). The Play Store app will use a private key.
+          mkdir -p ~/.android && echo "$TEST_KEY" | base64 -d > ~/.android/debug.keystore
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/AwareBC.apk
+      - name: Publish the test app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-test >/dev/null 2>&1 || gh release create android-test --prerelease --title "AwareBC test app" --notes "Test app for Android. Tap AwareBC.apk on your phone to install."
+          gh release upload android-test AwareBC.apk --clobber
+          gh release edit android-test --notes "Test app for Android, build ${{ github.run_number }}. Tap AwareBC.apk on your phone to install."
