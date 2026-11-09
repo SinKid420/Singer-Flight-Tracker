@@ -39,8 +39,13 @@
   var lt=null, lKey='', busy=false;
   function load(force){ if(!on||!fsrOn()) return; var b=map.getBounds().pad(.3), k=[b.getSouth(),b.getNorth(),b.getWest(),b.getEast()].map(function(v){return v.toFixed(2)}).join(',');
     if(!force&&(busy||k===lKey&&Date.now()-lt<30000)) return; busy=true; lKey=k; lt=Date.now();
-    api('/list?s='+b.getSouth().toFixed(3)+'&n='+b.getNorth().toFixed(3)+'&w='+b.getWest().toFixed(3)+'&e='+b.getEast().toFixed(3)).then(function(j){ data=(j.r||[]); lastErr=''; pins() })
-      .catch(function(e){ lastErr=navigator.onLine?String(e.message||e):'No signal'; badge() }).then(function(){ busy=false }); flush() }
+    var bx={s:b.getSouth(),n:b.getNorth(),w:b.getWest(),e:b.getEast()};
+    api('/list?s='+bx.s.toFixed(3)+'&n='+bx.n.toFixed(3)+'&w='+bx.w.toFixed(3)+'&e='+bx.e.toFixed(3)).then(function(j){ data=(j.r||[]); lastErr=''; tcPut(data,bx); pins() })
+      .catch(function(e){ lastErr=navigator.onLine?String(e.message||e):'No signal'; var c=tcGet(bx); if(c.length){ data=c; pins() } badge() }).then(function(){ busy=false }); flush() }
+  // saved copy of reports so pins and danger alerts still work with no service (the offline area download fills it too)
+  function inBox(r,b){ return r&&r.lat>=b.s&&r.lat<=b.n&&r.lon>=b.w&&r.lon<=b.e }
+  function tcGet(b){ var c=lj('sky-trcache',null); return c&&c.r?c.r.filter(function(r){ return inBox(r,b) }):[] }
+  function tcPut(list,b){ var c=lj('sky-trcache',{r:[]}), keep=(c.r||[]).filter(function(r){ return !inBox(r,b) }); ls('sky-trcache',JSON.stringify({at:Date.now(),r:keep.concat(list).slice(-3000)})) }
   function badge(){ var n=document.getElementById('trn'); var c=data.length; n.hidden=!(c||lastErr); n.textContent=lastErr?'!':(c>99?'99+':c); n.classList.toggle('bad',!!lastErr) }
   function pins(){ var seen={}; data.forEach(function(r){ seen[r.id]=1; var html=icon(r); if(mk[r.id]){ if(mk[r.id]._h!==html){ mk[r.id].setIcon(L.divIcon({className:'',html:html,iconSize:[0,0]})); mk[r.id]._h=html } return }
       var m=L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:html,iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:400,title:ST[r.st][1]+' report'}); m._h=html;
@@ -144,7 +149,7 @@
   // danger alerts are mandatory: they run even with FSR or the reports button off, using reports around your GPS spot
   var near=[], nearAt=0, nearPos=null;
   function loadNear(la,lo){ if(nearPos&&Date.now()-nearAt<120000&&map.distance(nearPos,[la,lo])<1500) return; nearAt=Date.now(); nearPos=[la,lo];
-    api('/list?s='+(la-.05).toFixed(3)+'&n='+(la+.05).toFixed(3)+'&w='+(lo-.08).toFixed(3)+'&e='+(lo+.08).toFixed(3)).then(function(j){ near=j.r||[]; check(la,lo) }).catch(function(){}) }
+    api('/list?s='+(la-.05).toFixed(3)+'&n='+(la+.05).toFixed(3)+'&w='+(lo-.08).toFixed(3)+'&e='+(lo+.08).toFixed(3)).then(function(j){ near=j.r||[]; tcPut(near,{s:la-.05,n:la+.05,w:lo-.08,e:lo+.08}); check(la,lo) }).catch(function(){ near=tcGet({s:la-.05,n:la+.05,w:lo-.08,e:lo+.08}); check(la,lo) }) }
   function all(){ var m={}, o=[]; data.concat(near||[]).forEach(function(r){ if(r&&!m[r.id]){ m[r.id]=1; o.push(r) } }); return o }
   function check(la,lo){ var A2=all(); if(!A2.length) return; var now=Date.now(), best=null, bd=1e9;
     A2.forEach(function(r){ if(r.st==='ok'||r.cl||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
