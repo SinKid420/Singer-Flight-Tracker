@@ -352,6 +352,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 .leaflet-control-attribution{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-sizing:border-box}.leaflet-control-attribution.open{white-space:normal;background:rgba(14,14,16,.97)!important;padding:6px 8px!important;position:relative;z-index:1200}
 .zwarn{position:fixed;left:16px;right:16px;top:28%;z-index:3000;background:#b71c1c;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:6px;font:14px/1.35 var(--font)}.zwarn[hidden]{display:none}.zwarn b{font-size:16px}.zwarn small{opacity:.9}.zwarn button{margin-top:4px;min-height:40px;border:0;border-radius:20px;background:#fff;color:#b71c1c;font:700 14px var(--font)}
 .zkey{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px}.zkey span{display:flex;align-items:center;gap:6px}.zkey i{width:14px;height:10px;border-radius:3px;display:inline-block;opacity:.85;flex:none}
+.dock.dmin .card>*:not(.cs):not(.cbtns):not(.m1),.dock.dmin .dtabs,.dock.dmin .grid,.dock.dmin .dbx{display:none!important}
 </style>
 </head>
 <body class="tuton">
@@ -903,17 +904,23 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       out.push([Math.atan2(z,Math.sqrt(x*x+y*y))/D,Math.atan2(y,x)/D])}
     return out}
   function chip(ll,txt,col){return L.marker(ll,{icon:L.divIcon({className:'',html:'<span class="apchip" style="background:'+col+'">'+esc(txt)+'</span>',iconSize:[0,0]}),interactive:false,keyboard:false,zIndexOffset:-200}).addTo(map)}
-  function dropRoute(h){var x=rl[h]; if(!x) return; map.removeLayer(x.past); map.removeLayer(x.fut); if(x.chips) x.chips.forEach(function(c){map.removeLayer(c)}); delete rl[h]}
+  function dropRoute(h){var x=rl[h]; if(!x) return; map.removeLayer(x.past); map.removeLayer(x.fut); if(x.cp){map.removeLayer(x.cp);map.removeLayer(x.cf)} if(x.chips) x.chips.forEach(function(c){map.removeLayer(c)}); delete rl[h]}
+  // keep a route in one piece when it crosses the date line, on the same world copy as the plane
+  function unwrapLL(a,i,lon){ for(var k=1;k<a.length;k++){ while(a[k][1]-a[k-1][1]>180) a[k][1]-=360; while(a[k][1]-a[k-1][1]<-180) a[k][1]+=360 } var sh=Math.round((lon-a[i][1])/360)*360; if(sh) a.forEach(function(q){ q[1]+=sh }); return a }
   function drawRoute(p,show,full){
     var h=p.hex, r=show&&p.alt_baro!=='ground'?routeOf(p):null;
     if(r){ var tot=distNm(r.o.la,r.o.lo,r.d.la,r.d.lo); if(distNm(r.o.la,r.o.lo,p.lat,p.lon)+distNm(p.lat,p.lon,r.d.la,r.d.lo)>tot*1.5+60) r=null }
     if(!r){dropRoute(h);return}
     var col=pcol(h), sel=h===selected, x=rl[h];
     if(!x) x=rl[h]={past:L.polyline([],{color:col,weight:2,opacity:.5,interactive:false}).addTo(map),fut:L.polyline([],{color:col,weight:2.6,opacity:.95,dashArray:'7 7',interactive:false}).addTo(map)};
-    var fut=gc([p.lat,p.lon],[r.d.la,r.d.lo],20);
-    if(full){ x.past.setLatLngs(gc([r.o.la,r.o.lo],[p.lat,p.lon],12)); x.fut.setLatLngs(fut) }
+    var fut=unwrapLL(gc([p.lat,p.lon],[r.d.la,r.d.lo],sel?64:20),0,p.lon), pst=full?unwrapLL(gc([r.o.la,r.o.lo],[p.lat,p.lon],sel?64:12),sel?64:12,p.lon):[];
+    if(sel&&!x.cp){ x.cp=L.polyline([],{color:'#fff',weight:9,opacity:.85,lineCap:'round',lineJoin:'round',interactive:false}).addTo(map); x.cf=L.polyline([],{color:'#fff',weight:9,opacity:.6,lineCap:'round',lineJoin:'round',interactive:false}).addTo(map); x.cp.bringToBack(); x.cf.bringToBack(); x.past.bringToFront(); x.fut.bringToFront() }
+    if(!sel&&x.cp){ map.removeLayer(x.cp); map.removeLayer(x.cf); x.cp=x.cf=null }
+    if(x.cp){ x.cp.setLatLngs(pst); x.cf.setLatLngs(fut) }
+    x.full=pst.concat(fut);
+    if(full){ x.past.setLatLngs(pst); x.fut.setLatLngs(fut) }
     else { var rem=distNm(p.lat,p.lon,r.d.la,r.d.lo), k=Math.max(1,Math.min(20,Math.ceil(20*Math.min(1,25/Math.max(rem,1))))); x.past.setLatLngs([]); x.fut.setLatLngs(fut.slice(0,k+1)) }
-    x.past.setStyle({weight:sel?3.5:2}); x.fut.setStyle({weight:sel?4:2.6,opacity:full?.95:.6});
+    x.past.setStyle({weight:sel?5:2,opacity:sel?.95:.5,lineCap:'round'}); x.fut.setStyle({weight:sel?5:2.6,opacity:full?.95:.6,dashArray:sel?'10 8':'7 7'});
     if(sel&&!x.chips) x.chips=[chip([r.o.la,r.o.lo],r.o.c,col),chip([r.d.la,r.d.lo],r.d.c,col)];
     if(!sel&&x.chips){x.chips.forEach(function(c){map.removeLayer(c)});x.chips=null}
   }
@@ -937,7 +944,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var ag=age(p); motion[p.hex]={lat:p.lat,lon:p.lon,t:Date.now()-(ag<60?ag*1000:0),gs:p.gs,trk:p.track,gnd:p.alt_baro==='ground'};
       var t=trails[p.hex]; if(!t) t=trails[p.hex]={pts:[],line:null,casing:null};
       var last=t.pts[t.pts.length-1];
-      if(!last||last[0]!==p.lat||last[1]!==p.lon){t.pts.push(ll);if(t.pts.length>60)t.pts.shift();}
+      if(!last||last[0]!==p.lat||last[1]!==p.lon){t.pts.push(ll);if(t.pts.length>(p.hex===selected?1500:60))t.pts.shift();}
       var sel=p.hex===selected;
       if(inView&&t.pts.length>1){
         if(!t.line) t.line=L.polyline([],{color:pcol(p.hex),weight:3,opacity:.95,lineCap:'round',lineJoin:'round',interactive:false}).addTo(map);
@@ -1096,9 +1103,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var who=[airlineOf(p),typeName(p)].filter(Boolean).join(' · ')||'Unknown aircraft';
       var rtx=routeText(p), more=[rtx,p.r,p.squawk?'squawk '+p.squawk:''].filter(Boolean).join(' · ');
       var near=cpaText(p), ph=getPhoto(p); if(ph&&!/^https:\/\//.test(ph.src||'')) ph=null; var phHtml=ph?'<a class="ph" href="'+esc(/^https:\/\//.test(ph.link||'')?ph.link:'https://www.planespotters.net/')+'" target="_blank" rel="noopener" aria-label="Photo on Planespotters.net"><img src="'+esc(ph.src)+'" alt="Photo of '+esc(name(p))+'" decoding="async" onerror="this.parentNode.remove()"><i>'+esc(ph.by?'Photo: '+ph.by:'Planespotters.net')+'</i></a>':'';
-      if(dockHex!==p.hex){dockHex=p.hex;dtab=cfg2.dtab}
+      if(dockHex!==p.hex){dockHex=p.hex;dtab=cfg2.dtab;dock.classList.remove('dmin')}
       var tabs='<div class="dtabs" role="tablist">'+[['ov','Overview'],['ck','Cockpit'],['ac','Aircraft']].map(function(t){return '<button role="tab" data-t="'+t[0]+'" aria-selected="'+(dtab===t[0])+'"'+(dtab===t[0]?' class="on"':'')+'>'+t[1]+'</button>'}).join('')+'</div>';
-      var head='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><span class="cbtns"><button class="close v3btn" id="v3b" aria-label="3D view from this plane">3D</button><button class="close" id="cl" aria-label="Close">✕</button></span>'+
+      var head='<div class="card'+(ph?' hasph':'')+'"><div class="cs">'+esc(name(p))+'</div><span class="cbtns"><button class="close v3btn" id="rtb" aria-label="Show the whole route on the map" aria-pressed="'+(dock.classList.contains('dmin')?'true':'false')+'">'+(dock.classList.contains('dmin')?'▴':'🗺')+'</button><button class="close v3btn" id="v3b" aria-label="3D view from this plane">3D</button><button class="close" id="cl" aria-label="Close">✕</button></span>'+
         phHtml+'<div class="meta m1" style="color:var(--fg)">'+esc(who)+'</div>'+(function(){ var ft=fireTag(p); return ft?'<div class="meta m1 fireline">🔥 '+esc(ft.text)+'</div>':'' })()+(more?'<div class="meta m1">'+esc(more)+'</div>':'');
       var bodyHtml;
       if(dtab==='ck') bodyHtml=cockpitHtml(p);
@@ -1112,6 +1119,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var html=head+tabs+bodyHtml+'</div>';
       if(body._h!==html||!body.firstChild){body.innerHTML=html;body._h=html}
       var clb=document.getElementById('cl'); if(clb) clb.onclick=function(){select(null)}; var v3b=document.getElementById('v3b'); if(v3b) v3b.onclick=function(){ V3D.open(p.hex) };
+      var rtb=document.getElementById('rtb'); if(rtb) rtb.onclick=function(){ var mini=!dock.classList.contains('dmin'); dock.classList.toggle('dmin',mini); body._h=''; renderDock();
+        if(mini){ var x=rl[p.hex], tr=trails[p.hex], pts=(x&&x.full&&x.full.length?x.full:[]).concat(tr&&tr.pts?tr.pts:[]); if(!pts.length&&planes[p.hex]) pts=[planes[p.hex].getLatLng()];
+          if(pts.length){ var b=L.latLngBounds(pts); if(planes[p.hex]) b.extend(planes[p.hex].getLatLng()); var hgt=dock.getBoundingClientRect().height||140; map.fitBounds(b,{paddingTopLeft:[24,130],paddingBottomRight:[70,hgt+24],maxZoom:11}) } } };
       [].forEach.call(body.querySelectorAll('.dtabs button'),function(bt){bt.onclick=function(){dtab=bt.getAttribute('data-t');renderDock()}});
       if(dtab==='ac') acRec(p.hex);
       return;
