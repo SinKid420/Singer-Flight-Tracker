@@ -398,6 +398,7 @@ body.menuon #trcard,body.toolon #trcard,body.fsrp #trcard{visibility:hidden}
 #trtoast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);z-index:3200;background:rgba(0,0,0,.86);color:#fff;border-radius:16px;padding:9px 14px;font:600 13px var(--font);opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}#trtoast.show{opacity:1}
 .gpsq{min-width:210px}.gpsb button[data-a=rep]{background:#ff3b30;color:#fff}.gpsx{display:block;width:100%;margin-top:6px;padding:5px;border:0;background:none;color:#5f6368;font:600 12.5px var(--font)}
 .trrepb{display:block;width:100%;margin-top:8px;padding:8px;border:0;border-radius:10px;background:#ff3b30;color:#fff;font:700 12.5px var(--font)}
+#tralert{position:absolute;left:12px;right:92px;top:calc(10px + env(safe-area-inset-top,0px));z-index:1700;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:11px 14px 11px 18px;border:0;border-radius:16px;background:var(--bg);color:var(--fg);box-shadow:var(--shadow),inset 5px 0 0 var(--c);text-align:left;transform:translateY(-160%);transition:transform .25s}#tralert.show{transform:none}#tralert b{font:800 15px var(--font);color:var(--c)}#tralert span{font:500 12.5px var(--font);color:var(--dim)}
 </style>
 </head>
 <body class="tuton">
@@ -2735,6 +2736,6 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 </script>
-<script src="reports.js?v=3"></script>
+<script src="reports.js?v=4"></script>
 </body>
 </html>
