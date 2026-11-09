@@ -315,6 +315,7 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:170px}
 #fsrleg{position:absolute;z-index:700;left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px;display:grid;grid-template-columns:auto auto;gap:3px 10px;background:var(--bg);color:var(--fg);border-radius:10px;padding:6px 9px;box-shadow:var(--shadow);font:600 11px/1.3 var(--font);pointer-events:none}#fsrleg[hidden],body.keyon #fsrleg{display:none}
 #fsrleg span{white-space:nowrap}#fsrleg i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px}#fsrleg .lw{border-top:3px dashed #3ddc5a}#fsrleg .lb{border-top:3px solid #40a9ff}#fsrleg .lm{border-top:2px solid #ff3b30}#fsrleg .lf{border-top:5px solid #ff1744}
+#fsrleg .lp{border-top:3px dashed #ff9800}#fsrleg .lc{border-top:4px dotted #fff}
 #fsrleg small{grid-column:1/-1;color:var(--dim);font-weight:500}#fsrleg small[hidden]{display:none}
 #toolbtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:150px}body.toolon #toolbtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
 .sidebtn.ti{display:none;top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}body.toolon .sidebtn.ti{display:grid}#t_sled{bottom:202px}#t_supply{bottom:250px}#t_planet{bottom:298px}#t_comms{bottom:346px}
@@ -409,7 +410,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div id="ltal" role="alert" hidden><span id="lttxt"></span><button id="ltx" aria-label="Dismiss lightning alert">✕</button></div>
-  <div id="fsrleg" hidden aria-label="FSR map colours"><span><i class="lw"></i>Walking</span><span><i class="lb"></i>Biking</span><span><i class="lm"></i>Motor</span><span><i class="lf"></i>FSR</span><small id="fsrhint">Zoom in to see trails</small></div>
+  <div id="fsrleg" hidden aria-label="FSR map colours"><span><i class="lw"></i>Walking</span><span><i class="lb"></i>Biking</span><span><i class="lm"></i>Motor</span><span><i class="lf"></i>FSR</span><span><i class="lp"></i>Planned</span><span><i class="lc"></i>Closed</span><small id="fsrhint">Zoom in to see trails</small></div>
   <div id="ltnote" role="status" hidden>⚡ No lightning in view right now</div>
   <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
@@ -603,7 +604,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
+  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
   var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
   (function(){ var ac=map.attributionControl.getContainer(), t=null; ac.title='Tap to read all credits'; L.DomEvent.disableClickPropagation(ac); ac.addEventListener('click',function(e){ if(e.target.closest('a')&&ac.classList.contains('open')) return; e.preventDefault(); ac.classList.toggle('open'); clearTimeout(t); if(ac.classList.contains('open')) t=setTimeout(function(){ ac.classList.remove('open') },8000) }) })();
@@ -1901,8 +1902,20 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     function inBC(b){ return b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60 }
     function inUS(b){ return b.s<49.05&&b.w<-104&&b.e>-125&&b.n>41 }
     function cap(s){ return String(s||'').toLowerCase().replace(/\b[a-z]/g,function(c){return c.toUpperCase()}) }
-    function WFS(t,b,cql,props){ var f='BBOX(GEOMETRY,'+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')+",'EPSG:4326')"+(cql?' AND '+cql:'');
-      return 'https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName='+t+'&outputFormat=json&srsName=EPSG:4326&count=3000&propertyName='+props+',GEOMETRY&CQL_FILTER='+encodeURIComponent(f) }
+    function WFS(t,b,cql,props,gc){ gc=gc||'GEOMETRY'; var f='BBOX('+gc+','+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')+",'EPSG:4326')"+(cql?' AND '+cql:'');
+      return 'https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName='+t+'&outputFormat=json&srsName=EPSG:4326&count=3000&propertyName='+props+','+gc+'&CQL_FILTER='+encodeURIComponent(f) }
+    // what each Recreation Sites & Trails BC trail is used for (hiking, biking, motorbike), loaded once
+    var recInfo=null, recP=null;
+    function recLoad(){ if(recInfo||recP) return; recP=fetch('https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_TRAILS_SVW&outputFormat=json&count=5000&propertyName=FOREST_FILE_ID,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,MAINTAIN_STD_DESC,OPERATOR_CLIENT_NAME').then(function(r){return r.ok?r.json():null}).then(function(j){ if(!j||!j.features) throw 0; var m={};
+      j.features.forEach(function(f){ var p=f.properties||{}, a=[p.ACTIVITY_DESC1,p.ACTIVITY_DESC2,p.ACTIVITY_DESC3].filter(Boolean); if(p.FOREST_FILE_ID) m[p.FOREST_FILE_ID]={a:a,k:a.some(function(x){return /Motorized|Four Wheel/.test(x)})?'motor':a.indexOf('Mountain Biking')>=0?'bike':'walk',ms:p.MAINTAIN_STD_DESC,op:p.OPERATOR_CLIENT_NAME} });
+      recInfo=m; Object.keys(drawn).forEach(function(key){ if(/^rec:/.test(key)) drawn[key].setStyle(function(f){ return recSt(f.properties||{}) }) }) }).catch(function(){ recP=null }) }
+    function recSt(p){ var i=recInfo&&recInfo[p.FOREST_FILE_ID], k=i?i.k:'walk'; return {color:C[k],weight:2.6,opacity:.95,dashArray:k==='walk'?'5,3':null} }
+    var BCTS={PROP:'Planned road',MAIN:'Maintained road',NEBU:'Newly built road',DEAC:'Deactivated (may be impassable)',REHB:'Rehabilitated (closed off)',WILD:'Not maintained (wilderness)',UNKN:'Status unknown'};
+    // Wildlife Act road rules: is this road open to vehicles today?
+    function rNow(p){ var st=p.ACCESS_STATUS||'', open=/^Open/.test(st); if(/Year Round/.test(st)) return open; var re=/([A-Za-z]{3})[a-z]*\.? (\d{1,2}) ?(?:to|-|–) ?([A-Za-z]{3})[a-z]*\.? (\d{1,2})/g, m, any=false, inR=false, d=new Date(), v=d.getMonth()*100+d.getDate();
+      while((m=re.exec(p.ACCESS_RANGE||''))){ var a=MONS[m[1].toLowerCase()], b=MONS[m[3].toLowerCase()]; if(a==null||b==null) continue; any=true; a=a*100+(+m[2]); b=b*100+(+m[4]); if(a<=b?(v>=a&&v<=b):(v>=a||v<=b)) inR=true }
+      if(!any) return open; return open?inR:!inR }
+    function dt(s){ var d=s?new Date(String(s).replace('Z','')):null; return d&&!isNaN(d)?d.toLocaleDateString([], {month:'short',year:'numeric'}):'' }
     function AGS(svc,b,where,fields){ return 'https://apps.fs.usda.gov/arcx/rest/services/EDW/'+svc+'/MapServer/0/query?where='+encodeURIComponent(where)+'&geometry='+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields='+fields+'&returnGeometry=true&outSR=4326&geometryPrecision=5&resultRecordCount=2000&f=geojson' }
     function usTrail(p){ return p.terra_motorized==='Y'?'motor':(p.bicycle_managed||p.bicycle_accpt)?'bike':'walk' }
     var KIND={walk:'Walking trail',bike:'Biking trail',motor:'Motor vehicles'};
@@ -1912,8 +1925,23 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         st:function(p){ return p.ROAD_CLASS==='trail'?{color:C.walk,weight:2,opacity:.9,dashArray:'4,3'}:{color:C.motor,weight:1.8,opacity:.85} },
         pop:function(p){ return '<b>'+esc(p.ROAD_NAME_FULL||(p.ROAD_CLASS==='trail'?'Trail':'Back road'))+'</b><br>'+(p.ROAD_CLASS==='trail'?'Trail':cap(p.ROAD_CLASS)+' road')+(p.ROAD_SURFACE?' · '+esc(p.ROAD_SURFACE)+' surface':'') }},
       {k:'rec',z:11,g:0.1,area:inBC,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_RECREATION_LINES_SVW',b,'RETIREMENT_DATE IS NULL','FOREST_FILE_ID,PROJECT_NAME,PROJECT_TYPE,SITE_LOCATION') },
-        id:function(f){ return f.id }, st:function(){ return {color:C.walk,weight:2.6,opacity:.95,dashArray:'5,3'} },
-        pop:function(p){ return '<b>'+esc(cap(p.PROJECT_NAME)||'Recreation trail')+'</b><br>'+esc(p.PROJECT_TYPE||'Recreation trail')+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'') }},
+        id:function(f){ return f.id }, st:recSt,
+        pop:function(p){ var i=recInfo&&recInfo[p.FOREST_FILE_ID]; return '<b>'+esc(cap(p.PROJECT_NAME)||'Recreation trail')+'</b><br>'+esc(p.PROJECT_TYPE||'Recreation trail')+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'')+(i&&i.a.length?'<br>'+esc(i.a.join(', ')):'')+(i&&i.ms?'<br><small>'+esc(i.ms)+(i.op?' · '+esc(cap(i.op)):'')+'</small>':'') }},
+      {k:'th',z:12,g:0.1,area:inBC,pt:1,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_REC_TRAIL_HEADS_SVW',b,"LIFE_CYCLE_STATUS_CODE='ACTIVE'",'PROJECT_NAME,SITE_LOCATION,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,PROJECT_DESCRIPTION') },
+        id:function(f){ return f.id }, st:function(){ return {radius:6,color:'#fff',weight:2,fillColor:'#2e7d32',fillOpacity:1} },
+        pop:function(p){ var a=[p.ACTIVITY_DESC1,p.ACTIVITY_DESC2,p.ACTIVITY_DESC3].filter(Boolean); return '<b>🥾 '+esc(cap(p.PROJECT_NAME)||'Trailhead')+'</b><br>Trailhead'+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'')+(a.length?'<br>'+esc(a.join(', ')):'')+(p.PROJECT_DESCRIPTION?'<br><small>'+esc(String(p.PROJECT_DESCRIPTION).trim().slice(0,160))+'…</small>':'') }},
+      {k:'frd',z:13,g:0.05,area:inBC,src:'BC Forest Tenures (road permits)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',b,"LIFE_CYCLE_STATUS_CODE='ACTIVE' AND FILE_TYPE_DESCRIPTION<>'Forest Service Road'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION,CLIENT_NAME,LOCATION') },
+        id:function(f){ return f.id }, st:function(){ return {color:C.motor,weight:2.4,opacity:.9} },
+        pop:function(p){ return '<b>'+esc(cap(p.LOCATION)||'Forest road')+'</b><br>Forest road · '+esc(p.FILE_TYPE_DESCRIPTION||'Road permit')+(p.CLIENT_NAME?'<br><small>'+esc(cap(p.CLIENT_NAME))+' · permit '+esc(p.FOREST_FILE_ID||'')+' '+esc(p.ROAD_SECTION_ID||'')+'</small>':'')+'<br><small>Industrial road: watch for logging trucks.</small>' }},
+      {k:'fom',z:12,g:0.1,area:inBC,src:'Forest Operations Map (FOM)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FOM_ROAD_SECTION_SP',b,'','FOM_ID,NAME,FSP_HOLDER_NAME,LIFECYCLE_STATUS,PLANNED_DEVELOPMENT_DATE','SHAPE') },
+        id:function(f){ return f.id }, st:function(){ return {color:'#ff9800',weight:2.6,opacity:.95,dashArray:'6,5'} },
+        pop:function(p){ return '<b>Planned forest road</b><br>'+esc(p.LIFECYCLE_STATUS==='Final'?'Final plan':'Proposed')+(dt(p.PLANNED_DEVELOPMENT_DATE)?' · build from '+esc(dt(p.PLANNED_DEVELOPMENT_DATE)):'')+'<br><small>'+esc(cap(p.FSP_HOLDER_NAME||''))+(p.NAME?' · '+esc(p.NAME):'')+' · FOM '+esc(p.FOM_ID||'')+'</small><br><small>May not exist yet.</small>' }},
+      {k:'bcts',z:12,g:0.1,area:inBC,src:'BC Timber Sales',url:function(b){ return WFS('WHSE_FOREST_TENURE.BCTS_PLANNED_ROADS_SP',b,'','ROAD_NAME,ROAD_STATE,TIMBER_SALES_OFFICE_NAME,ROAD_LENGTH','SHAPE') },
+        id:function(f){ return f.id }, st:function(p){ var s=p.ROAD_STATE; return s==='PROP'?{color:'#ff9800',weight:2.6,opacity:.95,dashArray:'2,5'}:/MAIN|NEBU/.test(s)?{color:C.motor,weight:2.4,opacity:.9}:{color:'#9e9e9e',weight:2.2,opacity:.9,dashArray:'3,4'} },
+        pop:function(p){ return '<b>'+esc(BCTS[p.ROAD_STATE]||'Timber sale road')+'</b><br>BC Timber Sales · '+esc(p.TIMBER_SALES_OFFICE_NAME||'')+'<br><small>'+esc(p.ROAD_NAME||'')+(p.ROAD_LENGTH?' · '+Math.round(p.ROAD_LENGTH)+' m':'')+'</small>' }},
+      {k:'mvr',z:10,g:0.25,area:inBC,src:'Wildlife Act (Motor Vehicle Prohibition Regulation)',url:function(b){ return WFS('WHSE_WILDLIFE_MANAGEMENT.WAA_MVPR_ROUTES_SP',b,'','ROAD_NAME,ACCESS_STATUS,ACCESS_RANGE,REGULATION_GEOGRAPHIC_NAME,PROHIBITION_TYPE,MAP_NUMBER','SHAPE') },
+        id:function(f){ return f.id }, st:function(p){ return !rNow(p)?{color:'#fff',weight:6,opacity:.95,dashArray:'1,9',lineCap:'round'}:{color:'#00bfa5',weight:3.4,opacity:.95} },
+        pop:function(p){ var cl=!rNow(p); return '<b>'+esc(p.ROAD_NAME||'Road')+'</b><br><span style="color:'+(cl?'#e53935':'#00897b')+';font-weight:600">'+(cl?'Closed to vehicles today':'Open today')+'</span><br><small>'+esc(p.ACCESS_STATUS||'')+'</small><br><small>'+esc(p.ACCESS_RANGE||'')+' · '+esc(p.REGULATION_GEOGRAPHIC_NAME||'')+'</small>'+(/Hunting/.test(p.PROHIBITION_TYPE||'')?'<br><small>Applies when hunting.</small>':'')+'<br><small>Map '+esc(p.MAP_NUMBER||'')+'</small>' }},
       {k:'fsr',z:10,g:0.25,area:inBC,src:'BC Forest Tenures (official FSR list)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',b,"RETIREMENT_DATE IS NULL AND FILE_TYPE_DESCRIPTION='Forest Service Road'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION') },
         id:function(f){ return f.id }, st:function(){ return {color:C.fsr,weight:5,opacity:.95} },
         pop:function(p){ return '<b>'+esc(cap(p.ROAD_SECTION_NAME)||'Forest Service Road')+' FSR</b><br>Forest Service Road · file '+esc(p.FOREST_FILE_ID||'')+(p.ROAD_SECTION_ID?' section '+esc(p.ROAD_SECTION_ID):'') }},
@@ -1926,7 +1954,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     ];
     function keys(s,b){ var g=s.g, out=[]; for(var y=Math.floor(b.s/g);y<=Math.floor(b.n/g);y++) for(var x=Math.floor(b.w/g);x<=Math.floor(b.e/g);x++) out.push([x,y]); return out }
     // each map square is drawn as its own small layer, and squares that leave the screen are dropped, so zooming and panning stay smooth
-    function opts(s,key){ return {renderer:R,smoothFactor:2,interactive:true,style:function(f){ return s.st(f.properties||{}) },
+    function opts(s,key){ return {renderer:R,smoothFactor:2,interactive:true,style:function(f){ return s.st(f.properties||{}) },pointToLayer:function(f,ll){ return L.circleMarker(ll,Object.assign({renderer:R},s.st(f.properties||{}))) },
       filter:function(f){ var id=s.id(f); if(id==null) return true; var m=seen[s.k]||(seen[s.k]={}); if(m[id]) return false; m[id]=key; return true },
       onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small>' },{closeButton:false}) }} }
     function draw(s,key){ if(drawn[key]||!data[key]) return; drawn[key]=L.geoJSON(data[key],opts(s,key)).addTo(map) }
@@ -1954,10 +1982,24 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         st.transportation=function(p){ if(p.class==='track') return {color:C.motor,weight:2,opacity:.9}; if(p.class==='path'){ if(p.subclass==='cycleway') return {color:C.bike,weight:2.4,opacity:.95}; if(p.subclass==='steps'||p.subclass==='platform'||p.subclass==='corridor') return []; return {color:C.walk,weight:2,opacity:.95,dashArray:'4,3'} } return [] };
         vg=L.vectorGrid.protobuf(url,{vectorTileLayerStyles:st,maxNativeZoom:14,minZoom:12,interactive:false,rendererFactory:L.canvas.tile,attribution:'Trails © OpenStreetMap (OpenFreeMap)'}); if(on) vg.addTo(map) })
       .catch(function(){ vgP=null }) }
-    function set(v){ if(v===on) return; on=v; if(leg) leg.hidden=!v;
-      if(v){ map.attributionControl.addAttribution('Roads & trails: BC Gov (DataBC), USDA Forest Service'); osm(); if(vg) vg.addTo(map); load() }
-      else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(drawn).forEach(drop); seen={}; wantNow={} } }
-    map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(load,350) });
+    var aD=null, aP=null, aG=L.layerGroup(), aLay={}, MONS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}, lastPop=0;
+    function aToday(w){ var m=/([A-Za-z]{3})[a-z]*\.? (\d{1,2}) (?:to|-) ([A-Za-z]{3})[a-z]*\.? (\d{1,2})/.exec(String(w||'')); if(!m||MONS[m[1].toLowerCase()]==null||MONS[m[3].toLowerCase()]==null) return true; var d=new Date(), v=d.getMonth()*100+d.getDate(), a=MONS[m[1].toLowerCase()]*100+(+m[2]), b=MONS[m[3].toLowerCase()]*100+(+m[4]), inR=a<=b?(v>=a&&v<=b):(v>=a||v<=b); return /^open/i.test(w)?!inR:inR }
+    function aDec(s){ var i=0, la=0, lo=0, out=[]; while(i<s.length){ var r=0, sh=0, b; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); la+=(r&1)?~(r>>1):(r>>1); r=0; sh=0; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); lo+=(r&1)?~(r>>1):(r>>1); out.push([la/1e4,lo/1e4]) } return out }
+    function aIn(la,lo,r){ var c=false; for(var i=0,j=r.length-1;i<r.length;j=i++){ var yi=r[i][0], xi=r[i][1], yj=r[j][0], xj=r[j][1]; if(((yi>la)!==(yj>la))&&(lo<(xj-xi)*(la-yi)/(yj-yi)+xi)) c=!c } return c }
+    function areas(){ if(!on) return; var z=map.getZoom(); if(z<9){ aG.clearLayers(); aLay={}; return }
+      if(!aD){ if(!aP) aP=fetch('sled-zones.json').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(j&&j.f){ aD=j.f.filter(function(f){ return !f.l&&f.w!=='Road Closure'&&(f.k==='mv'||(f.k==='c'&&/ATV/.test(f.t||''))) }); areas() } else aP=null }).catch(function(){ aP=null }); return }
+      var b=map.getBounds().pad(.2), w=b.getWest(), e=b.getEast(), so=b.getSouth(), n=b.getNorth();
+      aD.forEach(function(f,i){ var vis=f.b[0]<e&&f.b[2]>w&&f.b[1]<n&&f.b[3]>so, l=aLay[i];
+        if(vis&&!l){ if(!f._ll) f._ll=f.g.map(function(p){ return p.map(aDec) }); var act=aToday(f.w); l=aLay[i]=L.polygon(f._ll,{renderer:R,interactive:false,color:act?'#e65100':'#90a4ae',weight:2,opacity:.9,dashArray:'6,4',fillColor:act?'#ff6d00':'#90a4ae',fillOpacity:act?.12:.04}); l._af=f; l._act=act; aG.addLayer(l) }
+        else if(!vis&&l){ aG.removeLayer(l); delete aLay[i] } }) }
+    map.on('popupopen',function(){ lastPop=Date.now() });
+    map.on('click',function(e){ if(!on||!aD) return; setTimeout(function(){ if(Date.now()-lastPop<400) return; var la=e.latlng.lat, lo=e.latlng.lng, hit=null;
+      Object.keys(aLay).forEach(function(i){ var l=aLay[i], f=l._af; if(hit||la<f.b[1]||la>f.b[3]||lo<f.b[0]||lo>f.b[2]) return; if(f._ll.some(function(p){ return aIn(la,lo,p[0]) })) hit=l });
+      if(hit){ var f=hit._af; L.popup({closeButton:false,maxWidth:250}).setLatLng(e.latlng).setContent('<b>'+esc(f.n||'Closed area')+'</b><br><span style="color:'+(hit._act?'#e65100':'#78909c')+';font-weight:600">'+(hit._act?'Closed to motor vehicles now':'Not in effect today')+'</span><br><small>'+esc(f.t||'')+(f.w?' · '+esc(f.w):'')+'</small><br><small>Wildlife Act closure'+(f.m?' · map '+esc(f.m):'')+'. Some entries allow certain vehicles: check the official map.</small><br><small><a href="https://www2.gov.bc.ca/gov/content/sports-culture/recreation/motor-vehicle-prohibitions" target="_blank" rel="noopener">Official maps ›</a></small>').openOn(map) } },40) });
+    function set(v){ if(v===on) return; on=v; if(leg) leg.hidden=!v; if(v){ recLoad(); aG.addTo(map) } else { map.removeLayer(aG); aG.clearLayers(); aLay={} }
+      if(v){ map.attributionControl.addAttribution('Roads & trails: BC Gov (DataBC: DRA, FTEN, FOM, BCTS, RSTBC, Wildlife Act), USDA Forest Service'); osm(); if(vg) vg.addTo(map); load(); areas() }
+      else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC: DRA, FTEN, FOM, BCTS, RSTBC, Wildlife Act), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(drawn).forEach(drop); seen={}; wantNow={} } }
+    map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(function(){ load(); areas() },350) });
     window.__fsr={set:set,load:load};
     if(baseKey==='fsr') set(true);
   })();
