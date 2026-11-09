@@ -309,7 +309,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
-#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:98px;color:var(--accent)}#gear{bottom:150px;color:var(--dim)}
+#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:98px;color:var(--accent)}#locate.follow{background:var(--accent);color:#fff}.me.stale i{opacity:.45;filter:grayscale(1)}#gear{bottom:150px;color:var(--dim)}
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:46px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:170px}
@@ -1327,7 +1327,20 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       recenter(auto===true&&(touched||moved<0.3));
     },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
-  document.getElementById('locate').onclick=function(){ var b=this, z=Math.max(map.getZoom(),11); b.classList.add('on'); map.setView([me.lat,me.lon],z);
+  // Live GPS: your dot keeps moving as you travel. Phone GPS works with no cell service.
+  var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate');
+  var accC=L.circle([me.lat,me.lon],{radius:1,color:'#ff3b30',weight:1,opacity:.45,fillColor:'#ff3b30',fillOpacity:.08,interactive:false});
+  function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return; me.lat=nl; me.lon=nn; me.label='you';
+    meMark.setLatLng([nl,nn]); ring.setLatLng([nl,nn]); var ac=c.accuracy||0; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
+    var el=meMark.getElement(); if(el) el.classList.remove('stale'); if(follow) map.panTo([nl,nn],{animate:true,duration:.5});
+    var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
+    clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
+  function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,function(err){ if(err&&err.code===1) stopWatch() },{enableHighAccuracy:true,maximumAge:3000,timeout:30000}) }catch(e){ wId=null } }
+  function stopWatch(){ if(wId!=null&&navigator.geolocation) navigator.geolocation.clearWatch(wId); wId=null }
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) stopWatch(); else startWatch() });
+  map.on('dragstart',function(){ if(follow){ follow=false; locBtn.classList.remove('follow') } });
+  startWatch();
+  document.getElementById('locate').onclick=function(){ var b=this, z=Math.max(map.getZoom(),11); b.classList.add('on'); follow=true; b.classList.add('follow'); startWatch(); map.setView([me.lat,me.lon],z);
     if(!navigator.geolocation){ b.classList.remove('on'); setStat('No location<br>using default',true); return }
     navigator.geolocation.getCurrentPosition(function(pos){ b.classList.remove('on'); var nl=pos.coords.latitude, nn=pos.coords.longitude; me.lat=nl; me.lon=nn; me.label='you';
       try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} recenter(true); map.setView([nl,nn],Math.max(map.getZoom(),11)) },
