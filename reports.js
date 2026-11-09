@@ -132,5 +132,29 @@
   var flushing=false; function flush(){ var q=lj('sky-trq',[]); if(!q.length||flushing||!navigator.onLine) return; flushing=true; var b=q[0];
     send(b).then(function(){ q.shift(); ls('sky-trq',JSON.stringify(q)); toast('Saved report posted'); flushing=false; load(true); if(q.length) flush() }).catch(function(e){ flushing=false; if(/not accepted|missing/.test(e.message)){ q.shift(); ls('sky-trq',JSON.stringify(q)) } }) }
   addEventListener('online',function(){ setTimeout(flush,3000) });
+  // ---------- "ahead" alerts: buzz + banner for Caution/Blocked reports within 1 km in the direction you're heading ----------
+  var AL={}, wId=null, lastFix=null, hdg=null, ab=null, abT=null, AHEAD=1000;
+  function brg(a,b,c,d){ var r=Math.PI/180, y=Math.sin((d-b)*r)*Math.cos(c*r), x=Math.cos(a*r)*Math.sin(c*r)-Math.sin(a*r)*Math.cos(c*r)*Math.cos((d-b)*r); return (Math.atan2(y,x)/r+360)%360 }
+  function adiff(a,b){ var d=Math.abs(a-b)%360; return d>180?360-d:d }
+  function banner(r,d){ if(!ab){ ab=document.createElement('button'); ab.type='button'; ab.id='tralert'; app.appendChild(ab) } var s=ST[r.st], g=(r.tg||[]).map(function(t){ var x=TG.filter(function(q){return q[0]===t})[0]; return x?x[2]:'' }).filter(Boolean)[0];
+    ab.style.setProperty('--c',s[0]); ab.innerHTML='<b>⚠ '+s[1]+' ahead'+(g?' · '+esc(g):'')+'</b><span>'+(d<150?'Right here':(d<1000?Math.round(d/10)*10+' m':(d/1000).toFixed(1)+' km'))+' · tap to see the report</span>';
+    ab.onclick=function(){ hide(); openCard(r.id) }; ab.classList.add('show'); clearTimeout(abT); abT=setTimeout(hide,10000);
+    try{ if(navigator.vibrate) navigator.vibrate(r.st==='bad'?[400,150,400,150,400]:[250,120,250]) }catch(e){} }
+  function hide(){ if(ab) ab.classList.remove('show') }
+  function check(la,lo){ if(!on||!data.length) return; var now=Date.now(), best=null, bd=1e9;
+    data.forEach(function(r){ if(r.st==='ok'||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
+      var ahead=d<150||(hdg!=null&&adiff(hdg,brg(la,lo,r.lat,r.lon))<=50); if(ahead&&d<bd){ bd=d; best=r } });
+    if(best){ AL[best.id]=now; banner(best,bd) } }
+  function onFix(p){ var c=p.coords, la=c.latitude, lo=c.longitude;
+    if(c.heading!=null&&isFinite(c.heading)&&(c.speed||0)>1.5) hdg=c.heading;
+    else if(lastFix&&map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) hdg=brg(lastFix[0],lastFix[1],la,lo);
+    if(!lastFix||map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) lastFix=[la,lo]; check(la,lo) }
+  function watch(){ var want=on&&fsrOn()&&!!navigator.geolocation; if(want&&wId==null) wId=navigator.geolocation.watchPosition(onFix,function(){},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+    if(!want&&wId!=null){ navigator.geolocation.clearWatch(wId); wId=null; hide() } }
+  if(window.MutationObserver) new MutationObserver(watch).observe(fb,{attributes:true,attributeFilter:['aria-pressed']});
+  tb.addEventListener('click',function(){ setTimeout(watch,0) });
+  document.addEventListener('visibilitychange',function(){ if(document.hidden&&wId!=null){ navigator.geolocation.clearWatch(wId); wId=null } else watch() });
+  window.__trTest=function(la,lo,h){ hdg=h; check(la,lo) };
+  watch();
   vis();
 })();
