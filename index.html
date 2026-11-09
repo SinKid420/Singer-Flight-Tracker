@@ -399,6 +399,29 @@ body.menuon #trcard,body.toolon #trcard,body.fsrp #trcard{visibility:hidden}
 .gpsq{min-width:210px}.gpsb button[data-a=rep]{background:#ff3b30;color:#fff}.gpsx{display:block;width:100%;margin-top:6px;padding:5px;border:0;background:none;color:#5f6368;font:600 12.5px var(--font)}
 .trrepb{display:block;width:100%;margin-top:8px;padding:8px;border:0;border-radius:10px;background:#ff3b30;color:#fff;font:700 12.5px var(--font)}
 #tralert{position:absolute;left:12px;right:92px;top:calc(10px + env(safe-area-inset-top,0px));z-index:1700;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:11px 14px 11px 18px;border:0;border-radius:16px;background:var(--bg);color:var(--fg);box-shadow:var(--shadow),inset 5px 0 0 var(--c);text-align:left;transform:translateY(-160%);transition:transform .25s}#tralert.show{transform:none}#tralert b{font:800 15px var(--font);color:var(--c)}#tralert span{font:500 12.5px var(--font);color:var(--dim)}
+#ofsetup{position:fixed;inset:0;z-index:3400;background:#121413;color:#f5f5f7;font:400 14px var(--font)}#ofsetup[hidden]{display:none}
+.ofmap{position:absolute;left:0;right:0;top:0;height:208px}#ofmini{position:absolute;inset:0;background:#dfe6d8}
+.ofpin{position:absolute;left:50%;top:104px;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:18px;background:#30b0c7;color:#fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.5);z-index:500;pointer-events:none}
+.ofkm{position:absolute;left:calc(50% + 36px);top:150px;z-index:500;font:700 11px var(--font);background:#ff3b30;color:#fff;padding:2px 7px;border-radius:9px;pointer-events:none}
+.ofhd{position:absolute;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));display:flex;justify-content:space-between;align-items:center;z-index:500;pointer-events:none}.ofhd b{font:700 16px var(--font);color:#fff;text-shadow:0 1px 4px #000}.ofhd span{font:600 11.5px var(--font);background:rgba(0,0,0,.65);color:#fff;padding:5px 9px;border-radius:11px}.ofhd span[hidden]{display:none}
+.ofsheet{position:absolute;left:0;right:0;top:192px;bottom:0;background:#121413;border-radius:20px 20px 0 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;overflow:auto;z-index:600}
+.ofhomec{display:flex;align-items:center;gap:12px;background:#1d1f1e;border-radius:14px;padding:8px 10px;flex:none}.ofhomec>span{width:34px;height:34px;border-radius:17px;background:rgba(48,176,199,.18);color:#30b0c7;display:grid;place-items:center;flex:none}.ofhomec b{display:block;font:700 13.5px var(--font)}.ofhomec small{font:500 12px var(--font);color:#8e8e93}
+.oflab{font:600 11px var(--font);letter-spacing:1.1px;text-transform:uppercase;color:#8e8e93;margin:10px 0 7px}
+.ofchips{display:flex;gap:6px;flex:none}.ofchips button{flex:1;padding:9px 0;border:0;border-radius:14px;background:#1d1f1e;color:#f5f5f7;font:700 13px var(--font)}.ofchips button.on{background:#ff3b30;color:#fff}
+.ofstats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px;flex:none}.ofstats div{display:flex;align-items:center;gap:8px;background:#1d1f1e;border-radius:12px;padding:7px 9px}.ofstats svg{color:#30b0c7;flex:none}.ofstats b{display:block;font:700 13px var(--font)}.ofstats small{font:500 10.5px var(--font);color:#8e8e93}
+.ofinc{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:9px;flex:none}.ofinc span{display:flex;align-items:center;gap:6px;font:500 12px var(--font);color:#d1d1d6}.ofinc svg{color:#34c759;flex:none}
+.ofcta{margin-top:auto;height:48px;border:0;border-radius:16px;background:#ff3b30;color:#fff;font:700 15.5px var(--font);display:flex;align-items:center;justify-content:center;gap:8px;flex:none}
+.ofskip{border:0;background:none;color:#8e8e93;font:600 13px var(--font);padding:10px 0 0;flex:none}.ofghost{margin-top:auto;height:46px;border:0;border-radius:14px;background:#1d1f1e;color:#d1d1d6;font:600 14px var(--font);flex:none}
+.ofprog{display:flex;justify-content:space-between;align-items:baseline}.ofbig{font:800 20px var(--font)}.ofpct{font:800 20px var(--font);color:#ff3b30}
+.ofbar{height:10px;border-radius:5px;background:#2c2e2d;overflow:hidden;margin:10px 0 6px;flex:none}.ofbar i{display:block;height:100%;background:linear-gradient(90deg,#ff6b5e,#ff3b30);border-radius:5px;transition:width .3s}
+.ofsm{font:500 12px var(--font);color:#8e8e93;margin-bottom:6px}.ofrow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid #222;font:500 13px var(--font)}.ofrow em{font-style:normal;color:#8e8e93;font-size:12px}.ofrow .ok{color:#34c759;display:flex;align-items:center;gap:4px;font-weight:700}
+.ofnote{display:flex;gap:8px;align-items:flex-start;background:#1d1f1e;border-radius:12px;padding:9px 11px;font:500 12px/1.4 var(--font);color:#c7c7cc;margin-top:8px;flex:none}.ofnote>span{flex:none;margin-top:1px}
+.ofdone{width:64px;height:64px;border-radius:32px;background:rgba(52,199,89,.16);color:#34c759;display:grid;place-items:center;margin:4px auto 10px;flex:none}
+.ofhome{display:grid;place-items:center;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:16px;background:#30b0c7;color:#fff;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#ofhc{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:1460;background:var(--bg);color:var(--fg);border-radius:18px;box-shadow:var(--shadow);padding:12px 14px}#ofhc[hidden]{display:none}
+.ofhrow{display:flex;align-items:center;gap:14px;padding-right:30px}.ofarr{display:grid;place-items:center;width:56px;height:56px;border-radius:28px;background:rgba(48,176,199,.15);flex:none;transition:transform .4s}.ofdist{display:block;font:800 24px var(--font)}.ofsub{font:500 12px var(--font);color:var(--dim)}
+.ofbtns{display:flex;gap:6px;margin-top:10px}.ofbtns button{flex:1;min-height:36px;border:0;border-radius:18px;background:var(--chip);color:var(--fg);font:600 12.5px var(--font)}.ofbtns button[aria-pressed=true]{background:#30b0c7;color:#fff}
+.ofx{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:15px;border:0;background:var(--chip);color:var(--fg);display:grid;place-items:center;padding:0}
 </style>
 </head>
 <body class="tuton">
@@ -2101,7 +2124,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC: DRA, FTEN, FOM, BCTS, RSTBC, Wildlife Act), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(drawn).forEach(drop); seen={}; wantNow={} } }
     map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(function(){ load(); areas() },350) });
     function refresh(){ if(!on) return; Object.keys(drawn).forEach(drop); seen={}; aG.clearLayers(); aLay={}; load(); areas(); if(vg){ vg.redraw() } }
-    window.__fsr={set:set,load:load,refresh:refresh};
+    window.__fsr={set:set,load:load,refresh:refresh,urls:function(b){ var o=[]; SRC.forEach(function(s){ if(!s.url) return; keys(s,b).forEach(function(k){ var tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(s.area(tb)) o.push(s.url(tb)) }) });
+      o.push('https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_TRAILS_SVW&outputFormat=json&count=5000&propertyName=FOREST_FILE_ID,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,MAINTAIN_STD_DESC,OPERATOR_CLIENT_NAME'); return o }};
     // FSR layers drop-down: tap FSR again (when it is on) to show or hide its own layers
     (function(){ var fb=document.querySelector('.seg button[data-b=fsr]'); if(!fb) return; var pn=document.createElement('div'); pn.id='fsrpanel'; pn.hidden=true; pn.setAttribute('role','dialog'); pn.setAttribute('aria-label','FSR layers');
       var CH=[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrClose','Closures','#ffffff','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed']];
@@ -2737,5 +2761,6 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
 })();
 </script>
 <script src="reports.js?v=4"></script>
+<script src="offline.js?v=1"></script>
 </body>
 </html>
