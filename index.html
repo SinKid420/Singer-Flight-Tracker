@@ -766,6 +766,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var p=(j&&j.radar&&j.radar.past)||[]; if(!p.length){ if(force) applyRadar(); return } var t=p[p.length-1].time;
       if(t===rvStamp){ if(force) applyRadar(); return } rvStamp=t; rvPaths=p.map(function(x){return x.path}); applyRadar();
     }).catch(function(){ if(force) applyRadar() }) }
+  var rvPark=false, rvResume=null;
+  map.on('movestart zoomstart',function(){ clearTimeout(rvResume); if(frames.length<2) return; clearTimeout(tmr); frames.forEach(function(f,j){ if(j!==cur) ['rv','iem'].forEach(function(k){ if(f[k]&&map.hasLayer(f[k])) map.removeLayer(f[k]) }) }); rvPark=true });
+  map.on('moveend',function(){ clearTimeout(rvResume); if(!rvPark) return; rvResume=setTimeout(function(){ rvPark=false; frames.forEach(function(f){ ['rv','iem'].forEach(function(k){ if(f[k]&&!map.hasLayer(f[k])) f[k].addTo(map) }) }); setFrame(cur); clearTimeout(tmr); if(frames.length>1&&rcfg.loop==='1') tmr=setTimeout(step,2500) },1500) });
   function radarTick(){ if(!document.hidden) loadRV(want('us')) }
   (function(){ var a=document.getElementById('radsrc'), b=document.getElementById('radloop'); if(!a||!b) return;
     a.value=rcfg.src; b.value=rcfg.loop;
@@ -951,7 +954,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     if(sel&&!x.chips) x.chips=[chip([r.o.la,r.o.lo],r.o.c,col),chip([r.d.la,r.d.lo],r.d.c,col)];
     if(!sel&&x.chips){x.chips.forEach(function(c){map.removeLayer(c)});x.chips=null}
   }
-  var lastKey={}, maxPlanes=30;
+  var lastKey={}, maxPlanes=10;
   try{var mpv=parseInt(localStorage.getItem('sky-maxplanes'),10); if(mpv>=5&&mpv<=300) maxPlanes=mpv}catch(e){}
   // Planes keep moving between feed updates: each one is carried forward along its heading at its real speed.
   var motion={}, mLast=0;
@@ -1963,19 +1966,19 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         id:function(f){ return f.properties.DIGITAL_ROAD_ATLAS_LINE_ID },
         st:function(p){ return p.ROAD_CLASS==='trail'?{color:C.walk,weight:2,opacity:.9,dashArray:'4,3'}:{color:C.motor,weight:1.8,opacity:.85} },
         pop:function(p){ return '<b>'+esc(p.ROAD_NAME_FULL||(p.ROAD_CLASS==='trail'?'Trail':'Back road'))+'</b><br>'+(p.ROAD_CLASS==='trail'?'Trail':cap(p.ROAD_CLASS)+' road')+(p.ROAD_SURFACE?' · '+esc(p.ROAD_SURFACE)+' surface':'') }},
-      {k:'rec',z:11,g:0.1,area:inBC,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_RECREATION_LINES_SVW',b,'RETIREMENT_DATE IS NULL','FOREST_FILE_ID,PROJECT_NAME,PROJECT_TYPE,SITE_LOCATION') },
+      {k:'rec',z:12,g:0.1,area:inBC,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_RECREATION_LINES_SVW',b,'RETIREMENT_DATE IS NULL','FOREST_FILE_ID,PROJECT_NAME,PROJECT_TYPE,SITE_LOCATION') },
         id:function(f){ return f.id }, st:recSt,
         pop:function(p){ var i=recInfo&&recInfo[p.FOREST_FILE_ID]; return '<b>'+esc(cap(p.PROJECT_NAME)||'Recreation trail')+'</b><br>'+esc(p.PROJECT_TYPE||'Recreation trail')+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'')+(i&&i.a.length?'<br>'+esc(i.a.join(', ')):'')+(i&&i.ms?'<br><small>'+esc(i.ms)+(i.op?' · '+esc(cap(i.op)):'')+'</small>':'') }},
-      {k:'th',z:12,g:0.1,area:inBC,pt:1,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_REC_TRAIL_HEADS_SVW',b,"LIFE_CYCLE_STATUS_CODE='ACTIVE'",'PROJECT_NAME,SITE_LOCATION,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,PROJECT_DESCRIPTION') },
+      {k:'th',z:13,g:0.1,area:inBC,pt:1,src:'Recreation Sites & Trails BC',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_REC_TRAIL_HEADS_SVW',b,"LIFE_CYCLE_STATUS_CODE='ACTIVE'",'PROJECT_NAME,SITE_LOCATION,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,PROJECT_DESCRIPTION') },
         id:function(f){ return f.id }, st:function(){ return {radius:6,color:'#fff',weight:2,opacity:1,fillColor:'#2e7d32',fillOpacity:1} },
         pop:function(p){ var a=[p.ACTIVITY_DESC1,p.ACTIVITY_DESC2,p.ACTIVITY_DESC3].filter(Boolean); return '<b>🥾 '+esc(cap(p.PROJECT_NAME)||'Trailhead')+'</b><br>Trailhead'+(p.SITE_LOCATION?' · near '+esc(cap(p.SITE_LOCATION)):'')+(a.length?'<br>'+esc(a.join(', ')):'')+(p.PROJECT_DESCRIPTION?'<br><small>'+esc(String(p.PROJECT_DESCRIPTION).trim().slice(0,160))+'…</small>':'') }},
       {k:'frd',z:13,g:0.05,area:inBC,src:'BC Forest Tenures (road permits)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',b,"LIFE_CYCLE_STATUS_CODE='ACTIVE' AND FILE_TYPE_DESCRIPTION<>'Forest Service Road'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION,CLIENT_NAME,LOCATION') },
         id:function(f){ return f.id }, st:function(){ return {color:C.motor,weight:2.4,opacity:.9} },
         pop:function(p){ return '<b>'+esc(cap(p.LOCATION)||'Forest road')+'</b><br>Forest road · '+esc(p.FILE_TYPE_DESCRIPTION||'Road permit')+(p.CLIENT_NAME?'<br><small>'+esc(cap(p.CLIENT_NAME))+' · permit '+esc(p.FOREST_FILE_ID||'')+' '+esc(p.ROAD_SECTION_ID||'')+'</small>':'')+'<br><small>Industrial road: watch for logging trucks.</small>' }},
-      {k:'fom',z:12,g:0.1,area:inBC,src:'Forest Operations Map (FOM)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FOM_ROAD_SECTION_SP',b,'','FOM_ID,NAME,FSP_HOLDER_NAME,LIFECYCLE_STATUS,PLANNED_DEVELOPMENT_DATE','SHAPE') },
+      {k:'fom',z:13,g:0.1,area:inBC,src:'Forest Operations Map (FOM)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FOM_ROAD_SECTION_SP',b,'','FOM_ID,NAME,FSP_HOLDER_NAME,LIFECYCLE_STATUS,PLANNED_DEVELOPMENT_DATE','SHAPE') },
         id:function(f){ return f.id }, st:function(){ return {color:'#ff9800',weight:2.6,opacity:.95,dashArray:'6,5'} },
         pop:function(p){ return '<b>Planned forest road</b><br>'+esc(p.LIFECYCLE_STATUS==='Final'?'Final plan':'Proposed')+(dt(p.PLANNED_DEVELOPMENT_DATE)?' · build from '+esc(dt(p.PLANNED_DEVELOPMENT_DATE)):'')+'<br><small>'+esc(cap(p.FSP_HOLDER_NAME||''))+(p.NAME?' · '+esc(p.NAME):'')+' · FOM '+esc(p.FOM_ID||'')+'</small><br><small>May not exist yet.</small>' }},
-      {k:'bcts',z:12,g:0.1,area:inBC,src:'BC Timber Sales',url:function(b){ return WFS('WHSE_FOREST_TENURE.BCTS_PLANNED_ROADS_SP',b,'','ROAD_NAME,ROAD_STATE,TIMBER_SALES_OFFICE_NAME,ROAD_LENGTH','SHAPE') },
+      {k:'bcts',z:13,g:0.1,area:inBC,src:'BC Timber Sales',url:function(b){ return WFS('WHSE_FOREST_TENURE.BCTS_PLANNED_ROADS_SP',b,'','ROAD_NAME,ROAD_STATE,TIMBER_SALES_OFFICE_NAME,ROAD_LENGTH','SHAPE') },
         id:function(f){ return f.id }, st:function(p){ var s=p.ROAD_STATE; return s==='PROP'?{color:'#ff9800',weight:2.6,opacity:.95,dashArray:'2,5'}:/MAIN|NEBU/.test(s)?{color:C.motor,weight:2.4,opacity:.9}:{color:'#9e9e9e',weight:2.2,opacity:.9,dashArray:'3,4'} },
         pop:function(p){ return '<b>'+esc(BCTS[p.ROAD_STATE]||'Timber sale road')+'</b><br>BC Timber Sales · '+esc(p.TIMBER_SALES_OFFICE_NAME||'')+'<br><small>'+esc(p.ROAD_NAME||'')+(p.ROAD_LENGTH?' · '+Math.round(p.ROAD_LENGTH)+' m':'')+'</small>' }},
       {k:'mvr',z:10,g:0.25,area:inBC,src:'Wildlife Act (Motor Vehicle Prohibition Regulation)',url:function(b){ return WFS('WHSE_WILDLIFE_MANAGEMENT.WAA_MVPR_ROUTES_SP',b,'','ROAD_NAME,ACCESS_STATUS,ACCESS_RANGE,REGULATION_GEOGRAPHIC_NAME,PROHIBITION_TYPE,MAP_NUMBER','SHAPE') },
@@ -1984,10 +1987,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       {k:'fsr',z:10,g:0.25,area:inBC,src:'BC Forest Tenures (official FSR list)',url:function(b){ return WFS('WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',b,"RETIREMENT_DATE IS NULL AND FILE_TYPE_DESCRIPTION='Forest Service Road'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION') },
         id:function(f){ return f.id }, st:function(){ return {color:C.fsr,weight:5,opacity:.95} },
         pop:function(p){ return '<b>'+esc(cap(p.ROAD_SECTION_NAME)||'Forest Service Road')+' FSR</b><br>Forest Service Road · file '+esc(p.FOREST_FILE_ID||'')+(p.ROAD_SECTION_ID?' section '+esc(p.ROAD_SECTION_ID):'') }},
-      {k:'usr',z:12,g:0.1,area:inUS,src:'US Forest Service roads',url:function(b){ return AGS('EDW_RoadBasic_01',b,"oper_maint_level NOT LIKE '1%'",'objectid,id,name,oper_maint_level,surface_type') },
+      {k:'usr',z:13,g:0.1,area:inUS,src:'US Forest Service roads',url:function(b){ return AGS('EDW_RoadBasic_01',b,"oper_maint_level NOT LIKE '1%'",'objectid,id,name,oper_maint_level,surface_type') },
         id:function(f){ return 'r'+(f.properties.objectid||f.id) }, st:function(p){ return {color:C.motor,weight:/^2/.test(p.oper_maint_level||'')?1.8:2.6,opacity:.85} },
         pop:function(p){ return '<b>'+esc(p.name?cap(p.name):'Forest road '+(p.id||''))+'</b><br>'+esc(String(p.oper_maint_level||'').replace(/^\d+ - /,'').toLowerCase())+(p.surface_type?' · '+esc(String(p.surface_type).replace(/^\w+ - /,'').toLowerCase()):'') }},
-      {k:'ust',z:11,g:0.1,area:inUS,src:'US Forest Service trails',url:function(b){ return AGS('EDW_TrailNFSPublish_01',b,"trail_type='TERRA'",'objectid,trail_name,terra_motorized,bicycle_managed,bicycle_accpt') },
+      {k:'ust',z:12,g:0.1,area:inUS,src:'US Forest Service trails',url:function(b){ return AGS('EDW_TrailNFSPublish_01',b,"trail_type='TERRA'",'objectid,trail_name,terra_motorized,bicycle_managed,bicycle_accpt') },
         id:function(f){ return 't'+(f.properties.objectid||f.id) }, st:function(p){ var k=usTrail(p); return {color:C[k],weight:2.6,opacity:.95,dashArray:k==='walk'?'5,3':null} },
         pop:function(p){ return '<b>'+esc(cap(p.trail_name)||'Forest trail')+'</b><br>'+KIND[usTrail(p)] }}
     ];
@@ -2015,7 +2018,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     function thin(j){ (j.features||[]).forEach(function(f){ var g=f.geometry; if(!g) return; if(g.type==='LineString') g.coordinates=rdp(g.coordinates,4e-5); else if(g.type==='MultiLineString') g.coordinates=g.coordinates.map(function(c){ return rdp(c,4e-5) }) }); return j }
     function keep(key,j){ j=thin(j); data[key]=j; dataKeys.push(key); if(dataKeys.length>120){ var old=dataKeys.shift(); if(!drawn[old]) delete data[old] } }
     function load(){ if(!on) return; var z=map.getZoom(), bb=map.getBounds().pad(.1), b={s:bb.getSouth(),n:bb.getNorth(),w:bb.getWest(),e:bb.getEast()}, want={};
-      if(hint) hint.hidden=z>=12;
+      if(hint){ hint.hidden=z>=13; hint.textContent=z<12?'Zoom in for trails':'Zoom in for all roads' }
       SRC.forEach(function(s){ if(z<s.z) return; var ks=keys(s,b); if(ks.length>24) return;
         ks.forEach(function(k){ var key=s.k+':'+k[0]+'_'+k[1], tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(!s.area(tb)) return; want[key]=1;
           if(data[key]){ draw(s,key); return } if(busy[key]) return; busy[key]=1;
@@ -2027,7 +2030,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       .then(function(){ return fetch('https://tiles.openfreemap.org/planet').then(function(r){return r.json()}) }).then(function(tj){ var url=tj&&tj.tiles&&tj.tiles[0]; if(!url||!/^https:\/\/tiles\.openfreemap\.org\//.test(url)) throw 0;
         var hide=function(){return []}, st={}; ['water','landcover','landuse','mountain_peak','park','boundary','aeroway','building','water_name','transportation_name','place','housenumber','poi','aerodrome_label'].forEach(function(k){ st[k]=hide });
         st.waterway=function(p,z){ if(cfg2.water==='0'||z>=13||!/^(stream|river|brook|canal)$/.test(p.class||'')) return []; return fadeK({color:'#4dd0e1',weight:p.class==='river'?2.6:1.6,opacity:.9},kOf(cfg2.waterOp)) };
-        st.transportation=function(p){ if(cfg2.fsrOsm==='0') return []; if(p.class==='track') return cfg2.fsrMotor==='0'?[]:fadeK({color:C.motor,weight:2,opacity:.9},kOf(cfg2.fsrRdOp)); if(p.class==='path'){ if(p.subclass==='cycleway') return cfg2.fsrBike==='0'?[]:fade({color:C.bike,weight:2.4,opacity:.95}); if(p.subclass==='steps'||p.subclass==='platform'||p.subclass==='corridor') return []; return cfg2.fsrWalk==='0'?[]:fade({color:C.walk,weight:2,opacity:.95,dashArray:'4,3'}) } return [] };
+        st.transportation=function(p,z){ if(cfg2.fsrOsm==='0'||z<13) return []; if(p.class==='track') return cfg2.fsrMotor==='0'?[]:fadeK({color:C.motor,weight:2,opacity:.9},kOf(cfg2.fsrRdOp)); if(p.class==='path'){ if(p.subclass==='cycleway') return cfg2.fsrBike==='0'?[]:fade({color:C.bike,weight:2.4,opacity:.95}); if(p.subclass==='steps'||p.subclass==='platform'||p.subclass==='corridor') return []; return cfg2.fsrWalk==='0'?[]:fade({color:C.walk,weight:2,opacity:.95,dashArray:'4,3'}) } return [] };
         vg=L.vectorGrid.protobuf(url,{vectorTileLayerStyles:st,maxNativeZoom:14,minZoom:12,interactive:false,rendererFactory:L.canvas.tile,attribution:'Trails © OpenStreetMap (OpenFreeMap)'}); if(on) vg.addTo(map) })
       .catch(function(){ vgP=null }) }
     var aD=null, aP=null, aG=L.layerGroup(), aLay={}, MONS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}, lastPop=0;
