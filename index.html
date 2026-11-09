@@ -350,6 +350,8 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 .gpspin{font-size:26px;line-height:30px;text-align:center;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}.gpsq{font:13px/1.35 var(--font);min-width:170px}.gpsb{display:flex;gap:8px;margin-top:8px}.gpsb button{flex:1;padding:8px 6px;border:0;border-radius:10px;font:600 13px var(--font);background:#e8eaed;color:#202124}.gpsb button[data-a=go]{background:#1a73e8;color:#fff}
 .about{text-align:center;font-size:12px;color:var(--dim);margin:14px 0 4px;line-height:1.5}.about b{color:var(--fg);font-size:13px}
 .leaflet-control-attribution{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-sizing:border-box}.leaflet-control-attribution.open{white-space:normal;background:rgba(14,14,16,.97)!important;padding:6px 8px!important;position:relative;z-index:1200}
+.zwarn{position:fixed;left:16px;right:16px;top:28%;z-index:3000;background:#b71c1c;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:6px;font:14px/1.35 var(--font)}.zwarn[hidden]{display:none}.zwarn b{font-size:16px}.zwarn small{opacity:.9}.zwarn button{margin-top:4px;min-height:40px;border:0;border-radius:20px;background:#fff;color:#b71c1c;font:700 14px var(--font)}
+.zkey{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px}.zkey span{display:flex;align-items:center;gap:6px}.zkey i{width:14px;height:10px;border-radius:3px;display:inline-block;opacity:.85;flex:none}
 </style>
 </head>
 <body class="tuton">
@@ -1590,7 +1592,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     document.getElementById('prepx').onclick=function(){ sh.hidden=true; vt++ };
     sh.onclick=function(e){ if(e.target===sh){ sh.hidden=true; vt++ } };
     var MODS={
-      sled:{t:'🛷 Mountain sledder',tabs:['Snow','Slopes','Safety'],r:[sledSnow,sledSlopes,sledSafety]},
+      sled:{t:'🛷 Mountain sledder',tabs:['Snow','Slopes','Zones','Safety'],r:[sledSnow,sledSlopes,sledZones,sledSafety]},
       supply:{t:'🚢 Supply chain',tabs:['Ports','Fuel','Closures'],r:[supPorts,supFuel,supClose]},
       planet:{t:'☄️ Planetary threats',tabs:['Solar','Radiation','Asteroids'],r:[plSolar,plRad,plNeo]},
       comms:{t:'📻 Off-grid comms',tabs:['HF bands','Broadcast','Repeaters','SDR'],r:[cmHF,cmBcst,cmRep,cmSdr]}};
@@ -1662,6 +1664,79 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         '<button class="ltbtn2 pacc" id="slbtn">'+(on?'Hide slope colours':'Show slope colours on the map')+'</button>'+
         sec('Good to know','Works when zoomed in close (zoom 11+). Made on your phone from 30 m terrain data, so small rolls and cornices won’t show. It knows nothing about the snowpack: check the avalanche forecast before you ride.'));
       document.getElementById('slbtn').onclick=function(){ setSlope(!slopeLayer); if(slopeLayer){ sh.hidden=true; vt++; if(map.getZoom()<12) map.setZoom(12) } else sledSlopes(vt) } }
+    // riding zones & closures: BC government (DataBC) data saved in sled-zones.json
+    var zD=null, zP=null, zR=(function(){ var r=map.getRenderer(L.polyline([[0,0],[0,0]])); r.options.tolerance=Math.max(r.options.tolerance||0,6); return r })(), zG=L.layerGroup(), zPts=L.layerGroup(), zLay={}, zOn=false, zAlert=true, zIn={}, zNear={}, zMv=null, zWarnEl=null;
+    try{ zAlert=localStorage.getItem('sky-zalert')!=='0' }catch(e){}
+    var ZST={c:['Snowmobile closure',RED,1],c2:['Closed to sleds (club agreement)',RED,1],mv:['Motor vehicle closure',AMBER,1],s58:['Motorized closure (rec order)','#f4511e',1],s58deep:['Sleds only on 0.5 m+ snow','#fdd835',0],o:['Open riding area',GREEN,0],l:['Open, limited','#c0ca33',0],a:['ATES-rated avalanche terrain',PURPLE,0],t:['Sled access trail','#1e88e5',0]};
+    var MON={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    function zDec(s){ var i=0, la=0, lo=0, out=[]; while(i<s.length){ var r=0, sh=0, b; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); la+=(r&1)?~(r>>1):(r>>1); r=0; sh=0; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); lo+=(r&1)?~(r>>1):(r>>1); out.push([la/1e4,lo/1e4]) } return out }
+    // is the rule in force today? returns true (closed now), false (not today), null (no dates given)
+    function zToday(w){ w=String(w||''); var m=/([A-Za-z]{3})[a-z]*\.? (\d{1,2}) (?:to|-) ([A-Za-z]{3})[a-z]*\.? (\d{1,2})/.exec(w); if(!m||MON[m[1].toLowerCase()]==null||MON[m[3].toLowerCase()]==null) return null;
+      var d=new Date(), v=d.getMonth()*100+d.getDate(), a=MON[m[1].toLowerCase()]*100+(+m[2]), b=MON[m[3].toLowerCase()]*100+(+m[4]), inR=a<=b?(v>=a&&v<=b):(v>=a||v<=b);
+      return /^(open|snowmobiles allowed)/i.test(w)?!inR:inR }
+    function zClosed(f){ if(!ZST[f.k][2]&&f.k!=='s58deep') return false; var t=zToday(f.w); return t==null?true:t }
+    function zStatus(f){ var s=ZST[f.k]; if(f.k==='o') return ['Open riding area',GREEN]; if(f.k==='l') return ['Open, with limits',s[1]]; if(f.k==='a') return ['Avalanche terrain rated (ATES)',PURPLE]; if(f.k==='t') return ['Sled access trail',s[1]];
+      if(f.k==='s58deep') return zClosed(f)?['Sleds only on 0.5 m+ of snow',s[1]]:['Not in effect today',GREEN]; return zClosed(f)?['Closed to snowmobiles now',s[1]]:['Not in effect today','#78909c'] }
+    function zLoad(){ if(zD) return Promise.resolve(zD); if(zP) return zP; zP=fetch('sled-zones.json').then(function(r){ if(!r.ok) throw new Error(r.status); return r.json() }).then(function(j){ if(!j||!Array.isArray(j.f)) throw new Error('bad'); zD=j; return j }).catch(function(e){ zP=null; throw e }); return zP }
+    function zPolys(f){ if(f._ll) return f._ll; f._ll=f.l?f.g.map(zDec):f.g.map(function(p){ return p.map(zDec) }); return f._ll }
+    function zPop(f){ var st=zStatus(f), h='<b>'+esc(f.n||ZST[f.k][0])+'</b><br><span style="color:'+st[1]+';font-weight:600">'+esc(st[0])+'</span>';
+      if(f.t) h+='<br><small>'+esc(f.t)+'</small>'; if(f.w&&f.w!=='Open') h+='<br><small>'+esc(f.w)+'</small>'; if(f.x) h+='<br><small>Allowed: '+esc(f.x)+'</small>';
+      if(f.k==='mv') h+='<br><small>Includes snowmobiles unless the official entry allows them.</small>'; if(f.k==='a') h+='<br><small>Terrain ratings: <a href="https://avalanche.ca/ates" target="_blank" rel="noopener">avalanche.ca</a></small>';
+      if(f.m) h+='<br><small>Map '+esc(f.m)+'</small>'; return h+'<br><small><a href="https://www2.gov.bc.ca/gov/content/sports-culture/recreation/motor-vehicle-prohibitions/snowmobiling-in-bc/snowmobile-closures" target="_blank" rel="noopener">Official closure maps ›</a></small>' }
+    function zStyle(f){ var c=ZST[f.k][1], on=zClosed(f); if(f.k==='t') return {color:c,weight:3,opacity:.9,dashArray:'6,4',renderer:zR,interactive:false};
+      if(f.k==='a') return {color:c,weight:2,opacity:.9,fill:true,fillOpacity:.06,dashArray:'2,5',renderer:zR,interactive:false};
+      if(ZST[f.k][2]&&!on) return {color:'#90a4ae',weight:1.5,opacity:.9,dashArray:'5,5',fillOpacity:.05,renderer:zR,interactive:false};
+      return {color:c,weight:2,opacity:.95,fillColor:c,fillOpacity:ZST[f.k][2]?.28:.16,renderer:zR,interactive:false} }
+    function zDraw(){ if(!zOn||!zD) return; var z=map.getZoom(), b=map.getBounds().pad(.25), w=b.getWest(), e=b.getEast(), s=b.getSouth(), n=b.getNorth();
+      zD.f.forEach(function(f,i){ var vis=z>=7&&f.b[0]<e&&f.b[2]>w&&f.b[1]<n&&f.b[3]>s, l=zLay[i];
+        if(vis&&!l){ var ll=zPolys(f); l=zLay[i]=(f.l?L.polyline(ll,zStyle(f)):L.polygon(ll,zStyle(f))); l._zf=f; zG.addLayer(l) }
+        else if(!vis&&l){ zG.removeLayer(l); delete zLay[i] } });
+      zPts.clearLayers(); if(z>=9) (zD.p||[]).forEach(function(p){ if(p[0]<s||p[0]>n||p[1]<w||p[1]>e) return; var ic=p[2]==='h'?['🛖','Cabin / warming hut','#6d4c41']:p[2]==='p'?['🅿️','Sled staging & parking','#1565c0']:['❄️','Snowmobile rec site','#0277bd'];
+        L.marker([p[0],p[1]],{icon:L.divIcon({className:'',html:'<span class="firemk" role="img" aria-label="'+esc(ic[1])+'" style="--c:'+ic[2]+';--sz:24px">'+ic[0]+'</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-160,title:p[3]})
+          .bindPopup('<b>'+esc(p[3])+'</b><br>'+esc(ic[1])+(p[4]?'<br><small>Near '+esc(p[4].toLowerCase().replace(/\b[a-z]/g,function(c){return c.toUpperCase()}))+'</small>':'')+(p[5]?'<br><small style="color:#fb8c00">'+esc(p[5])+'</small>':'')+'<br><small>Recreation Sites and Trails BC</small>',{closeButton:false}).addTo(zPts) }) }
+    function setZones(v){ zOn=v; if(v){ zG.addTo(map); zPts.addTo(map); map.attributionControl.addAttribution('Sled zones: BC Gov (DataBC)'); zLoad().then(function(){ zDraw(); zCheck() }).catch(function(){}) }
+      else { map.removeLayer(zG); map.removeLayer(zPts); zG.clearLayers(); zLay={}; map.attributionControl.removeAttribution('Sled zones: BC Gov (DataBC)') }
+      try{ localStorage.setItem('sky-zones',v?'1':'0') }catch(e){} }
+    map.on('moveend',function(){ if(!zOn) return; clearTimeout(zMv); zMv=setTimeout(zDraw,250) });
+    // tap a zone: find what is under the finger (works on touch screens and a turned map)
+    function zSeg(la,lo,pts){ var kx=111.32*Math.cos(la*Math.PI/180), ky=110.57, best=1e9; for(var i=1;i<pts.length;i++){ var ax=(pts[i-1][1]-lo)*kx, ay=(pts[i-1][0]-la)*ky, bx=(pts[i][1]-lo)*kx, by=(pts[i][0]-la)*ky, dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy, t=L2?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L2)):0, ex=ax+t*dx, ey=ay+t*dy, d=Math.sqrt(ex*ex+ey*ey); if(d<best) best=d } return best }
+    map.on('click',function(e){ if(!zOn||!zD||map.getZoom()<7) return; var la=e.latlng.lat, lo=e.latlng.lng, tol=16*40075*Math.cos(la*Math.PI/180)/(256*Math.pow(2,map.getZoom())), PR={t:0,c:1,c2:1,mv:2,s58:2,s58deep:3,l:4,o:4,a:5}, best=null, bp=99;
+      Object.keys(zLay).forEach(function(i){ var f=zLay[i]._zf, m=tol/80; if(!f||PR[f.k]>=bp||la<f.b[1]-m||la>f.b[3]+m||lo<f.b[0]-m*1.6||lo>f.b[2]+m*1.6) return; var ll=zPolys(f), hit=false;
+        if(f.l) hit=ll.some(function(p){ return zSeg(la,lo,p)<tol }); else hit=ll.some(function(p){ if(!zInRing(la,lo,p[0])) return false; for(var h=1;h<p.length;h++) if(zInRing(la,lo,p[h])) return false; return true });
+        if(hit){ best=f; bp=PR[f.k] } });
+      if(best) L.popup({closeButton:false,maxWidth:250,autoPanPadding:[20,70]}).setLatLng(e.latlng).setContent(zPop(best)).openOn(map) });
+    // point in polygon + distance to edge (km)
+    function zInRing(la,lo,r){ var c=false; for(var i=0,j=r.length-1;i<r.length;j=i++){ var yi=r[i][0], xi=r[i][1], yj=r[j][0], xj=r[j][1]; if(((yi>la)!==(yj>la))&&(lo<(xj-xi)*(la-yi)/(yj-yi)+xi)) c=!c } return c }
+    function zEdge(la,lo,r){ var kx=111.32*Math.cos(la*Math.PI/180), ky=110.57, best=1e9; for(var i=0,j=r.length-1;i<r.length;j=i++){ var ax=(r[j][1]-lo)*kx, ay=(r[j][0]-la)*ky, bx=(r[i][1]-lo)*kx, by=(r[i][0]-la)*ky, dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy, t=L2?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L2)):0, ex=ax+t*dx, ey=ay+t*dy, d=Math.sqrt(ex*ex+ey*ey); if(d<best) best=d } return best }
+    function zWhere(la,lo){ var res=[]; if(!zD) return res; var m=0.02;
+      zD.f.forEach(function(f){ if(f.l||!zClosed(f)||f.k==='s58deep') return; if(la<f.b[1]-m||la>f.b[3]+m||lo<f.b[0]-m*1.5||lo>f.b[2]+m*1.5) return;
+        var ll=zPolys(f), inside=false, edge=1e9; ll.forEach(function(p){ var inP=zInRing(la,lo,p[0]); for(var h=1;h<p.length;h++) if(zInRing(la,lo,p[h])) inP=false; if(inP) inside=true; edge=Math.min(edge,zEdge(la,lo,p[0])) });
+        if(inside||edge<0.5) res.push({f:f,inside:inside,km:edge}) }); return res }
+    function zWarn(f,inside,kmv){ if(!zWarnEl){ zWarnEl=document.createElement('div'); zWarnEl.className='zwarn'; zWarnEl.setAttribute('role','alert'); document.body.appendChild(zWarnEl) }
+      zWarnEl.innerHTML='<b>'+(inside?'⛔ You are in a snowmobile closure':'⚠️ Closure ahead, '+Math.max(50,Math.round(kmv*1000/50)*50)+' m away')+'</b><span>'+esc(f.n||'Closed area')+' · '+esc(zStatus(f)[0])+'</span><small>Fines apply under the Wildlife Act. Turn back the way you came.</small><button type="button">OK</button>';
+      zWarnEl.hidden=false; zWarnEl.querySelector('button').onclick=function(){ zWarnEl.hidden=true };
+      try{ if(navigator.vibrate) navigator.vibrate(inside?[300,120,300,120,300]:[200,100,200]) }catch(e){} }
+    function zCheck(){ if(!zOn||!zAlert||!zD||me.label==='Grand Forks') return; var hits=zWhere(me.lat,me.lon), nowIn={}, nowNear={};
+      hits.forEach(function(h){ var id=h.f.n+h.f.b.join(); if(h.inside){ nowIn[id]=1; if(!zIn[id]) zWarn(h.f,true,0) } else { nowNear[id]=1; if(!zNear[id]&&!zIn[id]) zWarn(h.f,false,h.km) } });
+      zIn=nowIn; zNear=nowNear }
+    setInterval(function(){ if(!document.hidden) zCheck() },15000);
+    function sledZones(t){ put(t,'<div class="ssec">Loading BC closure maps…</div>');
+      zLoad().then(function(){ var near=[], seen={}, la=me.lat, lo=me.lon;
+        zD.f.forEach(function(f){ if(f.l||f.k==='a') return; var cx=(f.b[0]+f.b[2])/2, cy=(f.b[1]+f.b[3])/2; if(Math.abs(cy-la)>1.2||Math.abs(cx-lo)>1.8) return;
+          var ll=zPolys(f), d=1e9, inside=false; ll.forEach(function(p){ if(zInRing(la,lo,p[0])) inside=true; d=Math.min(d,zEdge(la,lo,p[0])) }); var key=f.n+f.k; if(seen[key]&&seen[key].d<=d) return; seen[key]={f:f,d:inside?0:d} });
+        Object.keys(seen).forEach(function(k){ if(seen[k].d<=100) near.push(seen[k]) }); near.sort(function(a,b){ return a.d-b.d });
+        var here=zWhere(la,lo).filter(function(h){return h.inside}), h='';
+        h+='<div class="ptiles">'+tile('Where you are',here.length?'In a closure':'Not in a closure',here.length?esc(here[0].f.n||''):(me.label==='Grand Forks'?'Turn on location for alerts':'Checked against '+zD.f.length+' areas'),here.length?RED:GREEN)+'</div>';
+        h+='<button class="ltbtn2 pacc" id="zbtn">'+(zOn?'Hide zones on the map':'Show zones on the map')+'</button>';
+        h+='<div class="row2" style="margin-top:6px"><span>Warn me when I ride into a closure</span><select id="zal" class="psel"><option value="1"'+(zAlert?' selected':'')+'>On</option><option value="0"'+(zAlert?'':' selected')+'>Off</option></select></div>';
+        h+=sec('Nearest to you',near.length?near.slice(0,6).map(function(x){ var st=zStatus(x.f); return '<div class="row2 prow2"><span><b>'+esc(x.f.n||ZST[x.f.k][0])+'</b> <small style="color:'+st[1]+'">'+esc(st[0])+'</small></span><span>'+(x.d===0?'Here':kmTxt(x.d))+'</span></div>' }).join(''):'No sled closures or riding areas within 100 km.');
+        h+=sec('Map key','<div class="zkey">'+['c','mv','s58','s58deep','o','l','t','a'].map(function(k){ return '<span><i style="background:'+ZST[k][1]+'"></i>'+ZST[k][0]+'</span>' }).join('')+'<span><i style="background:#90a4ae"></i>Closure not in effect today</span><span>🛖 Cabin · 🅿️ Staging · ❄️ Sled site</span></div>');
+        h+='<div class="skynote">BC Government (DataBC): Wildlife Act closures, snowmobile management areas & trails, recreation orders, ATES areas, recreation sites · saved '+esc(zD.at||'')+'. Rules can change: check the <a href="https://www2.gov.bc.ca/gov/content/sports-culture/recreation/motor-vehicle-prohibitions/snowmobiling-in-bc/snowmobile-closures" target="_blank" rel="noopener">official closure maps</a> before you ride.</div>';
+        if(!put(t,h)) return;
+        document.getElementById('zbtn').onclick=function(){ setZones(!zOn); if(zOn){ sh.hidden=true; vt++; if(map.getZoom()<9) map.setZoom(9) } else sledZones(vt) };
+        document.getElementById('zal').onchange=function(){ zAlert=this.value==='1'; try{ localStorage.setItem('sky-zalert',zAlert?'1':'0') }catch(e){} if(zAlert){ zIn={}; zNear={}; zCheck() } }
+      }).catch(function(){ put(t,sec('Riding zones','Could not load the closure maps. Check your connection and try again.')) }) }
+    try{ if(localStorage.getItem('sky-zones')==='1') setTimeout(function(){ setZones(true) },3000) }catch(e){}
     // offline spots: saved on the phone only
     var spotLayer=L.layerGroup().addTo(map), spotsOn=false, SPK={nosig:['📵','No signal','#546e7a'],cache:['🆘','Rescue cache','#e53935'],shelter:['🏠','Shelter / cabin','#6d4c41']};
     function spots(){ try{ var a=JSON.parse(localStorage.getItem('sky-spots')||'[]'); return Array.isArray(a)?a.filter(function(s){return s&&SPK[s.k]&&isFinite(s.lat)&&isFinite(s.lon)}):[] }catch(e){ return [] } }
@@ -1811,7 +1886,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   })();
   // ---- FSR map: forest service roads, back roads and trails from several free sources ----
   (function(){
-    var on=false, R=L.canvas({padding:.1,tolerance:6}), drawn={}, data={}, dataKeys=[], busy={}, seen={}, vg=null, vgP=null, mvT=null, leg=document.getElementById('fsrleg'), hint=document.getElementById('fsrhint');
+    var on=false, R=(function(){ var r=map.getRenderer(L.polyline([[0,0],[0,0]])); r.options.tolerance=Math.max(r.options.tolerance||0,6); return r })(), drawn={}, data={}, dataKeys=[], busy={}, seen={}, vg=null, vgP=null, mvT=null, leg=document.getElementById('fsrleg'), hint=document.getElementById('fsrhint');
     var C={walk:'#3ddc5a',bike:'#40a9ff',motor:'#ff3b30',fsr:'#ff1744'};
     function inBC(b){ return b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60 }
     function inUS(b){ return b.s<49.05&&b.w<-104&&b.e>-125&&b.n>41 }
