@@ -354,6 +354,12 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 .zwarn{position:fixed;left:16px;right:16px;top:28%;z-index:3000;background:#b71c1c;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:6px;font:14px/1.35 var(--font)}.zwarn[hidden]{display:none}.zwarn b{font-size:16px}.zwarn small{opacity:.9}.zwarn button{margin-top:4px;min-height:40px;border:0;border-radius:20px;background:#fff;color:#b71c1c;font:700 14px var(--font)}
 .zkey{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px}.zkey span{display:flex;align-items:center;gap:6px}.zkey i{width:14px;height:10px;border-radius:3px;display:inline-block;opacity:.85;flex:none}
 .dock.dmin .card>*:not(.cs):not(.cbtns):not(.m1),.dock.dmin .dtabs,.dock.dmin .grid,.dock.dmin .dbx{display:none!important}
+.sethd{grid-column:1/-1;font:700 11px var(--font);letter-spacing:.8px;text-transform:uppercase;color:var(--dim);margin:14px 4px 6px}
+#fsrpanel{position:absolute;z-index:1600;left:16px;right:76px;top:98px;background:var(--bg);color:var(--fg);border-radius:14px;box-shadow:var(--shadow);padding:8px 10px;font:500 13px var(--font)}#fsrpanel[hidden]{display:none}
+#fsrpanel .fph{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:6px}#fsrpanel .fpx{border:0;background:var(--chip);color:var(--fg);width:28px;height:28px;border-radius:14px;font-size:13px}
+#fsrpanel .fpc{display:grid;grid-template-columns:1fr 1fr;gap:5px}#fsrpanel .fpc button{min-height:30px;border-radius:15px;border:0;background:var(--chip);color:var(--dim);font:600 12px var(--font);display:flex;align-items:center;gap:6px;padding:0 9px;text-align:left;opacity:.55}
+#fsrpanel .fpc button[aria-pressed=true]{color:var(--fg);opacity:1;box-shadow:inset 0 0 0 2px var(--accent)}#fsrpanel .fpc i{width:14px;height:0;flex:none}
+#fsrpanel .fps{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px;font-size:12px}#fsrpanel select{background:var(--chip);color:var(--fg);border:0;border-radius:14px;padding:4px 8px;font:600 12px var(--font)}
 </style>
 </head>
 <body class="tuton">
@@ -2053,6 +2059,26 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(function(){ load(); areas() },350) });
     function refresh(){ if(!on) return; Object.keys(drawn).forEach(drop); seen={}; aG.clearLayers(); aLay={}; load(); areas(); if(vg){ vg.redraw() } }
     window.__fsr={set:set,load:load,refresh:refresh};
+    // FSR layers drop-down: tap FSR again (when it is on) to show or hide its own layers
+    (function(){ var fb=document.querySelector('.seg button[data-b=fsr]'); if(!fb) return; var pn=document.createElement('div'); pn.id='fsrpanel'; pn.hidden=true; pn.setAttribute('role','dialog'); pn.setAttribute('aria-label','FSR layers');
+      var CH=[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrClose','Closures','#ffffff','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed']];
+      var SE=[['s_fsrRdOp','Road lines see-through'],['s_fsrOp','Trail lines see-through'],['s_waterOp','Creeks see-through']];
+      pn.innerHTML='<div class="fph"><span>FSR layers</span><button type="button" class="fpx" aria-label="Close FSR layers">✕</button></div><div class="fpc">'+CH.map(function(c){ return '<button type="button" data-s="'+c[0]+'"><i style="border-top:3px '+c[3]+' '+c[2]+'"></i>'+c[1]+'</button>' }).join('')+'</div>'+
+        SE.map(function(x){ var o=document.getElementById(x[0]); return '<label class="fps">'+x[1]+'<select data-s="'+x[0]+'">'+(o?o.innerHTML:'')+'</select></label>' }).join('');
+      document.getElementById('map').parentNode.appendChild(pn);
+      function sync(){ [].forEach.call(pn.querySelectorAll('.fpc button'),function(b){ var o=document.getElementById(b.getAttribute('data-s')); b.setAttribute('aria-pressed',o&&o.value!=='0'?'true':'false') }); [].forEach.call(pn.querySelectorAll('select'),function(sl){ var o=document.getElementById(sl.getAttribute('data-s')); if(o) sl.value=o.value }) }
+      function push(id,v){ var o=document.getElementById(id); if(!o) return; o.value=v; o.dispatchEvent(new Event('change')); sync() }
+      [].forEach.call(pn.querySelectorAll('.fpc button'),function(b){ b.onclick=function(){ push(b.getAttribute('data-s'),b.getAttribute('aria-pressed')==='true'?'0':'1') } });
+      [].forEach.call(pn.querySelectorAll('select'),function(sl){ sl.onchange=function(){ push(sl.getAttribute('data-s'),sl.value) } });
+      function show(v){ if(v) sync(); pn.hidden=!v; fb.setAttribute('aria-expanded',v?'true':'false') }
+      pn.querySelector('.fpx').onclick=function(){ show(false) };
+      var was=false; fb.addEventListener('click',function(){ was=fb.getAttribute('aria-pressed')==='true' },true);
+      fb.addEventListener('click',function(){ show(was?pn.hidden:true) });
+      function lbl(){ var on=fb.getAttribute('aria-pressed')==='true'; fb.textContent=on?'FSR ▾':'FSR'; if(!on) show(false) }
+      if(window.MutationObserver) new MutationObserver(lbl).observe(fb,{attributes:true,attributeFilter:['aria-pressed']}); lbl();
+      map.on('click dragstart',function(){ show(false) });
+      var ff=document.getElementById('fsfolder'); if(ff) ff.style.display='none';
+    })();
     if(baseKey==='fsr') set(true);
   })();
   // ---- Planes on/off (off at start, so the app opens on a clean map) ----
@@ -2592,6 +2618,17 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     window.__ar={start:start,stop:stop,reset:function(){off=0;try{localStorage.setItem('sky-aroff','0')}catch(e){}},ori:function(a,b,g){onOri({alpha:a,beta:b,gamma:g},true)}};
   })();
   (function(){ var B=[['s_fsrRdOp','fsrRdOp'],['s_waterOp','waterOp'],['s_water','water'],['s_fsrOp','fsrOp'],['s_fsrFsr','fsrFsr'],['s_fsrRoad','fsrRoad'],['s_fsrWalk','fsrWalk'],['s_fsrBike','fsrBike'],['s_fsrMotor','fsrMotor'],['s_fsrBcts','fsrBcts'],['s_fsrPlan','fsrPlan'],['s_fsrTh','fsrTh'],['s_fsrClose','fsrClose'],['s_fsrOsm','fsrOsm'],['s_arMax','arMax'],['s_arDetail','arDetail'],['s_ovShow','ovShow'],['s_ovMins','ovMins'],['s_ovDist','ovDist'],['s_emShow','emShow'],['s_starlink','starlink'],['s_passAll','passAll'],['s_aptBad','aptOnlyBad'],['s_dtab','dtab'],['s_adir','adir'],['s_atype','atype'],['s_fireAll','fireAll'],['s_firePer','firePer'],['s_fireAc','fireAc'],['s_roadCams','roadCams'],['s_roadEvt','roadEvt'],['s_camAuto','camAuto'],['s_roadCons','roadCons'],['s_roadPass','roadPass'],['s_roadWA','roadWA'],['s_ferryHome','ferryHome'],['s_ferryN','ferryN'],['s_ferryFill','ferryFill'],['s_ferryCam','ferryCam'],['s_ferryJump','ferryJump'],['s_hubKm','hubKm'],['s_hubAuto','hubAuto'],['s_hubBadge','hubBadge'],['s_v3Ex','v3Ex'],['s_v3Fps','v3Fps'],['s_declutter','declutter'],['s_nearRef','nearRef'],['s_aMax','aMax'],['s_wxMax','wxMax'],['s_fireKm','fireKm'],['s_fireMax','fireMax'],['s_camMax','camMax'],['s_evtMax','evtMax'],['s_ferryMax','ferryMax'],['s_ltAge','ltAge'],['s_ltAlert','ltAlert'],['s_mt','mt'],['s_mtPins','mtPins'],['s_prepSolar','prepSolar']];
+    (function(){ var sh=document.querySelector('#fsheet .sheet'); if(!sh) return; var about=sh.querySelector('.about');
+      var G=[['Map',[['gfolder','Basics'],['rfolder','Map look, weather & water'],['cfolder','Compass']]],
+        ['Planes',[['pcfolder','Planes on the map & alerts'],['arfolder','AR sky camera'],['v3folder','3D view'],['apfolder','Airports'],['ffolder','Flight feeds & key']]],
+        ['Outdoors',[['mtfolder','Winter mountains'],['ltfolder','Lightning'],['prfolder','Survival tools']]],
+        ['BC info',[['rdfolder','DriveBC roads & cameras'],['wffolder','WildfireBC'],['bfolder','BC Ferries'],['hbfolder','Emergency hub (SOS)'],['spfolder','Space & night sky']]]];
+      G.forEach(function(g){ var h=document.createElement('div'); h.className='sethd'; h.textContent=g[0]; sh.insertBefore(h,about); g[1].forEach(function(f){ var d=document.getElementById(f[0]); if(!d) return; var su=d.querySelector('summary'); if(su) su.textContent=f[1]; sh.insertBefore(d,about) }) });
+      var ff=document.getElementById('fsfolder'); if(ff) sh.insertBefore(ff,about);
+      // plane settings live with the planes
+      var pc=document.getElementById('pcfolder'), su=pc&&pc.querySelector('summary'); ['lgalt','routemode','maxpl'].forEach(function(id){ var el=document.getElementById(id), row=el&&el.closest('.setrow'); if(row&&pc) pc.insertBefore(row,su.nextSibling) });
+      var RN={lgwx:'Rain colour key',lgalt:'Altitude colour key',s_declutter:'When zoomed out',s_nearRef:'Measure "nearest" from',radloop:'Radar animation',routemode:'Flight route lines',maxpl:'Planes shown',s_apt:'Airport weather tags',s_atype:'Airport icons for',s_aMax:'Airport icons shown',s_aptBad:'Weather tags show',s_wxMax:'Weather tags shown',s_adir:'Airport icons',s_hubKm:'Area to check',s_ferryFill:'Car space shown as',s_road:'Road info on the map',s_ferry:'Ferry terminals on the map'};
+      Object.keys(RN).forEach(function(id){ var row=document.querySelector('label.setrow[for="'+id+'"]'); if(row&&row.firstChild&&row.firstChild.nodeType===3) row.firstChild.textContent=RN[id] }) })();
     function changed(k){ if((k==='water'||k==='waterOp')&&window.__water){ window.__water(); if(window.__fsr&&window.__fsr.refresh) window.__fsr.refresh() } if(/^fsr/.test(k)&&window.__fsr&&window.__fsr.refresh) window.__fsr.refresh(); if(k==='ovShow'||k==='ovMins'||k==='ovDist'){ nxNone=false; updateNext() } if(k==='emShow') checkAlerts(); if(k==='starlink'){ satReady=null; sats=[]; issTick(); loadSats().catch(function(){}) } if(k==='aptOnlyBad') loadApts(); if(k==='adir'||k==='atype') loadDir(); if(k==='fireAll'||k==='firePer') loadFires(true); if(k==='fireAc'){ for(var h in lastKey) lastKey[h]=''; } if(/^(roadCams|roadEvt|roadCons|roadPass|roadWA)$/.test(k)&&window.__roads) window.__roads.reload(); if(/^ferry/.test(k)&&window.__roads) window.__roads.ferry(); if(/^hub/.test(k)&&window.__hub){ if(k==='hubBadge') window.__hub.paint(); else window.__hub.refresh() } if(k==='declutter'){ zoomClass(); loadDir(); loadApts(); loadFires(true); if(window.__roads) window.__roads.reload() }
       if(k==='nearRef'||k==='aMax') drawDir(); if(k==='nearRef'||k==='wxMax') loadApts(); if(k==='nearRef'||k==='fireKm'||k==='fireMax') drawFires();
       if((k==='nearRef'||k==='camMax'||k==='evtMax')&&window.__roads) window.__roads.reload(); if((k==='nearRef'||k==='ferryMax')&&window.__roads&&window.__roads.ferries) window.__roads.ferries();
