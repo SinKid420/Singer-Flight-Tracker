@@ -32,8 +32,6 @@ jobs:
           npm install --no-audit --no-fund
           npx cap add android
           node ../prep.mjs android
-          convert assets/icon-only.png -resize 1024x1024 assets/icon-only.png || true
-          npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#161618' --iconBackgroundColorDark '#161618' || echo "icon step skipped"
           npx cap sync android
       - name: Build the app
         working-directory: app/build/android
