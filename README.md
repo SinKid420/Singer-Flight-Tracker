@@ -32,3 +32,5 @@ Singers Flight Tracker is a free, phone-first live flight tracker. Open it and e
 ## Data sources
 
 Flight positions from [adsb.lol](https://adsb.lol) and FlyItalyADSB · routes and aircraft records from [adsbdb](https://www.adsbdb.com) · map © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors · radar from Environment and Climate Change Canada, NOAA/IEM and RainViewer · weather from Open-Meteo · photos from Planespotters.net
+
+v80: FSR trail reports (photo, note, status, spot, comments).
