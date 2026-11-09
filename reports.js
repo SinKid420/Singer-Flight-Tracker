@@ -46,7 +46,7 @@
       var m=L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:html,iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:400,title:ST[r.st][1]+' report'}); m._h=html;
       m.on('click',function(){ openCard(r.id) }); m.addTo(G); mk[r.id]=m });
     Object.keys(mk).forEach(function(id){ if(!seen[id]){ G.removeLayer(mk[id]); delete mk[id] } }); badge(); if(sel&&!seen[sel]) closeCard() }
-  function icon(r){ var c=ST[r.st][0]; if(r.id===sel&&r.ph) return '<span class="trpin" style="--c:'+c+'"><img src="'+RS+'/thumb/'+r.id+'" alt=""></span>'; return '<span class="trdot'+(r.id===sel?' sel':'')+'" style="--c:'+c+'"></span>' }
+  function icon(r){ if(r.cl) return '<span class="trdot'+(r.id===sel?' sel':'')+'" style="--c:#8e8e93;opacity:.85"></span>'; var c=ST[r.st][0]; if(r.id===sel&&r.ph) return '<span class="trpin" style="--c:'+c+'"><img src="'+RS+'/thumb/'+r.id+'" alt=""></span>'; return '<span class="trdot'+(r.id===sel?' sel':'')+'" style="--c:'+c+'"></span>' }
   map.on('moveend',function(){ clearTimeout(lt2); lt2=setTimeout(load,500) }); var lt2=null;
   setInterval(function(){ if(!document.hidden) load(true) },120000);
 
@@ -59,10 +59,10 @@
     var m=me(), d=km(m.lat,m.lon,r.lat,r.lon), s=ST[r.st];
     card.innerHTML='<div class="trgrab"></div><button type="button" class="trx" aria-label="Close report">'+I('x',15)+'</button>'+
       '<div class="trtop">'+(r.ph?'<button type="button" class="trph" aria-label="Open photo"><img src="'+RS+'/thumb/'+r.id+'" alt="Trail photo"></button>':'')+
-      '<div class="trinfo"><span class="trst" style="--c:'+s[0]+'"><i></i>'+s[1]+'</span>'+(r.tg&&r.tg.length?'<span class="trtags">'+r.tg.map(function(t){ var g=TG.filter(function(x){return x[0]===t})[0]; return g?g[1]+' '+g[2]:'' }).join(' · ')+'</span>':'')+
+      '<div class="trinfo">'+(r.cl?'<span class="trst" style="--c:#34c759"><i></i>Cleared</span> <span class="trst" style="--c:#8e8e93"><i></i>was '+s[1]+'</span>':'<span class="trst" style="--c:'+s[0]+'"><i></i>'+s[1]+'</span>')+(r.tg&&r.tg.length?'<span class="trtags">'+r.tg.map(function(t){ var g=TG.filter(function(x){return x[0]===t})[0]; return g?g[1]+' '+g[2]:'' }).join(' · ')+'</span>':'')+
       (r.n?'<p class="trnote">'+esc(r.n)+'</p>':'')+'<div class="trloc">'+I('pin',13)+r.lat.toFixed(5)+', '+r.lon.toFixed(5)+' · '+(d<1?Math.round(d*1000)+' m':d.toFixed(d<10?1:0)+' km')+' away</div></div></div>'+
-      '<div class="trwho"><span class="trav" style="background:'+avc(r.by)+'">'+esc((r.by||'?').charAt(0).toUpperCase())+'</span><b>'+esc(r.by)+'</b><small>'+ago(r.t)+'</small></div>'+
-      '<div class="tract"><button type="button" data-a="go">'+I('pin',14)+'Directions</button><button type="button" data-a="clr">'+I('chk',14)+'Cleared</button>'+(mine[r.id]?'<button type="button" data-a="del">Delete</button>':'<button type="button" data-a="flag">Flag</button>')+'</div>'+
+      '<div class="trwho"><span class="trav" style="background:'+avc(r.by)+'">'+esc((r.by||'?').charAt(0).toUpperCase())+'</span><b>'+esc(r.by)+'</b><small>'+ago(r.t)+(r.cl?' · cleared by '+esc(r.cb||'a rider')+' '+ago(r.cl):'')+'</small></div>'+
+      '<div class="tract"><button type="button" data-a="go">'+I('pin',14)+'Directions</button>'+(r.cl?'':'<button type="button" data-a="clr">'+I('chk',14)+'Cleared</button>')+(mine[r.id]?'<button type="button" data-a="del">Delete</button>':'<button type="button" data-a="flag">Flag</button>')+'</div>'+
       '<div class="trch">Comments'+(r.nc?' · '+r.nc:'')+'</div><div class="trcl">'+(r.nc?'<div class="trmsg">Loading…</div>':'<div class="trmsg">No comments yet. Be the first.</div>')+'</div>'+
       '<form class="trin"><input maxlength="300" placeholder="Add a comment…" aria-label="Add a comment" enterkeyhint="send"><button type="submit" aria-label="Send comment">'+I('send',15)+'</button></form>';
     card.hidden=false; document.body.classList.add('trcard');
@@ -70,8 +70,8 @@
     var ph=card.querySelector('.trph'); if(ph) ph.onclick=function(){ var im=full.querySelector('img'); im.src=RS+'/photo/'+r.id; full.hidden=false };
     card.querySelector('[data-a=go]').onclick=function(){ window.open('https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon+'&travelmode=driving','_blank','noopener') };
     var fl=card.querySelector('[data-a=flag]'); if(fl) fl.onclick=function(){ fl.disabled=true; api('/flag/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(){ fl.textContent='Thanks, flagged' }).catch(function(e){ fl.disabled=false; toast(e.message) }) };
-    var cl=card.querySelector('[data-a=clr]'); cl.onclick=function(){ if(cl.getAttribute('data-sure')!=='1'){ cl.setAttribute('data-sure','1'); cl.textContent='Tap: it\'s gone'; return } cl.disabled=true;
-      api('/clear/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:name()})}).then(function(){ data=data.filter(function(x){return x.id!==r.id}); closeCard(); pins(); toast('Marked cleared. Thanks!') }).catch(function(e){ cl.disabled=false; toast(e.message) }) };
+    var cl=card.querySelector('[data-a=clr]'); if(cl) cl.onclick=function(){ if(cl.getAttribute('data-sure')!=='1'){ cl.setAttribute('data-sure','1'); cl.textContent='Tap: it\'s gone'; return } cl.disabled=true;
+      api('/clear/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:name()})}).then(function(j){ r.cl=(j&&j.cl)||Date.now(); r.cb=name()||'you'; closeCard(); pins(); toast('Marked cleared. It stays on the map for a week.') }).catch(function(e){ cl.disabled=false; toast(e.message) }) };
     var dl=card.querySelector('[data-a=del]'); if(dl) dl.onclick=function(){ if(dl.getAttribute('data-sure')!=='1'){ dl.setAttribute('data-sure','1'); dl.textContent='Tap again to delete'; return } dl.disabled=true;
       api('/del/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:mine[r.id]})}).then(function(){ delete mine[r.id]; ls('sky-trmine',JSON.stringify(mine)); data=data.filter(function(x){return x.id!==r.id}); closeCard(); pins(); toast('Report deleted') }).catch(function(e){ dl.disabled=false; toast(e.message) }) };
     var f=card.querySelector('.trin'), inp=f.querySelector('input');
@@ -147,7 +147,7 @@
     api('/list?s='+(la-.05).toFixed(3)+'&n='+(la+.05).toFixed(3)+'&w='+(lo-.08).toFixed(3)+'&e='+(lo+.08).toFixed(3)).then(function(j){ near=j.r||[]; check(la,lo) }).catch(function(){}) }
   function all(){ var m={}, o=[]; data.concat(near||[]).forEach(function(r){ if(r&&!m[r.id]){ m[r.id]=1; o.push(r) } }); return o }
   function check(la,lo){ var A2=all(); if(!A2.length) return; var now=Date.now(), best=null, bd=1e9;
-    A2.forEach(function(r){ if(r.st==='ok'||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
+    A2.forEach(function(r){ if(r.st==='ok'||r.cl||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
       var ahead=d<150||(hdg!=null&&adiff(hdg,brg(la,lo,r.lat,r.lon))<=50); if(ahead&&d<bd){ bd=d; best=r } });
     if(best){ AL[best.id]=now; banner(best,bd); if(card.hidden&&form.hidden&&!document.body.classList.contains('menuon')&&!document.body.classList.contains('toolon')) openCard(best.id) } }
   function onFix(p){ var c=p.coords, la=c.latitude, lo=c.longitude;
