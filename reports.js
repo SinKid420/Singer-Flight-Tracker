@@ -28,7 +28,7 @@
   function fsrOn(){ return fb.getAttribute('aria-pressed')==='true' }
   function vis(){ var f=fsrOn(); document.body.classList.toggle('fsron',f); tb.classList.toggle('on',on); tb.setAttribute('aria-pressed',on?'true':'false');
     if(f&&on){ if(!map.hasLayer(G)) G.addTo(map); load() } else { if(map.hasLayer(G)) map.removeLayer(G); closeCard() } }
-  tb.onclick=function(){ on=!on; ls('sky-tr',on?'1':'0'); toast(on?'Reports on: tap a road or pin a spot to report':'Trail reports off'); vis() };
+  tb.onclick=function(){ on=!on; ls('sky-tr',on?'1':'0'); toast(on?'Reports on: tap a road or pin a spot to report':'Report pins hidden. Danger alerts stay on.'); vis() };
   // "Report trail" opens only from a picked spot: a tapped road/trail or a pinned spot
   window.__trReport=function(lat,lon){ if(!fsrOn()) fb.click(); if(!on){ on=true; ls('sky-tr','1'); vis() } openForm({lat:lat,lon:lon}) };
   map.on('popupopen',function(e){ var el=e.popup.getElement&&e.popup.getElement(), b=el&&el.querySelector('.trrep'); if(!b) return; b.onclick=function(ev){ var ll=e.popup.getLatLng(); setTimeout(function(){ map.closePopup() },0); window.__trReport(ll.lat,ll.lng) } });
@@ -55,7 +55,7 @@
   var full=document.createElement('div'); full.id='trfull'; full.hidden=true; full.innerHTML='<img alt="Trail report photo"><button type="button" aria-label="Close photo">'+I('x',18)+'</button>'; document.body.appendChild(full);
   full.onclick=function(){ full.hidden=true; full.querySelector('img').removeAttribute('src') };
   function me(){ return A.me() }
-  function openCard(id){ var r=data.filter(function(x){return x.id===id})[0]; if(!r) return; var prev=sel; sel=id; if(prev&&mk[prev]) pins(); pins(); if(A.show) A.show(false);
+  function openCard(id){ var r=all().filter(function(x){return x.id===id})[0]; if(!r) return; var prev=sel; sel=id; if(prev&&mk[prev]) pins(); pins(); if(A.show) A.show(false);
     var m=me(), d=km(m.lat,m.lon,r.lat,r.lon), s=ST[r.st];
     card.innerHTML='<div class="trgrab"></div><button type="button" class="trx" aria-label="Close report">'+I('x',15)+'</button>'+
       '<div class="trtop">'+(r.ph?'<button type="button" class="trph" aria-label="Open photo"><img src="'+RS+'/thumb/'+r.id+'" alt="Trail photo"></button>':'')+
@@ -141,15 +141,20 @@
     ab.onclick=function(){ hide(); openCard(r.id) }; ab.classList.add('show'); clearTimeout(abT); abT=setTimeout(hide,10000);
     try{ if(navigator.vibrate) navigator.vibrate(r.st==='bad'?[400,150,400,150,400]:[250,120,250]) }catch(e){} }
   function hide(){ if(ab) ab.classList.remove('show') }
-  function check(la,lo){ if(!on||!data.length) return; var now=Date.now(), best=null, bd=1e9;
-    data.forEach(function(r){ if(r.st==='ok'||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
+  // danger alerts are mandatory: they run even with FSR or the reports button off, using reports around your GPS spot
+  var near=[], nearAt=0, nearPos=null;
+  function loadNear(la,lo){ if(nearPos&&Date.now()-nearAt<120000&&map.distance(nearPos,[la,lo])<1500) return; nearAt=Date.now(); nearPos=[la,lo];
+    api('/list?s='+(la-.05).toFixed(3)+'&n='+(la+.05).toFixed(3)+'&w='+(lo-.08).toFixed(3)+'&e='+(lo+.08).toFixed(3)).then(function(j){ near=j.r||[]; check(la,lo) }).catch(function(){}) }
+  function all(){ var m={}, o=[]; data.concat(near||[]).forEach(function(r){ if(r&&!m[r.id]){ m[r.id]=1; o.push(r) } }); return o }
+  function check(la,lo){ var A2=all(); if(!A2.length) return; var now=Date.now(), best=null, bd=1e9;
+    A2.forEach(function(r){ if(r.st==='ok'||mine[r.id]) return; if(AL[r.id]&&now-AL[r.id]<1800000) return; var d=map.distance([la,lo],[r.lat,r.lon]); if(d>AHEAD) return;
       var ahead=d<150||(hdg!=null&&adiff(hdg,brg(la,lo,r.lat,r.lon))<=50); if(ahead&&d<bd){ bd=d; best=r } });
     if(best){ AL[best.id]=now; banner(best,bd); if(card.hidden&&form.hidden&&!document.body.classList.contains('menuon')&&!document.body.classList.contains('toolon')) openCard(best.id) } }
   function onFix(p){ var c=p.coords, la=c.latitude, lo=c.longitude;
     if(c.heading!=null&&isFinite(c.heading)&&(c.speed||0)>1.5) hdg=c.heading;
     else if(lastFix&&map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) hdg=brg(lastFix[0],lastFix[1],la,lo);
-    if(!lastFix||map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) lastFix=[la,lo]; check(la,lo) }
-  function watch(){ var want=on&&fsrOn()&&!!navigator.geolocation; if(want&&wId==null) wId=navigator.geolocation.watchPosition(onFix,function(){},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+    if(!lastFix||map.distance([lastFix[0],lastFix[1]],[la,lo])>=25) lastFix=[la,lo]; loadNear(la,lo); check(la,lo) }
+  function watch(){ var want=!!navigator.geolocation; if(want&&wId==null) wId=navigator.geolocation.watchPosition(onFix,function(){},{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
     if(!want&&wId!=null){ navigator.geolocation.clearWatch(wId); wId=null; hide() } }
   if(window.MutationObserver) new MutationObserver(watch).observe(fb,{attributes:true,attributeFilter:['aria-pressed']});
   tb.addEventListener('click',function(){ setTimeout(watch,0) });
