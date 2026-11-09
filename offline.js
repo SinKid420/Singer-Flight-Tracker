@@ -81,9 +81,9 @@
     var idx=job.i++, u=job.items[idx], kind=idx<LIBS.length?'l':idx<LIBS.length+job.nf?'f':'t';
     job.cache.match(u).then(function(m){ if(m) return 'hit'; return get(u,2) }).then(function(r){ if(r==='hit'||r){ job.ok++; if(r&&r.size) job.bytes+=r.size; else job.bytes+=(kind==='t'?TKB:CKB)*1024 } else job.fail++;
         if(kind==='f') job.fsDone++; if(kind==='t') job.tDone++ }).catch(function(){ job.fail++ }).then(function(){ job.run--; uiSoon(); if(!navigator.onLine&&job&&!job.paused){ job.paused='net'; ui() } worker() }) }
-  function get(u,tries){ return fetch(u,{mode:'cors',credentials:'omit'}).then(function(r){ if(!r.ok) throw 0; var c=r.clone(); return r.blob().then(function(bl){ return job.cache.put(u,c).then(function(){ return {size:bl.size} }) }) })
+  function get(u,tries){ return fetch(u,{mode:'cors',credentials:'omit'}).then(function(r){ if(!r.ok) throw 0; if(u.indexOf('/tile/')>0&&!/image/.test(r.headers.get('content-type')||'')) throw 0; var c=r.clone(); return r.blob().then(function(bl){ return job.cache.put(u,c).then(function(){ return {size:bl.size} }) }) })
       .catch(function(){ if(tries>1) return new Promise(function(ok){ setTimeout(ok,1500) }).then(function(){ return get(u,tries-1) }); return null }) }
-  function finish(){ var a=job.a; area={lat:a.lat,lon:a.lon,r:a.r,at:Date.now(),bytes:job.bytes,done:true,fail:job.fail}; ls('sky-offarea',JSON.stringify(area)); ls('sky-offjob',null); lock(false); addLayer(); job.finished=true; ui() }
+  function finish(){ var a=job.a; area={lat:a.lat,lon:a.lon,r:a.r,at:Date.now(),bytes:job.bytes,done:true,fail:job.fail}; ls('sky-offarea',JSON.stringify(area)); ls('sky-offjob',null); lock(false); addLayer(); job.finished=true; if(ov) ov.hidden=false; ui() }
   function pause(p){ if(!job) return; job.paused=p?'user':false; if(!p){ for(var k=0;k<6;k++) worker() } ui() }
   addEventListener('online',function(){ if(job&&job.paused==='net'){ job.paused=false; for(var k=0;k<6;k++) worker(); ui() } });
   var wl=null; function lock(on){ try{ if(on&&navigator.wakeLock&&!wl) navigator.wakeLock.request('screen').then(function(x){ wl=x }).catch(function(){}); if(!on&&wl){ wl.release(); wl=null } }catch(e){} }
@@ -97,7 +97,7 @@
     ov.innerHTML='<div class="ofmap"><div id="ofmini"></div><span class="ofpin">'+I('home',19)+'</span><span class="ofkm"></span><div class="ofhd"><b>Set up AwareBC</b><span class="ofdrag">Drag map to move home</span></div></div><div class="ofsheet"></div>';
     document.body.appendChild(ov);
     var c=home||(A.me()&&A.me().label==='you'?{lat:A.me().lat,lon:A.me().lon}:null)||{lat:map.getCenter().lat,lon:map.getCenter().lng};
-    mini=L.map('ofmini',{zoomControl:false,attributionControl:false,zoomSnap:0,keyboard:false,rotate:false}).setView([c.lat,c.lon],8);
+    mini=L.map('ofmini',{zoomControl:false,attributionControl:false,zoomSnap:0,keyboard:false,rotate:false,rotateControl:false,touchRotate:false,shiftKeyRotate:false}).setView([c.lat,c.lon],8);
     L.tileLayer(BCR,{maxNativeZoom:17,maxZoom:18}).addTo(mini);
     circ=L.circle([c.lat,c.lon],{radius:R*1000,color:'#ff3b30',weight:2.5,dashArray:'7 6',fillColor:'#ff3b30',fillOpacity:.1,interactive:false}).addTo(mini);
     mini.on('move',function(){ circ.setLatLng(mini.getCenter()) }); mini.on('dragstart',function(){ moved=true; ui() }); mini.on('moveend',function(){ if(!job) ui() });
@@ -130,8 +130,8 @@
       '<div class="ofrow">Trail reports'+(job.rep===true?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+(job.rep==='later'?'saves when online':'…')+'</em>')+'</div>'+
       '<div class="ofrow">Map tiles'+(job.tDone>=job.nt?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+job.tDone.toLocaleString()+' of '+job.nt.toLocaleString()+'</em>')+'</div>'+
       '<div class="ofnote"><span style="color:#ff9f0a">'+I('phone',15)+'</span>Keep AwareBC open until it finishes. If you lose signal it picks up where it left off.</div>'+
-      '<button type="button" class="ofghost">'+(job.paused==='user'?'Resume':'Pause')+'</button>';
-    sh.querySelector('.ofghost').onclick=function(){ pause(job.paused!=='user') } }
+      '<button type="button" class="ofghost">'+(job.paused==='user'?'Resume':'Pause')+'</button><button type="button" class="ofskip" data-a="hide">Use the app while it saves</button>';
+    sh.querySelector('.ofghost').onclick=function(){ pause(job.paused!=='user') }; sh.querySelector('[data-a=hide]').onclick=close }
   function close(){ if(ov){ ov.hidden=true } }
   window.__offline={open:openSetup,home:function(){ return home }};
 
