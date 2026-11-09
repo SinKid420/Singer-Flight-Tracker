@@ -396,6 +396,8 @@ body.menuon #trcard,body.toolon #trcard,body.fsrp #trcard{visibility:hidden}
 .trname{position:fixed;inset:0;z-index:3100;background:rgba(0,0,0,.6);display:grid;place-items:center}.trname form{width:min(320px,88vw);background:var(--bg);color:var(--fg);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px}.trname b{font:700 17px var(--font)}.trname small{color:var(--dim)}
 .trname input{height:44px;border:0;border-radius:12px;background:var(--chip);color:var(--fg);padding:0 12px;font:400 15px var(--font)}.trname button{height:46px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:700 15px var(--font)}
 #trtoast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);z-index:3200;background:rgba(0,0,0,.86);color:#fff;border-radius:16px;padding:9px 14px;font:600 13px var(--font);opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}#trtoast.show{opacity:1}
+.gpsq{min-width:210px}.gpsb button[data-a=rep]{background:#ff3b30;color:#fff}.gpsx{display:block;width:100%;margin-top:6px;padding:5px;border:0;background:none;color:#5f6368;font:600 12.5px var(--font)}
+.trrepb{display:block;width:100%;margin-top:8px;padding:8px;border:0;border-radius:10px;background:#ff3b30;color:#fff;font:700 12.5px var(--font)}
 </style>
 </head>
 <body class="tuton">
@@ -745,7 +747,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function drop(ll){ var now=Date.now(); if(now-last<800) return; last=now; if(pin) map.removeLayer(pin);
       var la=ll.lat.toFixed(5), lo=ll.lng.toFixed(5);
       pin=L.marker(ll,{icon:L.divIcon({className:'gpspin',html:'📍',iconSize:[30,30],iconAnchor:[15,28]}),keyboard:false}).addTo(map);
-      var d=document.createElement('div'); d.className='gpsq'; d.innerHTML='<b>Pinned spot</b><br><small>'+la+', '+lo+'</small><br>Get GPS directions here?<div class="gpsb"><button type="button" data-a="go">Yes, GPS</button><button type="button" data-a="no">No</button></div>';
+      var d=document.createElement('div'); d.className='gpsq'; d.innerHTML='<b>Pinned spot</b><br><small>'+la+', '+lo+'</small><div class="gpsb"><button type="button" data-a="go">GPS directions</button><button type="button" data-a="rep" class="trrep">Report trail</button></div><button type="button" class="gpsx" data-a="no">Cancel</button>';
       d.onclick=function(e){ var a=e.target&&e.target.getAttribute('data-a'); if(a==='go'){ window.open('https://www.google.com/maps/dir/?api=1&destination='+la+','+lo+'&travelmode=driving','_blank','noopener') } if(a){ map.removeLayer(pin); pin=null } };
       pin.bindPopup(d,{closeButton:false,offset:[0,-24],autoPanPadding:[20,60]}).openPopup();
       pin.on('popupclose',function(){ var p=pin; if(Date.now()-last<900){ setTimeout(function(){ if(p&&pin===p) p.openPopup() },30); return } setTimeout(function(){ if(p&&pin===p&&!p.isPopupOpen()){ map.removeLayer(p); pin=null } },50) }) }
@@ -2052,7 +2054,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function fade(o){ var k=op(); o=Object.assign({},o); if(o.opacity!=null) o.opacity*=k; if(o.fillOpacity!=null) o.fillOpacity*=k; return o }
     function opts(s,key){ return {renderer:R,smoothFactor:2,interactive:true,style:function(f){ var p=f.properties||{}; return isRoad(s,p)?fadeK(s.st(p),kOf(cfg2.fsrRdOp)):fade(s.st(p)) },pointToLayer:function(f,ll){ return L.circleMarker(ll,Object.assign({renderer:R},fade(s.st(f.properties||{})))) },
       filter:function(f){ if(!shown(s,f.properties||{})) return false; var id=s.id(f); if(id==null) return true; var m=seen[s.k]||(seen[s.k]={}); if(m[id]) return false; m[id]=key; return true },
-      onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small>' },{closeButton:false}) }} }
+      onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small><button type="button" class="trrep trrepb">Report trail here</button>' },{closeButton:false}) }} }
     function draw(s,key){ if(drawn[key]||!data[key]) return; drawn[key]=L.geoJSON(data[key],opts(s,key)).addTo(map) }
     function drop(key){ var l=drawn[key]; if(!l) return; map.removeLayer(l); delete drawn[key]; var k=key.split(':')[0], m=seen[k]; if(m) Object.keys(m).forEach(function(id){ if(m[id]===key) delete m[id] }) }
     // thin out the line points (about 4 m accuracy) so redrawing on zoom stays quick
@@ -2131,7 +2133,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         hs.onchange=function(){ try{ localStorage.setItem(TK,hs.value) }catch(e){} vis() };
         function fsrOn(){ return fb.getAttribute('aria-pressed')==='true' }
         function vis(){ var on=fsrOn(); if(on&&hs.value!=='0'){ if(!map.hasLayer(tr)) tr.addTo(map) } else if(map.hasLayer(tr)) map.removeLayer(tr); if(on&&files.length){ if(!map.hasLayer(G)) G.addTo(map) } else if(map.hasLayer(G)) map.removeLayer(G) }
-        function draw(){ G.clearLayers(); files.forEach(function(f,i){ var c=COL[i%COL.length]; (f.l||[]).forEach(function(seg){ L.polyline(seg,{renderer:RR,color:'#000',weight:6,opacity:.35,interactive:false}).addTo(G); L.polyline(seg,{renderer:RR,color:c,weight:3.5,opacity:.95}).bindPopup('<b>'+esc(f.n)+'</b><br><small>Your GPX track · '+(f.k|0)+' km</small>',{closeButton:false}).addTo(G) });
+        function draw(){ G.clearLayers(); files.forEach(function(f,i){ var c=COL[i%COL.length]; (f.l||[]).forEach(function(seg){ L.polyline(seg,{renderer:RR,color:'#000',weight:6,opacity:.35,interactive:false}).addTo(G); L.polyline(seg,{renderer:RR,color:c,weight:3.5,opacity:.95}).bindPopup('<b>'+esc(f.n)+'</b><br><small>Your GPX track · '+(f.k|0)+' km</small><button type="button" class="trrep trrepb">Report trail here</button>',{closeButton:false}).addTo(G) });
           (f.w||[]).forEach(function(w){ L.circleMarker([w[0],w[1]],{renderer:RR,radius:5,color:'#fff',weight:2,fillColor:c,fillOpacity:1}).bindPopup('<b>'+esc(w[2]||'Waypoint')+'</b><br><small>'+esc(f.n)+'</small>',{closeButton:false}).addTo(G) }) }); vis() }
         function save(){ try{ localStorage.setItem(KEY,JSON.stringify(files)); return true }catch(e){ return false } }
         var gv=document.createElement('div'); gv.className='gpxv'; gv.hidden=true; pn.appendChild(gv);
@@ -2733,6 +2735,6 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 </script>
-<script src="reports.js?v=1"></script>
+<script src="reports.js?v=2"></script>
 </body>
 </html>
