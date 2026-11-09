@@ -88,7 +88,7 @@
 
   // ---------- name ----------
   function name(){ return ls('sky-trname')||'' }
-  function askName(done){ var w=document.createElement('div'); w.className='trname'; w.innerHTML='<form><b>Your trail name</b><small>Shown on your reports and comments</small><input maxlength="24" placeholder="e.g. Josh" aria-label="Your trail name"><button type="submit">Save</button></form>'; document.body.appendChild(w);
+  function askName(done){ var w=document.createElement('div'); w.className='trname'; w.innerHTML='<form><b>Your name to complete action</b><small>Shown on your reports and comments</small><input maxlength="24" placeholder="e.g. Josh" aria-label="Your name to complete action"><button type="submit">Save</button></form>'; document.body.appendChild(w);
     var i=w.querySelector('input'); i.focus(); w.querySelector('form').onsubmit=function(e){ e.preventDefault(); var v=i.value.trim().slice(0,24); if(!v) return; ls('sky-trname',v); w.remove(); var nf=document.getElementById('trnm'); if(nf) nf.value=v; done&&done() };
     w.onclick=function(e){ if(e.target===w) w.remove() } }
 
@@ -102,7 +102,7 @@
       '<div class="trq">What\'s out there? <small>tap any</small></div><div class="trtg">'+TG.map(function(t){ return '<button type="button" data-tg="'+t[0]+'">'+t[1]+' '+t[2]+'</button>' }).join('')+'</div>'+
       '<div class="trq">Add a photo <small>optional</small></div><div class="trpb"><button type="button" data-p="cam">'+I('cam',21)+'Take photo</button><button type="button" data-p="gal">'+I('img',21)+'From gallery</button></div><div class="trprev" hidden></div>'+
       '<div class="trq">Note <small>optional</small></div><textarea maxlength="200" rows="2" placeholder="e.g. Chains needed past the gate"></textarea>'+
-      '<div class="trrow"><span class="trgps">'+I('pin',13)+'<span>Report spot: '+spot.lat.toFixed(5)+', '+spot.lon.toFixed(5)+'</span></span>'+(name()?'':'<input id="trnm" maxlength="24" placeholder="Your trail name" aria-label="Your trail name">')+'</div>'+
+      '<div class="trrow"><span class="trgps">'+I('pin',13)+'<span>Report spot: '+spot.lat.toFixed(5)+', '+spot.lon.toFixed(5)+'</span></span>'+(name()?'':'<input id="trnm" maxlength="24" placeholder="Your name to complete action" aria-label="Your name to complete action">')+'</div>'+
       '<input type="file" accept="image/*" capture="environment" hidden data-i="cam"><input type="file" accept="image/*" hidden data-i="gal"></div>'+
       '<div class="trfoot"><button type="button" class="trpost" disabled>Pick how the trail is</button></div>';
     form.hidden=false;
