@@ -1,6 +1,6 @@
-const C='sky-v9',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json'];
+const C='sky-v10',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json'];
 // Map pictures, trail data and map code are saved as you look at them, so areas you have viewed still work with no service.
-const XH=/^(server\.arcgisonline\.com|services\.arcgisonline\.com|tile\.openstreetmap\.org|tiles\.openfreemap\.org|openmaps\.gov\.bc\.ca|apps\.fs\.usda\.gov|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net)$/;
+const XH=/^(server\.arcgisonline\.com|services\.arcgisonline\.com|tile\.openstreetmap\.org|tiles\.openfreemap\.org|openmaps\.gov\.bc\.ca|apps\.fs\.usda\.gov|basemap\.nationalmap\.gov|hydro\.nationalmap\.gov|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net)$/;
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==T).map(x=>caches.delete(x)))));self.clients.claim()});
 let puts=0;
