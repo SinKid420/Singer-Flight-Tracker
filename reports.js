@@ -23,14 +23,15 @@
   // ---------- buttons on the map ----------
   var app=document.getElementById('map').parentNode;
   var tb=document.createElement('button'); tb.className='sidebtn'; tb.id='trbtn'; tb.type='button'; tb.setAttribute('aria-label','Trail reports: show other riders\' reports'); tb.innerHTML=I('users',21)+'<b id="trn" hidden></b>';
-  var cb=document.createElement('button'); cb.className='sidebtn'; cb.id='trcam'; cb.type='button'; cb.setAttribute('aria-label','Post a trail report'); cb.innerHTML=I('cam',21);
-  app.appendChild(tb); app.appendChild(cb);
+  app.appendChild(tb);
   var on=ls('sky-tr')!=='0', G=L.layerGroup(), data=[], sel=null, mk={}, mine=lj('sky-trmine',{}), lastErr='';
   function fsrOn(){ return fb.getAttribute('aria-pressed')==='true' }
   function vis(){ var f=fsrOn(); document.body.classList.toggle('fsron',f); tb.classList.toggle('on',on); tb.setAttribute('aria-pressed',on?'true':'false');
     if(f&&on){ if(!map.hasLayer(G)) G.addTo(map); load() } else { if(map.hasLayer(G)) map.removeLayer(G); closeCard() } }
-  tb.onclick=function(){ on=!on; ls('sky-tr',on?'1':'0'); toast(on?'Trail reports on':'Trail reports off'); vis() };
-  cb.onclick=function(){ openForm() };
+  tb.onclick=function(){ on=!on; ls('sky-tr',on?'1':'0'); toast(on?'Reports on: tap a road or pin a spot to report':'Trail reports off'); vis() };
+  // "Report trail" opens only from a picked spot: a tapped road/trail or a pinned spot
+  window.__trReport=function(lat,lon){ if(!fsrOn()) fb.click(); if(!on){ on=true; ls('sky-tr','1'); vis() } openForm({lat:lat,lon:lon}) };
+  map.on('popupopen',function(e){ var el=e.popup.getElement&&e.popup.getElement(), b=el&&el.querySelector('.trrep'); if(!b) return; b.onclick=function(ev){ var ll=e.popup.getLatLng(); setTimeout(function(){ map.closePopup() },0); window.__trReport(ll.lat,ll.lng) } });
   if(window.MutationObserver) new MutationObserver(vis).observe(fb,{attributes:true,attributeFilter:['aria-pressed']});
   var tt=null; function toast(t){ var el=document.getElementById('trtoast'); if(!el){ el=document.createElement('div'); el.id='trtoast'; app.appendChild(el) } el.textContent=t; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){ el.classList.remove('show') },2200) }
 
@@ -61,7 +62,7 @@
       '<div class="trinfo"><span class="trst" style="--c:'+s[0]+'"><i></i>'+s[1]+'</span>'+(r.tg&&r.tg.length?'<span class="trtags">'+r.tg.map(function(t){ var g=TG.filter(function(x){return x[0]===t})[0]; return g?g[1]+' '+g[2]:'' }).join(' · ')+'</span>':'')+
       (r.n?'<p class="trnote">'+esc(r.n)+'</p>':'')+'<div class="trloc">'+I('pin',13)+r.lat.toFixed(5)+', '+r.lon.toFixed(5)+' · '+(d<1?Math.round(d*1000)+' m':d.toFixed(d<10?1:0)+' km')+' away</div></div></div>'+
       '<div class="trwho"><span class="trav" style="background:'+avc(r.by)+'">'+esc((r.by||'?').charAt(0).toUpperCase())+'</span><b>'+esc(r.by)+'</b><small>'+ago(r.t)+'</small></div>'+
-      '<div class="tract"><button type="button" data-a="go">'+I('pin',14)+'Directions</button>'+(mine[r.id]?'<button type="button" data-a="del">Delete mine</button>':'<button type="button" data-a="flag">Report post</button>')+'</div>'+
+      '<div class="tract"><button type="button" data-a="go">'+I('pin',14)+'Directions</button><button type="button" data-a="clr">'+I('chk',14)+'Cleared</button>'+(mine[r.id]?'<button type="button" data-a="del">Delete</button>':'<button type="button" data-a="flag">Flag</button>')+'</div>'+
       '<div class="trch">Comments'+(r.nc?' · '+r.nc:'')+'</div><div class="trcl">'+(r.nc?'<div class="trmsg">Loading…</div>':'<div class="trmsg">No comments yet. Be the first.</div>')+'</div>'+
       '<form class="trin"><input maxlength="300" placeholder="Add a comment…" aria-label="Add a comment" enterkeyhint="send"><button type="submit" aria-label="Send comment">'+I('send',15)+'</button></form>';
     card.hidden=false; document.body.classList.add('trcard');
@@ -69,6 +70,8 @@
     var ph=card.querySelector('.trph'); if(ph) ph.onclick=function(){ var im=full.querySelector('img'); im.src=RS+'/photo/'+r.id; full.hidden=false };
     card.querySelector('[data-a=go]').onclick=function(){ window.open('https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon+'&travelmode=driving','_blank','noopener') };
     var fl=card.querySelector('[data-a=flag]'); if(fl) fl.onclick=function(){ fl.disabled=true; api('/flag/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(){ fl.textContent='Thanks, flagged' }).catch(function(e){ fl.disabled=false; toast(e.message) }) };
+    var cl=card.querySelector('[data-a=clr]'); cl.onclick=function(){ if(cl.getAttribute('data-sure')!=='1'){ cl.setAttribute('data-sure','1'); cl.textContent='Tap: it\'s gone'; return } cl.disabled=true;
+      api('/clear/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:name()})}).then(function(){ data=data.filter(function(x){return x.id!==r.id}); closeCard(); pins(); toast('Marked cleared. Thanks!') }).catch(function(e){ cl.disabled=false; toast(e.message) }) };
     var dl=card.querySelector('[data-a=del]'); if(dl) dl.onclick=function(){ if(dl.getAttribute('data-sure')!=='1'){ dl.setAttribute('data-sure','1'); dl.textContent='Tap again to delete'; return } dl.disabled=true;
       api('/del/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:mine[r.id]})}).then(function(){ delete mine[r.id]; ls('sky-trmine',JSON.stringify(mine)); data=data.filter(function(x){return x.id!==r.id}); closeCard(); pins(); toast('Report deleted') }).catch(function(e){ dl.disabled=false; toast(e.message) }) };
     var f=card.querySelector('.trin'), inp=f.querySelector('input');
@@ -93,13 +96,13 @@
   var form=document.createElement('div'); form.id='trform'; form.hidden=true; form.setAttribute('role','dialog'); form.setAttribute('aria-label','Report trail'); document.body.appendChild(form);
   var F={st:null,tg:[],img:null,th:null,pos:null};
   function tile(k){ var s=ST[k], ic={ok:'chk',warn:'warn',bad:'stop'}[k]; return '<button type="button" class="trtile" data-st="'+k+'" style="--c:'+s[0]+'"><span>'+I(ic,20)+'</span><b>'+s[1]+'</b><small>'+s[2]+'</small></button>' }
-  function openForm(){ if(!fsrOn()) return; if(A.show) A.show(false); closeCard(); F={st:null,tg:[],img:null,th:null,pos:null};
+  function openForm(spot){ if(!spot) return; if(A.show) A.show(false); closeCard(); F={st:null,tg:[],img:null,th:null,pos:{lat:spot.lat,lon:spot.lon}};
     form.innerHTML='<div class="trfin"><div class="trfh"><b>Report trail</b><button type="button" class="trx2" aria-label="Close">'+I('x',15)+'</button></div>'+
       '<div class="trq">How\'s the trail?</div><div class="trtiles">'+tile('ok')+tile('warn')+tile('bad')+'</div>'+
       '<div class="trq">What\'s out there? <small>tap any</small></div><div class="trtg">'+TG.map(function(t){ return '<button type="button" data-tg="'+t[0]+'">'+t[1]+' '+t[2]+'</button>' }).join('')+'</div>'+
       '<div class="trq">Add a photo <small>optional</small></div><div class="trpb"><button type="button" data-p="cam">'+I('cam',21)+'Take photo</button><button type="button" data-p="gal">'+I('img',21)+'From gallery</button></div><div class="trprev" hidden></div>'+
       '<div class="trq">Note <small>optional</small></div><textarea maxlength="200" rows="2" placeholder="e.g. Chains needed past the gate"></textarea>'+
-      '<div class="trrow"><span class="trgps">'+I('pin',13)+'<span>Finding your GPS spot…</span></span>'+(name()?'':'<input id="trnm" maxlength="24" placeholder="Your trail name" aria-label="Your trail name">')+'</div>'+
+      '<div class="trrow"><span class="trgps">'+I('pin',13)+'<span>Report spot: '+spot.lat.toFixed(5)+', '+spot.lon.toFixed(5)+'</span></span>'+(name()?'':'<input id="trnm" maxlength="24" placeholder="Your trail name" aria-label="Your trail name">')+'</div>'+
       '<input type="file" accept="image/*" capture="environment" hidden data-i="cam"><input type="file" accept="image/*" hidden data-i="gal"></div>'+
       '<div class="trfoot"><button type="button" class="trpost" disabled>Pick how the trail is</button></div>';
     form.hidden=false;
@@ -108,13 +111,8 @@
     [].forEach.call(form.querySelectorAll('[data-tg]'),function(b){ b.onclick=function(){ var t=b.getAttribute('data-tg'), i=F.tg.indexOf(t); if(i<0) F.tg.push(t); else F.tg.splice(i,1); b.classList.toggle('on',i<0) } });
     [].forEach.call(form.querySelectorAll('[data-p]'),function(b){ b.onclick=function(){ var i=form.querySelector('[data-i='+b.getAttribute('data-p')+']'); i.value=''; i.click() } });
     [].forEach.call(form.querySelectorAll('input[type=file]'),function(i){ i.onchange=function(){ if(i.files&&i.files[0]) photo(i.files[0]) } });
-    form.querySelector('.trpost').onclick=post;
-    gps() }
+    form.querySelector('.trpost').onclick=post; ready() }
   function ready(){ var b=form.querySelector('.trpost'); b.disabled=!F.st||!F.pos; b.textContent=!F.st?'Pick how the trail is':!F.pos?'Waiting for your spot…':'Post report' }
-  function gps(){ var g=form.querySelector('.trgps span'), m=me();
-    function use(la,lo,acc,src){ F.pos={lat:la,lon:lo}; g.textContent=(src||'Your GPS spot')+': '+la.toFixed(5)+', '+lo.toFixed(5)+(acc?' (±'+Math.round(acc)+' m)':''); ready() }
-    if(!navigator.geolocation){ var c=map.getCenter(); use(c.lat,c.lng,0,'Map centre'); return }
-    navigator.geolocation.getCurrentPosition(function(p){ use(p.coords.latitude,p.coords.longitude,p.coords.accuracy) },function(){ if(m&&m.label==='you') use(m.lat,m.lon,0,'Last GPS spot'); else { var c=map.getCenter(); use(c.lat,c.lng,0,'No GPS, using map centre') } },{enableHighAccuracy:true,timeout:15000,maximumAge:30000}) }
   // photos are redrawn on a canvas: that shrinks them and drops hidden data (phone model, the photo's own GPS tag)
   function photo(file){ var pv=form.querySelector('.trprev'); pv.hidden=false; pv.innerHTML='<div class="trmsg">Getting photo ready…</div>';
     (window.createImageBitmap?createImageBitmap(file,{imageOrientation:'from-image'}).catch(function(){ return createImageBitmap(file) }):Promise.reject()).catch(function(){ return new Promise(function(ok,no){ var im=new Image(); im.onload=function(){ ok(im) }; im.onerror=no; im.src=URL.createObjectURL(file) }) })
