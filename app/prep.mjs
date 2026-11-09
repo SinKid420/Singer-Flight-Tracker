@@ -23,7 +23,7 @@ if (step === 'web') {
     name: 'awarebc', version: '1.0.' + run, private: true, author: 'Josh Singer',
     dependencies: {
       '@capacitor/core': '^8.6.0', '@capacitor/cli': '^8.6.0', '@capacitor/android': '^8.6.0', '@capacitor/app': '^8.1.2',
-      '@capacitor/local-notifications': '^8.3.1', '@capacitor-community/background-geolocation': '^1.3.1'
+      '@capacitor/local-notifications': '^8.3.1', '@capacitor-community/background-geolocation': '^1.3.1', 'sharp': '^0.34.0'
     }
   }, null, 2));
   fs.writeFileSync(path.join(B, 'capacitor.config.json'), JSON.stringify({
@@ -86,8 +86,31 @@ if (step === 'android') {
   const sx = path.join(A, 'src', 'main', 'res', 'values', 'strings.xml'); let t = fs.readFileSync(sx, 'utf8');
   t = R(t, '</resources>', '    <string name="capacitor_background_geolocation_notification_channel_name">Trail alerts GPS</string>\n    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_tracking</string>\n    <string name="capacitor_background_geolocation_notification_color">#ff3b30</string>\n</resources>', 'strings.xml');
   fs.writeFileSync(sx, t);
-  // app icon source for @capacitor/assets
-  fs.mkdirSync(path.join(B, 'assets'), { recursive: true });
-  fs.copyFileSync(path.join(ROOT, 'awarebc-maskable.png'), path.join(B, 'assets', 'icon-only.png'));
-  console.log('android ready, build', run);
+  // AwareBC app icon and start screen (replaces Capacitor's own)
+  const { createRequire } = await import('node:module');
+  const sharp = createRequire(path.join(B, 'package.json'))('sharp');
+  const ICON = path.join(ROOT, 'awarebc-maskable.png'), BGC = '#161618', res = path.join(A, 'src', 'main', 'res');
+  const D = { mdpi: [48, 108], hdpi: [72, 162], xhdpi: [96, 216], xxhdpi: [144, 324], xxxhdpi: [192, 432] };
+  for (const [k, [s, f]] of Object.entries(D)) {
+    const dir = path.join(res, 'mipmap-' + k); fs.mkdirSync(dir, { recursive: true });
+    await sharp(ICON).resize(s, s).png().toFile(path.join(dir, 'ic_launcher.png'));
+    const circle = Buffer.from(`<svg width="${s}" height="${s}"><circle cx="${s / 2}" cy="${s / 2}" r="${s / 2}"/></svg>`);
+    await sharp(ICON).resize(s, s).composite([{ input: circle, blend: 'dest-in' }]).png().toFile(path.join(dir, 'ic_launcher_round.png'));
+    const inner = Math.round(f * 80 / 108);
+    await sharp({ create: { width: f, height: f, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite([{ input: await sharp(ICON).resize(inner, inner).png().toBuffer(), gravity: 'center' }]).png().toFile(path.join(dir, 'ic_launcher_foreground.png'));
+  }
+  const ad = path.join(res, 'mipmap-anydpi-v26'); fs.mkdirSync(ad, { recursive: true });
+  const xml = '<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n    <background android:drawable="@color/ic_launcher_background"/>\n    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n</adaptive-icon>\n';
+  fs.writeFileSync(path.join(ad, 'ic_launcher.xml'), xml); fs.writeFileSync(path.join(ad, 'ic_launcher_round.xml'), xml);
+  fs.writeFileSync(path.join(res, 'values', 'ic_launcher_background.xml'), '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">' + BGC + '</color>\n</resources>\n');
+  let sp = 0;
+  for (const dn of fs.readdirSync(res).filter(n => n.startsWith('drawable'))) {
+    const fp = path.join(res, dn, 'splash.png'); if (!fs.existsSync(fp)) continue;
+    const m = await sharp(fp).metadata(), w = m.width, h = m.height, ic = Math.round(Math.min(w, h) * 0.38);
+    const buf = await sharp({ create: { width: w, height: h, channels: 4, background: BGC } })
+      .composite([{ input: await sharp(ICON).resize(ic, ic).png().toBuffer(), gravity: 'center' }]).png().toBuffer();
+    fs.writeFileSync(fp, buf); sp++;
+  }
+  console.log('android ready, build', run, '· splash screens:', sp);
 }
