@@ -360,6 +360,7 @@ body.tuton #menubtn{z-index:1310;animation:tutp 1s infinite}
 #fsrpanel .fpc{display:grid;grid-template-columns:1fr 1fr;gap:5px}#fsrpanel .fpc button{min-height:30px;border-radius:15px;border:0;background:var(--chip);color:var(--dim);font:600 12px var(--font);display:flex;align-items:center;gap:6px;padding:0 9px;text-align:left;opacity:.55}
 #fsrpanel .fpc button[aria-pressed=true]{color:var(--fg);opacity:1;box-shadow:inset 0 0 0 2px var(--accent)}#fsrpanel .fpc i{width:14px;height:0;flex:none}
 #fsrpanel .fps{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px;font-size:12px}#fsrpanel select{background:var(--chip);color:var(--fg);border:0;border-radius:14px;padding:4px 8px;font:600 12px var(--font)}
+body.menuon #dock,body.toolon #dock,body.fsrp #dock{visibility:hidden}
 </style>
 </head>
 <body class="tuton">
@@ -628,7 +629,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var src = 0;
 
   L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
-  var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
+  (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
+var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
   (function(){ var ac=map.attributionControl.getContainer(), t=null; ac.title='Tap to read all credits'; L.DomEvent.disableClickPropagation(ac); ac.addEventListener('click',function(e){ if(e.target.closest('a')&&ac.classList.contains('open')) return; e.preventDefault(); ac.classList.toggle('open'); clearTimeout(t); if(ac.classList.contains('open')) t=setTimeout(function(){ ac.classList.remove('open') },8000) }) })();
   var tempEl=null, tempC=null, tcfg='C';
@@ -966,7 +968,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var motion={}, mLast=0;
   function mPos(m,now){ if(!m||!m.gs||m.trk==null||m.gnd) return m?[m.lat,m.lon]:[0,0]; var dt=Math.min(60,Math.max(0,(now-m.t)/1000)), d=m.gs*0.5144*dt, t=m.trk*Math.PI/180;
     return [m.lat+d*Math.cos(t)/111320, m.lon+d*Math.sin(t)/(111320*Math.cos(m.lat*Math.PI/180))] }
-  function motionTick(all){ if(document.hidden||document.body.classList.contains('zooming')||document.body.classList.contains('moving')) return; mLast++;
+  function motionTick(all){ var any=false; for(var q in motion){ any=true; break } if(!any) return; try{ motionTick0(all) }catch(e){} }
+  function motionTick0(all){ if(document.hidden||document.body.classList.contains('zooming')||document.body.classList.contains('moving')) return; mLast++;
     var n=0; for(var k in planes) n++; if(all!==true&&n>60&&(mLast&1)) return;
     var t=Date.now(), vb=map.getBounds().pad(0.15); for(var h in planes){ var m=motion[h]; if(m&&m.gs&&!m.gnd){ var ll=mPos(m,t); if(all===true||h===selected||vb.contains(ll)) planes[h].setLatLng(ll) } } }
   setInterval(motionTick,100); map.on('moveend zoomend',function(){ motionTick(true) });
@@ -975,7 +978,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     list.forEach(function(p){ if(p.lat==null||p.lon==null) return; p._d=(p.lat-c.lat)*(p.lat-c.lat)+(p.lon-c.lng)*(p.lon-c.lng)*0.45; arr.push(p) });
     arr.sort(function(a,b){return a._d-b._d}); if(arr.length>maxPlanes){ var keep=arr.slice(0,maxPlanes); if(selected&&!keep.some(function(q){return q.hex===selected})){ var sp=arr.filter(function(q){return q.hex===selected})[0]; if(sp) keep.push(sp) } arr=keep }
     arr.forEach(function(p,idx){
-      seen[p.hex]=1;
+      seen[p.hex]=1; try{
       var ll=[p.lat,p.lon], inView=vb.contains(ll)||p.hex===selected;
       var ag=age(p); motion[p.hex]={lat:p.lat,lon:p.lon,t:Date.now()-(ag<60?ag*1000:0),gs:p.gs,trk:p.track,gnd:p.alt_baro==='ground'};
       var t=trails[p.hex]; if(!t) t=trails[p.hex]={pts:[],line:null,casing:null};
@@ -996,6 +999,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         planes[p.hex]=L.marker(mPos(motion[p.hex],Date.now()),{icon:icon(p),keyboard:true,title:name(p)}).addTo(map)
           .on('click',(function(h){return function(){select(h)}})(p.hex)); lastKey[p.hex]=key;
       }
+      }catch(e){ try{console.warn('plane',p.hex,e)}catch(_){} }
     });
     Object.keys(planes).forEach(function(h){
       if(!seen[h]){map.removeLayer(planes[h]);delete planes[h];delete lastKey[h];delete motion[h];dropRoute(h);if(trails[h]){if(trails[h].line)map.removeLayer(trails[h].line);if(trails[h].casing)map.removeLayer(trails[h].casing);delete trails[h];}}
@@ -1304,7 +1308,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var t=new Date().toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit',second:'2-digit'});
       var warn=good.length<on.length?' · '+good.length+'/'+on.length:'';
       setStat('<em>'+Math.min(lastData.length,maxPlanes)+((Math.min(lastData.length,maxPlanes))===1?' plane':' planes')+'</em><br>'+t+warn, good.length<on.length);
-    }).then(function(){busy=false;schedule()});
+    }).catch(function(e){ try{console.warn('poll',e)}catch(_){} }).then(function(){busy=false;schedule()});
   }
   var slow=0, slowUntil=0, planesOn=false;
   function schedule(){clearTimeout(timer);timer=setTimeout(poll,slow?refreshMs*Math.pow(2,slow):refreshMs);
@@ -1324,7 +1328,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ['pointerdown','wheel','touchstart'].forEach(function(ev){document.getElementById('map').addEventListener(ev,function(){touched=true},{passive:true})});
   function recenter(keep){
     meMark.setLatLng([me.lat,me.lon]); meHalo.setLatLng([me.lat,me.lon]); loadTemp(); ring.setLatLng([me.lat,me.lon]).setRadius(radiusNm*1852);
-    if(!keep) map.fitBounds(ring.getBounds(),{padding:[10,10]});
+    if(!keep) map.fitBounds(L.latLng(me.lat,me.lon).toBounds(radiusNm*1852*2),{padding:[10,10]});
     Object.keys(trails).forEach(function(h){trails[h].pts=[]});
     poll();
   }
@@ -1338,7 +1342,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   document.getElementById('units').onchange=function(e){
     units=e.target.value==='metric'?'metric':'av';
     try{localStorage.setItem('sky-units',units)}catch(err){}
-    applyUnits(); recenter(); render(lastData);
+    applyUnits(); recenter(true); render(lastData);
   };
   function locate(auto){
     if(!navigator.geolocation){setStat('No location<br>using default');return}
@@ -1430,6 +1434,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function loadSatJs(){ return new Promise(function(res,rej){ if(window.satellite) return res(); var sc=document.createElement('script'); sc.src=SATJS; sc.integrity=SATSRI; sc.crossOrigin='anonymous'; sc.referrerPolicy='no-referrer'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc) }) }
   function tleGroup(g){ var K='sky-tle-'+g, c=null; try{c=JSON.parse(localStorage.getItem(K)||'null')}catch(e){}
     if(c&&Date.now()-c.t<6*3600000) return Promise.resolve(c.d);
+    if(g==='last-30-days') return altTle(g,K).then(function(t){ return t||(c?c.d:'') });
     return fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP='+g+'&FORMAT=tle').then(function(r){if(!r.ok) throw new Error(r.status); return r.text()}).then(function(t){ if(t.length>400000) t=t.slice(0,400000); try{localStorage.setItem(K,JSON.stringify({t:Date.now(),d:t}))}catch(e){} return t }).catch(function(){ return c?c.d:altTle(g,K) }) }
   function altTle(g,K){ var u='https://tle.ivanstanojevic.me/api/tle/', ids=g==='stations'?[25544,48274]:g==='visual'?[20580,27386,25994,27424,28654,33591,25338,39084,43013,37849]:null;
     var ps=ids?ids.map(function(id){ return fetch(u+id).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }):[fetch(u+'?search=STARLINK&sort=id&sort-dir=desc&page-size=100').then(function(r){return r.ok?r.json():null}).catch(function(){return null})];
@@ -1818,7 +1823,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent(q)+'&mode=artlist&format=json&sort=datedesc&timespan='+span+'&maxrecords='+n;
       var REL={port:/\b(port|ports|terminal|ship|ships|shipping|vessel|vessels|cargo|container|rail|freight|grain|tanker|longshore|dock|deltaport|rupert|roberts bank)/i,close:/airspace|border|no-fly|clos/i}[k];
       function tidy(t){ return String(t||'').replace(/\s+([,.;:!?%)\]'’])/g,'$1').replace(/([(\[$])\s+/g,'$1').replace(/(['’])\s(?=(s|t|re|ll|ve|d|m)\b)/g,'$1').replace(/\b([A-Z])\.\s(?=[A-Z]\.)/g,'$1.').replace(/(\w) - (?=\w)/g,'$1-').slice(0,160) }
-      return cached('gd2'+k,20,function(){ var tries=0; function go(){ return T(viaRelay(u)).catch(function(e){ if(++tries>2) throw e; return new Promise(function(r){ setTimeout(r,6000*tries) }).then(go) }) } return go().then(function(x){ var j; try{ j=JSON.parse(x) }catch(e){ j={articles:[]} } return (j.articles||[]).filter(function(a){ return !REL||REL.test(a.title||'') }).map(function(a){ return [tidy(a.title),link(a.url),String(a.domain||'').slice(0,40),String(a.seendate||'')] }) }) }) }
+      return cached('gd2'+k,20,function(){ var tries=0; function go(){ return T(viaRelay(u)).catch(function(e){ if(++tries>1) throw e; return new Promise(function(r){ setTimeout(r,3500) }).then(go) }) } return go().then(function(x){ var j; try{ j=JSON.parse(x) }catch(e){ j={articles:[]} } return (j.articles||[]).filter(function(a){ return !REL||REL.test(a.title||'') }).map(function(a){ return [tidy(a.title),link(a.url),String(a.domain||'').slice(0,40),String(a.seendate||'')] }) }) }) }
     function gTime(s){ var m=/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(s||''); return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):0 }
     function heads(r,max){ return (r.d||[]).slice(0,max).map(function(a){ return '<a class="phead" href="'+esc(a[1]||'#')+'" target="_blank" rel="noopener noreferrer">'+esc(a[0]||'(no title)')+'<small>'+esc(a[2])+(gTime(a[3])?' · '+ago(gTime(a[3])):'')+'</small></a>' }).join('') }
     function supPorts(t){ gdelt('port','("Port of Vancouver" OR "Prince Rupert" OR Deltaport OR "Roberts Bank") (port OR terminal OR vessels OR ships OR cargo)','72h',8).then(function(r){
@@ -2078,6 +2083,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       if(window.MutationObserver) new MutationObserver(lbl).observe(fb,{attributes:true,attributeFilter:['aria-pressed']}); lbl();
       map.on('click dragstart',function(){ show(false) });
       var ff=document.getElementById('fsfolder'); if(ff) ff.style.display='none';
+      if(window.MutationObserver){ var bc=document.body.classList; new MutationObserver(function(){ if(!pn.hidden&&(bc.contains('menuon')||bc.contains('toolon')||bc.contains('keyon'))) show(false) }).observe(document.body,{attributes:true,attributeFilter:['class']});
+        new MutationObserver(function(){ bc.toggle('fsrp',!pn.hidden); if(!pn.hidden) bc.remove('menuon','toolon','keyon') }).observe(pn,{attributes:true,attributeFilter:['hidden']});
+        var dk=document.getElementById('dock'); if(dk) new MutationObserver(function(){ if(!dk.hidden){ bc.remove('toolon','keyon'); var t=document.getElementById('toolbtn'); if(t) t.setAttribute('aria-expanded','false'); if(!pn.hidden) show(false) } }).observe(dk,{attributes:true,attributeFilter:['hidden']}) }
     })();
     if(baseKey==='fsr') set(true);
   })();
@@ -2292,7 +2300,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var roadOn=false, ferryOn=false;
     var roadLayer=L.layerGroup().addTo(map), camLayer=L.layerGroup().addTo(map), ferryLayer=L.layerGroup().addTo(map), dbcCams=null, rGen=0, rT=null, rKey='', sel=null, camList=[], camTmr=null;
     var WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
-    function gj(u){ return fetch(u).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }
+    var gjC={}; function o5b(b){ var cx=(b.w+b.e)/2, cy=(b.s+b.n)/2, hw=Math.max((b.e-b.w)/2,.75), hh=Math.max((b.n-b.s)/2,.5); return [cx-hw,cy-hh,cx+hw,cy+hh].map(function(v){return (Math.round(v*4)/4).toFixed(2)}).join(',') }
+    function gj(u,o){ var hit=gjC[u]; if(hit&&Date.now()-hit.t<60000) return hit.p; var p=fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}); gjC[u]={t:Date.now(),p:p}; return p }
+
     function env(b){ return '&geometry='+encodeURIComponent([b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(','))+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json' }
     function https(u){ u=String(u||''); return /^https:\/\/[^\s"<>]{4,300}$/.test(u)?u:'' }
     function pin(lat,lon,c,emo,sz,label,fn,z){ L.marker([lat,lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(label)+'" style="--c:'+c+';--sz:'+sz+'px">'+emo+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:z||-250,title:label}).on('click',fn).addTo(this) }
@@ -2303,7 +2313,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       var bb=map.getBounds().pad(.15), b={s:bb.getSouth(),n:bb.getNorth(),w:bb.getWest(),e:bb.getEast()};
       var key=[b.s,b.n,b.w,b.e].map(function(v){return Math.round(v*10)/10}).join(',')+z+cfg2.roadEvt+cfg2.roadCams+cfg2.roadCons+cfg2.roadPass+cfg2.roadWA; if(!force&&key===rKey) return; rKey=key;
       var inBC=b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60, inWA=b.e>-124.9&&b.w<-116.9&&b.n>45.5&&b.s<49.1, jobs=[]; if(cfg2.roadWA!=='1') inWA=false;
-      if(inBC) jobs.push(gj('https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500&bbox='+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')).then(function(j){ return (j&&j.events||[]).map(function(e){ var gm=e.geography||{}, c=gm.type==='Point'?gm.coordinates:(gm.type==='LineString'&&gm.coordinates?gm.coordinates[Math.floor(gm.coordinates.length/2)]:null); if(!c) return null;
+      if(inBC) jobs.push(gj('https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500&bbox='+o5b(b)).then(function(j){ return (j&&j.events||[]).map(function(e){ var gm=e.geography||{}, c=gm.type==='Point'?gm.coordinates:(gm.type==='LineString'&&gm.coordinates?gm.coordinates[Math.floor(gm.coordinates.length/2)]:null); if(!c) return null;
         var closed=(e.roads||[]).some(function(r){return /CLOSED/.test(r.state||'')})||(e.event_subtypes||[]).some(function(s){return /CLOSED|CLOSURE/.test(s)});
         return {k:'ev',src:'DriveBC',lat:c[1],lon:c[0],closed:closed,major:e.severity==='MAJOR',type:String(e.event_type||'').replace(/_/g,' ').toLowerCase(),road:(e.roads||[]).map(function(r){return r.name}).filter(Boolean).slice(0,2).join(', '),desc:String(e.description||'').slice(0,600),upd:e.updated} }).filter(Boolean) }));
       if(inWA) jobs.push(gj(WS+'TravelInfoRoadAlerts/FeatureServer/0/query?where=1%3D1&outFields=EventCategoryDescription,EventCategoryTypeDescription,EventPriorityID,Road,RoadDirection,HeadlineMessage,LastModifiedDate,RoadClosedFlag&resultRecordCount=500'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes||{}, gm=f.geometry||{}; if(typeof gm.x!=='number') return null;
@@ -2386,14 +2396,16 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     var btn=document.getElementById('hubbtn'), sheetEl=document.getElementById('hubsheet'), body=document.getElementById('hubbody'); if(!btn||!sheetEl) return;
     var hubLayer=L.layerGroup().addTo(map), H={t:0}, open=-1, busy=false, evacPolys=[];
     var BCWS='https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/', WFIGS='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/', WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
-    function gj(u,o){ return fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}) }
+    var gjC={}; function o5b(b){ var cx=(b.w+b.e)/2, cy=(b.s+b.n)/2, hw=Math.max((b.e-b.w)/2,.75), hh=Math.max((b.n-b.s)/2,.5); return [cx-hw,cy-hh,cx+hw,cy+hh].map(function(v){return (Math.round(v*4)/4).toFixed(2)}).join(',') }
+    function gj(u,o){ var hit=gjC[u]; if(hit&&Date.now()-hit.t<60000) return hit.p; var p=fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}); gjC[u]={t:Date.now(),p:p}; return p }
+
     function kmBox(km){ var dl=km/111, dn=km/(111*Math.cos(me.lat*Math.PI/180)); return {s:me.lat-dl,n:me.lat+dl,w:me.lon-dn,e:me.lon+dn} }
     function env(b){ return '&geometry='+encodeURIComponent([b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(','))+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json' }
     function bear(la,lo,la2,lo2){ var r=Math.PI/180, y=Math.sin((lo2-lo)*r)*Math.cos(la2*r), x=Math.cos(la*r)*Math.sin(la2*r)-Math.sin(la*r)*Math.cos(la2*r)*Math.cos((lo2-lo)*r); return (Math.atan2(y,x)/r+360)%360 }
     function where(la,lo){ var d=distNm(me.lat,me.lon,la,lo); return uDist(d)+' '+distUnit()+' '+cmp(bear(me.lat,me.lon,la,lo)) }
     function inRing(pt,ring){ var x=pt[0], y=pt[1], ins=false; for(var i=0,j=ring.length-1;i<ring.length;j=i++){ var xi=ring[i][0], yi=ring[i][1], xj=ring[j][0], yj=ring[j][1]; if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) ins=!ins } return ins }
     function km(){ return +cfg2.hubKm||100 }
-    function gather(){ if(busy) return Promise.resolve(); busy=true; var R=km(), b=kmBox(R), bf=kmBox(Math.min(R,60)), inBC=b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60, inUS=me.lat<49.2&&me.lat>18&&me.lon<-66, jobs={};
+    function gather(){ if(busy) return Promise.resolve(); busy=true; var R=km(), b=kmBox(R), bf=kmBox(Math.min(R,60)), inBC=b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60, inUS=me.lat<48.99&&me.lat>18&&me.lon<-66&&!(me.lon<-123&&me.lat>48.25), jobs={};
       jobs.evac=inBC?gj(BCWS+'Evacuation_Orders_and_Alerts/FeatureServer/0/query?where=1%3D1&outFields=EVENT_NAME,EVENT_TYPE,ORDER_ALERT_NAME,ORDER_ALERT_STATUS,ISSUING_AGENCY,DATE_MODIFIED&maxAllowableOffset=0.002&geometryPrecision=4&resultRecordCount=200'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes||{}, rings=(f.geometry&&f.geometry.rings)||[], c=[0,0], n=0, inside=false;
           rings.forEach(function(rg){ rg.forEach(function(p){c[0]+=p[0];c[1]+=p[1];n++}); if(inRing([me.lon,me.lat],rg)) inside=!inside }); if(n){c[0]/=n;c[1]/=n}
           return {order:a.ORDER_ALERT_STATUS==='Order',name:a.ORDER_ALERT_NAME||a.EVENT_NAME||'Area',event:a.EVENT_NAME,type:a.EVENT_TYPE,agency:a.ISSUING_AGENCY,upd:a.DATE_MODIFIED,rings:rings,lat:c[1],lon:c[0],inside:inside} }) }):Promise.resolve([]);
@@ -2407,7 +2419,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(f){return isFinite(f.lat)}).map(function(f){ f.d=distNm(me.lat,me.lon,f.lat,f.lon); return f }).sort(function(a,b){return a.d-b.d}) });
       jobs.air=gj('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+me.lat.toFixed(3)+'&longitude='+me.lon.toFixed(3)+'&current=us_aqi,pm2_5&hourly=us_aqi,pm2_5&forecast_hours=24&timezone=auto').then(function(j){ if(!j||!j.current) return null; var h=(j.hourly&&j.hourly.us_aqi)||[], mx=0, mt=null; h.forEach(function(v,i){ if(v>mx){mx=v;mt=j.hourly.time[i]} }); return {aqi:j.current.us_aqi,pm:j.current.pm2_5,max:mx,maxAt:mt} });
       jobs.roads=Promise.all([
-        inBC?gj('https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500&bbox='+[b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(',')).then(function(j){ return (j&&j.events||[]).filter(function(e){ return (e.roads||[]).some(function(r){return /CLOSED/.test(r.state||'')}) }).map(function(e){ var g=e.geography||{}, c=g.type==='Point'?g.coordinates:(g.coordinates&&g.coordinates[0]); return {road:(e.roads||[]).map(function(r){return r.name}).filter(Boolean).slice(0,2).join(', '),text:String(e.description||'').slice(0,300),lat:c&&c[1],lon:c&&c[0]} }) }):[],
+        inBC?gj('https://api.open511.gov.bc.ca/events?format=json&status=ACTIVE&limit=500&bbox='+o5b(b)).then(function(j){ return (j&&j.events||[]).filter(function(e){ return (e.roads||[]).some(function(r){return /CLOSED/.test(r.state||'')}) }).map(function(e){ var g=e.geography||{}, c=g.type==='Point'?g.coordinates:(g.coordinates&&g.coordinates[0]); return {road:(e.roads||[]).map(function(r){return r.name}).filter(Boolean).slice(0,2).join(', '),text:String(e.description||'').slice(0,300),lat:c&&c[1],lon:c&&c[0]} }) }):[],
         inUS?gj(WS+'TravelInfoRoadAlerts/FeatureServer/0/query?where=RoadClosedFlag%3D1&outFields=Road,RoadDirection,HeadlineMessage'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {road:[a.Road,a.RoadDirection].filter(Boolean).join(' '),text:String(a.HeadlineMessage||'').slice(0,300),lat:g.y,lon:g.x} }) }):[]
       ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(x){return isFinite(x.lat)}) });
       var keys=Object.keys(jobs);
@@ -2440,13 +2452,13 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
         (aqw?'<div style="margin-bottom:6px"><b style="color:#fb8c00">Official air quality warning in effect.</b> See Weather alerts for details.</div>':'')+(a?'<div class="row2"><span>Now</span><span><b style="color:'+aqiCol(a.aqi)+'">'+Math.round(a.aqi)+' '+esc(aqiWord(a.aqi))+'</b></span></div><div class="row2"><span>Fine smoke particles (PM2.5)</span><span>'+Math.round(a.pm)+' µg/m³</span></div><div class="row2"><span>Worst in next 24 h</span><span><b style="color:'+aqiCol(a.max)+'">'+Math.round(a.max)+'</b> '+(a.maxAt?esc(new Date(a.maxAt).toLocaleTimeString([], {hour12:true,weekday:'short',hour:'numeric'})):'')+'</span></div><small>US AQI scale, forecast model (Open-Meteo/CAMS). Official readings: airhealth.ca</small>':'Air quality data unavailable.'));
       var rd=H.roads||[];
       h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
-        rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(x.text.slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
+        rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(String(x.text||'').slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
       h+='<div class="abtns" style="margin-top:6px"><a href="#" id="hubmap" class="pri" role="button">🗺 Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer">EmergencyInfoBC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer">DriveBC</a></div>';
       h+='<div class="skynote">In danger? Call 911. Always follow official orders. Checked '+esc(new Date(H.t).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}))+' · '+km()+' km around you</div>';
       body.innerHTML=h;
       [].forEach.call(body.querySelectorAll('.hubhd'),function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); open=open===i?-1:i; render() } });
       var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() } }
-    function showOnMap(){ hubLayer.clearLayers(); (H.evac||[]).forEach(function(e){ var c=e.order?'#e53935':'#fb8c00'; e.rings.forEach(function(rg){ L.polygon(rg.map(function(p){return [p[1],p[0]]}),{color:c,weight:2,fillColor:c,fillOpacity:.25}).bindTooltip((e.order?'Evacuation ORDER: ':'Evacuation alert: ')+e.name).addTo(hubLayer) }) });
+    function showOnMap(){ hubLayer.clearLayers(); (H.evac||[]).forEach(function(e){ var c=e.order?'#e53935':'#fb8c00'; e.rings.forEach(function(rg){ L.polygon(rg.map(function(p){return [p[1],p[0]]}),{color:c,weight:2,fillColor:c,fillOpacity:.25}).bindTooltip(esc((e.order?'Evacuation ORDER: ':'Evacuation alert: ')+(e.name||''))).addTo(hubLayer) }) });
       var fb=document.getElementById('firebtn'); if(fb&&!fb.classList.contains('on')) fb.click();
       var rb=document.getElementById('roadbtn'); if(rb&&!rb.classList.contains('on')) rb.click();
       sheetEl.hidden=true; var b=kmBox(Math.min(km(),60)); map.fitBounds([[b.s,b.w],[b.n,b.e]]) }
