@@ -8,6 +8,8 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const B = path.join(ROOT, 'app', 'build'), W = path.join(B, 'www');
 const step = process.argv[2] || 'web';
 const run = +(process.env.GITHUB_RUN_NUMBER || 1);
+// raise NATIVE when the app's phone parts change (plugins, Capacitor version). Live updates only go to apps with the same or newer NATIVE.
+const NATIVE = 1;
 
 function R(s, a, b, file) { const c = s.split(a).length - 1; if (c !== 1) throw new Error(file + ': expected 1 match, found ' + c + ' for: ' + a.slice(0, 80)); return s.split(a).join(b); }
 async function get(url, to) {
@@ -22,8 +24,8 @@ if (step === 'web') {
   fs.writeFileSync(path.join(B, 'package.json'), JSON.stringify({
     name: 'awarebc', version: '1.0.' + run, private: true, author: 'Josh Singer',
     dependencies: {
-      '@capacitor/core': '^8.6.0', '@capacitor/cli': '^8.6.0', '@capacitor/android': '^8.6.0', '@capacitor/app': '^8.1.2',
-      '@capacitor/local-notifications': '^8.3.1', '@capacitor-community/background-geolocation': '^1.3.1', 'sharp': '^0.34.0'
+      '@capacitor/core': '8.6.0', '@capacitor/cli': '8.6.0', '@capacitor/android': '8.6.0', '@capacitor/app': '8.1.2', '@capacitor/filesystem': '8.1.5',
+      '@capacitor/local-notifications': '8.3.1', '@capacitor-community/background-geolocation': '1.3.1', 'sharp': '^0.34.0'
     }
   }, null, 2));
   fs.writeFileSync(path.join(B, 'capacitor.config.json'), JSON.stringify({
@@ -36,7 +38,7 @@ if (step === 'web') {
 
   // the website files
   for (const f of fs.readdirSync(ROOT)) {
-    if (/\.(html|js|json|webmanifest|png|svg)$/.test(f) && !/^sky-overhead-personal/.test(f) && f !== 'sw.js') fs.copyFileSync(path.join(ROOT, f), path.join(W, f));
+    if (/\.(html|js|json|webmanifest|png|svg)$/.test(f) && !/^(sky-overhead-personal|logo-)/.test(f) && f !== 'sw.js' && f !== 'icon.svg') fs.copyFileSync(path.join(ROOT, f), path.join(W, f));
   }
   // map libraries saved inside the app so it opens with no signal
   const LF = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/', LR = 'https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js';
@@ -75,9 +77,14 @@ if (step === 'android') {
   // Capacitor's own script, loaded by the page (no bundler)
   const core = path.join(B, 'node_modules', '@capacitor', 'core', 'dist', 'capacitor.js');
   fs.copyFileSync(core, path.join(W, 'lib', 'capacitor.js'));
+  // live update list: every app file and its fingerprint (the app checks this to update itself)
+  const { createHash } = await import('node:crypto'), files = {};
+  (function walk(d, pre) { for (const n of fs.readdirSync(d).sort()) { const fp = path.join(d, n); if (fs.statSync(fp).isDirectory()) walk(fp, pre + n + '/'); else if (pre + n !== 'app-version.json') files[pre + n] = createHash('sha256').update(fs.readFileSync(fp)).digest('hex'); } })(W, '');
+  const id = createHash('sha256').update(JSON.stringify(files)).digest('hex').slice(0, 12);
+  fs.writeFileSync(path.join(W, 'app-version.json'), JSON.stringify({ id, n: run, native: NATIVE, files }));
   // version number goes up with every build so updates install over the old one
   const g = path.join(A, 'build.gradle'); let s = fs.readFileSync(g, 'utf8');
-  s = s.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.0.' + run + '"');
+  s = s.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.' + NATIVE + '.' + run + '"');
   if (!s.includes('versionCode ' + run)) throw new Error('build.gradle: version not set');
   fs.writeFileSync(g, s);
   // small white icon for the GPS and alert notifications
@@ -112,5 +119,5 @@ if (step === 'android') {
       .composite([{ input: await sharp(ICON).resize(ic, ic).png().toBuffer(), gravity: 'center' }]).png().toBuffer();
     fs.writeFileSync(fp, buf); sp++;
   }
-  console.log('android ready, build', run, '· splash screens:', sp);
+  console.log('android ready, build', run, '· live id', id, '· files', Object.keys(files).length, '· splash screens:', sp);
 }
