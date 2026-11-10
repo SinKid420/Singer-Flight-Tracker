@@ -570,7 +570,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
       <label class="setrow" for="maptheme">Map theme<select id="maptheme" aria-label="Map theme"><option value="day">Day</option><option value="night">Night</option><option value="auto">Auto (sunset)</option></select></label>
       <label class="setrow" for="radsrc">Radar source<select id="radsrc" aria-label="Radar source"><option value="auto">All (CA · US · MX)</option><option value="ca">Canada only</option><option value="us">US only</option><option value="mx">Mexico + world</option><option value="off">Off</option></select></label>
       <label class="setrow" for="radloop">Animation<select id="radloop" aria-label="Radar animation"><option value="1">Play last hour</option><option value="0">Off (live only)</option></select></label>
-      <label class="setrow" for="radop">Rain see-through<select id="radop" aria-label="Rain see-through"><option value="1">Solid</option><option value="0.8">80%</option><option value="0.6">60%</option><option value="0.4">40%</option><option value="0.2">20%</option></select></label>
+      <label class="setrow" for="radop">Rain see-through<select id="radop" aria-label="Rain see-through"><option value="1">Solid</option><option value="0.8">80%</option><option value="0.6">60%</option><option value="0.4">40%</option><option value="0.2">20%</option><option value="0.1">10%</option></select></label>
       <label class="setrow" for="s_water">Rivers &amp; creeks<select id="s_water"><option value="1">Show</option><option value="0">Hide</option></select></label>
       <label class="setrow" for="s_waterOp">Creeks see-through<select id="s_waterOp"><option value="1">Solid</option><option value="0.8">80%</option><option value="0.6">60%</option><option value="0.4">40%</option><option value="0.25">25%</option></select></label>
       <label class="setrow" for="routemode">Route lines<select id="routemode" aria-label="Route lines"><option value="sel">Tapped plane only</option><option value="off">Hide</option></select></label>
@@ -843,9 +843,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // ---- Wider radar: US (NEXRAD, Iowa Mesonet) + Canada/US/Mexico/world (RainViewer), animated, no keys
   var IEM='https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913';
   var RVHOST='https://tilecache.rainviewer.com', rvPaths=[], rvStamp=0;
-  var rcfg={src:'auto',loop:'1',op:'0.2'};
-  try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop); if(rr.op) rcfg.op=String(rr.op)}catch(e){}
-  var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=(+rcfg.op>0&&+rcfg.op<=1)?+rcfg.op:.2, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
+  var rcfg={src:'auto',loop:'1',op:'0.1',v:2};
+  try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop); if(rr.op&&rr.v===2) rcfg.op=String(rr.op)}catch(e){}
+  var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=(+rcfg.op>0&&+rcfg.op<=1)?+rcfg.op:.1, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
   function want(k){ var v=rcfg.src; if(k==='mx'&&v==='auto'){ var c=map.getCenter(); if(c.lat>24&&c.lat<58&&c.lng>-135&&c.lng<-52) return false } return v==='auto'||v===k }
   var lazyT=null;
   function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,attribution:attr}) }
@@ -881,7 +881,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function save(){ try{localStorage.setItem('sky-radar',JSON.stringify(rcfg))}catch(e){} }
     a.onchange=function(){ rcfg.src=a.value; save(); applyRadar() };
     b.onchange=function(){ rcfg.loop=b.value; save(); applyRadar() };
-    var c=document.getElementById('radop'); if(c){ c.value=rcfg.op; c.onchange=function(){ rcfg.op=c.value; radOp=+c.value||.2; save(); setFrame(cur); rainOp() } }
+    var c=document.getElementById('radop'); if(c){ c.value=rcfg.op; c.onchange=function(){ rcfg.op=c.value; radOp=+c.value||.1; save(); setFrame(cur); rainOp() } }
   })();
   function rainOp(){ ['rain','snow'].forEach(function(k){ if(wxLayers[k]) wxLayers[k].setOpacity(Math.min(1,radOp*(WX[k].boost||1))) }) }
   rainOp();
@@ -1476,7 +1476,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=111, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=112, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
