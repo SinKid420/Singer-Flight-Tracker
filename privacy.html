@@ -1,15 +1,63 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Singers Flight Tracker – Privacy Policy</title>
-<style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:0 auto;padding:20px 16px;background:#0e0e10;color:#eee}h1{font-size:24px}h2{font-size:18px;margin-top:24px;color:#ff6a5f}a{color:#ff6a5f}</style></head><body>
-<h1>Singers Flight Tracker – Privacy Policy</h1><p>Last updated: November 4, 2026</p>
-<p>Singers Flight Tracker is a free live flight tracker. It has no accounts, no ads and no analytics, and we do not sell or share personal data.</p>
-<h2>What stays on your device</h2><p>Your settings, your optional API key and cached flight routes are stored only in your device's local storage. They are never sent to us.</p>
-<h2>Location</h2><p>If you tap the locate button, the app asks for your device location to centre the map and to show nearby planes and local weather. It is used only in the app and is not stored on any server of ours.</p>
-<h2>Third-party services the app contacts</h2>
-<ul><li>Flight positions: adsb.lol (through a small relay we run on Cloudflare Workers) and FlyItalyADSB. These receive the map centre coordinates and search radius you are viewing, plus your IP address as part of any web request.</li>
-<li>Flight routes: adsbdb.com receives the flight callsign of a plane you tap.</li>
-<li>Weather and radar: Open-Meteo, Environment and Climate Change Canada, NOAA/Iowa Environmental Mesonet and RainViewer receive coordinates and map tile requests.</li>
-<li>Map tiles and photos: OpenStreetMap and other tile providers, and Planespotters.net for aircraft photos.</li></ul>
-<p>The relay does not keep logs of requests beyond what Cloudflare provides for operating the service. Each third party has its own privacy policy.</p>
-<h2>Children</h2><p>The app is not directed at children and collects no personal information from anyone.</p>
-<h2>Contact</h2><p>Questions: <a href="https://github.com/SinKid420/Singer-Flight-Tracker/issues">github.com/SinKid420/Singer-Flight-Tracker/issues</a></p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AwareBC – Privacy, Terms and Rider Rules</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:0 auto;padding:20px 16px;background:#0e0e10;color:#eee}h1{font-size:24px;margin-bottom:4px}h2{font-size:18px;margin-top:26px;color:#ff6a5f}a{color:#ff6a5f}li{margin:4px 0}.box{background:#1c1c1e;border-radius:12px;padding:10px 14px;margin:14px 0}nav a{margin-right:12px}</style></head><body>
+<h1>AwareBC – Privacy, Terms and Rider Rules</h1><p>By Josh Singer · Last updated: November 9, 2026</p>
+<nav><a href="#privacy">Privacy</a><a href="#rules">Rider rules</a><a href="#terms">Terms</a><a href="#contact">Contact</a></nav>
+<div class="box"><b>Short version:</b> AwareBC has no ads, no analytics and no selling of data. Your settings stay on your phone. Things you choose to post (trail reports, chat messages, your shared spot) go to our small server so other riders can see them, and are deleted on a schedule. AwareBC is not an emergency service: in an emergency call 911.</div>
+
+<h2 id="privacy">1. What stays on your device</h2>
+<p>Your settings, your name, your optional API key, saved offline maps, routes and your <b>rider key</b> are stored only on your phone (in the app's local storage). They are never sold or shared.</p>
+
+<h2>2. Your rider key and rider tag</h2>
+<p>The first time you post or use Friends, the app makes a random secret <b>rider key</b> on your phone. It is sent with your posts so the server can tell it's you, but the server only keeps a one-way fingerprint of it, never the key itself. From that fingerprint the app shows a short <b>rider tag</b> (like Boss #4K7Q) that other riders can't copy. You can back up your key in Friends ▸ Safety &amp; account to move it to a new phone. Anyone who has your key can act as you, so never send it to anyone.</p>
+
+<h2>3. Trail reports</h2>
+<p>When you post a trail report we store: the spot you picked, the status, tags, your note, an optional photo (shrunk and stripped of camera data by the app before upload), the name you typed, your rider tag and the time. Reports are public to all AwareBC users. Cleared reports are deleted 7 days after being cleared; only the newest 1000 reports are kept. You can delete your own reports at any time.</p>
+
+<h2>4. Friends, shared spot and chat</h2>
+<ul>
+<li><b>Friends:</b> we store your name, rider tag, the fingerprint of your key, who you are friends with, pending requests, groups and who you blocked.</li>
+<li><b>Shared spot:</b> only while "Share my spot" is on, your latest GPS spot is sent to the server and shown <b>only to riders you accepted as friends</b>. You choose 1 hour, 4 hours or until you turn it off. A spot older than 6 hours is never shown, and when sharing stops the spot is erased from the server.</li>
+<li><b>Chat:</b> messages (and any spot you send in a chat) are stored so the people in that chat can read them. They are <b>deleted after 30 days</b>, and you can unsend your own messages at any time. Messages are protected in transit (HTTPS) but are not end-to-end encrypted, so don't send passwords, card numbers or other secrets.</li>
+<li><b>Online status:</b> friends can see when you last opened AwareBC.</li>
+<li><b>Delete my data:</b> Friends ▸ Safety &amp; account ▸ "Delete my friends &amp; chat data" removes from the server, right away: your friends, requests, blocks, the reports you made, your 1-to-1 chats and every message you sent, and takes you out of your groups. Riders who don't open AwareBC for a year are deleted automatically.</li>
+</ul>
+
+<h2>5. Safety and moderation data</h2>
+<p>To stop spam and abuse the server keeps short-lived counters tied to a one-way fingerprint of your network address (IP), not the address itself. If you report a rider or a message, we store the report, the reason and a copy of the reported message so a moderator can review it. Reports are deleted after 90 days. When three different riders report someone within 30 days, that rider's chat is paused for 7 days.</p>
+
+<h2>6. Location</h2>
+<p>The app uses your phone's location to centre the map, warn you about trail reports ahead and show nearby planes and weather. On the Android/Apple app, location can keep running with the screen off for danger alerts; you can turn GPS off in AwareBC at any time. Your location is only sent to our server when you post a report or turn on "Share my spot".</p>
+
+<h2>7. Services the app contacts</h2>
+<ul><li>Our servers on Cloudflare Workers: trail reports, friends and chat, and a relay for flight positions.</li>
+<li>Flight data: adsb.lol, FlyItalyADSB and adsbdb.com (map area, or the callsign you tap).</li>
+<li>Weather, snow and radar: Open-Meteo, Environment and Climate Change Canada, NOAA/Iowa Environmental Mesonet and RainViewer.</li>
+<li>Maps, roads, places and search: OpenStreetMap and other tile providers, DataBC (Province of BC), BC Geographic Names and Photon (komoot).</li>
+<li>App updates for the phone app: GitHub.</li></ul>
+<p>These services receive the map area or coordinates being looked up and your IP address as part of any web request. Each has its own privacy policy. Cloudflare may keep short operational logs.</p>
+
+<h2>8. Children</h2>
+<p>AwareBC is for riders <b>13 and older</b>. Riders under 18 should only add people they know in real life, and with a parent's OK. We do not knowingly collect information from children under 13; if you believe a child under 13 is using Friends, contact us and we will delete their data.</p>
+
+<h2 id="rules">9. Rider rules</h2>
+<ul>
+<li>Only add riders you know or trust. Never share your rider key.</li>
+<li>No harassment, threats, hate, sexual content, scams, spam or selling.</li>
+<li>Don't post someone else's location or personal details without their OK.</li>
+<li>Trail reports must be honest. Don't post fake hazards or hide real ones.</li>
+<li>Don't pretend to be someone else, AwareBC staff or a moderator.</li>
+<li>Use <b>Block</b> and <b>Report</b> (tap a message, or the links under a chat). Blocked riders can't add you, message you or see your spot, and are not told they were blocked.</li>
+</ul>
+<p>Breaking the rules can get your chat paused or your rider data deleted.</p>
+
+<h2 id="terms">10. Terms</h2>
+<ul>
+<li><b>Not an emergency service.</b> The 🆘 button only sends your spot to that chat; it does not call 911 or search and rescue. Your friends may not see it in time, or at all. In an emergency call 911 (or use a satellite SOS device where there is no signal).</li>
+<li>Trail reports, road info, weather, snow and flight data come from other riders and outside sources. They can be wrong, late or missing. Always use your own judgement and follow road and trail signs.</li>
+<li>AwareBC is free and provided "as is", without warranty. Features may change or stop.</li>
+<li>You are responsible for what you post. We may remove content or pause riders who break the rules.</li>
+</ul>
+
+<h2 id="contact">11. Contact and data requests</h2>
+<p>Questions, safety concerns or a request to delete data: open an issue at <a href="https://github.com/SinKid420/Singer-Flight-Tracker/issues">github.com/SinKid420/Singer-Flight-Tracker/issues</a>. Don't post private details there; say you need a private follow-up. You can delete your own friends and chat data yourself in the app at any time.</p>
 </body></html>
