@@ -808,8 +808,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function drop(ll,title){ var now=Date.now(); if(now-last<800) return; last=now; if(pin) map.removeLayer(pin);
       var la=ll.lat.toFixed(5), lo=ll.lng.toFixed(5);
       pin=L.marker(ll,{icon:L.divIcon({className:'gpspin',html:'📍',iconSize:[30,30],iconAnchor:[15,28]}),keyboard:false}).addTo(map);
-      var d=document.createElement('div'); d.className='gpsq'; d.innerHTML='<b>'+(title?esc(title):'Pinned spot')+'</b><br><small>'+la+', '+lo+'</small><div class="gpsb"><button type="button" data-a="go">GPS directions</button><button type="button" data-a="rep" class="trrep">Report trail</button></div><button type="button" class="gpsx" data-a="no">Cancel</button>';
-      d.onclick=function(e){ var a=e.target&&e.target.getAttribute('data-a'); if(a==='go'){ window.open('https://www.google.com/maps/dir/?api=1&destination='+la+','+lo+'&travelmode=driving','_blank','noopener') } if(a){ map.removeLayer(pin); pin=null } };
+      var d=document.createElement('div'); d.className='gpsq'; d.innerHTML='<b>'+(title?esc(title):'Pinned spot')+'</b><br><small>'+la+', '+lo+'</small><div class="gpsb"><button type="button" data-a="go">Directions</button><button type="button" data-a="rep" class="trrep">Report trail</button></div><button type="button" class="gpsx" data-a="no">Cancel</button>';
+      d.onclick=function(e){ var a=e.target&&e.target.getAttribute('data-a'); if(a==='go'){ if(window.__nav) window.__nav.to(ll,title||'Pinned spot'); else window.open('https://www.google.com/maps/dir/?api=1&destination='+la+','+lo+'&travelmode=driving','_blank','noopener') } if(a){ map.removeLayer(pin); pin=null } };
       pin.bindPopup(d,{closeButton:false,offset:[0,-24],autoPanPadding:[20,60]}).openPopup();
       pin.on('popupclose',function(){ var p=pin; if(Date.now()-last<900){ setTimeout(function(){ if(p&&pin===p) p.openPopup() },30); return } setTimeout(function(){ if(p&&pin===p&&!p.isPopupOpen()){ map.removeLayer(p); pin=null } },50) }) }
     window.__pin=drop; map.on('contextmenu',function(e){ drop(e.latlng) });
@@ -1476,7 +1476,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=109, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=110, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1863,7 +1863,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       else { map.attributionControl.removeAttribution('Roads & trails: BC Gov (DataBC: DRA, FTEN, FOM, BCTS, RSTBC, Wildlife Act), USDA Forest Service'); if(vg&&map.hasLayer(vg)) map.removeLayer(vg); Object.keys(drawn).forEach(drop); seen={}; wantNow={} } }
     map.on('moveend',function(){ if(!on) return; clearTimeout(mvT); mvT=setTimeout(function(){ load(); areas() },350) });
     function refresh(){ if(!on) return; Object.keys(drawn).forEach(drop); seen={}; aG.clearLayers(); aLay={}; load(); areas(); if(vg){ vg.redraw() } }
-    window.__fsr={set:set,mode:mode,load:load,refresh:refresh,urls:function(b){ var o=[]; SRC.forEach(function(s){ if(!s.url) return; keys(s,b).forEach(function(k){ var tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(s.area(tb)) o.push(s.url(tb)) }) });
+    window.__fsr={set:set,mode:mode,load:load,refresh:refresh,help:{rNow:rNow,aToday:aToday,aIn:aIn,aDec:aDec},urls:function(b){ var o=[]; SRC.forEach(function(s){ if(!s.url) return; keys(s,b).forEach(function(k){ var tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(s.area(tb)) o.push(s.url(tb)) }) });
       o.push('https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_TRAILS_SVW&outputFormat=json&count=5000&propertyName=FOREST_FILE_ID,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,MAINTAIN_STD_DESC,OPERATOR_CLIENT_NAME'); o.push(SITES); return o }};
     // Layer lists: tap Satellite or FSR again (when it is on) to show or hide its own layers.
     // On road: trails, camping, creeks, GPS traces, closures. Off road: forest service roads plus camping, creeks, OSM trails, GPS traces and closures (shared chips).
@@ -2370,5 +2370,6 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
 <script src="reports.js?v=5"></script>
 <script src="friends.js?v=3"></script>
 <script src="offline.js?v=3"></script>
+<script src="nav.js?v=1" defer></script>
 </body>
 </html>
