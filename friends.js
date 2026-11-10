@@ -1,0 +1,135 @@
+// AwareBC friends, live spots and chat (by Josh Singer).
+// Add riders by their rider tag (like #7QHD). Accepted friends see each other on the map only while "Share my spot" is on.
+// 1-to-1 chat and group chat, with quick "my spot", "OK" and "Need help" buttons.
+(function(){
+  var A=window.__AW; if(!A||!A.map) return;
+  var map=A.map, esc=A.esc, RS='https://awarebc.joshuasinger123.workers.dev';
+  var CSS="#frbtn{position:fixed;z-index:1000;width:44px;height:44px;border-radius:50%;border:0;background:var(--bg,#111);color:#fff;box-shadow:var(--shadow,0 2px 8px rgba(0,0,0,.5));display:grid;place-items:center;padding:0;cursor:pointer}\n#frbtn svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}\n#frbtn em{position:absolute;right:-3px;top:-3px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#34c759;color:#fff;font:800 11px/14px var(--font);font-style:normal;text-align:center;border:2px solid #111}#frbtn em.red{background:#ff3b30}#frbtn em[hidden]{display:none}\nbody.fron #frbtn,body.menuon #frbtn,body.toolon #frbtn,body.keyon #frbtn,body.srchon #frbtn{visibility:hidden}\n#frsheet{position:fixed;z-index:1250;left:0;right:0;bottom:0;max-height:82dvh;display:flex;flex-direction:column;background:#1c1c1e;color:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 16px rgba(0,0,0,.5);padding:8px 14px calc(12px + env(safe-area-inset-bottom,0px));font-family:var(--font);box-sizing:border-box}\n#frsheet[hidden]{display:none}#frsheet.chat{height:82dvh}\n#frsheet .frgrab{width:36px;height:4px;border-radius:2px;background:#48484a;margin:0 auto 8px;flex:none}\n#frsheet .frhd{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex:none;min-width:0}#frsheet .frhd b{font:700 18px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}#frsheet .frhd span{color:#8e8e93}#frsheet .frhd small{margin-left:auto;font:500 12px var(--font);color:#aeaeb2;white-space:nowrap}\n#frsheet .frx,#frsheet .frbk{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:#2c2c2e;color:#fff;font:600 16px var(--font);padding:0}#frsheet .frbk{font-size:26px;line-height:30px}\n#frsheet .frbody{overflow:auto;min-height:0;-webkit-overflow-scrolling:touch}\n#frsheet .frshare{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;background:#2c2c2e;border:0;border-radius:12px;padding:9px 12px;margin-bottom:8px;color:#fff;font:600 13.5px var(--font);text-align:left}#frsheet .frshare small{display:block;color:#aeaeb2;font-weight:400;font-size:12px}\n#frsheet .frtg{flex:none;width:42px;height:24px;border-radius:12px;background:#48484a;position:relative}#frsheet .frtg:after{content:'';position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}#frsheet .frtg.on{background:#34c759}#frsheet .frtg.on:after{left:20px}\n#frsheet .fradd{display:flex;gap:8px;margin:0 0 6px}#frsheet .fradd input{flex:1;min-width:0;background:#2c2c2e;border:0;border-radius:12px;padding:10px 12px;color:#fff;font:400 15px var(--font);outline:0}#frsheet .fradd input[hidden]{display:none}\n#frsheet .frbt{flex:none;border:0;border-radius:14px;padding:8px 11px;font:700 12.5px var(--font);background:#2c2c2e;color:#fff}#frsheet .frbt.g{background:#34c759}#frsheet .frbt.r{background:#ff3b30}\n#frsheet .frh{display:flex;justify-content:space-between;align-items:center;font:700 11.5px var(--font);letter-spacing:.06em;color:#8e8e93;margin:12px 0 2px}\n#frsheet .frlink{border:0;background:none;color:#0a84ff;font:700 12.5px var(--font);padding:4px 0}#frsheet .frlink.red{color:#ff453a}#frsheet .frlink[hidden]{display:none}\n#frsheet .frrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #2c2c2e}#frsheet .frrow>div{flex:1;min-width:0}#frsheet .frrow b{display:block;font:600 14.5px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#frsheet .frrow b small{color:#8e8e93;font-weight:700;margin-left:3px}#frsheet .frrow>div>small{display:block;color:#aeaeb2;font:400 12.5px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n#frsheet .frav{flex:none;position:relative;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font:800 14px var(--font)}#frsheet .frav i{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#34c759;border:2px solid #1c1c1e}\n#frsheet .frun{flex:none;min-width:20px;height:20px;border-radius:10px;background:#ff3b30;color:#fff;font:800 11.5px/20px var(--font);font-style:normal;text-align:center;padding:0 5px;box-sizing:border-box}\n#frsheet .frnone,#frsheet .frsent{color:#8e8e93;font:400 13px var(--font);padding:8px 0}#frsheet .frpick input{width:20px;height:20px}\n#frsheet .frmsgs{flex:1;overflow:auto;min-height:0;display:flex;flex-direction:column;padding:2px 0;-webkit-overflow-scrolling:touch}\n#frsheet .frmsg{max-width:80%;padding:8px 12px;border-radius:16px;background:#2c2c2e;border-bottom-left-radius:4px;font:400 14px/1.35 var(--font);margin:3px 0;align-self:flex-start;overflow-wrap:anywhere}#frsheet .frmsg.me{background:#0a84ff;align-self:flex-end;border-radius:16px;border-bottom-right-radius:4px}#frsheet .frmsg>b{display:block;font:700 12px var(--font);margin-bottom:2px}#frsheet .frmsg>b small{opacity:.6}#frsheet .frmsg>small{display:block;opacity:.6;font-size:11px;margin-top:2px}\n#frsheet .frspot{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:5px 8px;margin-top:3px;font:600 12.5px var(--font)}\n#frsheet .frquick{display:flex;gap:6px;margin-top:8px;flex:none;overflow-x:auto}\n#frsheet .frin{display:flex;gap:8px;margin-top:8px;flex:none}#frsheet .frin input{flex:1;min-width:0;background:#2c2c2e;border:0;border-radius:20px;padding:10px 14px;color:#fff;font:400 15px var(--font);outline:0}#frsheet .frin button{flex:none;width:42px;height:42px;border:0;border-radius:50%;background:#0a84ff;color:#fff;font-size:17px;padding:0}\n#frsheet .frfoot{display:flex;gap:12px;align-items:center;margin-top:6px;flex:none}#frsheet .frfoot select{background:#2c2c2e;color:#fff;border:0;border-radius:10px;padding:6px;font:400 13px var(--font);max-width:60%}#frsheet .frfoot select[hidden]{display:none}\n.frmk{position:relative;width:40px;height:40px}.frmk b{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:3px solid #fff;color:#fff;font:800 16px var(--font);box-shadow:0 2px 6px rgba(0,0,0,.5);box-sizing:content-box}.frmk i{position:absolute;right:-2px;bottom:0;width:11px;height:11px;border-radius:50%;background:#34c759;border:2px solid #fff}.frmk span{position:absolute;left:50%;top:44px;transform:translateX(-50%);white-space:nowrap;background:rgba(17,17,17,.85);color:#fff;font:600 11px var(--font);padding:2px 6px;border-radius:8px}\n.frtoast{position:fixed;z-index:1400;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(28,28,30,.96);color:#fff;font:600 13.5px var(--font);padding:10px 14px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.4);max-width:86vw;text-align:center;transition:opacity .4s}.frtoast.go{opacity:0}";
+  var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
+  function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
+  function uid(){ var u=ls('sky-uid'); if(!u||u.length<20){ var a=new Uint8Array(18); crypto.getRandomValues(a); u=btoa(String.fromCharCode.apply(null,a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); ls('sky-uid',u) } return u }
+  function name(){ return ls('sky-trname')||'' }
+  function api(p,b){ return fetch(RS+'/s/'+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({uid:uid(),name:name()},b||{}))})
+    .then(function(r){ return r.json().catch(function(){ return {error:'Server error ('+r.status+')'} }).then(function(j){ if(!r.ok||j.error) throw new Error(j.error||('Server error '+r.status)); return j }) }) }
+  function ago(t){ var m=Math.round((Date.now()-t)/60000); return m<1?'now':m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d' }
+  function clock(t){ return new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) }
+  function km(a,b,c,d){ return map.distance([a,b],[c,d])/1000 }
+  function kmT(k){ return k<10?k.toFixed(1)+' km':Math.round(k)+' km' }
+  var COL=['#ff9500','#af52de','#5856d6','#34c759','#ff2d55','#0a84ff','#ff6b00','#30b0c7'];
+  function col(s){ var h=0; s=String(s||''); for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return COL[Math.abs(h)%COL.length] }
+  function ini(n){ return esc(String(n||'?').trim().charAt(0).toUpperCase()||'?') }
+  function toast(t){ var e=document.createElement('div'); e.className='frtoast'; e.textContent=t; document.body.appendChild(e); setTimeout(function(){ e.classList.add('go') },2600); setTimeout(function(){ e.remove() },3200) }
+  function buzz(){ try{ if(navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.hasBeenActive)) navigator.vibrate([120,80,120]) }catch(e){} }
+
+  // ---------- my spot (only sent while Share my spot is on) ----------
+  var share=ls('sky-frshare')==='1', wId=null, fix=null;
+  function watch(){ if(share&&wId==null&&navigator.geolocation) wId=navigator.geolocation.watchPosition(function(p){ fix={lat:p.coords.latitude,lon:p.coords.longitude,t:Date.now()} },function(){}, {enableHighAccuracy:true,maximumAge:15000,timeout:30000});
+    if(!share&&wId!=null){ navigator.geolocation.clearWatch(wId); wId=null; fix=null } }
+  function mySpot(){ if(fix&&Date.now()-fix.t<180000) return fix; var m=A.me&&A.me(); return m&&isFinite(m.lat)&&isFinite(m.lon)?{lat:m.lat,lon:m.lon}:null }
+
+  // ---------- button ----------
+  var btn=document.createElement('button'); btn.type='button'; btn.id='frbtn'; btn.setAttribute('aria-label','Friends and chat');
+  btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 19.5c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><circle cx="17" cy="9" r="2.6"/><path d="M15.8 14.3c2.7-.3 4.9 1.3 5.4 4.2"/></svg><em hidden></em>';
+  document.body.appendChild(btn);
+  var badge=btn.querySelector('em');
+  function place(){ var ids=['gear','menubtn','trbtn'], bot=0, left=null, w=44;
+    ids.forEach(function(id){ var e=document.getElementById(id); if(!e||e.offsetParent===null) return; var r=e.getBoundingClientRect(); if(!r.width||getComputedStyle(e).visibility==='hidden') return; if(r.bottom>bot) bot=r.bottom; if(left==null){ left=r.left+(r.width-w)/2 } });
+    if(left==null){ btn.style.display='none'; return } btn.style.display=''; btn.style.left=Math.round(left)+'px'; btn.style.top=Math.round(bot+8)+'px' }
+  place(); window.addEventListener('resize',place); setInterval(place,1500);
+
+  // ---------- sheet ----------
+  var sh=document.createElement('div'); sh.id='frsheet'; sh.hidden=true; sh.setAttribute('role','dialog'); sh.setAttribute('aria-label','Friends');
+  document.body.appendChild(sh);
+  var S={me:null,friends:[],req:[],sent:[],groups:[],unread:{}}, view='list', chat=null, msgs=[], lastId=0, chatT=null, syncT=null, prevUn=-1, newSel={};
+  function open(v){ sh.hidden=false; document.body.classList.add('fron'); view=v||'list'; render(); sync() }
+  function close(){ sh.hidden=true; document.body.classList.remove('fron'); chat=null; clearTimeout(chatT) }
+  btn.onclick=function(){ if(sh.hidden) open('list'); else close() };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!sh.hidden) close() });
+  function total(){ var n=0; Object.keys(S.unread||{}).forEach(function(k){ n+=S.unread[k] }); return n }
+  function setBadge(){ var u=total(), on=S.friends.filter(function(f){return f.on}).length, rq=S.req.length;
+    if(u||rq){ badge.hidden=false; badge.textContent=u+rq; badge.className='red' } else if(on){ badge.hidden=false; badge.textContent=on; badge.className='' } else badge.hidden=true }
+  function head(t,sub,back){ return '<div class="frgrab"></div><div class="frhd">'+(back?'<button type="button" class="frbk" data-a="back" aria-label="Back">‹</button>':'')+'<b>'+t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'<button type="button" class="frx" data-a="close" aria-label="Close">✕</button></div>' }
+  function render(){
+    if(view==='chat'&&chat) return renderChat();
+    if(view==='group') return renderNewGroup();
+    var me=S.me, h=head('Friends',me?'Your tag: '+esc(me.n)+' <span>#'+esc(me.t)+'</span>':'');
+    h+='<div class="frbody">';
+    if(!name()) h+='<form class="fradd" data-f="name"><input maxlength="24" placeholder="Your name (shown to friends)" aria-label="Your name"><button type="submit" class="frbt g">Save</button></form>';
+    h+='<button type="button" class="frshare" data-a="share"><span>📍 Share my spot with friends<small>'+(share?'On until I turn it off':'Off: friends can\'t see you')+'</small></span><i class="frtg'+(share?' on':'')+'"></i></button>';
+    h+='<form class="fradd" data-f="add"><input maxlength="6" placeholder="Add friend: their rider tag, e.g. 7QHD" aria-label="Friend\'s rider tag" autocapitalize="characters"><input class="frwho" maxlength="24" placeholder="Their name" aria-label="Their name" hidden><button type="submit" class="frbt g">Add</button></form>';
+    if(S.req.length) h+='<div class="frh">REQUESTS</div>'+S.req.map(function(r){ return '<div class="frrow"><span class="frav" style="background:'+col(r.id)+'">'+ini(r.n)+'</span><div><b>'+esc(r.n)+'<small>#'+esc(r.t)+'</small></b><small>wants to be friends</small></div><button type="button" class="frbt g" data-a="yes" data-id="'+esc(r.id)+'">Accept</button><button type="button" class="frbt" data-a="no" data-id="'+esc(r.id)+'">No</button></div>' }).join('');
+    if(S.sent.length) h+='<div class="frsent">Waiting for: '+S.sent.map(function(r){ return esc(r.n)+' #'+esc(r.t) }).join(', ')+'</div>';
+    h+='<div class="frh">GROUPS <button type="button" class="frlink" data-a="newg">+ New group</button></div>';
+    h+=S.groups.length?S.groups.map(function(g){ var u=S.unread[g.chat]||0; return '<div class="frrow"><span class="frav" style="background:#3a3a3c">👥</span><div><b>'+esc(g.n)+'</b><small>'+g.c+' riders</small></div>'+(u?'<em class="frun">'+u+'</em>':'')+'<button type="button" class="frbt" data-a="gchat" data-id="'+esc(g.id)+'">💬</button></div>' }).join(''):'<div class="frnone">No groups yet. Make one for your riding crew.</div>';
+    var me2=mySpot();
+    h+='<div class="frh">FRIENDS</div>'+(S.friends.length?S.friends.map(function(f){ var u=S.unread[f.chat]||0, d=f.spot&&me2?' · '+kmT(km(me2.lat,me2.lon,f.spot.lat,f.spot.lon)):'';
+      return '<div class="frrow"><span class="frav" style="background:'+col(f.id)+'">'+ini(f.n)+(f.on?'<i></i>':'')+'</span><div><b>'+esc(f.n)+'<small>#'+esc(f.t)+'</small></b><small>'+(f.on?'Online':'Seen '+ago(f.seen)+' ago')+(f.spot?d+' · spot '+ago(f.spot.at)+' ago':' · not sharing')+'</small></div>'+(u?'<em class="frun">'+u+'</em>':'')+'<button type="button" class="frbt" data-a="chat" data-id="'+esc(f.id)+'">💬</button>'+(f.spot?'<button type="button" class="frbt" data-a="see" data-id="'+esc(f.id)+'">📍</button>':'')+'</div>' }).join(''):'<div class="frnone">No friends yet. Give riders your tag'+(S.me?' <b>#'+esc(S.me.t)+'</b>':'')+' and add theirs.</div>');
+    h+='</div>'; sh.innerHTML=h; sh.className='list' }
+  function renderNewGroup(){ var h=head('New group','',true)+'<div class="frbody"><form class="fradd" data-f="gnew"><input maxlength="30" placeholder="Group name, e.g. Sunday ride" aria-label="Group name"><button type="submit" class="frbt g">Create</button></form><div class="frh">ADD FRIENDS</div>';
+    h+=S.friends.length?S.friends.map(function(f){ return '<label class="frrow frpick"><span class="frav" style="background:'+col(f.id)+'">'+ini(f.n)+'</span><div><b>'+esc(f.n)+'<small>#'+esc(f.t)+'</small></b></div><input type="checkbox" data-id="'+esc(f.id)+'"'+(newSel[f.id]?' checked':'')+'></label>' }).join(''):'<div class="frnone">Add friends first, then make a group.</div>';
+    sh.innerHTML=h+'</div>'; sh.className='list' }
+  function chatTitle(){ if(!chat) return ''; return chat.g?esc(chat.n):esc(chat.n)+' <span>#'+esc(chat.t)+'</span>' }
+  function renderChat(){ var sub=chat.g?((chat.mem?chat.mem.length:chat.c)+' riders'):(chat.on?'🟢 Online':'Seen '+ago(chat.seen||Date.now())+' ago');
+    var h=head(chatTitle(),sub,true)+'<div class="frmsgs" id="frmsgs">'+(msgs.length?'':'<div class="frnone">No messages yet. Say hi.</div>')+msgs.map(function(m){
+      var spot=m.lat!=null, body=(m.x?esc(m.x):'')+(spot?(m.x?'<br>':'')+'<button type="button" class="frspot" data-a="msgspot" data-lat="'+m.lat+'" data-lon="'+m.lon+'" data-n="'+esc(m.n)+'">📍 '+(m.me?'My spot':esc(m.n)+'\'s spot')+' · tap to see</button>':'');
+      return '<div class="frmsg'+(m.me?' me':'')+'">'+(chat.g&&!m.me?'<b style="color:'+col(m.n)+'">'+esc(m.n)+' <small>#'+esc(m.tg||'')+'</small></b>':'')+body+'<small>'+clock(m.t)+'</small></div>' }).join('')+'</div>';
+    h+='<div class="frquick"><button type="button" class="frbt" data-a="qspot">📍 Send my spot</button><button type="button" class="frbt" data-a="qok">👍 OK</button><button type="button" class="frbt r" data-a="qhelp">🆘 Need help</button></div>';
+    h+='<form class="frin" data-f="send"><input maxlength="500" placeholder="Message…" aria-label="Message" autocomplete="off"><button type="submit" aria-label="Send">➤</button></form>';
+    h+='<div class="frfoot">'+(chat.g?'<button type="button" class="frlink" data-a="gaddsel">+ Add friend</button> <select class="frgadd" aria-label="Add a friend to this group" hidden></select> <button type="button" class="frlink red" data-a="gleave">Leave group</button>':'<button type="button" class="frlink red" data-a="unfriend">Remove friend</button>')+'</div>';
+    sh.innerHTML=h; sh.className='chat'; var box=document.getElementById('frmsgs'); if(box) box.scrollTop=box.scrollHeight }
+  function openChat(c){ chat=c; msgs=[]; lastId=0; view='chat'; render(); loadMsgs(true) }
+  function loadMsgs(first){ if(!chat||view!=='chat') return; clearTimeout(chatT); var c=chat;
+    api('msgs',{chat:c.chat,since:lastId}).then(function(j){ if(chat!==c) return; if(j.mem) c.mem=j.mem; if(j.m&&j.m.length){ var neu=j.m.filter(function(m){ return m.id>lastId }); msgs=msgs.concat(neu); lastId=msgs[msgs.length-1].id; if(!first&&neu.some(function(m){return !m.me})) buzz(); S.unread[c.chat]=0; setBadge() }
+      if(first||(j.m&&j.m.length)) renderChat() }).catch(function(e){ if(first) toast(e.message) }).then(function(){ if(chat===c&&!sh.hidden) chatT=setTimeout(loadMsgs,document.hidden?20000:4000) }) }
+  function send(text,spot){ if(!chat) return; var b={chat:chat.chat,text:text||''}; if(spot){ b.lat=spot.lat; b.lon=spot.lon }
+    api('send',b).then(function(){ loadMsgs() }).catch(function(e){ toast(e.message) }) }
+  function needName(){ if(name()) return false; toast('Add your name first.'); view='list'; render(); return true }
+
+  sh.addEventListener('submit',function(e){ e.preventDefault(); var f=e.target, k=f.getAttribute('data-f'), i=f.querySelector('input');
+    if(k==='name'){ var v=i.value.trim().slice(0,24); if(!v) return; ls('sky-trname',v); sync().then(render) }
+    if(k==='add'){ if(needName()) return; var t=i.value.trim(), who=f.querySelector('.frwho'); if(!t) return;
+      api('add',{tag:t,who:who&&!who.hidden?who.value.trim():''}).then(function(j){ if(j.ask){ who.hidden=false; who.focus(); toast(j.ask); return } toast(j.msg||'Request sent'); i.value=''; if(who){ who.value=''; who.hidden=true } sync().then(render) }).catch(function(x){ toast(x.message) }) }
+    if(k==='gnew'){ if(needName()) return; var ids=Object.keys(newSel).filter(function(x){return newSel[x]});
+      api('gnew',{gname:i.value.trim(),ids:ids}).then(function(j){ newSel={}; return sync().then(function(){ var g=S.groups.filter(function(x){return x.id===j.id})[0]||{id:j.id,n:i.value.trim()||'Riding group',c:ids.length+1,chat:j.chat}; openChat({g:true,id:g.id,n:g.n,c:g.c,chat:g.chat}) }) }).catch(function(x){ toast(x.message) }) }
+    if(k==='send'){ var m=i.value.trim(); if(!m) return; i.value=''; send(m) } });
+  sh.addEventListener('change',function(e){ var t=e.target; if(t.type==='checkbox'&&t.getAttribute('data-id')) newSel[t.getAttribute('data-id')]=t.checked;
+    if(t.classList.contains('frgadd')&&t.value&&chat){ api('gadd',{g:chat.id,id:t.value}).then(function(){ toast('Added to the group'); chat.mem=null; lastId=0; msgs=[]; loadMsgs(true) }).catch(function(x){ toast(x.message) }) } });
+  sh.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-a]'); if(!b) return; var a=b.getAttribute('data-a'), id=b.getAttribute('data-id');
+    if(a==='close') return close();
+    if(a==='back'){ chat=null; clearTimeout(chatT); view='list'; render(); return sync() }
+    if(a==='share'){ if(needName()) return; share=!share; ls('sky-frshare',share?'1':'0'); watch(); render(); setTimeout(sync,share?2500:0); toast(share?'Friends can now see your spot.':'Your spot is hidden from friends.'); return }
+    if(a==='yes'||a==='no') return api('answer',{id:id,ok:a==='yes'}).then(function(){ toast(a==='yes'?'Friend added':'Request declined'); return sync() }).then(render).catch(function(x){ toast(x.message) });
+    if(a==='chat'){ var f=S.friends.filter(function(x){return x.id===id})[0]; if(f) openChat({id:f.id,n:f.n,t:f.t,on:f.on,seen:f.seen,chat:f.chat}); return }
+    if(a==='gchat'){ var g=S.groups.filter(function(x){return x.id===id})[0]; if(g) openChat({g:true,id:g.id,n:g.n,c:g.c,chat:g.chat}); return }
+    if(a==='see'){ var s=S.friends.filter(function(x){return x.id===id})[0]; if(s&&s.spot){ close(); map.flyTo([s.spot.lat,s.spot.lon],Math.max(map.getZoom(),14),{duration:1}); var mk=marks[s.id]; if(mk) setTimeout(function(){ mk.openPopup() },1200) } return }
+    if(a==='newg'){ view='group'; newSel={}; return render() }
+    if(a==='msgspot'){ var la=+b.getAttribute('data-lat'), lo=+b.getAttribute('data-lon'); close(); var ll=L.latLng(la,lo); map.once('moveend',function(){ setTimeout(function(){ if(window.__pin) window.__pin(ll,(b.getAttribute('data-n')||'Friend')+'\'s spot') },60) }); map.flyTo(ll,Math.max(map.getZoom(),14),{duration:1}); return }
+    if(a==='qspot'){ var sp=mySpot(); if(!sp) return toast('No GPS spot yet.'); return send('',sp) }
+    if(a==='qok') return send('👍 OK');
+    if(a==='qhelp'){ if(b.getAttribute('data-sure')!=='1'){ b.setAttribute('data-sure','1'); b.textContent='Tap again to send'; return } var hp=mySpot(); return send('🆘 Need help!',hp) }
+    if(a==='gaddsel'){ var sel=sh.querySelector('.frgadd'); var have={}; (chat.mem||[]).forEach(function(m){ have[m.id]=1 }); var opts=S.friends.filter(function(f){ return !have[f.id] });
+      if(!opts.length) return toast('All your friends are already in this group.'); sel.innerHTML='<option value="">Pick a friend…</option>'+opts.map(function(f){ return '<option value="'+esc(f.id)+'">'+esc(f.n)+' #'+esc(f.t)+'</option>' }).join(''); sel.hidden=false; b.hidden=true; return }
+    if(a==='gleave'){ if(b.getAttribute('data-sure')!=='1'){ b.setAttribute('data-sure','1'); b.textContent='Tap again to leave'; return } return api('gleave',{g:chat.id}).then(function(){ toast('You left the group'); chat=null; view='list'; return sync() }).then(render).catch(function(x){ toast(x.message) }) }
+    if(a==='unfriend'){ if(b.getAttribute('data-sure')!=='1'){ b.setAttribute('data-sure','1'); b.textContent='Tap again to remove '+chat.n; return } return api('remove',{id:chat.id}).then(function(){ toast('Friend removed'); chat=null; view='list'; return sync() }).then(render).catch(function(x){ toast(x.message) }) } });
+
+  // ---------- friends on the map ----------
+  var layer=L.layerGroup().addTo(map), marks={};
+  function drawMarks(){ var keep={};
+    S.friends.forEach(function(f){ if(!f.spot) return; keep[f.id]=1; var html='<div class="frmk"><b style="background:'+col(f.id)+'">'+ini(f.n)+'</b>'+(f.on?'<i></i>':'')+'<span>'+esc(f.n)+' · '+ago(f.spot.at)+'</span></div>', m=marks[f.id];
+      if(!m){ m=marks[f.id]=L.marker([f.spot.lat,f.spot.lon],{icon:L.divIcon({className:'',html:html,iconSize:[40,40],iconAnchor:[20,20]}),keyboard:false,zIndexOffset:900}).addTo(layer);
+        m.bindPopup(function(){ var x=S.friends.filter(function(q){return q.id===f.id})[0]||f; return '<b>'+esc(x.n)+' <small style="opacity:.7">#'+esc(x.t)+'</small></b><br><small>'+(x.on?'Online':'Seen '+ago(x.seen)+' ago')+' · spot '+(x.spot?ago(x.spot.at)+' ago':'')+'</small><div class="gpsb"><button type="button" data-fr="chat" data-id="'+esc(x.id)+'">💬 Chat</button><button type="button" data-fr="go" data-id="'+esc(x.id)+'">GPS directions</button></div>' },{closeButton:false,offset:[0,-14]}) }
+      else { m.setLatLng([f.spot.lat,f.spot.lon]); m.setIcon(L.divIcon({className:'',html:html,iconSize:[40,40],iconAnchor:[20,20]})) } });
+    Object.keys(marks).forEach(function(id){ if(!keep[id]){ layer.removeLayer(marks[id]); delete marks[id] } }) }
+  map.on('popupopen',function(e){ var el=e.popup.getElement&&e.popup.getElement(); if(!el) return; el.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-fr]'); if(!b) return; var f=S.friends.filter(function(q){return q.id===b.getAttribute('data-id')})[0]; if(!f) return;
+    map.closePopup(); if(b.getAttribute('data-fr')==='chat'){ sh.hidden=false; document.body.classList.add('fron'); openChat({id:f.id,n:f.n,t:f.t,on:f.on,seen:f.seen,chat:f.chat}) } else if(f.spot) window.open('https://www.google.com/maps/dir/?api=1&destination='+f.spot.lat+','+f.spot.lon+'&travelmode=driving','_blank','noopener') }) });
+
+  // ---------- keep in step with the server ----------
+  var busy=false;
+  function sync(){ if(busy) return Promise.resolve(); busy=true; var b={}; if(share){ var s=fix&&Date.now()-fix.t<180000?fix:null; b.share=true; if(s){ b.lat=s.lat; b.lon=s.lon } } else b.share=false;
+    return api('sync',b).then(function(j){ S=j; var u=total()+S.req.length; if(prevUn>=0&&u>prevUn){ buzz(); if(sh.hidden){ toast(S.req.length&&u-prevUn<=S.req.length?'New friend request':'New message from a friend'); if(window.__native&&window.__native.notify&&window.__native.bg()) window.__native.notify('AwareBC','New message from a friend') } } prevUn=u;
+      setBadge(); drawMarks(); if(!sh.hidden&&view==='list') render() }).catch(function(){}).then(function(){ busy=false }) }
+  function loop(){ clearTimeout(syncT); var t=document.hidden?(share?60000:180000):(!sh.hidden?10000:30000); syncT=setTimeout(function(){ sync().then(loop) },t) }
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ sync(); loop() } });
+  watch(); setTimeout(function(){ sync().then(loop) },3000);
+  window.__friends={open:open,sync:sync};
+})();
