@@ -15,10 +15,21 @@
 
   // ---------- GPS: one background watcher shared by every part of the app ----------
   var G = navigator.geolocation, subs = {}, n = 0, wid = null, starting = false, last = null;
+  // Android's own location service (the one maps apps use): faster and more reliable than the web view's GPS. Older app installs without it keep the old way.
+  var GEO = reg('Geolocation'), geoOK = !!(C.isPluginAvailable && C.isPluginAvailable('Geolocation')), gid = null;
+  function gErr(e) { var m = String((e && e.message) || e || ''); return { code: /denied|permission|not authorized/i.test(m) ? 1 : /timeout|timed out/i.test(m) ? 3 : 2, message: m } }
+  function gPerm() { return GEO.checkPermissions().then(function (p) { return (p.location === 'granted' || p.coarseLocation === 'granted') ? p : GEO.requestPermissions() }).then(function (p) { if (p.location !== 'granted' && p.coarseLocation !== 'granted') throw new Error('Location permission denied'); return p }) }
+  function gStart() { if (!geoOK || gid != null) return; gid = 'pending';
+    gPerm().then(function () { return GEO.watchPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 2000 }, function (p, e) {
+      if (e) { var x = gErr(e); if (x.code === 1) each(1, x); return }
+      if (p && p.coords) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; each(0, last) } }) })
+      .then(function (id) { if (gid === 'stop') { GEO.clearWatch({ id: id }).catch(function () {}); gid = null } else gid = id })
+      .catch(function (e) { gid = null; var x = gErr(e); if (x.code === 1) each(1, x); else web() }) }
+  function gStop() { if (gid == null) return; if (gid === 'pending') { gid = 'stop'; return } GEO.clearWatch({ id: gid }).catch(function () {}); gid = null }
   function pos(l) { return { coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, altitudeAccuracy: l.altitudeAccuracy, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() } }
   function each(i, v) { Object.keys(subs).forEach(function (k) { var f = subs[k] && subs[k][i]; if (f) try { f(v) } catch (e) {} }) }
   function start() {
-    if (wid != null || starting) return; starting = true;
+    gStart(); if (wid != null || starting) return; starting = true;
     BG.addWatcher({ backgroundTitle: 'AwareBC is watching the trail ahead', backgroundMessage: 'Danger alerts stay on while you ride. Turn GPS off in AwareBC to stop.', requestPermissions: true, stale: false, distanceFilter: 10 },
       function (l, e) {
         if (e) { if (e.code !== 'NOT_AUTHORIZED') { web(); return } each(1, { code: 1, message: e.message || '' }); return }
@@ -28,11 +39,14 @@
     clearTimeout(dog); dog = setTimeout(function () { if (Object.keys(subs).length && (!last || Date.now() - last.timestamp > 20000)) web() }, 20000);
   }
   var wwid = null, dog = null;
-  function web() { if (wwid != null || !G || !Object.keys(subs).length) return;
+  function web() { if (wwid != null || !G || !Object.keys(subs).length || (geoOK && gid != null && gid !== 'stop')) return;
     try { wwid = G.watchPosition(function (p) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; each(0, last) }, function (e) { each(1, e) }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 }) } catch (e) { wwid = null } }
-  function stop() { clearTimeout(dog); if (wwid != null && G) { G.clearWatch(wwid); wwid = null } if (wid != null) { var id = wid; wid = null; BG.removeWatcher({ id: id }).catch(function () {}) } }
+  function stop() { clearTimeout(dog); gStop(); if (wwid != null && G) { G.clearWatch(wwid); wwid = null } if (wid != null) { var id = wid; wid = null; BG.removeWatcher({ id: id }).catch(function () {}) } }
   var shim = {
-    getCurrentPosition: G ? G.getCurrentPosition.bind(G) : function (a, b) { if (b) b({ code: 2 }) },
+    getCurrentPosition: function (ok, bad, o) { o = o || {};
+      if (!geoOK) { if (G) return G.getCurrentPosition(ok, bad, o); if (bad) bad({ code: 2 }); return }
+      gPerm().then(function () { return GEO.getCurrentPosition({ enableHighAccuracy: o.enableHighAccuracy !== false, timeout: o.timeout || 15000, maximumAge: o.maximumAge || 0 }) })
+        .then(function (p) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; if (ok) ok(last) }, function (e) { if (bad) bad(gErr(e)) }) },
     watchPosition: function (ok, bad) { var id = ++n; subs[id] = [ok, bad];
       if (last && Date.now() - last.timestamp < 15000) setTimeout(function () { if (subs[id]) try { ok(last) } catch (e) {} }, 0);
       start(); return id },
