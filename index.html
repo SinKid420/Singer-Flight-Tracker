@@ -309,7 +309,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
-#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:118px;color:var(--accent)}#locate.follow{background:var(--accent);color:#fff}#locate.on svg{animation:locp 1s ease-in-out infinite}@keyframes locp{50%{opacity:.35}}#locmsg{position:fixed;left:16px;right:70px;top:calc(env(safe-area-inset-top,0px) + 104px);z-index:1250;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:8px 12px;font:13px/1.35 var(--font);box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center}#locmsg[hidden]{display:none}#locmsg b{display:block;font-size:14px;margin-bottom:2px}#locmsg button{display:block;margin:6px auto 0;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:700 13px var(--font)}.gpst{width:100%;border-collapse:collapse;margin:2px 0;text-align:left}.gpst td{padding:2px 0;font-size:12px;vertical-align:top}.gpst td:first-child{color:#aaa;padding-right:8px;white-space:nowrap}.me.stale i{opacity:.45;filter:grayscale(1)}#gear{bottom:150px;color:var(--dim)}
+#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:118px;color:var(--accent)}#locate.follow{background:var(--accent);color:#fff}#locate.on svg{animation:locp 1s ease-in-out infinite}@keyframes locp{50%{opacity:.35}}#locmsg{position:fixed;left:16px;right:70px;top:calc(env(safe-area-inset-top,0px) + 104px);z-index:1250;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:8px 12px;font:13px/1.35 var(--font);box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center}#locmsg[hidden]{display:none}#locmsg b{display:block;font-size:14px;margin-bottom:2px}#locmsg button{display:block;margin:6px auto 0;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:700 13px var(--font)}.gpst{width:100%;border-collapse:collapse;margin:2px 0;text-align:left}.gpst td{padding:2px 0;font-size:12px;vertical-align:top}.gpst td:first-child{color:#aaa;padding-right:8px;white-space:nowrap}.me.stale i{opacity:.45;filter:grayscale(1)}.me b{display:none;position:absolute;left:50%;top:50%;width:0;height:0;margin:-27px 0 0 -9px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid #ff3b30;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 1px 2px rgba(0,0,0,.6));transform-origin:9px 27px;transform:rotate(var(--hd,0deg))}.me.mv b{display:block}#gear{bottom:150px;color:var(--dim)}
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:58px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:180px}
@@ -908,7 +908,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ if(d.open) [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(o){ if(o!==d) o.open=false }) }) });
 
   // Location dot with a soft red halo
-  var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
+  var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i><b></b>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
   var meHalo = {setLatLng:function(){return meHalo}};
   var ring = L.circle([me.lat,me.lon],{radius:radiusNm*1852,color:'#ff3b30',weight:1.5,opacity:.6,fill:false,dashArray:'5 7',interactive:false}).addTo(map);
 
@@ -1456,7 +1456,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=106, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=107, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1469,16 +1469,33 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return; me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
     meMark.setLatLng([nl,nn]); ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
     var el=meMark.getElement(); if(el) el.classList.remove('stale');
-    if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); say('Following you · drag the map to stop',3000); recenter(true); map.setView([nl,nn],Math.max(map.getZoom(),11)) }
-    else if(follow) map.panTo([nl,nn],{animate:true,duration:.5});
+    // Driving: speed and direction from the GPS (or worked out from the last spot), arrow shows which way you're heading
+    var t=pos.timestamp||Date.now(), sp=(c.speed!=null&&isFinite(c.speed))?c.speed:-1, hd=(c.heading!=null&&isFinite(c.heading))?c.heading:-1;
+    if(prevFix){ var dm=distNm(prevFix[0],prevFix[1],nl,nn)*1852, dt=(t-prevFix[2])/1000;
+      if(sp<0&&dt>0.5&&dt<30) sp=dm/dt;
+      if(dm>8){ var y=Math.sin((nn-prevFix[1])*Math.PI/180)*Math.cos(nl*Math.PI/180), x=Math.cos(prevFix[0]*Math.PI/180)*Math.sin(nl*Math.PI/180)-Math.sin(prevFix[0]*Math.PI/180)*Math.cos(nl*Math.PI/180)*Math.cos((nn-prevFix[1])*Math.PI/180); if(hd<0||sp<3) hd=(Math.atan2(y,x)*180/Math.PI+360)%360 } }
+    if(!prevFix||distNm(prevFix[0],prevFix[1],nl,nn)*1852>8||t-prevFix[2]>10000) prevFix=[nl,nn,t];
+    moving=sp>1.5; if(moving){ stillT=0; if(hd>=0) lastHd=hd } else if(!stillT) stillT=t;
+    var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
+    if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
+    if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(moving?'Drive mode · following you up close':'Following you · drag the map to stop',3000); recenter(true); zoomTo([nl,nn],moving?DRIVEZ:Math.max(map.getZoom(),11)) }
+    else if(follow){ if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
+    awake(follow&&mvOn);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
+  var prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
+  function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
+  function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0; el.style.setProperty('--hd',((lastHd+(bb||0))%360)+'deg') }
+  map.on('rotate',arrow);
+  map.on('zoomstart',function(){ if(follow&&!ourZoom) userZoom=true });
+  // keep the screen on while you're driving with My spot following
+  function awake(on){ try{ if(on&&!wl&&navigator.wakeLock&&!document.hidden){ wl=1; navigator.wakeLock.request('screen').then(function(x){ wl=x; x.addEventListener('release',function(){ wl=null }) },function(){ wl=null }) } else if(!on&&wl&&wl.release){ wl.release(); wl=null } }catch(e){ wl=null } }
   function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
   var told=false;
-  function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:true,maximumAge:3000,timeout:30000}) }catch(e){ wId=null } }
+  function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:true,maximumAge:1000,timeout:30000}) }catch(e){ wId=null } }
   function stopWatch(){ if(wId!=null&&navigator.geolocation) navigator.geolocation.clearWatch(wId); wId=null }
   document.addEventListener('visibilitychange',function(){ if(document.hidden) stopWatch(); else startWatch() });
-  map.on('dragstart',function(){ if(follow){ follow=false; locBtn.classList.remove('follow','on'); say('Stopped following · tap My spot to follow again',2500) } });
+  map.on('dragstart',function(){ if(follow){ follow=false; awake(false); locBtn.classList.remove('follow','on'); say('Stopped following · tap My spot to follow again',2500) } });
   startWatch();
   // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
   if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){
@@ -1491,8 +1508,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     locBtn.addEventListener('click',function(e){ if(held){ held=false; e.stopImmediatePropagation(); e.preventDefault() } },true); locBtn.addEventListener('contextmenu',function(e){ e.preventDefault() }) })();
   locBtn.onclick=function(){ var b=locBtn;
     if(!navigator.geolocation){ say('<b>No location on this device</b>This browser can\'t share your location.',8000); return }
-    follow=true; b.classList.add('follow'); startWatch();
-    if(lastFix&&Date.now()-lastFix<20000){ recenter(true); map.setView([me.lat,me.lon],Math.max(map.getZoom(),11)); say('Following you · drag the map to stop',3000); return }
+    follow=true; userZoom=false; drove=false; b.classList.add('follow'); startWatch();
+    if(lastFix&&Date.now()-lastFix<20000){ recenter(true); zoomTo([me.lat,me.lon],moving?DRIVEZ:Math.max(map.getZoom(),11)); say(moving?'Drive mode · following you up close':'Following you · drag the map to stop',3000); return }
     b.classList.add('on'); say('Finding you…',31000,true); var tries=0;
     setTimeout(function(){ if(b.classList.contains('on')){ b.classList.remove('on'); if(!lastErr) lastErr={code:3,msg:'No answer from the phone GPS'}; say(why({code:3}),20000,true) } },30000);
     function fail(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(!b.classList.contains('on')) return; if(err&&err.code===1){ lost(err); return }
