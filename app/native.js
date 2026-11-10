@@ -8,6 +8,7 @@
   var reg = X.registerPlugin, BG = reg('BackgroundGeolocation'), LN = reg('LocalNotifications'), APP = reg('App');
   var OFF = 'awarebc-off-1', bg = false;
   window.__native = { bg: function () { return bg || document.hidden } };
+  window.__native.settings = function () { return BG.openSettings() };
 
   // ---------- app in background? ----------
   try { APP.addListener('appStateChange', function (s) { bg = !s.isActive }) } catch (e) {}
