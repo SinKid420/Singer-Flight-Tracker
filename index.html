@@ -1476,7 +1476,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=112, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=113, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1498,7 +1498,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     moving=sp>1.5; if(moving){ stillT=0; if(hd>=0) lastHd=hd } else if(!stillT) stillT=t;
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
-    if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(moving?'Drive mode · following you up close':'Following you · drag the map to stop',3000); recenter(true); zoomTo([nl,nn],moving?DRIVEZ:Math.max(map.getZoom(),11)) }
+    if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); zoomTo([nl,nn],moving?DRIVEZ:Math.max(map.getZoom(),11)) }
     else if(follow){ if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
     awake(follow&&mvOn);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
@@ -1531,6 +1531,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     follow=true; userZoom=false; drove=false; b.classList.add('follow'); startWatch();
     if(lastFix&&Date.now()-lastFix<20000){ recenter(true); zoomTo([me.lat,me.lon],moving?DRIVEZ:Math.max(map.getZoom(),11)); say(moving?'Drive mode · following you up close':'Following you · drag the map to stop',3000); return }
     b.classList.add('on'); say('Finding you…',31000,true); var tries=0;
+    // quick rough spot from Wi-Fi and cell towers (a second or two, works indoors) while precise GPS locks on
+    try{ navigator.geolocation.getCurrentPosition(function(p){ if(b.classList.contains('on')) onFix(p) },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:600000}) }catch(e){}
     setTimeout(function(){ if(b.classList.contains('on')){ b.classList.remove('on'); if(!lastErr) lastErr={code:3,msg:'No answer from the phone GPS'}; say(why({code:3}),20000,true) } },30000);
     function fail(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(!b.classList.contains('on')) return; if(err&&err.code===1){ lost(err); return }
       if(++tries<2){ navigator.geolocation.getCurrentPosition(onFix,fail,{enableHighAccuracy:false,timeout:15000,maximumAge:600000}); return }
