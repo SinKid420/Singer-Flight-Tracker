@@ -159,13 +159,21 @@
     var steps=[{i:0,tx:'Head '+['north','northeast','east','southeast','south','southwest','west','northwest'][Math.round(brg(pts[0][0],pts[0][1],pts[Math.min(3,pts.length-1)][0],pts[Math.min(3,pts.length-1)][1])/45)%8]+(nmOf(eds[1])?' on '+nmOf(eds[1]):''),ic:'⬆'}];
     function nmOf(ix){ var e=fe[ix]; if(!e) return ''; return e.n||({fsr:'forest service road',permit:'forest road',resource:'resource road',unclassified:'back road',recreation:'recreation road',local:'local road'}[e.c]||'') }
     function bAt(k,dir){ var j=k, d=0; while(j+dir>=0&&j+dir<pts.length&&d<40){ d+=hav(pts[j][0],pts[j][1],pts[j+dir][0],pts[j+dir][1]); j+=dir } return j }
-    var lastN=nmOf(eds[1]);
-    for(k=1;k<pts.length-1;k++){ var e1=fe[eds[k]], e2=fe[eds[k+1]], nm2=nmOf(eds[k+1]);
+    var GEN={'forest service road':1,'forest road':1,'resource road':1,'back road':1,'recreation road':1,'local road':1,'':1};
+    var lastN=nmOf(eds[1]), lastReal=GEN[lastN]?'':lastN;
+    for(k=1;k<pts.length-1;k++){ var nm2=nmOf(eds[k+1]), gen=!!GEN[nm2];
       var deg=adj[path[k]].length/4, b1=brg(pts[bAt(k,-1)][0],pts[bAt(k,-1)][1],pts[k][0],pts[k][1]), b2=brg(pts[k][0],pts[k][1],pts[bAt(k,1)][0],pts[bAt(k,1)][1]), t=((b2-b1)+540)%360-180, at=Math.abs(t);
-      var named=nm2&&nm2!==lastN, same=!named, turn=deg>2&&at>(same?60:35);
-      if(!(named&&deg>2)&&!turn) continue; if(steps.length&&cum[k]-cum[steps[steps.length-1].i]<25&&!turn) continue;
-      var mo=at<35?'straight':at<60?(t<0?'slight left':'slight right'):at<150?(t<0?'left':'right'):'uturn';
-      steps.push({i:k,tx:same&&nm2?(mo==='uturn'?'Make a U-turn':(t<0?'Turn left':'Turn right'))+' to stay on '+nm2:(mo==='straight'?'Continue':MOD[mo])+(nm2?' onto '+nm2:''),ic:icon('turn',mo)}); lastN=nm2 }
+      var gap=steps.length?cum[k]-cum[steps[steps.length-1].i]:1e9, mo=at<35?'straight':at<60?(t<0?'slight left':'slight right'):at<150?(t<0?'left':'right'):'uturn', tx='';
+      // the road just bends if our way is the straightest way on at this junction: no instruction then
+      var nd=path[k], aj=adj[nd], best=1e9, mine=1e9, bi1=brg(nLa[path[k-1]],nLo[path[k-1]],nLa[nd],nLo[nd]);
+      for(var q=0;q<aj.length;q+=4){ var v=aj[q]; if(v===path[k-1]) continue; var dd=Math.abs((((brg(nLa[nd],nLo[nd],nLa[v],nLo[v])-bi1)%360)+540)%360-180); if(dd<best) best=dd; if(v===path[k+1]) mine=dd }
+      var bend=mine<=best+15;
+      if(deg>2&&at>=60&&!bend&&(gap>60||at>100)){ // a real turn at a junction
+        tx=(mo==='uturn'?'Make a U-turn':MOD[mo])+(gen?(nm2!==lastN&&nm2?' onto '+nm2:''):(nm2===lastReal?' to stay on '+nm2:' onto '+nm2)) }
+      else if(!gen&&nm2!==lastReal&&deg>2&&gap>80){ // a new named road
+        tx=(mo==='straight'?'Continue':MOD[mo])+' onto '+nm2 }
+      if(tx){ steps.push({i:k,tx:tx,ic:icon('turn',mo)}); lastN=nm2 }
+      if(!gen&&(tx||nm2===lastReal)) lastReal=nm2 }
     steps.push({i:pts.length-1,tx:'Arrive at '+dest.n,ic:'🏁'});
     // warnings along the way
     var fsrM=0, permM=0, rough=0;
