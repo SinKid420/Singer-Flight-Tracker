@@ -271,6 +271,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .compass text{font:700 10px var(--font);fill:#fff;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.45);stroke-width:2px}
 .compass .north{fill:#ff3b30}
 .compass .tick{stroke:rgba(255,255,255,.65);stroke-width:1;stroke-linecap:round}
+#rotbtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:238px}#rotbtn svg{width:24px;height:24px}#rotbtn::after{content:'Rotate';position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:1px;font:700 10px/12px var(--font);color:#fff;text-shadow:0 0 3px #000,0 0 2px #000,0 1px 2px #000;white-space:nowrap;pointer-events:none}#rotbtn[aria-pressed=true]{background:var(--accent,#2f80ed);color:#fff}
 .hdg{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:5px;min-width:44px;text-align:center;padding:3px 8px;border-radius:12px;font:500 11px/1.1 var(--font);font-variant-numeric:tabular-nums;letter-spacing:.03em;color:#fff;
   background:rgba(18,18,22,.72);border:1px solid rgba(255,255,255,.22)}
 .compass:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -460,6 +461,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
       <div class="legend" id="altlegend"><span id="lgtitle">Altitude ft</span><div class="bar"></div><div class="ends"><span>0</span><span id="lgmax">40k+</span></div></div>
       <div class="legend wxlegend" id="wxlegend"><div id="wxlegtxt">Live rain, mm/h</div><img id="wxlegimg" alt="Rain intensity scale"></div>
     </div>
+    <button class="sidebtn" id="rotbtn" type="button" aria-pressed="false" aria-label="Auto-rotate map to the way you face or drive"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 5 21l7-4 7 4z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 8.5A9.5 9.5 0 0 1 8 3.6M20.5 8.5A9.5 9.5 0 0 0 16 3.6"/></svg></button>
     <button class="compass" id="compass" aria-label="Compass. Tap to point the map north">
       <svg viewBox="0 0 72 72" aria-hidden="true"><g id="dial">
         <line class="tick" x1="36" y1="3.5" x2="36" y2="7"/><line class="tick" x1="36" y1="68.5" x2="36" y2="65"/><line class="tick" x1="3.5" y1="36" x2="7" y2="36"/><line class="tick" x1="68.5" y1="36" x2="65" y2="36"/>
@@ -1476,7 +1478,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=113, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=114, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1498,6 +1500,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     moving=sp>1.5; if(moving){ stillT=0; if(hd>=0) lastHd=hd } else if(!stillT) stillT=t;
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
+    rotStep();
     if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); zoomTo([nl,nn],moving?DRIVEZ:Math.max(map.getZoom(),11)) }
     else if(follow){ if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
     awake(follow&&mvOn);
@@ -1507,6 +1510,35 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
   var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
+  // Auto-rotate: the map turns so the way you drive (GPS) or face (phone compass) points up
+  var rotOn=false, rotH=null, rotSm=null, rotLast=0, rotPause=0, rotOurs=false, rotGot=false, rotChk=null, rotBtn=document.getElementById('rotbtn');
+  try{ rotOn=localStorage.getItem('sky-autorot')==='1' }catch(e){}
+  function aDiff(a,b){ return ((a-b)%360+540)%360-180 }
+  function compassHd(al,be,ga){ var r=Math.PI/180, x=be*r, y=ga*r, z=al*r, cY=Math.cos(y), cZ=Math.cos(z), sX=Math.sin(x), sY=Math.sin(y), sZ=Math.sin(z);
+    if(Math.abs(be)<35) return (360-al)%360; var h=Math.atan2(-cZ*sY-sZ*sX*cY,-sZ*sY+cZ*sX*cY)/r; return (h+360)%360 }
+  function rotStep(){ if(!rotOn||!map.setBearing) return;
+    var t=(moving&&lastHd>=0)?lastHd:rotH; if(t==null) return;
+    var now=Date.now(); if(now<rotPause||now-rotLast<70) return; rotLast=now;
+    rotSm=rotSm==null?t:(rotSm+aDiff(t,rotSm)*0.2+360)%360;
+    var want=(360-rotSm)%360, cur=map.getBearing?map.getBearing():0, d=aDiff(want,cur);
+    if(Math.abs(d)<2) return;
+    rotOurs=true; try{ map.setBearing((cur+d+360)%360) }catch(e){} rotOurs=false }
+  map.on('rotate',function(){ if(!rotOurs) rotPause=Date.now()+6000 });
+  function onOri(e){ var h=null;
+    if(e.webkitCompassHeading!=null&&isFinite(e.webkitCompassHeading)) h=e.webkitCompassHeading;
+    else if(e.alpha!=null&&e.beta!=null&&e.gamma!=null&&(e.absolute||e.type==='deviceorientationabsolute')) h=compassHd(e.alpha,e.beta,e.gamma);
+    if(h==null) return; rotGot=true; rotH=h; rotStep() }
+  function rotListen(on){ var f=on?'addEventListener':'removeEventListener'; try{ window[f]('deviceorientationabsolute',onOri,true); window[f]('deviceorientation',onOri,true) }catch(e){} }
+  function setRot(on,quiet){ rotOn=!!on; rotBtn.setAttribute('aria-pressed',rotOn?'true':'false'); try{ localStorage.setItem('sky-autorot',rotOn?'1':'0') }catch(e){}
+    clearTimeout(rotChk); rotListen(false); rotSm=null; rotPause=0;
+    if(rotOn){ rotGot=false;
+      rotListen(true); try{ if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().then(function(r){ if(r==='denied') say('Compass blocked. Allow motion &amp; orientation in Settings.',6000) },function(){}) }catch(e){}
+      rotChk=setTimeout(function(){ if(rotOn&&!rotGot&&!(moving&&lastHd>=0)) say('No compass found on this phone. Auto-rotate works while you drive.',6000) },3000);
+      if(!quiet) say('Auto-rotate on · map turns to the way you face. Tap the compass for north.',4500) }
+    else if(!quiet) say('Auto-rotate off',2000) }
+  rotBtn.onclick=function(){ setRot(!rotOn) };
+  document.getElementById('compass').addEventListener('click',function(){ if(rotOn) setRot(false,true) });
+  if(rotOn) setRot(true,true);
   map.on('zoomstart',function(){ if(follow&&!ourZoom) userZoom=true });
   // keep the screen on while you're driving with My spot following
   function awake(on){ try{ if(on&&!wl&&navigator.wakeLock&&!document.hidden){ wl=1; navigator.wakeLock.request('screen').then(function(x){ wl=x; x.addEventListener('release',function(){ wl=null }) },function(){ wl=null }) } else if(!on&&wl&&wl.release){ wl.release(); wl=null } }catch(e){ wl=null } }
