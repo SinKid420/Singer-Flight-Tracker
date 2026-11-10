@@ -1,4 +1,4 @@
-// AwareBC by Josh Singer: survival tools (mountain sledder, supply chain, planetary threats, off-grid comms).
+// AwareBC by Josh Singer: survival tools (mountain sledder, supply chain, planetary threats, off-grid comms, rescue & signal).
 // Loaded a moment after the map opens, so the map itself shows up faster.
 window.__awm&&window.__awm('tools',function(X){with(X){
 (function(){
@@ -38,13 +38,15 @@ window.__awm&&window.__awm('tools',function(X){with(X){
     document.getElementById('t_supply').onclick=function(){ setTools(false); open('supply',0) };
     document.getElementById('t_planet').onclick=function(){ setTools(false); open('planet',0) };
     document.getElementById('t_comms').onclick=function(){ setTools(false); open('comms',0) };
+    var trs=document.getElementById('t_rescue'); if(trs) trs.onclick=function(){ setTools(false); open('rescue',0) };
     document.getElementById('prepx').onclick=function(){ sh.hidden=true; vt++ };
     sh.onclick=function(e){ if(e.target===sh){ sh.hidden=true; vt++ } };
     var MODS={
       sled:{t:'🛷 Mountain sledder',tabs:['Snow','Slopes','Zones','Safety'],r:[sledSnow,sledSlopes,sledZones,sledSafety]},
       supply:{t:'🚢 Supply chain',tabs:['Ports','Fuel','Closures'],r:[supPorts,supFuel,supClose]},
       planet:{t:'☄️ Planetary threats',tabs:['Solar','Radiation','Asteroids'],r:[plSolar,plRad,plNeo]},
-      comms:{t:'📻 Off-grid comms',tabs:['HF bands','Broadcast','Repeaters','SDR'],r:[cmHF,cmBcst,cmRep,cmSdr]}};
+      comms:{t:'📻 Off-grid comms',tabs:['HF bands','Broadcast','Repeaters','SDR'],r:[cmHF,cmBcst,cmRep,cmSdr]},
+      rescue:{t:'🆘 Rescue & signal',tabs:['Rescue card','Signal','First aid'],r:[rsCard,rsSignal,rsAid]}};
     function open(k,tab){ var m=MODS[k]; cur=k; curTab=tab||0; vt++; ttl.textContent=m.t;
       tabsEl.innerHTML=m.tabs.map(function(t,i){ return '<button class="ptab'+(i===curTab?' on':'')+'" data-i="'+i+'" aria-pressed="'+(i===curTab)+'">'+t+'</button>' }).join('');
       [].forEach.call(tabsEl.children,function(b){ b.onclick=function(){ open(k,+b.getAttribute('data-i')) } });
@@ -195,7 +197,7 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       }).catch(function(){ put(t,sec('Riding zones','Could not load the closure maps. Check your connection and try again.')) }) }
     try{ if(localStorage.getItem('sky-zones')==='1') setTimeout(function(){ setZones(true) },3000) }catch(e){}
     // offline spots: saved on the phone only
-    var spotLayer=L.layerGroup().addTo(map), spotsOn=false, SPK={nosig:['📵','No signal','#546e7a'],cache:['🆘','Rescue cache','#e53935'],shelter:['🏠','Shelter / cabin','#6d4c41']};
+    var spotLayer=L.layerGroup().addTo(map), spotsOn=false, SPK={nosig:['📵','No signal','#546e7a'],sig:['📶','Had signal','#2e7d32'],cache:['🆘','Rescue cache','#e53935'],shelter:['🏠','Shelter / cabin','#6d4c41']};
     function spots(){ try{ var a=JSON.parse(localStorage.getItem('sky-spots')||'[]'); return Array.isArray(a)?a.filter(function(s){return s&&SPK[s.k]&&isFinite(s.lat)&&isFinite(s.lon)}):[] }catch(e){ return [] } }
     function saveSpots(a){ try{ localStorage.setItem('sky-spots',JSON.stringify(a.slice(-300))) }catch(e){} drawSpots() }
     function drawSpots(){ spotLayer.clearLayers(); if(!spotsOn) return; spots().forEach(function(s){ var k=SPK[s.k];
@@ -338,6 +340,121 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       put(t,sec('Online radio receivers (WebSDR / KiwiSDR)','Listen to shortwave and ham bands through someone else’s receiver over the internet. Handy for checking what is getting through.')+
         sec('Nearest to you',a.slice(0,6).map(function(s){ return '<a class="phead" href="'+esc(link(s[3]))+'" target="_blank" rel="noopener">'+esc(s[0])+'<small>'+kmTxt(s[4])+'</small></a>' }).join(''))+
         '<div class="skynote">These need internet. Live list of all receivers: <a href="http://rx.kiwisdr.com/" target="_blank" rel="noopener">rx.kiwisdr.com</a> · <a href="http://websdr.org/" target="_blank" rel="noopener">websdr.org</a></div>') }
+
+    // ================= 5. RESCUE & SIGNAL =================
+    // Rescue card: your exact spot in every format Search and Rescue asks for. Signal: where you are most likely to get a bar. First aid: offline guides.
+    function pad2(n){ return (n<10?'0':'')+n }
+    function utm(lat,lon){ var a=6378137, f=1/298.257223563, k0=0.9996, e2=f*(2-f), ep=e2/(1-e2), zn=Math.floor((lon+180)/6)+1, l0=((zn-1)*6-177)*Math.PI/180, p=lat*Math.PI/180, l=lon*Math.PI/180;
+      var sp=Math.sin(p), cp=Math.cos(p), tp=Math.tan(p), N=a/Math.sqrt(1-e2*sp*sp), T=tp*tp, Cc=ep*cp*cp, A=cp*(l-l0);
+      var M=a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*p-(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*p)+(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*p)-(35*e2*e2*e2/3072)*Math.sin(6*p));
+      var E=k0*N*(A+(1-T+Cc)*A*A*A/6+(5-18*T+T*T+72*Cc-58*ep)*Math.pow(A,5)/120)+500000;
+      var Nn=k0*(M+N*tp*(A*A/2+(5-T+9*Cc+4*Cc*Cc)*Math.pow(A,4)/24+(61-58*T+T*T+600*Cc-330*ep)*Math.pow(A,6)/720)); if(lat<0) Nn+=10000000;
+      return {z:zn,b:'CDEFGHJKLMNPQRSTUVWXX'.charAt(Math.max(0,Math.min(20,Math.floor((lat+80)/8)))),e:Math.round(E),n:Math.round(Nn)} }
+    function dms(v,P,Q){ var a=Math.abs(v), d=Math.floor(a), mf=(a-d)*60, m=Math.floor(mf), s=((mf-m)*60).toFixed(1); if(s==='60.0'){ s='0.0'; m++ } if(m===60){ m=0; d++ } return d+'° '+m+'′ '+s+'″ '+(v<0?Q:P) }
+    function ddm(v,P,Q){ var a=Math.abs(v), d=Math.floor(a), m=((a-d)*60).toFixed(3); if(m==='60.000'){ m='0.000'; d++ } return d+'° '+m+'′ '+(v<0?Q:P) }
+    function brg(a,b,c,d){ var p1=a*Math.PI/180, p2=c*Math.PI/180, dl=(d-b)*Math.PI/180, y=Math.sin(dl)*Math.cos(p2), x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl); return (Math.atan2(y,x)*180/Math.PI+360)%360 }
+    function nearTown(lat,lon){ var best=null; BCST.forEach(function(b){ var k=km(lat,lon,b[4],b[5]); if(!best||k<best.k) best={n:b[3],k:k,d:dirTxt(brg(b[4],b[5],lat,lon))} }); return best }
+    var rFix=null; try{ rFix=JSON.parse(localStorage.getItem('sky-rfix')||'null') }catch(e){}
+    function getFix(){ return new Promise(function(res){ var G=navigator.geolocation, done=false; if(!G) return res(null);
+      var to=setTimeout(function(){ if(!done){ done=true; res(null) } },16000);
+      G.getCurrentPosition(function(p){ if(done) return; done=true; clearTimeout(to); rFix={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy,alt:p.coords.altitude,t:p.timestamp||Date.now()}; try{ localStorage.setItem('sky-rfix',JSON.stringify(rFix)) }catch(e){} res(rFix) },
+        function(){ if(!done){ done=true; clearTimeout(to); res(null) } },{enableHighAccuracy:true,maximumAge:15000,timeout:15000}) }) }
+    var rPlace={};
+    function placeName(lat,lon){ var k=lat.toFixed(3)+','+lon.toFixed(3); if(rPlace[k]) return rPlace[k];
+      return rPlace[k]=cached('rev'+k,1440,function(){ return J('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&lat='+lat.toFixed(5)+'&lon='+lon.toFixed(5)).then(function(j){ var a=(j&&j.address)||{}; var road=a.road||a.track||a.path||'', town=a.village||a.town||a.city||a.hamlet||a.locality||a.county||''; return (road||town)?{road:road,town:town}:null }) }) }
+    function rsText(f,u,town,place,el){ var la=f.lat.toFixed(5), lo=f.lon.toFixed(5);
+      return 'My location (AwareBC):\nLat/Lon: '+la+', '+lo+'\nDMS: '+dms(f.lat,'N','S')+', '+dms(f.lon,'E','W')+'\nUTM: '+u.z+u.b+' '+u.e+'E '+u.n+'N (NAD83/WGS84)'+(el!=null?'\nElevation: about '+Math.round(el)+' m':'')+(f.acc?'\nGPS accuracy: ±'+Math.round(f.acc)+' m':'')+(place&&place.road?'\nNear: '+place.road+(place.town?', '+place.town:''):'')+(town?(town.k<1?'\nIn '+town.n:'\nAbout '+kmTxt(town.k)+' '+town.d+' of '+town.n):'')+'\nTime: '+new Date(f.t||Date.now()).toLocaleString()+'\nhttps://maps.google.com/?q='+la+','+lo }
+    function rsCard(t){ var f=rFix&&Date.now()-rFix.t<6*3600000?rFix:{lat:me.lat,lon:me.lon,t:0,old:true}, fresh=false;
+      function draw(place,el){ if(t!==vt) return; var u=utm(f.lat,f.lon), town=nearTown(f.lat,f.lon), la=f.lat.toFixed(5), lo=f.lon.toFixed(5);
+        var row=function(k,v){ return '<div class="row2 prow2"><span>'+k+'</span><span><b style="font-weight:700;user-select:all;-webkit-user-select:all">'+v+'</b></span></div>' };
+        var h='<div class="ssec" style="border:2px solid #e53935"><h4>📞 Call 911 · ask for police</h4>In BC the RCMP call out Search and Rescue. Read them this:</div>';
+        h+=sec('Your location'+(fresh?' · <span class="good">GPS ✓</span>':f.old?' · <span style="color:#fb8c00">no GPS fix yet</span>':' · <span style="color:#fb8c00">saved '+ago(f.t)+'</span>'),
+          row('Latitude',Math.abs(f.lat).toFixed(5)+(f.lat<0?' S':' N'))+row('Longitude',Math.abs(f.lon).toFixed(5)+(f.lon<0?' W':' E'))+row('As numbers',la+', '+lo)+row('Deg · min · sec',dms(f.lat,'N','S')+'<br>'+dms(f.lon,'E','W'))+row('Degrees · minutes',ddm(f.lat,'N','S')+'<br>'+ddm(f.lon,'E','W'))+
+          row('UTM (NAD83)',u.z+u.b+' '+u.e+' E<br>'+u.n+' N')+(el!=null?row('Elevation','~'+Math.round(el).toLocaleString()+' m'):'')+(f.acc?row('GPS accuracy','± '+Math.round(f.acc)+' m'):'')+
+          (place&&place.road?row('Near',esc(place.road)+(place.town?'<br>'+esc(place.town):'')):'')+(town?row('Closest town',town.k<1?'In '+esc(town.n):kmTxt(town.k)+' '+town.d+' of '+esc(town.n)):''));
+        h+='<div class="pbtns"><button id="rsfix">📍 Refresh GPS</button><button id="rscopy">📋 Copy</button><a id="rssms" style="min-height:40px;border-radius:10px;background:var(--bg);color:var(--fg);font:600 12px var(--font);display:flex;align-items:center;justify-content:center;text-decoration:none" href="sms:?&body='+encodeURIComponent(rsText(f,u,town,place,el))+'">💬 Text it</a></div><div id="rsbox"></div>';
+        h+=sec('No signal?','<b>Texts get through when calls can’t.</b> Text this card to someone who can call 911 for you. Phones with satellite SOS (newer iPhones, some Androids, inReach, SPOT) work with no cell signal. Climb to open high ground (see the Signal tab) and try again.');
+        h+=sec('Once help is coming','Stay where you are. Keep your phone warm (inside pocket) and on low-power mode. Stay off the phone except to check in. Make yourself easy to see: bright gear spread out, a fire only if it’s safe.');
+        h+='<div class="skynote">Works with no signal (except the road name). Coordinates are WGS84, the same as NAD83 for rescue use.</div>';
+        if(!put(t,h)) return;
+        document.getElementById('rsfix').onclick=function(){ this.textContent='Getting GPS…'; getFix().then(function(x){ if(x){ f=x; fresh=true; go() } else if(t===vt){ var b=document.getElementById('rsfix'); if(b) b.textContent='No GPS fix · try outside' } }) };
+        document.getElementById('rscopy').onclick=function(){ var bx=document.getElementById('rsbox'); bx.innerHTML='<textarea readonly rows="9" style="width:100%;box-sizing:border-box;margin-top:6px;background:#000;color:#fff;border:1px solid #555;border-radius:8px;padding:8px;font:12px/1.35 ui-monospace,monospace">'+esc(rsText(f,u,town,place,el))+'</textarea><small style="display:block;color:var(--dim)">Selected: press and hold, then Copy.</small>'; var ta=bx.querySelector('textarea'); ta.focus(); ta.select() } }
+      function go(){ var el=f.alt!=null&&isFinite(f.alt)?f.alt:null; draw(null,el); var p=placeName(f.lat,f.lon);
+        var ep=el!=null?Promise.resolve(el):cached('el'+f.lat.toFixed(3)+f.lon.toFixed(3),100000,function(){ return J('https://api.open-meteo.com/v1/elevation?latitude='+f.lat.toFixed(4)+'&longitude='+f.lon.toFixed(4)).then(function(j){ return j&&j.elevation?j.elevation[0]:null }) }).then(function(r){ return r?(typeof r.d==='number'?r.d:null):null });
+        Promise.all([p,ep]).then(function(a){ draw(a[0]&&a[0].d,a[1]) }) }
+      go(); getFix().then(function(x){ if(x&&t===vt){ f=x; fresh=true; go() } }) }
+
+    // ---------- Signal finder: high ground with a clear line to cell towers ----------
+    var demP={}, demA={}, sigLayer=L.layerGroup().addTo(map), sigRes=null;
+    function dem(z,x,y){ var k=z+'/'+x+'/'+y; if(demP[k]) return demP[k];
+      return demP[k]=fetch('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+k+'.png').then(function(r){ return r.ok?r.blob():null }).then(function(b){ return b?createImageBitmap(b):null }).then(function(im){ if(!im){ delete demP[k]; return null }
+        var c=document.createElement('canvas'); c.width=c.height=256; var g=c.getContext('2d'); g.drawImage(im,0,0); var d=g.getImageData(0,0,256,256).data, E=new Float32Array(65536);
+        for(var i=0;i<65536;i++) E[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768; demA[k]=E; return E }).catch(function(){ delete demP[k]; return null }) }
+    function tpx(lat,lon,z){ var n=Math.pow(2,z), r=lat*Math.PI/180; return [(lon+180)/360*n,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n] }
+    // loads the terrain for a box, then gives back a quick "height at this spot" function
+    function demLoad(s,w,n,e,z){ var a=tpx(n,w,z), b=tpx(s,e,z), jobs=[];
+      for(var x=Math.floor(a[0]);x<=Math.floor(b[0]);x++) for(var y=Math.floor(a[1]);y<=Math.floor(b[1]);y++) jobs.push(dem(z,x,y));
+      return Promise.all(jobs).then(function(){ return function(lat,lon){ var t=tpx(lat,lon,z), tx=Math.floor(t[0]), ty=Math.floor(t[1]), E=demA[z+'/'+tx+'/'+ty]; if(!E) return null;
+        return E[Math.min(255,Math.floor((t[1]-ty)*256))*256+Math.min(255,Math.floor((t[0]-tx)*256))] } }) }
+    function towers(lat,lon){ var k='tw'+lat.toFixed(1)+lon.toFixed(1);
+      return cached(k,7*1440,function(){ var q='[out:json][timeout:25];(node["tower:type"="communication"](around:45000,'+lat.toFixed(3)+','+lon.toFixed(3)+');node["communication:mobile_phone"](around:45000,'+lat.toFixed(3)+','+lon.toFixed(3)+');way["tower:type"="communication"](around:45000,'+lat.toFixed(3)+','+lon.toFixed(3)+'););out center 300;';
+        return J('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q)).then(function(j){ var seen={}; return (j.elements||[]).map(function(x){ var la=x.lat!=null?x.lat:(x.center&&x.center.lat), lo=x.lon!=null?x.lon:(x.center&&x.center.lon), g=x.tags||{}; return {lat:la,lon:lo,h:parseFloat(g.height)||30,n:g.operator||g.name||''} })
+          .filter(function(t){ if(!isFinite(t.lat)||!isFinite(t.lon)) return false; var s=t.lat.toFixed(3)+t.lon.toFixed(3); if(seen[s]) return false; seen[s]=1; return true }) }) }) }
+    function losOk(el,a,b,ha,hb){ // clear line from a (ha m up) to b (hb m up)? earth curve with normal radio bending (k=4/3)
+      var d=km(a[0],a[1],b[0],b[1])*1000, za=el(a[0],a[1]), zb=el(b[0],b[1]); if(za==null||zb==null) return false; za+=ha; zb+=hb;
+      var n=Math.max(8,Math.min(120,Math.round(d/250))), R=6371000*4/3;
+      for(var i=1;i<n;i++){ var f=i/n, z=el(a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f); if(z==null) continue; var d1=d*f, bulge=d1*(d-d1)/(2*R); if(z+bulge>za+(zb-za)*f) return false }
+      return true }
+    function sigFind(f){ var dLat=4/111, dLon=4/(111*Math.cos(f.lat*Math.PI/180)), W=45/111, WL=45/(111*Math.cos(f.lat*Math.PI/180));
+      return towers(f.lat,f.lon).then(function(tr){ var tw=(tr&&tr.d||[]).map(function(t){ return {lat:t.lat,lon:t.lon,h:Math.min(Math.max(t.h,10),120),n:t.n,k:km(f.lat,f.lon,t.lat,t.lon)} }).filter(function(t){ return t.k<=45 }).sort(function(a,b){ return a.k-b.k }).slice(0,12);
+        return Promise.all([demLoad(f.lat-dLat,f.lon-dLon,f.lat+dLat,f.lon+dLon,12),tw.length?demLoad(f.lat-W,f.lon-WL,f.lat+W,f.lon+WL,9):null]).then(function(fs){ var near=fs[0], far=fs[1], here=near(f.lat,f.lon);
+          if(here==null) throw new Error('no terrain');
+          // the highest ground in each of 8 directions, out to 1.5 km and to 4 km
+          var best={}; for(var dy=-dLat;dy<=dLat;dy+=dLat/26) for(var dx=-dLon;dx<=dLon;dx+=dLon/26){ var la=f.lat+dy, lo=f.lon+dx, k=km(f.lat,f.lon,la,lo); if(k<0.25||k>4) continue; var z=near(la,lo); if(z==null) continue;
+            var key=Math.round(brg(f.lat,f.lon,la,lo)/45)%8+(k>1.5?'f':'n'); if(!best[key]||z>best[key].z) best[key]={lat:la,lon:lo,z:z,k:k} }
+          var cands=Object.keys(best).map(function(k){ return best[k] }).filter(function(c){ return c.z>here+25 });
+          function sees(p,pz){ if(!far) return []; return tw.filter(function(t){ return km(p.lat,p.lon,t.lat,t.lon)<=40&&losOk(far,[p.lat,p.lon],[t.lat,t.lon],3,t.h) }) }
+          var hs=sees(f,here); cands.forEach(function(c){ c.s=sees(c,c.z); c.up=Math.round(c.z-here); c.d=dirTxt(brg(f.lat,f.lon,c.lat,c.lon)) });
+          cands.sort(function(a,b){ return (b.s.length>0)-(a.s.length>0)||(b.s.length-a.s.length)||(a.k-b.k) });
+          return {f:f,here:Math.round(here),hs:hs,tw:tw,c:cands.slice(0,4),at:Date.now()} }) }) }
+    function sigDraw(){ sigLayer.clearLayers(); if(!sigRes) return;
+      sigRes.tw.forEach(function(t){ L.marker([t.lat,t.lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="img" aria-label="Cell tower" style="--c:#546e7a;--sz:20px">🗼</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-170,title:'Tower'}).bindPopup('<b>🗼 Tower</b>'+(t.n?'<br>'+esc(t.n):'')+'<br><small>From OpenStreetMap</small>',{closeButton:false}).addTo(sigLayer) });
+      sigRes.c.forEach(function(c,i){ L.marker([c.lat,c.lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="img" aria-label="Signal spot" style="--c:'+(c.s.length?'#2e7d32':'#8d6e63')+';--sz:26px">'+(c.s.length?'📶':'⛰')+'</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-140,title:'Signal spot'})
+        .bindPopup('<b>'+(c.s.length?'📶 Likely signal':'⛰ High ground')+'</b><br>'+kmTxt(c.k)+' '+c.d+' · '+c.up+' m higher<br>'+(c.s.length?'Clear line to '+c.s.length+' tower'+(c.s.length>1?'s':''):'No mapped tower in clear view')+'<div class="gpsb"><a href="https://www.google.com/maps/dir/?api=1&destination='+c.lat.toFixed(5)+','+c.lon.toFixed(5)+'&travelmode=walking" target="_blank" rel="noopener" style="flex:1;padding:8px 6px;border-radius:10px;font:600 13px var(--font);background:#1a73e8;color:#fff;text-align:center;text-decoration:none">Directions</a></div>',{closeButton:false}).addTo(sigLayer) }) }
+    function rsSignal(t){ var f=rFix&&Date.now()-rFix.t<3600000?rFix:{lat:me.lat,lon:me.lon,t:Date.now()}, c=navigator.connection||{}, on=navigator.onLine;
+      var mine=spots().filter(function(s){ return s.k==='sig' }).map(function(s){ return {s:s,k:km(f.lat,f.lon,s.lat,s.lon)} }).sort(function(a,b){ return a.k-b.k });
+      var h='<div class="ptiles">'+tile('Your connection',on?(c.effectiveType?String(c.effectiveType).toUpperCase():'Online'):'No signal',on&&c.downlink?'~'+c.downlink+' Mbit/s':on?'':'Texts may still send',on?GREEN:RED)+tile('Saved signal spots',String(mine.length),mine.length?'Closest '+kmTxt(mine[0].k):'Save one when you have a bar',mine.length?GREEN:null)+'</div>';
+      h+='<div class="pbtns" style="margin-bottom:6px"><button id="sgsave" style="grid-column:1/-1">📶 I have signal here · save it</button></div>';
+      if(mine.length) h+=sec('Your signal spots',mine.slice(0,4).map(function(x){ return '<div class="row2 prow2"><span>📶 '+esc(new Date(x.s.t).toLocaleDateString([], {month:'short',day:'numeric'}))+'</span><span>'+kmTxt(x.k)+' '+dirTxt(brg(f.lat,f.lon,x.s.lat,x.s.lon))+'</span></div>' }).join(''));
+      if(sigRes&&km(sigRes.f.lat,sigRes.f.lon,f.lat,f.lon)<1){ var r=sigRes;
+        h+=sec('Where you are now',(r.tw.length?(r.hs.length?'<span class="good">Clear line to '+r.hs.length+' tower'+(r.hs.length>1?'s':'')+'</span> from here. If you still have no bar, try a few metres higher or away from trees.':'<span style="color:#fb8c00">Hills block every mapped tower from here.</span>'):'No mapped cell towers within 45 km.')+' Elevation ~'+r.here+' m.');
+        h+=sec('Best spots to try',r.c.length?r.c.map(function(c){ return '<div class="row2 prow2"><span>'+(c.s.length?'📶':'⛰')+' <b>'+kmTxt(c.k)+' '+c.d+'</b> <small>+'+c.up+' m · '+(c.s.length?'sees '+c.s.length+' tower'+(c.s.length>1?'s':'')+' (closest '+kmTxt(Math.min.apply(null,c.s.map(function(s){ return km(c.lat,c.lon,s.lat,s.lon) })))+')':'high ground')+'</small></span></div>' }).join('')+'<button class="ltbtn2 pacc" id="sgmap">Show spots & towers on the map</button>':'You are already on the highest ground close by.');
+      } else h+=sec('Find signal spots','Looks for higher ground within 4 km that has a clear line to cell towers. Uses about 1 MB of data, so run it while you still have a bar.<button class="ltbtn2 pacc" id="sgfind">🔎 Find signal spots near me</button>');
+      h+=sec('Tips for a bar','Get high and in the open: ridges and clearings beat valleys and thick trees. Hold the phone up, stay still for a minute. A text needs far less signal than a call. Turn airplane mode on and off to make the phone search again. Keep it warm: cold batteries die fast.');
+      h+='<div class="skynote">Towers: OpenStreetMap (not every tower is mapped) · Terrain: Mapzen/AWS. A clear line is a good sign, not a promise.</div>';
+      if(!put(t,h)) return;
+      document.getElementById('sgsave').onclick=function(){ var b=this; b.textContent='Getting GPS…'; getFix().then(function(x){ var p=x||f; var a=spots(); a.push({k:'sig',lat:+p.lat.toFixed(5),lon:+p.lon.toFixed(5),t:Date.now()}); try{ localStorage.setItem('sky-spots',JSON.stringify(a.slice(-200))) }catch(e){} if(typeof drawSpots==='function') drawSpots(); rsSignal(vt) }) };
+      var fb=document.getElementById('sgfind'); if(fb) fb.onclick=function(){ fb.textContent='Looking… (10–30 s)'; fb.disabled=true; var tt=vt; getFix().then(function(x){ return sigFind(x||f) }).then(function(r){ sigRes=r; sigDraw(); rsSignal(tt) }).catch(function(){ if(tt===vt){ fb.disabled=false; fb.textContent='Couldn’t load terrain · tap to try again' } }) };
+      var mb=document.getElementById('sgmap'); if(mb) mb.onclick=function(){ sigDraw(); sh.hidden=true; vt++; var b=L.latLngBounds([[sigRes.f.lat,sigRes.f.lon]]); sigRes.c.forEach(function(c){ b.extend([c.lat,c.lon]) }); sigRes.hs.concat(sigRes.c.length?sigRes.c[0].s:[]).forEach(function(s){ b.extend([s.lat,s.lon]) }); map.fitBounds(b.pad(.2),{maxZoom:14}) } }
+
+    // ---------- First aid: short offline guides ----------
+    var AID=[
+      ['🚨','First: check & call','Make sure it’s safe for you first (traffic, avalanche slope, fire). Talk to them and tap their shoulders. Call 911 (or send someone / text someone to call). Check breathing for up to 10 seconds. Not breathing normally → start CPR. Breathing → treat the worst problem first: heavy bleeding, then everything else.'],
+      ['❤️','CPR (adult)','Call 911 and get an AED if one is near. Kneel beside them, heel of your hand in the centre of the chest, other hand on top. Push hard and fast: at least 5 cm (2 in) deep, 100 to 120 a minute, let the chest come all the way back up. If you are trained, give 2 breaths after every 30 pushes; if not, keep pushing without breaths. Don’t stop until help takes over, an AED tells you to, or they start breathing. Do CPR on a cold person too: they may still recover.'],
+      ['🩸','Heavy bleeding','Press hard right on the wound with a cloth, glove or your hand, and keep pressing. Don’t lift it to look; if blood soaks through, add more on top. Bleeding from an arm or leg that won’t stop with pressure: put a tourniquet (or a belt/strap twisted tight with a stick) 5 to 7 cm (2–3 in) above the wound, not on a joint, and tighten until the bleeding stops. Note the time. Keep them warm and lying down.'],
+      ['🥶','Hypothermia','Signs: hard shivering, clumsy hands, slurred speech, confusion, wanting to sleep. Get them out of wind and wet, off the cold ground (pad, pack, branches). Swap wet clothes for dry, cover the head and neck, wrap in everything you have. Warm (not hot) packs on the chest, armpits and groin, over clothing. Warm sweet drinks only if fully awake. If shivering has stopped and they are very drowsy, move them very gently and keep them lying flat: this is an emergency. No alcohol, no rubbing arms and legs.'],
+      ['🧊','Frostbite','Signs: white, grey or waxy skin that feels numb or hard. Get to shelter. Don’t rub it or rub snow on it. Only thaw it if it won’t freeze again. Thaw in warm water you can comfortably hold your hand in (about 37–39 °C) for 20–30 minutes, or with body heat (hands in armpits). Never use a fire, heater or engine. It will hurt and may blister; don’t break blisters. Cover loosely and get medical care.'],
+      ['🦴','Broken bone or sprain','Don’t try to straighten it. Support it in the position you found it. Splint with anything stiff (branch, ski pole, rolled foam pad), padded, reaching past the joints above and below the break. Check fingers or toes stay warm and pink after you tie it. A cold pack wrapped in cloth, 20 minutes at a time. Bone through the skin: cover the wound, don’t push the bone back.'],
+      ['🛷','Head, neck or back injury','After a crash, if they hit their head or have neck or back pain, numbness or tingling: keep them still. Hold the head in line with the body. Don’t take the helmet off unless you must to clear the airway. Only move them to get out of danger. If they throw up or pass out and are breathing, roll them onto their side as one unit, keeping the head in line. Confusion, repeated vomiting, or getting sleepier: emergency.'],
+      ['⚠️','Shock','Signs: pale, cold, clammy skin, fast weak pulse, fast breathing, anxious or confused. Lay them down, keep them warm and off the cold ground. Raise the legs a little only if it doesn’t hurt and no leg, hip or back injury. Nothing to eat or drink. Stay with them and call 911.'],
+      ['🏔','Avalanche burial','Watch where they were last seen. Check for more slides, then search fast: the first 15 minutes matter most. Switch beacons to search, look for gear on the surface, probe. Call 911 if you have signal, but don’t stop searching to do it. When you hit them, dig from downhill of the probe, get to the face and clear the airway first. Then treat for hypothermia.'],
+      ['🔥','Burns','Cool the burn under cool running water for 20 minutes (only the burn, to avoid chilling them). Take off rings, watches and tight clothing near it. Cover loosely with plastic wrap or a clean non-stick dressing. No ice, butter or creams, and don’t break blisters. Large burns, burns on the face, hands or groin, or deep burns: get medical help.'],
+      ['😮','Choking (adult)','Coughing hard: let them keep coughing. Can’t breathe, cough or speak: stand behind them, give 5 firm back blows between the shoulder blades, then 5 abdominal thrusts (fist just above the belly button, pull in and up). Repeat until it comes out. If they pass out, lower them down, call 911 and start CPR.'],
+      ['💓','Chest pain / heart attack','Chest pressure or pain, often spreading to the arm, jaw or back, with sweating, sickness or shortness of breath. Call 911 right away. Have them rest sitting up. If they are not allergic and can swallow, have them chew 1 regular aspirin (325 mg) or 2 low-dose (81 mg). Be ready to do CPR.'],
+      ['🐝','Severe allergic reaction','Signs: swelling of the face or throat, trouble breathing, hives, feeling faint. Use their epinephrine auto-injector (EpiPen) in the outer thigh, through clothing if needed. Call 911. Lay them down (sit up if breathing is easier). If no better after 5 minutes and they have a second one, give it.']];
+    function rsAid(t){ var h='<div class="ssec" style="border:2px solid #e53935"><h4>Call 911 first if you can</h4>Short reminders that work with no signal. Not a replacement for training: a first aid course makes all of this easier.</div>';
+      h+=AID.map(function(a,i){ return '<details class="ssec" style="padding:0"><summary style="padding:9px 10px;cursor:pointer;font:600 13px var(--font);color:var(--fg);list-style-position:inside">'+a[0]+' '+a[1]+'</summary><div style="padding:0 10px 10px;font-size:13px;line-height:1.45;color:var(--fg)">'+a[2]+'</div></details>' }).join('');
+      h+='<div class="skynote">Based on Canadian Red Cross and Heart & Stroke first aid guidance. Saved in the app, works offline.</div>'; put(t,h) }
 
     window.__prep={open:open,slope:setSlope,check:solarCheck,_bands:bands,_threat:threat};
   })();
