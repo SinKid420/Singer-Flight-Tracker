@@ -2,6 +2,8 @@
 // On road: turn-by-turn on regular roads from OpenStreetMap (OSRM route service).
 // Off road: routes built on the phone from BC Government road data (Digital Road Atlas + Forest Service and permit roads),
 // with warnings for roads closed to vehicles today, closed areas, rough or overgrown roads and industrial roads.
+// No signal: On road falls back to the same BC road data (saved when you save an area for offline).
+// Street names: when the map is turned south-up, the upside-down map names are swapped for upright ones.
 (function boot(){
   if(!window.__AW||!window.L){ setTimeout(boot,300); return }
   var A=window.__AW, map=A.map, esc=A.esc||function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) };
@@ -59,7 +61,9 @@
     route(offMode()?'off':'on') }
   var seq=0;
   function route(mode,quiet){ if(!dest) return; var id=++seq, a=from(); busy=quiet?0:1; if(!quiet){ rt=null; clear(true) } panel();
-    var p=mode==='off'?offRoute(a,dest):onRoute(a,dest);
+    var p=mode==='off'?offRoute(a,dest):onRoute(a,dest).catch(function(e){ var d=dest;
+      return offRoute(a,d,true).then(function(r){ (r.warn=r.warn||[]).unshift(navigator.onLine?'Route service not reachable · route from BC road data':'No signal · route from saved BC road data'); return r },
+        function(e2){ throw new Error(navigator.onLine?((e&&e.message)||'Route service not reachable'):'No signal and no saved road data here. Save this area for offline when you have signal') }) });
     p.then(function(r){ if(id!==seq) return; busy=0; rt=r; r.mode=mode; r.prog=0; r.next=1; r.li=0; draw(); if(!quiet&&!nav) map.fitBounds(lineF.getBounds(),{paddingTopLeft:[30,240],paddingBottomRight:[90,90]}); if(nav) track(lastPos); panel() },
       function(err){ if(id!==seq) return; busy=0; if(quiet) return; rt=null; dest.err=err&&err.message||'No route found'; panel() }) }
 
@@ -75,8 +79,8 @@
       case 'end of road': return 'At the end of the road, turn '+(mo.indexOf('left')>=0?'left':'right')+on;
       case 'new name': case 'continue': return (mo&&mo!=='straight'?(MOD[mo]||'Continue'):'Continue')+on;
       default: return (MOD[mo]||'Continue')+on } }
-  function onRoute(a,b){ var u=OSRM+a.lon.toFixed(6)+','+a.lat.toFixed(6)+';'+b.lon.toFixed(6)+','+b.lat.toFixed(6)+'?overview=full&geometries=geojson&steps=true';
-    return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status===429?'Route service busy, try again in a minute':'Route service not reachable'); return r.json() }).then(function(j){
+  function onRoute(a,b){ if(navigator.onLine===false) return Promise.reject(new Error('No signal')); var ac=window.AbortController?new AbortController():null, to=setTimeout(function(){ if(ac) ac.abort() },9000); var u=OSRM+a.lon.toFixed(6)+','+a.lat.toFixed(6)+';'+b.lon.toFixed(6)+','+b.lat.toFixed(6)+'?overview=full&geometries=geojson&steps=true';
+    return fetch(u,ac?{signal:ac.signal}:{}).then(function(r){ clearTimeout(to); if(!r.ok) throw new Error(r.status===429?'Route service busy, try again in a minute':'Route service not reachable'); return r.json() },function(e){ clearTimeout(to); throw new Error('Route service not reachable') }).then(function(j){
       var r0=j&&j.routes&&j.routes[0]; if(!r0) throw new Error('No road route found');
       var pts=r0.geometry.coordinates.map(function(c){ return [c[1],c[0]] }), cum=cumul(pts), steps=[];
       r0.legs[0].steps.forEach(function(s){ var ml=s.maneuver.location, i=nearIdx(pts,ml[1],ml[0]); if(s.maneuver.type==='new name'&&steps.length&&!s.name) return; steps.push({i:i,tx:stepTx(s),ic:icon(s.maneuver.type,s.maneuver.modifier||'')}) });
@@ -87,28 +91,33 @@
 
   // ---------- Off road: build a road graph from BC Government data and find the quickest way ----------
   var cache={};
+  var LAY={dra:['WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP',"ROAD_CLASS NOT IN ('trail','runway','driveway','proposed','water')",'DIGITAL_ROAD_ATLAS_LINE_ID,ROAD_CLASS,ROAD_NAME_FULL,ROAD_SURFACE'],
+    ften:['WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',"RETIREMENT_DATE IS NULL AND LIFE_CYCLE_STATUS_CODE='ACTIVE'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION,LOCATION'],
+    mvr:['WHSE_WILDLIFE_MANAGEMENT.WAA_MVPR_ROUTES_SP','','ROAD_NAME,ACCESS_STATUS','SHAPE']};
+  function job(k,c){ var q=LAY[k]; return cell(k,q[0],c,q[1],q[2],q[3]) }
   function wfs(t,b,cql,props,gc,start){ gc=gc||'GEOMETRY'; var f='BBOX('+gc+','+[b.w,b.s,b.e,b.n].map(function(v){ return v.toFixed(3) }).join(',')+",'EPSG:4326')"+(cql?' AND '+cql:'');
     return WFSU+'?service=WFS&version=2.0.0&request=GetFeature&typeName='+t+'&outputFormat=json&srsName=EPSG:4326&count=5000&startIndex='+(start||0)+'&sortBy=OBJECTID&propertyName='+props+','+gc+'&CQL_FILTER='+encodeURIComponent(f) }
-  function getAll(t,b,cql,props,gc){ var out=[]; function page(s){ return fetch(wfs(t,b,cql,props,gc,s)).then(function(r){ if(!r.ok) throw new Error('BC road data not reachable'); return r.json() }).then(function(j){ var f=(j&&j.features)||[]; out=out.concat(f); if(f.length===5000&&s<15000) return page(s+5000); return out }) } return page(0) }
+  function getAll(t,b,cql,props,gc){ var out=[]; function page(s){ return fetch(wfs(t,b,cql,props,gc,s)).then(function(r){ if(!r.ok) throw new Error('BC road data not reachable'); return r.json() }).then(function(j){ var f=(j&&j.features)||[]; out=out.concat(f); if(f.length===5000&&s<15000) return page(s+5000).catch(function(){ return out }); return out }) } return page(0) }
   function cell(k,t,b,cql,props,gc){ var key=k+'|'+b.w+','+b.s; if(!cache[key]) cache[key]=getAll(t,b,cql,props,gc).catch(function(e){ delete cache[key]; throw e }); return cache[key] }
   function cells(bb){ var o=[], G=0.2; for(var x=Math.floor(bb.w/G)*G;x<bb.e;x+=G) for(var y=Math.floor(bb.s/G)*G;y<bb.n;y+=G) o.push({w:+x.toFixed(2),s:+y.toFixed(2),e:+(x+G).toFixed(2),n:+(y+G).toFixed(2)}); return o }
   var SPD={freeway:100,expressway:100,highway:90,arterial:70,ramp:60,collector:55,local:40,resource:35,unclassified:30,recreation:25,strata:20,lane:20,alleyway:15,service:20,yield:20,restricted:20,ferry:15,water:0,proposed:0,trail:0,runway:0,driveway:0,'private':15};
   var help=(window.__fsr&&window.__fsr.help)||{}, zones=null;
   function loadZones(){ if(zones) return zones; zones=fetch('sled-zones.json').then(function(r){ return r.ok?r.json():null }).then(function(j){ return j&&j.f?j.f.filter(function(f){ return !f.l&&f.w!=='Road Closure'&&(f.k==='mv'||(f.k==='c'&&/ATV/.test(f.t||''))) }):[] }).catch(function(){ zones=null; return [] }); return zones }
-  function offRoute(a,b){
+  function offRoute(a,b,on){
     var inBC=function(p){ return p.lat>48.2&&p.lat<60&&p.lon>-139.5&&p.lon<-114 };
-    if(!inBC(a)||!inBC(b)) return Promise.reject(new Error('Off road routes work inside BC only'));
-    var km=hav(a.lat,a.lon,b.lat,b.lon)/1000; if(km>90) return Promise.reject(new Error('Too far for Off road ('+Math.round(km)+' km). Use On road to get close, then switch'));
+    if(!inBC(a)||!inBC(b)) return Promise.reject(new Error(on?'No signal: routes without signal work inside BC only':'Off road routes work inside BC only'));
+    var km=hav(a.lat,a.lon,b.lat,b.lon)/1000; if(km>90) return Promise.reject(new Error(on?'No signal: routes without signal reach up to 90 km ('+Math.round(km)+' km)':'Too far for Off road ('+Math.round(km)+' km). Use On road to get close, then switch'));
     var pad=Math.max(0.04,0.18*Math.max(Math.abs(a.lat-b.lat),Math.abs(a.lon-b.lon))), bb={w:Math.min(a.lon,b.lon)-pad*1.5,e:Math.max(a.lon,b.lon)+pad*1.5,s:Math.min(a.lat,b.lat)-pad,n:Math.max(a.lat,b.lat)+pad};
     var cs=cells(bb), jobs=[];
     cs.forEach(function(c){
-      jobs.push(cell('dra','WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP',c,"ROAD_CLASS NOT IN ('trail','runway','driveway','proposed','water')",'DIGITAL_ROAD_ATLAS_LINE_ID,ROAD_CLASS,ROAD_NAME_FULL,ROAD_SURFACE').then(function(f){ return {k:'dra',f:f} }));
-      jobs.push(cell('ften','WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW',c,"RETIREMENT_DATE IS NULL AND LIFE_CYCLE_STATUS_CODE='ACTIVE'",'FOREST_FILE_ID,ROAD_SECTION_ID,ROAD_SECTION_NAME,FILE_TYPE_DESCRIPTION,LOCATION').then(function(f){ return {k:'ften',f:f} }));
-      jobs.push(cell('mvr','WHSE_WILDLIFE_MANAGEMENT.WAA_MVPR_ROUTES_SP',c,'','ROAD_NAME,ACCESS_STATUS','SHAPE').then(function(f){ return {k:'mvr',f:f} }).catch(function(){ return {k:'mvr',f:[]} })) });
-    jobs.push(loadZones().then(function(z){ return {k:'zones',f:z} }));
-    return Promise.all(jobs).then(function(res){ return solve(a,b,res) }) }
+      jobs.push(job('dra',c).then(function(f){ return {k:'dra',f:f} }));
+      if(on) return;
+      jobs.push(job('ften',c).then(function(f){ return {k:'ften',f:f} }));
+      jobs.push(job('mvr',c).then(function(f){ return {k:'mvr',f:f} }).catch(function(){ return {k:'mvr',f:[]} })) });
+    if(!on) jobs.push(loadZones().then(function(z){ return {k:'zones',f:z} }));
+    return Promise.all(jobs).then(function(res){ return solve(a,b,res,on) }) }
 
-  function solve(a,b,res){
+  function solve(a,b,res,on){
     var nLa=[], nLo=[], adj=[], key={}, fe=[], seen={}, grid={}, GS=0.002;
     function node(la,lo){ var k=la.toFixed(5)+','+lo.toFixed(5), i=key[k]; if(i!=null) return i; i=nLa.length; key[k]=i; nLa.push(la); nLo.push(lo); adj.push([]); var g=Math.floor(la/GS)+':'+Math.floor(lo/GS); (grid[g]||(grid[g]=[])).push(i); return i }
     function near(la,lo,maxM,skip){ var gi=Math.floor(la/GS), gj=Math.floor(lo/GS), best=-1, bd=maxM, r=Math.ceil(maxM/180)+1;
@@ -121,7 +130,7 @@
     var ften=[];
     res.forEach(function(r){ if(r.k==='dra') r.f.forEach(function(f){ var p=f.properties||{}, id='d'+(p.DIGITAL_ROAD_ATLAS_LINE_ID||f.id); if(seen[id]) return; seen[id]=1;
         var cl=p.ROAD_CLASS||'unclassified', sp=SPD[cl]!=null?SPD[cl]:25, sf=String(p.ROAD_SURFACE||'').toLowerCase(), pen=1;
-        if(sf==='rough') sp=Math.min(sp,25); else if(sf==='loose'||sf==='unknown') sp=Math.min(sp,50); if(sf==='overgrown'){ sp=Math.min(sp,12); pen=2 } if(sf==='decommissioned'){ sp=Math.min(sp,8); pen=8 } if(cl==='restricted'||cl==='private') pen=Math.max(pen,4);
+        if(sf==='rough') sp=Math.min(sp,25); else if(sf==='loose'||sf==='unknown') sp=Math.min(sp,50); if(sf==='overgrown'){ sp=Math.min(sp,12); pen=2 } if(sf==='decommissioned'){ sp=Math.min(sp,8); pen=8 } if(cl==='restricted'||cl==='private') pen=Math.max(pen,4); if(on){ if(sf==='loose'||sf==='rough'||sf==='unknown') pen*=2; if(/^(resource|unclassified|recreation)$/.test(cl)) pen*=2.5 }
         var rn=String(p.ROAD_NAME_FULL||'').trim(); if(/^(unsigned|unnamed|unknown|no name)/i.test(rn)) rn='';
         var e={ix:fe.length,n:rn?cap(rn):'',c:cl,sf:sf,pen:pen,src:'dra'}; fe.push(e);
         lines(f.geometry).forEach(function(l){ var pv=null; l.forEach(function(c){ var i=node(c[1],c[0]); if(pv!=null) edge(pv,i,hav(nLa[pv],nLo[pv],nLa[i],nLo[i]),sp,e); pv=i }) }) });
@@ -202,5 +211,54 @@
     panel() }
 
   // public: other parts of the app open directions with window.__nav.to(latlng, name)
-  window.__nav={to:to,clear:function(){ stop(); dest=null; rt=null; clear(); panel() },route:function(){ return rt },setFrom:function(p){ lastPos=p }};
+  // ---------- Street names stay readable when you head south ----------
+  // The map's own names are part of its pictures and turn upside down with the map. Heading south, they're hidden and upright
+  // names from BC road data are shown instead. Heading north, east or west, the map's own names stay.
+  (function(){
+    var css2=document.createElement('style'); css2.textContent='.snm{pointer-events:none}.snm span{position:absolute;left:0;top:0;white-space:nowrap;font:700 12px/1 var(--font,system-ui);color:#fff;letter-spacing:.02em;text-shadow:0 0 3px #000,0 0 2px #000,0 1px 2px #000;transform-origin:0 0}'; document.head.appendChild(css2);
+    var on=false, grp=L.layerGroup(), feats=[], loadK='', tm=null, seqL=0;
+    function brg0(){ var b=map.getBearing?map.getBearing():0; return ((b%360)+360)%360 }
+    function inBC(c){ return c.lat>48.2&&c.lat<60&&c.lng>-139.5&&c.lng<-114 }
+    function trans(){ var b=A.base&&A.base(); return b&&b[1] }
+    function check(){ var b=brg0(), z=map.getZoom(), c=map.getCenter(), want=z>=15&&inBC(c)&&(on?(b>120&&b<240):(b>135&&b<225));
+      var t=trans(); if(t&&t.setOpacity) t.setOpacity(want?0:1);
+      if(want!==on){ on=want; if(on){ grp.addTo(map); load() } else { map.removeLayer(grp); grp.clearLayers() } }
+      else if(on) soon() }
+    function soon(){ clearTimeout(tm); tm=setTimeout(place,120) }
+    // the part of a line that's on screen (so long straight roads with few points still get a name)
+    function clipS(a,b,x0,y0,x1,y1){ var t0=0,t1=1,dx=b.x-a.x,dy=b.y-a.y,P=[-dx,dx,-dy,dy],Q=[a.x-x0,x1-a.x,a.y-y0,y1-a.y];
+      for(var i=0;i<4;i++){ if(P[i]===0){ if(Q[i]<0) return null } else { var r=Q[i]/P[i]; if(P[i]<0){ if(r>t1) return null; if(r>t0) t0=r } else { if(r<t0) return null; if(r<t1) t1=r } } }
+      return [L.point(a.x+t0*dx,a.y+t0*dy),L.point(a.x+t1*dx,a.y+t1*dy),t1<1] }
+    function load(){ var bd=map.getBounds(), cs=cells({w:bd.getWest(),e:bd.getEast(),s:bd.getSouth(),n:bd.getNorth()}), k=cs.map(function(c){ return c.w+','+c.s }).join('|');
+      if(k===loadK){ place(); return } var my=++seqL;
+      Promise.all(cs.map(function(c){ return job('dra',c).catch(function(){ return [] }) })).then(function(r){ if(my!==seqL) return; loadK=k; feats=[];
+        var seen={}; r.forEach(function(f){ f.forEach(function(x){ var p=x.properties||{}, n=String(p.ROAD_NAME_FULL||'').trim(); if(!n||/^(unsigned|unnamed|unknown|no name)/i.test(n)) return;
+          var id=p.DIGITAL_ROAD_ATLAS_LINE_ID||x.id; if(seen[id]) return; seen[id]=1; lines(x.geometry).forEach(function(l){ if(l.length<2) return; var w=1e9,e=-1e9,s2=1e9,n2=-1e9; l.forEach(function(q){ if(q[0]<w)w=q[0]; if(q[0]>e)e=q[0]; if(q[1]<s2)s2=q[1]; if(q[1]>n2)n2=q[1] }); feats.push({n:cap(n),l:l,b:[w,s2,e,n2]}) }) }) }); place() }) }
+    function place(){ if(!on) return; var bd=map.getBounds().pad(0.05), W0=bd.getWest(), E0=bd.getEast(), S0=bd.getSouth(), N0=bd.getNorth(), sz=map.getSize(), put=[], byName={};
+      if(loadK&&!feats.length){ grp.clearLayers(); return }
+      var cand=feats.filter(function(f){ return f.b[2]>=W0&&f.b[0]<=E0&&f.b[3]>=S0&&f.b[1]<=N0 });
+      grp.clearLayers();
+      cand.forEach(function(f){ if(put.length>=45) return; var pts=f.l.map(function(q){ return map.latLngToContainerPoint([q[1],q[0]]) }), run=[], best=[];
+        var bl=0, rl=0; for(var i=1;i<pts.length;i++){ var cp=clipS(pts[i-1],pts[i],-20,-20,sz.x+20,sz.y+20);
+          if(!cp){ if(rl>bl){ best=run; bl=rl } run=[]; rl=0; continue }
+          if(!run.length) run.push(cp[0]); run.push(cp[1]); rl+=cp[0].distanceTo(cp[1]); if(cp[2]){ if(rl>bl){ best=run; bl=rl } run=[]; rl=0 } }
+        if(rl>bl){ best=run; bl=rl }
+        if(best.length<2) return; var len=bl; if(len<f.n.length*7) return;
+        // middle of the road on screen, moved along the road if it would sit on top of your spot
+        function at(fr){ var want=len*fr, acc=0; for(var j=1;j<best.length;j++){ var d=best[j].distanceTo(best[j-1]); if(acc+d>=want){ var t=d?(want-acc)/d:0; return {m:L.point(best[j-1].x+(best[j].x-best[j-1].x)*t,best[j-1].y+(best[j].y-best[j-1].y)*t),a:Math.atan2(best[j].y-best[j-1].y,best[j].x-best[j-1].x)*180/Math.PI} } acc+=d } return {m:best[best.length-1],a:0} }
+        var ctr=L.point(sz.x/2,sz.y/2), pk=null; [0.5,0.3,0.7,0.15,0.85].some(function(fr){ var c=at(fr); if(c.m.distanceTo(ctr)>=55){ pk=c; return true } return false }); if(!pk) return;
+        var mid=pk.m, ang=pk.a;
+        if(ang>90) ang-=180; if(ang<-90) ang+=180;
+        if(put.some(function(q){ return q.distanceTo(mid)<60 })) return; var mine=byName[f.n]||(byName[f.n]=[]); if(mine.some(function(q){ return q.distanceTo(mid)<240 })) return;
+        put.push(mid); mine.push(mid);
+        L.marker(map.containerPointToLatLng(mid),{interactive:false,keyboard:false,icon:L.divIcon({className:'snm',iconSize:[0,0],html:'<span style="transform:rotate('+ang.toFixed(1)+'deg) translate(-50%,-50%)">'+esc(f.n)+'</span>'})}).addTo(grp) }) }
+    map.on('rotate',function(){ clearTimeout(tm); tm=setTimeout(check,150) });
+    map.on('moveend zoomend',function(){ check(); if(on) load() });
+    window.__navNames=function(){ return {on:on,n:grp.getLayers().length,feats:feats.length} };
+  })();
+
+  // public: other parts of the app open directions with window.__nav.to(latlng, name)
+  // urls(box) lists the road data to save for offline (used by "Save area for offline")
+  window.__nav={to:to,clear:function(){ stop(); dest=null; rt=null; clear(); panel() },route:function(){ return rt },setFrom:function(p){ lastPos=p },
+    urls:function(b){ var o=[]; cells(b).forEach(function(c){ ['dra','ften','mvr'].forEach(function(k){ var q=LAY[k]; o.push(wfs(q[0],c,q[1],q[2],q[3],0)) }) }); return o }};
 })();
