@@ -20,11 +20,16 @@
     if (wid != null || starting) return; starting = true;
     BG.addWatcher({ backgroundTitle: 'AwareBC is watching the trail ahead', backgroundMessage: 'Danger alerts stay on while you ride. Turn GPS off in AwareBC to stop.', requestPermissions: true, stale: false, distanceFilter: 10 },
       function (l, e) {
-        if (e) { each(1, { code: e.code === 'NOT_AUTHORIZED' ? 1 : 2, message: e.message || '' }); return }
+        if (e) { if (e.code !== 'NOT_AUTHORIZED') { web(); return } each(1, { code: 1, message: e.message || '' }); return }
         if (l) { last = pos(l); each(0, last) }
-      }).then(function (id) { starting = false; wid = id; if (!Object.keys(subs).length) stop() }).catch(function () { starting = false });
+      }).then(function (id) { starting = false; wid = id; if (!Object.keys(subs).length) stop() }).catch(function () { starting = false; web() });
+    // backup: if the background GPS hasn't given a spot in 20 s, also use the normal phone GPS
+    clearTimeout(dog); dog = setTimeout(function () { if (Object.keys(subs).length && (!last || Date.now() - last.timestamp > 20000)) web() }, 20000);
   }
-  function stop() { if (wid != null) { var id = wid; wid = null; BG.removeWatcher({ id: id }).catch(function () {}) } }
+  var wwid = null, dog = null;
+  function web() { if (wwid != null || !G || !Object.keys(subs).length) return;
+    try { wwid = G.watchPosition(function (p) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; each(0, last) }, function (e) { each(1, e) }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 }) } catch (e) { wwid = null } }
+  function stop() { clearTimeout(dog); if (wwid != null && G) { G.clearWatch(wwid); wwid = null } if (wid != null) { var id = wid; wid = null; BG.removeWatcher({ id: id }).catch(function () {}) } }
   var shim = {
     getCurrentPosition: G ? G.getCurrentPosition.bind(G) : function (a, b) { if (b) b({ code: 2 }) },
     watchPosition: function (ok, bad) { var id = ++n; subs[id] = [ok, bad];
