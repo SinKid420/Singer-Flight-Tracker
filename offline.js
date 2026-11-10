@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./app.js?v=4','./app2.js?v=1','./nav.js?v=3','./reports.js?v=6','./offline.js?v=5','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./app.js?v=5','./app2.js?v=1','./nav.js?v=3','./reports.js?v=6','./offline.js?v=6','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -47,6 +47,7 @@
     if(wId==null) wId=navigator.geolocation.watchPosition(onFix,function(){},{enableHighAccuracy:true,maximumAge:10000,timeout:30000}) }
   document.addEventListener('visibilitychange',watch);
   function updHome(){ if(!home) return; var p=fix||(A.me()&&A.me().label==='you'?[A.me().lat,A.me().lon]:null);
+    if(homeMk&&p) homeMk.setOpacity(km(p[0],p[1],home.lat,home.lon)<0.04?0:1); // at home: your vehicle shows, not the pin
     if(showLine&&p){ var ll=[p,[home.lat,home.lon]]; if(lineHome) lineHome.setLatLngs(ll); else lineHome=L.polyline(ll,{color:'#30b0c7',weight:4,opacity:.9,dashArray:'10 8',interactive:false}).addTo(map) }
     if(showPath&&track.p.length>1){ if(pathLine) pathLine.setLatLngs(track.p); else pathLine=L.polyline(track.p,{color:'#ffcc00',weight:4,opacity:.95,interactive:false}).addTo(map) }
     var el=document.getElementById('ofhc'); if(!el||el.hidden||!p) return; var d=km(p[0],p[1],home.lat,home.lon), b=brg(p[0],p[1],home.lat,home.lon), mb=map.getBearing?map.getBearing():0;
