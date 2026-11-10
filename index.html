@@ -452,7 +452,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
     </div>
     <div class="chips">
       <div class="seg" role="group" aria-label="Map style">
-        <button data-b="sat" aria-pressed="true">Satellite</button><button data-b="fsr" aria-pressed="false" aria-label="FSR: forest service roads, back roads and trails">FSR</button>
+        <button data-b="sat" aria-pressed="true">On road</button><button data-b="fsr" aria-pressed="false" aria-label="Off road: forest service roads and back roads">Off road</button>
       </div>
       
     </div>
@@ -1816,8 +1816,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(window.MutationObserver){ new MutationObserver(lbl).observe(btn,{attributes:true,attributeFilter:['aria-pressed']});
           new MutationObserver(function(){ bc.toggle('fsrp',all.some(function(p){ return !p.pn.hidden })); if(!pn.hidden) bc.remove('menuon','toolon','keyon') }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }
         lbl(); var o={pn:pn,show:show,sync:sync}; all.push(o); return o }
-      var fp=mk(fb,'FSR','FSR roads',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrRdOp','Road lines see-through']]);
-      var sp=mk(sb,'Satellite','Satellite layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed']],[['s_fsrOp','Trail lines see-through'],['s_waterOp','Creeks see-through']]);
+      var fp=mk(fb,'Off road','Off road layers',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrRdOp','Road lines see-through']]);
+      var sp=mk(sb,'On road','On road layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed']],[['s_fsrOp','Trail lines see-through'],['s_waterOp','Creeks see-through']]);
       var pn=sp.pn; function show(v){ all.forEach(function(p){ p.show(v) }) } function sync(){ all.forEach(function(p){ p.sync() }) }
       map.on('click dragstart',function(){ show(false) });
       var ff=document.getElementById('fsfolder'); if(ff) ff.style.display='none';
