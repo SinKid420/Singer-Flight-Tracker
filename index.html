@@ -291,7 +291,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 #q:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .empty{color:var(--dim);font-size:13px;padding:6px 0}
 @media (prefers-reduced-motion:reduce){.plane,.glide .leaflet-marker-icon{transition:none}}
-@media (max-width:400px){.chips{gap:6px}.seg button{padding:6px 7px}h1{font-size:15px}.pill{padding-left:12px;gap:4px}.stat{font-size:10px}}
+@media (max-width:400px){.chips{gap:6px}.seg{gap:4px}.seg button{padding:6px 16px}h1{font-size:15px}.pill{padding-left:12px;gap:4px}.stat{font-size:10px}}
 .pill{top:10px;height:34px;padding:0 0 0 4px;background:none;box-shadow:none;pointer-events:none}
 .pill>*{pointer-events:auto}.pill .stat{flex:0 1 auto;margin-left:8px;font-size:12px;color:var(--fg);font-weight:500}
 .pill h1,.pill .stat{text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 6px var(--bg)}
@@ -2239,7 +2239,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     document.body.appendChild(box);
     var q=box.querySelector('#srq'), list=box.querySelector('#srlist'), res=[], seq=0, tmr=null, sites=null, sitesP=null;
     // the button sits just right of the map styles (Map / Satellite / Terrain / FSR)
-    function place(){ var r=seg.getBoundingClientRect(); if(!r.width){ btn.style.display='none'; return } btn.style.display=''; btn.style.left=Math.round(r.right+8)+'px'; btn.style.top=Math.round(r.top+(r.height-40)/2)+'px' }
+    function place(){ var r=seg.getBoundingClientRect(); if(!r.width){ btn.style.display='none'; return } btn.style.display=''; btn.style.left=Math.round(r.right+16)+'px'; btn.style.top=Math.round(r.top+(r.height-40)/2)+'px' }
     place(); window.addEventListener('resize',place); if(window.ResizeObserver) new ResizeObserver(place).observe(seg); seg.addEventListener('click',function(){ setTimeout(place,50) });
     function ref(){ var m=A.me&&A.me(); if(m&&isFinite(m.lat)&&isFinite(m.lon)&&(m.lat||m.lon)) return {lat:m.lat,lon:m.lon}; var c=map.getCenter(); return {lat:c.lat,lon:c.lng} }
     function km(a,b,c,d){ var r=Math.PI/180, x=Math.sin((c-a)*r/2), y=Math.sin((d-b)*r/2), h=x*x+Math.cos(a*r)*Math.cos(c*r)*y*y; return 12742*Math.asin(Math.sqrt(h)) }
