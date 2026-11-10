@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.joshuasinger123.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./reports.js?v=5','./offline.js?v=3','./friends.js?v=3','./tools.js?v=2','./roads.js?v=2','./winter.js?v=2','./ar.js?v=2','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./app.js?v=1','./app2.js?v=1','./nav.js?v=3','./reports.js?v=5','./offline.js?v=4','./friends.js?v=3','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -25,7 +25,7 @@
   function ty(lat,z){ var r=lat*Math.PI/180; return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)) }
   function tiles(b){ var o=[]; for(var z=ZMIN;z<=ZMAX;z++){ var x0=tx(b.w,z), x1=tx(b.e,z), y0=ty(b.n,z), y1=ty(b.s,z); for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) o.push(BCR.replace('{z}',z).replace('{y}',y).replace('{x}',x)) } return o }
   function tcount(b){ var n=0; for(var z=ZMIN;z<=ZMAX;z++) n+=(tx(b.e,z)-tx(b.w,z)+1)*(ty(b.s,z)-ty(b.n,z)+1); return n }
-  function cells(b){ return window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[] }
+  function cells(b){ return (window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[]).concat(window.__nav&&window.__nav.urls?window.__nav.urls(b):[]) } // map layers + road data for directions and upright street names
   function est(lat,lon,r){ var b=box(lat,lon,r), t=tcount(b), c=cells(b).length; return {t:t,c:c,bytes:(t*TKB+c*CKB)*1024,min:Math.max(1,Math.round((t+c)/30/60)),km2:Math.round(4*r*r/100)*100} }
 
   // ---------- Home ----------
