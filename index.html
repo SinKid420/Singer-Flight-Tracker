@@ -452,7 +452,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
     </div>
     <div class="chips">
       <div class="seg" role="group" aria-label="Map style">
-        <button data-b="map" aria-pressed="true">Map</button><button data-b="sat" aria-pressed="false">Satellite</button><button data-b="terrain" aria-pressed="false">Terrain</button><button data-b="fsr" aria-pressed="false" aria-label="FSR: forest service roads, back roads and trails">FSR</button>
+        <button data-b="sat" aria-pressed="true">Satellite</button><button data-b="fsr" aria-pressed="false" aria-label="FSR: forest service roads, back roads and trails">FSR</button>
       </div>
       
     </div>
@@ -775,9 +775,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
-  var baseLayers=[], baseKey='map';
+  var baseLayers=[], baseKey='sat';
   function setBase(key){
-    if(!BASES[key]) key='map';
+    if(key!=='sat'&&key!=='fsr') key='sat'; // only Satellite and FSR are offered
     baseLayers.forEach(function(l){map.removeLayer(l)});
     baseLayers=BASES[key].layers();
     baseLayers.forEach(function(l){l.addTo(map)});
@@ -791,8 +791,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
     b.onclick=function(){setBase(b.getAttribute('data-b'))};
   });
-  var savedBase='map'; try{savedBase=localStorage.getItem('sky-base')||'map'}catch(e){}
-  setBase(savedBase==='fsr'?'terrain':savedBase);
+  var savedBase='sat'; try{savedBase=localStorage.getItem('sky-base')||'sat'}catch(e){}
+  setBase('sat');
   // Rivers & creeks on every map: BC Freshwater Atlas (names, zoomed in) + USGS National Hydrography
   (function(){ var wp=map.createPane('water',map._rotatePane||map.getPane('mapPane')); wp.style.zIndex=350; wp.style.pointerEvents='none';
     var BCB=L.latLngBounds([[48.2,-139.6],[60.1,-114]]), USB=L.latLngBounds([[24,-125.5],[48.99,-66]]);
