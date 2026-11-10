@@ -25,7 +25,7 @@ if (step === 'web') {
     name: 'awarebc', version: '1.0.' + run, private: true, author: 'Josh Singer',
     dependencies: {
       '@capacitor/core': '8.6.0', '@capacitor/cli': '8.6.0', '@capacitor/android': '8.6.0', '@capacitor/app': '8.1.2', '@capacitor/filesystem': '8.1.5',
-      '@capacitor/local-notifications': '8.3.1', '@capacitor-community/background-geolocation': '1.3.1', 'sharp': '^0.34.0'
+      '@capacitor/local-notifications': '8.3.1', '@capacitor-community/background-geolocation': '1.3.1', '@capacitor/geolocation': '8.0.0', 'sharp': '^0.34.0'
     }
   }, null, 2));
   fs.writeFileSync(path.join(B, 'capacitor.config.json'), JSON.stringify({
