@@ -1,7 +1,7 @@
 // AwareBC trail reports (by Josh Singer): status + photo + note + exact spot, shared with other riders, with comments.
 (function(){
   var A=window.__AW; if(!A||!window.L) return; var map=A.map, esc=A.esc, fb=A.fb;
-  var RS=(function(){ try{ var u=localStorage.getItem('sky-rsurl'); if(u&&/^https:\/\/[a-z0-9.-]+\.workers\.dev$/.test(u)) return u }catch(e){} return 'https://awarebc.joshuasinger123.workers.dev' })();
+  var RS=(function(){ try{ var u=localStorage.getItem('sky-rsurl'); if(u&&/^https:\/\/awarebc\.[a-z0-9-]+\.workers\.dev$/.test(u)&&u!=='https://awarebc.aware-bc.workers.dev'){ localStorage.removeItem('sky-rsurl'); u=null } if(u&&/^https:\/\/[a-z0-9.-]+\.workers\.dev$/.test(u)) return u }catch(e){} return 'https://awarebc.aware-bc.workers.dev' })();
   var ST={ok:['#34c759','Open','All good'],warn:['#ff9f0a','Caution','Go slow'],bad:['#ff3b30','Blocked',"Can't pass"]};
   var TG=[['snow','❄️','Snow'],['washout','🌊','Washout'],['tree','🌲','Tree down'],['mud','🟤','Mud'],['gate','🚧','Gate closed'],['fire','🔥','Fire'],['wildlife','🐻','Wildlife']];
   var ICO={chk:'<path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
