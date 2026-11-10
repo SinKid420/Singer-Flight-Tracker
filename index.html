@@ -2846,7 +2846,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         return o.sort(function(a,b){ return a.rank-b.rank }).slice(0,5) }) }
     function go(kind){ var id=++seq, R=ref(); res=[]; pend=0;
       if(kind==='hosp'){ q.value='Hospital'; run('h',id,function(){ return photon('hospital','amenity:hospital',R,3,2) }) }
-      else if(kind==='gas'){ q.value='Gas'; ['gas station','petro','esso','shell','co-op','husky','chevron','mobil'].forEach(function(w){ run('g',id,function(){ return photon(w,'amenity:fuel',R,1.5,1) }) }) }
+      else if(kind==='gas'){ q.value='Gas'; ['gas station','petro','esso','shell','co-op','husky','chevron','mobil','canco'].forEach(function(w){ run('g',id,function(){ return photon(w,'amenity:fuel',R,1.5,1) }) }) }
       else if(kind==='rec'){ q.value='Rec sites'; run('r',id,function(){ return recSites('').then(function(a){ return a.sort(function(x,y){ return km(R.lat,R.lon,x.lat,x.lon)-km(R.lat,R.lon,y.lat,y.lon) }).slice(0,25) }) }) } }
     box.querySelector('.srchips').onclick=function(e){ var b=e.target.closest&&e.target.closest('button[data-c]'); if(b) go(b.getAttribute('data-c')) };
     function search(){ var s=String(q.value||'').trim(), l=s.toLowerCase(); if(s.length<2){ seq++; chipsOnly(); return }
