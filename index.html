@@ -1668,7 +1668,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   (function(){
     var on=false, R=(function(){ var r=map.getRenderer(L.polyline([[0,0],[0,0]])); r.options.tolerance=Math.max(r.options.tolerance||0,6); return r })(), drawn={}, data={}, dataKeys=[], busy={}, seen={}, vg=null, vgP=null, mvT=null, leg=document.getElementById('fsrleg'), hint=document.getElementById('fsrhint'), fsrMode=false;
     // road layers show only on the FSR map; trails, camping and creeks show on Satellite too
-    var RG={fsr:1,road:1,motor:1,plan:1,bcts:1,close:1}, RSRC={frd:1,fom:1,bcts:1,mvr:1,fsr:1,usr:1};
+    var RG={fsr:1,road:1,motor:1,plan:1,bcts:1}, RSRC={frd:1,fom:1,bcts:1,fsr:1,usr:1};
     var C={walk:'#3ddc5a',bike:'#40a9ff',motor:'#ff3b30',fsr:'#ff1744'};
     function inBC(b){ return b.e>-139.5&&b.w<-114&&b.n>48.2&&b.s<60 }
     function inUS(b){ return b.s<49.05&&b.w<-104&&b.e>-125&&b.n>41 }
@@ -1779,7 +1779,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function aToday(w){ var m=/([A-Za-z]{3})[a-z]*\.? (\d{1,2}) (?:to|-) ([A-Za-z]{3})[a-z]*\.? (\d{1,2})/.exec(String(w||'')); if(!m||MONS[m[1].toLowerCase()]==null||MONS[m[3].toLowerCase()]==null) return true; var d=new Date(), v=d.getMonth()*100+d.getDate(), a=MONS[m[1].toLowerCase()]*100+(+m[2]), b=MONS[m[3].toLowerCase()]*100+(+m[4]), inR=a<=b?(v>=a&&v<=b):(v>=a||v<=b); return /^open/i.test(w)?!inR:inR }
     function aDec(s){ var i=0, la=0, lo=0, out=[]; while(i<s.length){ var r=0, sh=0, b; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); la+=(r&1)?~(r>>1):(r>>1); r=0; sh=0; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5 }while(b>=32); lo+=(r&1)?~(r>>1):(r>>1); out.push([la/1e4,lo/1e4]) } return out }
     function aIn(la,lo,r){ var c=false; for(var i=0,j=r.length-1;i<r.length;j=i++){ var yi=r[i][0], xi=r[i][1], yj=r[j][0], xj=r[j][1]; if(((yi>la)!==(yj>la))&&(lo<(xj-xi)*(la-yi)/(yj-yi)+xi)) c=!c } return c }
-    function areas(){ if(!on) return; var z=map.getZoom(); if(z<9||cfg2.fsrClose==='0'||!fsrMode){ aG.clearLayers(); aLay={}; return }
+    function areas(){ if(!on) return; var z=map.getZoom(); if(z<9||cfg2.fsrClose==='0'){ aG.clearLayers(); aLay={}; return }
       if(!aD){ if(!aP) aP=fetch('sled-zones.json').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(j&&j.f){ aD=j.f.filter(function(f){ return !f.l&&f.w!=='Road Closure'&&(f.k==='mv'||(f.k==='c'&&/ATV/.test(f.t||''))) }); areas() } else aP=null }).catch(function(){ aP=null }); return }
       var b=map.getBounds().pad(.2), w=b.getWest(), e=b.getEast(), so=b.getSouth(), n=b.getNorth();
       aD.forEach(function(f,i){ var vis=f.b[0]<e&&f.b[2]>w&&f.b[1]<n&&f.b[3]>so, l=aLay[i];
@@ -1798,7 +1798,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     window.__fsr={set:set,mode:mode,load:load,refresh:refresh,urls:function(b){ var o=[]; SRC.forEach(function(s){ if(!s.url) return; keys(s,b).forEach(function(k){ var tb={w:k[0]*s.g,s:k[1]*s.g,e:(k[0]+1)*s.g,n:(k[1]+1)*s.g}; if(s.area(tb)) o.push(s.url(tb)) }) });
       o.push('https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_TRAILS_SVW&outputFormat=json&count=5000&propertyName=FOREST_FILE_ID,ACTIVITY_DESC1,ACTIVITY_DESC2,ACTIVITY_DESC3,MAINTAIN_STD_DESC,OPERATOR_CLIENT_NAME'); o.push(SITES); return o }};
     // Layer lists: tap Satellite or FSR again (when it is on) to show or hide its own layers.
-    // Satellite: trails, camping, creeks, GPS traces and your GPX tracks (they show on both). FSR: forest service roads and other road layers.
+    // On road: trails, camping, creeks, GPS traces, closures. Off road: forest service roads plus camping, creeks, OSM trails, GPS traces and closures (shared chips).
     (function(){ var fb=document.querySelector('.seg button[data-b=fsr]'), sb=document.querySelector('.seg button[data-b=sat]'); if(!fb||!sb) return; var bc=document.body.classList, all=[];
       function mk(btn,name,title,CH,SE){ var pn=document.createElement('div'); pn.className='lyrp'; pn.hidden=true; pn.setAttribute('role','dialog'); pn.setAttribute('aria-label',title);
         pn.innerHTML='<div class="fph"><span>'+title+'</span><button type="button" class="fpx" aria-label="Close '+title+'">✕</button></div><div class="fpc">'+CH.map(function(c){ return '<button type="button" data-s="'+c[0]+'"><i style="border-top:3px '+c[3]+' '+c[2]+'"></i>'+c[1]+'</button>' }).join('')+'</div>'+
@@ -1816,8 +1816,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(window.MutationObserver){ new MutationObserver(lbl).observe(btn,{attributes:true,attributeFilter:['aria-pressed']});
           new MutationObserver(function(){ bc.toggle('fsrp',all.some(function(p){ return !p.pn.hidden })); if(!pn.hidden) bc.remove('menuon','toolon','keyon') }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }
         lbl(); var o={pn:pn,show:show,sync:sync}; all.push(o); return o }
-      var fp=mk(fb,'Off road','Off road layers',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrRdOp','Road lines see-through']]);
-      var sp=mk(sb,'On road','On road layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed']],[['s_fsrOp','Trail lines see-through'],['s_waterOp','Creeks see-through']]);
+      var fp=mk(fb,'Off road','Off road layers',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid']],[['s_fsrRdOp','Road lines see-through']]);
+      var sp=mk(sb,'On road','On road layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrOp','Trail lines see-through'],['s_waterOp','Creeks see-through']]);
       var pn=sp.pn; function show(v){ all.forEach(function(p){ p.show(v) }) } function sync(){ all.forEach(function(p){ p.sync() }) }
       map.on('click dragstart',function(){ show(false) });
       var ff=document.getElementById('fsfolder'); if(ff) ff.style.display='none';
@@ -1828,8 +1828,6 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         try{ files=JSON.parse(localStorage.getItem(KEY)||'[]')||[] }catch(e){ files=[] } if(!Array.isArray(files)) files=[];
         var tr=L.tileLayer('https://gps.tile.openstreetmap.org/lines/{z}/{x}/{y}.png',{minZoom:9,maxZoom:19,maxNativeZoom:18,opacity:.8,zIndex:6,attribution:'GPS traces © OpenStreetMap contributors'});
         var hs=document.createElement('select'); hs.id='s_gpsTr'; hs.hidden=true; hs.innerHTML='<option value="1">1</option><option value="0">0</option>'; try{ hs.value=localStorage.getItem(TK)==='0'?'0':'1' }catch(e){ hs.value='1' } document.body.appendChild(hs);
-        var grid=pn.querySelector('.fpc'), chip=document.createElement('button'); chip.type='button'; chip.setAttribute('data-s','s_gpsTr'); chip.innerHTML='<i style="border-top:3px solid #b388ff"></i>GPS traces'; grid.appendChild(chip);
-        chip.onclick=function(){ hs.value=chip.getAttribute('aria-pressed')==='true'?'0':'1'; hs.dispatchEvent(new Event('change')); sync() };
         hs.onchange=function(){ try{ localStorage.setItem(TK,hs.value) }catch(e){} vis() };
         function vis(){ var on=true; if(on&&hs.value!=='0'){ if(!map.hasLayer(tr)) tr.addTo(map) } else if(map.hasLayer(tr)) map.removeLayer(tr); if(on&&files.length){ if(!map.hasLayer(G)) G.addTo(map) } else if(map.hasLayer(G)) map.removeLayer(G) }
         function draw(){ G.clearLayers(); files.forEach(function(f,i){ var c=COL[i%COL.length]; (f.l||[]).forEach(function(seg){ L.polyline(seg,{renderer:RR,color:'#000',weight:6,opacity:.35,interactive:false}).addTo(G); L.polyline(seg,{renderer:RR,color:c,weight:3.5,opacity:.95}).bindPopup('<b>'+esc(f.n)+'</b><br><small>Your GPX track · '+(f.k|0)+' km</small><button type="button" class="trrep trrepb">Report trail here</button>',{closeButton:false}).addTo(G) });
