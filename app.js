@@ -220,7 +220,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(d){ d.addEventListener('toggle',function(){ if(d.open) [].forEach.call(document.querySelectorAll('#fsheet details.folder'),function(o){ if(o!==d) o.open=false }) }) });
 
   // Location dot with a soft red halo
-  var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i><b></b>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
+  var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i><b></b>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:950}).addTo(map);
   // My spot icon: the red dot or a car, pickup, SUV or quad seen from above (it turns to face the way you're going), in your colour
   var ME_IC=(function(){ function w(y1,y2){ return '<rect x="-1.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="-1.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/>' }
     var G='#1d2733', S=' stroke="#fff" stroke-width="1.6"';
@@ -787,15 +787,15 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // Live GPS: your dot keeps moving as you travel. Phone GPS works with no cell service.
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
-  var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=124, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
+  var AWV=125, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
         ['Last spot',ago<0?'None yet':(ago<90?ago+' s ago':Math.round(ago/60)+' min ago')+(lastAcc?' · ±'+Math.round(lastAcc)+' m':'')],['Last problem',lastErr?(E[lastErr.code]||'Error')+(lastErr.msg?' · '+esc(String(lastErr.msg).slice(0,60)):''):'None'],
         ['Compass',na?'Working ✅ · '+Math.round(sens.absV)+'°':'No reading ❌'],['Turning sensor',nr?'Working ✅':'No reading ❌'],['Precise location',NATIVE?(window.__native&&window.__native.approx?'Off ❌ · approximate only':'On ✅'):(lastAcc>=500?'Rough spot only (±'+Math.round(lastAcc)+' m)':'—')],['Rotate',(rotOn?'On':'Off')+(nr&&!na?(relOff!=null?' · north set by GPS ✅':' · drive to set north'):'')]];
-      say('<b>GPS check</b><table class="gpst">'+rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>' }).join('')+'</table><button type="button" id="gpsgo">Try again</button>',40000) }) }
+      say('<b>GPS check</b><table class="gpst">'+rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>' }).join('')+'</table>'+(!na&&!nr?'<button type="button" id="gpscmp">Allow compass</button>':'')+'<button type="button" id="gpsgo">Try again</button>',40000) }) }
   function say(t,ms,chk){ clearTimeout(msgT); locMsg.innerHTML=(t||'')+(t&&chk?CHK:''); locMsg.hidden=!t; if(t) msgT=setTimeout(function(){ locMsg.hidden=true },ms||5000) }
   function why(err){ if(err&&err.code===1) return NATIVE?(window.__native&&window.__native.settings?'<b>Location is blocked for AwareBC</b>Tap Open settings ▸ Permissions ▸ Location ▸ Allow, then come back and tap My spot.<button type="button" id="gpsset">Open settings</button>':'<b>Location is blocked for AwareBC</b>Phone Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Location ▸ Allow, then tap My spot again.'):'<b>Location is off for this site</b>Tap Try again and choose Allow. If no question pops up, tap the icon left of the web address ▸ Permissions ▸ Location ▸ Allow.<button type="button" id="gpsgo">Try again</button>';
     return '<b>Can\'t find you yet</b>Turn on Location in your phone\'s quick settings. Indoors, GPS can take a minute; step outside for a clear view of the sky.' }
@@ -815,13 +815,13 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
     rotCal(); rotStep();
-    if(window.__native&&window.__native.approx&&!apxTold){ apxTold=true; setTimeout(function(){ say('<b>Precise location is off</b>Your phone only shares a rough spot, which can be blocks away. Open settings ▸ Permissions ▸ Location ▸ turn on <b>Use precise location</b>.<button type="button" id="gpsset">Open settings</button>',20000) },3500) }
+    if(window.__native&&window.__native.approx&&!apxTold){ apxTold=true; setTimeout(function(){ say('<b>Precise location is off</b>Your phone only shares a rough spot, which can be blocks away. Open settings ▸ Permissions ▸ Location ▸ turn on Use precise location.<button type="button" id="gpsset">Open settings</button>',20000) },3500) }
     if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); needZ=false; zoomTo([nl,nn],DRIVEZ) }
     else if(follow){ if(needZ&&ac<=150){ needZ=false; zoomTo([nl,nn],DRIVEZ) } else if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
-    awake(follow);
+    if(sp>4&&ac<=50&&pac<=50) driveT=t; pac=ac; awake(follow&&(charging||Date.now()-driveT<180000)); roughB(ac);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
-  var goodT=0, goodAcc=1e9, apxTold=false, needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
+  var driveT=0, pac=9999, charging=false, roughN=0, apxWebTold=false, goodT=0, goodAcc=1e9, apxTold=false, needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
   var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
@@ -851,6 +851,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function rotCal(){ if(!moving||lastHd<0||relH==null) return; var d=(aDiff(lastHd,relH)+360)%360; relOff=relOff==null?d:(relOff+aDiff(d,relOff)*0.25+360)%360 }
   function rotProbe(cb){ var a0=sens.abs, r0=sens.rel, was=rotLis; if(!was) rotListen(true);
     setTimeout(function(){ if(!was&&!rotOn) rotListen(false); cb(sens.abs-a0, sens.rel-r0) },2000) }
+  function rotAsk(){ try{ if(window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission) return DeviceOrientationEvent.requestPermission().then(function(r){ rotListen(true); return r },function(){ rotListen(true); return 'err' }) }catch(e){} rotListen(true); return Promise.resolve('granted') }
+  document.addEventListener('pointerdown',function askOnce(){ document.removeEventListener('pointerdown',askOnce,true); if(rotOn&&!sens.abs&&!sens.rel) rotAsk() },true);
   function rotListen(on){ rotLis=!!on; var f=on?'addEventListener':'removeEventListener'; try{ window[f]('deviceorientationabsolute',onOri,true); window[f]('deviceorientation',onOri,true) }catch(e){} }
   function setRot(on,quiet){ rotOn=!!on; rotBtn.setAttribute('aria-pressed',rotOn?'true':'false'); try{ localStorage.setItem('sky-autorot',rotOn?'1':'0') }catch(e){}
     clearTimeout(rotChk); rotListen(false); rotSm=null; rotPause=0;
@@ -864,6 +866,12 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   if(rotOn) setRot(true,true);
   map.on('zoomstart',function(){ if(follow&&!ourZoom) userZoom=true });
   // keep the screen on while you're driving with My spot following
+  try{ if(navigator.getBattery) navigator.getBattery().then(function(bt){ charging=!!bt.charging; bt.addEventListener('chargingchange',function(){ charging=!!bt.charging }) },function(){}) }catch(e){}
+  // 1: a rough spot is labelled until GPS locks on, so the dot never looks exact when it isn't
+  var rb=document.createElement('button'); rb.type='button'; rb.id='roughb'; rb.hidden=true; document.body.appendChild(rb); rb.onclick=function(){ gpsCheck() };
+  var rbs=document.createElement('style'); rbs.textContent='#roughb{position:fixed;z-index:1100;left:calc(max(10px,env(safe-area-inset-left,0px)) + 54px);bottom:calc(env(safe-area-inset-bottom,0px) + 128px);background:#e65100;color:#fff;border:0;font:700 12px/1.25 var(--font,system-ui);padding:6px 10px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.5);max-width:190px;text-align:left}'; document.head.appendChild(rbs);
+  function roughB(ac){ var r=ac>150; rb.hidden=!r; if(r) rb.textContent='Rough spot ±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · waiting for GPS';
+    if(!NATIVE){ roughN=ac>=1500?roughN+1:0; if(roughN>=2&&!apxWebTold){ apxWebTold=true; say('<b>Chrome is only sharing a rough spot</b>Phone Settings ▸ Apps ▸ Chrome ▸ Permissions ▸ Location ▸ turn on Use precise location, then reload and tap My spot.',20000) } } }
   function awake(on){ try{ if(on&&!wl&&navigator.wakeLock&&!document.hidden){ wl=1; navigator.wakeLock.request('screen').then(function(x){ wl=x; x.addEventListener('release',function(){ wl=null }) },function(){ wl=null }) } else if(!on&&wl&&wl.release){ wl.release(); wl=null } }catch(e){ wl=null } }
   function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
   var told=false;
