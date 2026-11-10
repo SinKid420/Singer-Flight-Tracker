@@ -18,7 +18,10 @@
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   function ago(t){ var m=Math.round((Date.now()-t)/60000); return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago' }
   function km(a,b,c,d){ return map.distance([a,b],[c,d])/1000 }
-  function api(path,o){ return fetch(RS+path,o).then(function(r){ return r.json().catch(function(){ return {error:'Server error ('+r.status+')'} }).then(function(j){ if(!r.ok) throw new Error(j&&j.error||('Server error '+r.status)); return j }) }) }
+  function uid(){ var u=ls('sky-uid'); if(!u||u.length<20){ var a=new Uint8Array(18); crypto.getRandomValues(a); u=btoa(String.fromCharCode.apply(null,a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); ls('sky-uid',u) } return u }
+  function myTag(cb){ if(!(window.crypto&&crypto.subtle)) return; crypto.subtle.digest('SHA-256',new TextEncoder().encode('awarebc-tag:'+uid())).then(function(h){ var x=Array.prototype.map.call(new Uint8Array(h),function(b){return ('0'+b.toString(16)).slice(-2)}).join(''), n=parseInt(x.slice(0,5),16), T='23456789ABCDEFGHJKLMNPQRSTUVWXYZ', t=''; for(var i=0;i<4;i++){ t=T[n&31]+t; n>>=5 } cb(t) }).catch(function(){}) }
+  function tagH(t,tr){ return (t?'<small style="opacity:.7;font-weight:700;margin-left:3px">#'+esc(t)+'</small>':'')+(tr?'<span title="Trusted rider" style="color:#34c759;font-weight:800;margin-left:3px">✓</span>':'') }
+  function api(path,o){ if(o&&o.method==='POST'&&typeof o.body==='string'){ try{ var b=JSON.parse(o.body||'{}'); b.uid=uid(); o=Object.assign({},o,{body:JSON.stringify(b)}) }catch(e){} } return fetch(RS+path,o).then(function(r){ return r.json().catch(function(){ return {error:'Server error ('+r.status+')'} }).then(function(j){ if(!r.ok) throw new Error(j&&j.error||('Server error '+r.status)); return j }) }) }
 
   // ---------- buttons on the map ----------
   var app=document.getElementById('map').parentNode;
@@ -66,7 +69,7 @@
       '<div class="trtop">'+(r.ph?'<button type="button" class="trph" aria-label="Open photo"><img src="'+RS+'/thumb/'+r.id+'" alt="Trail photo"></button>':'')+
       '<div class="trinfo">'+(r.cl?'<span class="trst" style="--c:#34c759"><i></i>Cleared</span> <span class="trst" style="--c:#8e8e93"><i></i>was '+s[1]+'</span>':'<span class="trst" style="--c:'+s[0]+'"><i></i>'+s[1]+'</span>')+(r.tg&&r.tg.length?'<span class="trtags">'+r.tg.map(function(t){ var g=TG.filter(function(x){return x[0]===t})[0]; return g?g[1]+' '+g[2]:'' }).join(' · ')+'</span>':'')+
       (r.n?'<p class="trnote">'+esc(r.n)+'</p>':'')+'<div class="trloc">'+I('pin',13)+r.lat.toFixed(5)+', '+r.lon.toFixed(5)+' · '+(d<1?Math.round(d*1000)+' m':d.toFixed(d<10?1:0)+' km')+' away</div></div></div>'+
-      '<div class="trwho"><span class="trav" style="background:'+avc(r.by)+'">'+esc((r.by||'?').charAt(0).toUpperCase())+'</span><b>'+esc(r.by)+'</b><small>'+ago(r.t)+(r.cl?' · cleared by '+esc(r.cb||'a rider')+' '+ago(r.cl):'')+'</small></div>'+
+      '<div class="trwho"><span class="trav" style="background:'+avc(r.by)+'">'+esc((r.by||'?').charAt(0).toUpperCase())+'</span><b>'+esc(r.by)+'</b>'+tagH(r.ut,r.tr)+'<small>'+ago(r.t)+(r.cl?' · cleared by '+esc(r.cb||'a rider')+' '+ago(r.cl):(r.cv?' · '+r.cv+' rider says it\'s gone':''))+'</small></div>'+
       '<div class="tract"><button type="button" data-a="go">'+I('pin',14)+'Directions</button>'+(r.cl?'':'<button type="button" data-a="clr">'+I('chk',14)+'Cleared</button>')+(mine[r.id]?'<button type="button" data-a="del">Delete</button>':'<button type="button" data-a="flag">Flag</button>')+'</div>'+
       '<div class="trch">Comments'+(r.nc?' · '+r.nc:'')+'</div><div class="trcl">'+(r.nc?'<div class="trmsg">Loading…</div>':'<div class="trmsg">No comments yet. Be the first.</div>')+'</div>'+
       '<form class="trin"><input maxlength="300" placeholder="Add a comment…" aria-label="Add a comment" enterkeyhint="send"><button type="submit" aria-label="Send comment">'+I('send',15)+'</button></form>';
@@ -76,7 +79,7 @@
     card.querySelector('[data-a=go]').onclick=function(){ window.open('https://www.google.com/maps/dir/?api=1&destination='+r.lat+','+r.lon+'&travelmode=driving','_blank','noopener') };
     var fl=card.querySelector('[data-a=flag]'); if(fl) fl.onclick=function(){ fl.disabled=true; api('/flag/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(function(){ fl.textContent='Thanks, flagged' }).catch(function(e){ fl.disabled=false; toast(e.message) }) };
     var cl=card.querySelector('[data-a=clr]'); if(cl) cl.onclick=function(){ if(cl.getAttribute('data-sure')!=='1'){ cl.setAttribute('data-sure','1'); cl.textContent='Tap: it\'s gone'; return } cl.disabled=true;
-      api('/clear/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:name()})}).then(function(j){ r.cl=(j&&j.cl)||Date.now(); r.cb=name()||'you'; closeCard(); pins(); toast('Marked cleared. It stays on the map for a week.') }).catch(function(e){ cl.disabled=false; toast(e.message) }) };
+      api('/clear/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:name()})}).then(function(j){ if(j&&j.need){ r.cv=j.cv||1; closeCard(); pins(); toast('Thanks. One more rider needs to confirm it\'s gone before it clears.'); return } r.cl=(j&&j.cl)||Date.now(); r.cb=(j&&j.cb)||name()||'you'; closeCard(); pins(); toast('Marked cleared. It stays on the map for a week.') }).catch(function(e){ cl.disabled=false; toast(e.message) }) };
     var dl=card.querySelector('[data-a=del]'); if(dl) dl.onclick=function(){ if(dl.getAttribute('data-sure')!=='1'){ dl.setAttribute('data-sure','1'); dl.textContent='Tap again to delete'; return } dl.disabled=true;
       api('/del/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:mine[r.id]})}).then(function(){ delete mine[r.id]; ls('sky-trmine',JSON.stringify(mine)); data=data.filter(function(x){return x.id!==r.id}); closeCard(); pins(); toast('Report deleted') }).catch(function(e){ dl.disabled=false; toast(e.message) }) };
     var f=card.querySelector('.trin'), inp=f.querySelector('input');
@@ -84,7 +87,7 @@
       api('/c/'+r.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({by:nm,text:t})}).then(function(j){ r.nc=j.nc; inp.value=''; comments(r) }).catch(function(e){ toast(e.message) }).then(function(){ inp.disabled=false }) };
     if(r.nc) comments(r) }
   function comments(r){ api('/c/'+r.id).then(function(j){ if(sel!==r.id) return; var cl=card.querySelector('.trcl'), c=j.c||[]; card.querySelector('.trch').textContent='Comments'+(c.length?' · '+c.length:'');
-      cl.innerHTML=c.length?c.map(function(x){ return '<div class="trc"><span class="trav" style="background:'+avc(x.by)+'">'+esc((x.by||'?').charAt(0).toUpperCase())+'</span><div><b>'+esc(x.by)+'</b> <small>'+ago(x.t)+'</small><p>'+esc(x.x)+'</p></div></div>' }).join(''):'<div class="trmsg">No comments yet. Be the first.</div>' })
+      cl.innerHTML=c.length?c.map(function(x){ return '<div class="trc"><span class="trav" style="background:'+avc(x.by)+'">'+esc((x.by||'?').charAt(0).toUpperCase())+'</span><div><b>'+esc(x.by)+'</b>'+tagH(x.ut)+' <small>'+ago(x.t)+'</small><p>'+esc(x.x)+'</p></div></div>' }).join(''):'<div class="trmsg">No comments yet. Be the first.</div>' })
       .catch(function(){ var cl=card.querySelector('.trcl'); if(cl&&sel===r.id) cl.innerHTML='<div class="trmsg">Comments need signal.</div>' }) }
   function avc(s){ var h=0; s=String(s||''); for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return ['#5856d6','#34c759','#ff9f0a','#30b0c7','#af52de','#ff2d55','#007aff'][Math.abs(h)%7] }
   function closeCard(){ if(card.hidden&&!sel) return; card.hidden=true; document.body.classList.remove('trcard'); var p=sel; sel=null; if(p&&mk[p]) pins() }
@@ -93,7 +96,8 @@
 
   // ---------- name ----------
   function name(){ return ls('sky-trname')||'' }
-  function askName(done){ var w=document.createElement('div'); w.className='trname'; w.innerHTML='<form><b>Your name to complete action</b><small>Shown on your reports and comments</small><input maxlength="24" placeholder="e.g. Josh" aria-label="Your name to complete action"><button type="submit">Save</button></form>'; document.body.appendChild(w);
+  function askName(done){ var w=document.createElement('div'); w.className='trname'; w.innerHTML='<form><b>Your name to complete action</b><small>Shown on your reports and comments<span class="trmytag"></span></small><input maxlength="24" placeholder="e.g. Josh" aria-label="Your name to complete action"><button type="submit">Save</button></form>'; document.body.appendChild(w);
+    myTag(function(t){ var e=w.querySelector('.trmytag'); if(e) e.textContent=' with your rider tag #'+t+' (only this phone can use it)' });
     var i=w.querySelector('input'); i.focus(); w.querySelector('form').onsubmit=function(e){ e.preventDefault(); var v=i.value.trim().slice(0,24); if(!v) return; ls('sky-trname',v); w.remove(); var nf=document.getElementById('trnm'); if(nf) nf.value=v; done&&done() };
     w.onclick=function(e){ if(e.target===w) w.remove() } }
 
