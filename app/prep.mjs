@@ -62,8 +62,12 @@ if (step === 'web') {
   h = h.replace(/(<script src="lib\/leaflet-rotate\.js"[^>]*><\/script>)/, '$1\n<script src="lib/capacitor.js"></script>\n<script src="native.js"></script>');
   if (!h.includes('<script src="native.js">')) throw new Error('index.html: could not add native.js');
   // the app stores its own files, so no website service worker
-  h = R(h, "'serviceWorker' in navigator && location.protocol==='https:'", "!window.Capacitor && 'serviceWorker' in navigator && location.protocol==='https:'", 'index.html');
+  // the Capacitor bridge adds a small script of its own to the page, so the app's copy allows that
+  h = R(h, "script-src 'self' https://cdnjs.cloudflare.com", "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com", 'index.html');
   fs.writeFileSync(path.join(W, 'index.html'), h);
+  let aj = fs.readFileSync(path.join(W, 'app.js'), 'utf8');
+  aj = R(aj, "'serviceWorker' in navigator && location.protocol==='https:'", "!window.Capacitor && 'serviceWorker' in navigator && location.protocol==='https:'", 'app.js');
+  fs.writeFileSync(path.join(W, 'app.js'), aj);
 
   // danger alerts keep running with the screen off
   let r = fs.readFileSync(path.join(W, 'reports.js'), 'utf8');
