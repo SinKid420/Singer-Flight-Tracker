@@ -199,18 +199,18 @@
   // ---------- navigation: follow your GPS along the route ----------
   function start(){ if(!rt) return; nav=true; showList=false; var lb=document.getElementById('locate'); if(lb&&!lb.classList.contains('follow')) lb.click();
     if(wid==null&&navigator.geolocation) try{ wid=navigator.geolocation.watchPosition(function(p){ var c=p.coords; lastPos={lat:c.latitude,lon:c.longitude,acc:c.accuracy||0}; if(nav) track(lastPos) },function(){},{enableHighAccuracy:true,maximumAge:1000,timeout:30000}) }catch(e){}
-    if(lastPos) track(lastPos); panel() }
-  function stop(){ nav=false; offN=0; if(wid!=null&&navigator.geolocation){ navigator.geolocation.clearWatch(wid); wid=null } }
+    if(lastPos) track(lastPos); panel(); tiltUpd() }
+  function stop(){ nav=false; offN=0; setTimeout(tiltUpd,0); if(wid!=null&&navigator.geolocation){ navigator.geolocation.clearWatch(wid); wid=null } }
   function track(p){ if(!rt||!p) return; var pts=rt.pts, lo=Math.max(0,rt.li-30), hi=Math.min(pts.length-1,rt.li+400), bi=rt.li, bd=1e18, bp=0;
     for(var i=lo;i<hi;i++){ var a=pts[i], b=pts[i+1], cx=Math.cos(a[0]*D2R), ax=(b[1]-a[1])*cx, ay=b[0]-a[0], px=(p.lon-a[1])*cx, py=p.lat-a[0], L2=ax*ax+ay*ay, t=L2?Math.max(0,Math.min(1,(px*ax+py*ay)/L2)):0, dx=px-t*ax, dy=py-t*ay, d=dx*dx+dy*dy;
       if(d<bd){ bd=d; bi=i; bp=t } }
-    var off=Math.sqrt(bd)*111320; rt.li=bi; rt.prog=rt.cum[bi]+bp*(rt.cum[bi+1]-rt.cum[bi]||0);
+    var off=Math.sqrt(bd)*111320; rt.li=bi;
+    if(tilted){ var j=Math.min(pts.length-1,bi+4), hd=brg(pts[bi][0],pts[bi][1],pts[j][0],pts[j][1]), want=(360-hd)%360, cur=map.getBearing?map.getBearing():0; if(j>bi&&Math.abs(((want-cur)%360+540)%360-180)>4&&map.setBearing) map.setBearing(want) } rt.prog=rt.cum[bi]+bp*(rt.cum[bi+1]-rt.cum[bi]||0);
     if(hav(p.lat,p.lon,dest.lat,dest.lon)<35||rt.dist-rt.prog<20){ rt.arrived=true; stop(); panel(); return }
     var k=1; while(k<rt.steps.length-1&&rt.cum[rt.steps[k].i]<rt.prog+8) k++; rt.next=k;
     if(off>(rt.mode==='off'?80:60)&&(p.acc||0)<60){ if(++offN>=3&&Date.now()-lastRe>20000){ lastRe=Date.now(); offN=0; route(rt.mode,true); return } } else offN=0;
     panel() }
 
-  // public: other parts of the app open directions with window.__nav.to(latlng, name)
   // ---------- Street names stay readable when you head south ----------
   // The map's own names are part of its pictures and turn upside down with the map. Heading south, they're hidden and upright
   // names from BC road data are shown instead. Heading north, east or west, the map's own names stay.
@@ -256,6 +256,18 @@
     map.on('moveend zoomend',function(){ check(); if(on) load() });
     window.__navNames=function(){ return {on:on,n:grp.getLayers().length,feats:feats.length} };
   })();
+
+  // ---------- 3D: the map tilts while directions are following you (buttons and panels stay flat) ----------
+  var tilted=false, ctlBox=null, sky=null;
+  (function(){ var c3=document.createElement('style'); c3.textContent='body.tilt3d .mapwrap{perspective:800px;background:#0b0e13}body.tilt3d #map{position:absolute!important;flex:none!important;left:-50%;width:200%;top:-70%;height:220%;transform:rotateX(50deg);transform-origin:50% 100%}#tiltsky{position:absolute;left:0;right:0;top:0;height:300px;z-index:450;pointer-events:none;background:linear-gradient(#0b0e13 0,#0b0e13 35%,rgba(11,14,19,0) 100%);display:none}body.tilt3d #tiltsky{display:block}'; document.head.appendChild(c3);
+    var mc=map.getContainer(); sky=document.createElement('div'); sky.id='tiltsky'; mc.parentNode.insertBefore(sky,mc.nextSibling);
+    var lb=document.getElementById('locate'); if(lb&&window.MutationObserver) new MutationObserver(tiltUpd).observe(lb,{attributes:true,attributeFilter:['class']}) })();
+  function tiltUpd(){ var lb=document.getElementById('locate'); tilt(!!(nav&&rt&&!rt.arrived&&lb&&lb.classList.contains('follow'))) }
+  function tilt(on){ if(on===tilted) return; tilted=on; var mc=map.getContainer(), wrap=mc.parentNode;
+    if(on){ ctlBox=mc.querySelector('.leaflet-control-container'); if(ctlBox) wrap.insertBefore(ctlBox,sky.nextSibling) } else if(ctlBox){ mc.appendChild(ctlBox); ctlBox=null }
+    var ll=lastPos?[lastPos.lat,lastPos.lon]:map.getCenter(); document.body.classList.toggle('tilt3d',on);
+    map.invalidateSize({pan:false}); map.setView(ll,map.getZoom(),{animate:false});
+    if(!on&&map.setBearing){ var ro=false; try{ ro=localStorage.getItem('sky-autorot')==='1' }catch(e){} if(!ro) map.setBearing(0) } else if(on&&lastPos) track(lastPos) }
 
   // public: other parts of the app open directions with window.__nav.to(latlng, name)
   // urls(box) lists the road data to save for offline (used by "Save area for offline")
