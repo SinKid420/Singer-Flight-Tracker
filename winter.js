@@ -11,7 +11,7 @@ window.__awm&&window.__awm('winter',function(X){with(X){
     function show(){ if(btn) btn.classList.toggle('off',!active()); if(!active()&&on) setOn(false) }
     function tU(c){ if(typeof c!=='number') return '—'; return (typeof tcfg!=='undefined'&&tcfg==='F')?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C' }
     function cm(v){ return v<0.5?'0 cm':Math.round(v)+' cm' }
-    function txt(h){ var d=document.createElement('div'); d.innerHTML=String(h||''); return (d.textContent||'').replace(/\s+/g,' ').trim() }
+    function txt(h){ var d; try{ d=new DOMParser().parseFromString(String(h||''),'text/html').body }catch(e){ return String(h||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim() } return ((d&&d.textContent)||'').replace(/\s+/g,' ').trim() } // read-only copy: pictures or code in the text never run
     var AVC={low:'#52ba4a',moderate:'#e6c700',considerable:'#f79218',high:'#ef1c29',extreme:'#111'};
     function getWx(){ if(wx&&Date.now()-wxAt<20*60000) return Promise.resolve(wx); var all=PASS.map(function(p){return [p[2],p[3],p[4]]}).concat(HILL.map(function(h){return [h[1],h[2],h[3]]}));
       var u='https://api.open-meteo.com/v1/forecast?latitude='+all.map(function(a){return a[0]}).join(',')+'&longitude='+all.map(function(a){return a[1]}).join(',')+'&elevation='+all.map(function(a){return a[2]}).join(',')+
