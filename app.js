@@ -788,19 +788,21 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=123, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=124, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
         ['Last spot',ago<0?'None yet':(ago<90?ago+' s ago':Math.round(ago/60)+' min ago')+(lastAcc?' · ±'+Math.round(lastAcc)+' m':'')],['Last problem',lastErr?(E[lastErr.code]||'Error')+(lastErr.msg?' · '+esc(String(lastErr.msg).slice(0,60)):''):'None'],
-        ['Compass',na?'Working ✅ · '+Math.round(sens.absV)+'°':'No reading ❌'],['Turning sensor',nr?'Working ✅':'No reading ❌'],['Rotate',(rotOn?'On':'Off')+(nr&&!na?(relOff!=null?' · north set by GPS ✅':' · drive to set north'):'')]];
+        ['Compass',na?'Working ✅ · '+Math.round(sens.absV)+'°':'No reading ❌'],['Turning sensor',nr?'Working ✅':'No reading ❌'],['Precise location',NATIVE?(window.__native&&window.__native.approx?'Off ❌ · approximate only':'On ✅'):(lastAcc>=500?'Rough spot only (±'+Math.round(lastAcc)+' m)':'—')],['Rotate',(rotOn?'On':'Off')+(nr&&!na?(relOff!=null?' · north set by GPS ✅':' · drive to set north'):'')]];
       say('<b>GPS check</b><table class="gpst">'+rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>' }).join('')+'</table><button type="button" id="gpsgo">Try again</button>',40000) }) }
   function say(t,ms,chk){ clearTimeout(msgT); locMsg.innerHTML=(t||'')+(t&&chk?CHK:''); locMsg.hidden=!t; if(t) msgT=setTimeout(function(){ locMsg.hidden=true },ms||5000) }
   function why(err){ if(err&&err.code===1) return NATIVE?(window.__native&&window.__native.settings?'<b>Location is blocked for AwareBC</b>Tap Open settings ▸ Permissions ▸ Location ▸ Allow, then come back and tap My spot.<button type="button" id="gpsset">Open settings</button>':'<b>Location is blocked for AwareBC</b>Phone Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Location ▸ Allow, then tap My spot again.'):'<b>Location is off for this site</b>Tap Try again and choose Allow. If no question pops up, tap the icon left of the web address ▸ Permissions ▸ Location ▸ Allow.<button type="button" id="gpsgo">Try again</button>';
     return '<b>Can\'t find you yet</b>Turn on Location in your phone\'s quick settings. Indoors, GPS can take a minute; step outside for a clear view of the sky.' }
   var accC=L.circle([me.lat,me.lon],{radius:1,color:'#ff3b30',weight:1,opacity:.45,fillColor:'#ff3b30',fillOpacity:.08,interactive:false});
-  function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return; me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
+  function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return;
+    // a rough Wi-Fi/cell spot never replaces a good GPS spot from the last 20 s (stops the dot jumping blocks away)
+    var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
     meMark.setLatLng([nl,nn]); ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ accC.setStyle(ac>120?{fillOpacity:0,weight:1.5,opacity:.7,dashArray:'6 6'}:{fillOpacity:.08,weight:1,opacity:.45,dashArray:null}); if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
     var el=meMark.getElement(); if(el) el.classList.remove('stale');
     // Driving: speed and direction from the GPS (or worked out from the last spot), arrow shows which way you're heading
@@ -813,12 +815,13 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
     rotCal(); rotStep();
+    if(window.__native&&window.__native.approx&&!apxTold){ apxTold=true; setTimeout(function(){ say('<b>Precise location is off</b>Your phone only shares a rough spot, which can be blocks away. Open settings ▸ Permissions ▸ Location ▸ turn on <b>Use precise location</b>.<button type="button" id="gpsset">Open settings</button>',20000) },3500) }
     if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); needZ=false; zoomTo([nl,nn],DRIVEZ) }
     else if(follow){ if(needZ&&ac<=150){ needZ=false; zoomTo([nl,nn],DRIVEZ) } else if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
     awake(follow);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
-  var needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
+  var goodT=0, goodAcc=1e9, apxTold=false, needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
   var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
@@ -888,10 +891,10 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(lastFix&&Date.now()-lastFix<20000){ recenter(true); needZ=false; zoomTo([me.lat,me.lon],DRIVEZ); say(moving?'Drive mode · following you up close':'Following you · drag the map to stop',3000); return }
     b.classList.add('on'); say('Finding you…',31000,true); var tries=0;
     // quick rough spot from Wi-Fi and cell towers (a second or two, works indoors) while precise GPS locks on
-    try{ navigator.geolocation.getCurrentPosition(function(p){ if(b.classList.contains('on')) onFix(p) },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:600000}) }catch(e){}
+    try{ navigator.geolocation.getCurrentPosition(function(p){ if(b.classList.contains('on')) onFix(p) },function(){},{enableHighAccuracy:false,timeout:8000,maximumAge:60000}) }catch(e){}
     setTimeout(function(){ if(b.classList.contains('on')){ b.classList.remove('on'); if(!lastErr) lastErr={code:3,msg:'No answer from the phone GPS'}; say(why({code:3}),20000,true) } },30000);
     function fail(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(!b.classList.contains('on')) return; if(err&&err.code===1){ lost(err); return }
-      if(++tries<2){ navigator.geolocation.getCurrentPosition(onFix,fail,{enableHighAccuracy:false,timeout:15000,maximumAge:600000}); return }
+      if(++tries<2){ navigator.geolocation.getCurrentPosition(onFix,fail,{enableHighAccuracy:false,timeout:15000,maximumAge:60000}); return }
       b.classList.remove('on'); say(why(err),20000,true) }
     navigator.geolocation.getCurrentPosition(onFix,fail,{enableHighAccuracy:true,timeout:12000,maximumAge:20000}) };
 
