@@ -43,6 +43,14 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
           cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/AwareBC.apk
+      - name: Publish the live update (apps update themselves from this)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/live && cp -r app/build/www /tmp/live/www && cp app/build/www/app-version.json /tmp/live/version.json
+          cd /tmp/live && git init -q -b app-live && git add -A
+          git -c user.name="AwareBC build" -c user.email="actions@github.com" commit -qm "AwareBC live update ${{ github.run_number }}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" app-live
       - name: Publish the test app
         env:
           GH_TOKEN: ${{ github.token }}
