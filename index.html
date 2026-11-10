@@ -234,7 +234,7 @@ body:has(#fsheet:not([hidden])) .welcome{display:none}
 .leaflet-control-zoom{margin-right:16px!important}
 body.moving .tempctl{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,18,22,.72)}
 .me{pointer-events:none}
-.me i{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,#ff3b30 4.5px 9px,rgba(255,59,48,.24) 9.5px 17px,transparent 17.5px)}
+.me i{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#fff 0 4px,var(--mc,#ff3b30) 4.5px 9px,color-mix(in srgb,var(--mc,#ff3b30) 24%,transparent) 9.5px 17px,transparent 17.5px)}.me.veh i{background:none;position:relative}.me.veh i svg{position:absolute;left:-6px;top:-6px;width:46px;height:46px;transform:rotate(var(--hd,0deg));transition:transform .5s;filter:drop-shadow(0 2px 3px rgba(0,0,0,.65))}.me.veh b{display:none!important}.mepick{display:flex;gap:6px;flex-wrap:wrap;background:var(--chip);border-radius:8px;padding:6px;margin-bottom:6px}.mepick button{width:46px;height:46px;border-radius:10px;background:rgba(255,255,255,.06);border:2px solid transparent;display:grid;place-items:center;padding:0;color:#fff;font:600 10px var(--font)}.mepick button[aria-pressed=true]{border-color:var(--accent)}.mepick button svg{width:38px;height:38px}.mepick .mc{width:34px;height:34px;border-radius:50%;border:2px solid #fff}.mepick .mc[aria-pressed=true]{outline:3px solid var(--accent);outline-offset:2px;border-color:#fff}
 .leaflet-marker-icon.me{transition:none!important}
 body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(18,18,22,.72)}
 .gear{width:40px;height:40px;border-radius:50%;padding:0;display:grid;place-items:center;color:var(--dim);background:var(--bg);box-shadow:var(--shadow)}
@@ -309,7 +309,7 @@ body.moving .compass,body.moving .hdg{-webkit-backdrop-filter:none;backdrop-filt
 .leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
-#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:118px;color:var(--accent)}#locate.follow{background:var(--accent);color:#fff}#locate.on svg{animation:locp 1s ease-in-out infinite}@keyframes locp{50%{opacity:.35}}#locmsg{position:fixed;left:16px;right:70px;top:calc(env(safe-area-inset-top,0px) + 104px);z-index:1250;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:8px 12px;font:13px/1.35 var(--font);box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center}#locmsg[hidden]{display:none}#locmsg b{display:block;font-size:14px;margin-bottom:2px}#locmsg button{display:block;margin:6px auto 0;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:700 13px var(--font)}.gpst{width:100%;border-collapse:collapse;margin:2px 0;text-align:left}.gpst td{padding:2px 0;font-size:12px;vertical-align:top}.gpst td:first-child{color:#aaa;padding-right:8px;white-space:nowrap}.me.stale i{opacity:.45;filter:grayscale(1)}.me b{display:none;position:absolute;left:50%;top:50%;width:0;height:0;margin:-27px 0 0 -9px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid #ff3b30;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 1px 2px rgba(0,0,0,.6));transform-origin:9px 27px;transform:rotate(var(--hd,0deg))}.me.mv b{display:block}#gear{bottom:150px;color:var(--dim)}
+#locate,#gear{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}#locate{bottom:118px;color:var(--accent)}#locate.follow{background:var(--accent);color:#fff}#locate.on svg{animation:locp 1s ease-in-out infinite}@keyframes locp{50%{opacity:.35}}#locmsg{position:fixed;left:16px;right:70px;top:calc(env(safe-area-inset-top,0px) + 104px);z-index:1250;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:8px 12px;font:13px/1.35 var(--font);box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center}#locmsg[hidden]{display:none}#locmsg b{display:block;font-size:14px;margin-bottom:2px}#locmsg button{display:block;margin:6px auto 0;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:700 13px var(--font)}.gpst{width:100%;border-collapse:collapse;margin:2px 0;text-align:left}.gpst td{padding:2px 0;font-size:12px;vertical-align:top}.gpst td:first-child{color:#aaa;padding-right:8px;white-space:nowrap}.me.stale i{opacity:.45;filter:grayscale(1)}.me b{display:none;position:absolute;left:50%;top:50%;width:0;height:0;margin:-27px 0 0 -9px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid var(--mc,#ff3b30);filter:drop-shadow(0 0 2px #fff) drop-shadow(0 1px 2px rgba(0,0,0,.6));transform-origin:9px 27px;transform:rotate(var(--hd,0deg))}.me.mv b{display:block}#gear{bottom:150px;color:var(--dim)}
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:58px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:180px}
@@ -555,6 +555,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <div class="sheet-bg" id="fsheet" hidden>
   <div class="sheet" role="dialog" aria-label="Settings">
     <div class="sheet-head"><b>Settings</b><button class="close" id="fclose" aria-label="Close">✕</button></div>
+    <details class="folder" id="mefolder"><summary>My spot icon</summary><div class="mepick" id="meicons" role="group" aria-label="My spot icon"></div><div class="mepick" id="mecols" role="group" aria-label="My spot colour"></div></details>
     <details class="folder" id="gfolder"><summary>General</summary>
     <label class="setrow" for="radius">Search radius<select id="radius" aria-label="Search radius"><option value="0">25 nm</option><option value="1">50 nm</option><option value="2" selected>100 nm</option><option value="3">150 nm</option></select></label>
     <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
@@ -909,6 +910,25 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
 
   // Location dot with a soft red halo
   var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i><b></b>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:-500}).addTo(map);
+  // My spot icon: the red dot or a car, pickup, SUV or quad seen from above (it turns to face the way you're going), in your colour
+  var ME_IC=(function(){ function w(y1,y2){ return '<rect x="-1.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="-1.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/>' }
+    var G='#1d2733', S=' stroke="#fff" stroke-width="1.6"';
+    return { car:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,3)">'+w(6,22)+'<rect width="20" height="34" rx="7" fill="'+c+'"'+S+'/><path d="M3 10Q10 6 17 10L16 14Q10 12 4 14Z" fill="'+G+'"/><path d="M4 25Q10 27 16 25L17 29Q10 31 3 29Z" fill="'+G+'"/><rect x="4" y="15" width="12" height="9" rx="2" fill="rgba(255,255,255,.25)"/></g></svg>' },
+      truck:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,1)">'+w(5,26)+'<rect width="20" height="38" rx="5" fill="'+c+'"'+S+'/><path d="M3 8Q10 5 17 8L16 12Q10 10.5 4 12Z" fill="'+G+'"/><rect x="3" y="13" width="14" height="5" rx="1.5" fill="rgba(255,255,255,.25)"/><rect x="2.5" y="20" width="15" height="16" rx="1.5" fill="rgba(0,0,0,.35)" stroke="rgba(255,255,255,.5)"/></g></svg>' },
+      suv:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,2)">'+w(5,24)+'<rect width="20" height="36" rx="5" fill="'+c+'"'+S+'/><path d="M3 8Q10 5 17 8L16 12Q10 10.5 4 12Z" fill="'+G+'"/><rect x="3.5" y="13" width="13" height="17" rx="2" fill="rgba(255,255,255,.22)"/><path d="M4 17H16M4 22H16M4 27H16" stroke="rgba(0,0,0,.4)" stroke-width="1.2"/><path d="M4 31.5H16L15 34H5Z" fill="'+G+'"/></g></svg>' },
+      atv:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(9,4)"><rect x="-2" y="2" width="5" height="9" rx="2" fill="#111"/><rect x="19" y="2" width="5" height="9" rx="2" fill="#111"/><rect x="-2" y="21" width="5" height="9" rx="2" fill="#111"/><rect x="19" y="21" width="5" height="9" rx="2" fill="#111"/><path d="M4 3H18L19 13L16 16V26L18 30H4L6 26V16L3 13Z" fill="'+c+'"'+S+'/><rect x="2" y="7" width="18" height="2" rx="1" fill="#222"/><ellipse cx="11" cy="20" rx="3.5" ry="6" fill="'+G+'"/></g></svg>' } } })();
+  var ME_K=[['dot','Dot'],['car','Car'],['truck','Truck'],['suv','SUV'],['atv','Quad']], ME_C=['#ff3b30','#2f80ed','#27ae60','#f2c94c','#f2f2f2','#222222'], meSt={k:'dot',c:'#ff3b30'};
+  try{ var ms=JSON.parse(localStorage.getItem('sky-meicon')||'null'); if(ms&&ME_K.some(function(x){ return x[0]===ms.k })) meSt.k=ms.k; if(ms&&ME_C.indexOf(ms.c)>=0) meSt.c=ms.c }catch(e){}
+  function meDraw(){ var el=meMark.getElement(); if(!el) return; var v=meSt.k!=='dot'&&ME_IC[meSt.k], i=el.querySelector('i'); el.classList.toggle('veh',!!v); el.style.setProperty('--mc',meSt.c); if(i) i.innerHTML=v?v(meSt.c):'' }
+  meDraw();
+  (function(){ var bi=document.getElementById('meicons'), bc=document.getElementById('mecols'); if(!bi||!bc) return;
+    function dotSvg(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="'+c+'" opacity=".25"/><circle cx="20" cy="20" r="8" fill="'+c+'"/><circle cx="20" cy="20" r="3.5" fill="#fff"/></svg>' }
+    function paint(){ bi.innerHTML=ME_K.map(function(k){ return '<button type="button" data-k="'+k[0]+'" aria-label="'+k[1]+'" aria-pressed="'+(meSt.k===k[0])+'">'+(k[0]==='dot'?dotSvg(meSt.c):ME_IC[k[0]](meSt.c))+'</button>' }).join('');
+      bc.innerHTML=ME_C.map(function(c){ return '<button type="button" class="mc" data-c="'+c+'" aria-label="Colour '+c+'" aria-pressed="'+(meSt.c===c)+'" style="background:'+c+'"></button>' }).join('') }
+    function save(){ try{ localStorage.setItem('sky-meicon',JSON.stringify(meSt)) }catch(e){} paint(); meDraw() }
+    bi.onclick=function(e){ var b=e.target.closest('button'); if(b){ meSt.k=b.getAttribute('data-k'); save() } };
+    bc.onclick=function(e){ var b=e.target.closest('button'); if(b){ meSt.c=b.getAttribute('data-c'); save() } };
+    paint() })();
   var meHalo = {setLatLng:function(){return meHalo}};
   var ring = L.circle([me.lat,me.lon],{radius:radiusNm*1852,color:'#ff3b30',weight:1.5,opacity:.6,fill:false,dashArray:'5 7',interactive:false}).addTo(map);
 
@@ -1456,7 +1476,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=107, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=108, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1485,7 +1505,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
   var prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
-  function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0; el.style.setProperty('--hd',((lastHd+(bb||0))%360)+'deg') }
+  var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
   map.on('zoomstart',function(){ if(follow&&!ourZoom) userZoom=true });
   // keep the screen on while you're driving with My spot following
