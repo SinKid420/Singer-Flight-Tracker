@@ -1478,7 +1478,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=116, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=117, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1506,7 +1506,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     awake(follow&&mvOn);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
-  var needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
+  var needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=19, wl=null;
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
   var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
