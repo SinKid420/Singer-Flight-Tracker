@@ -691,7 +691,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // Personal FlyItalyADSB key, used until you paste a different one on the Feeds screen. Empty in the website build.
   var DEFAULT_KEY='';
   try{relay=localStorage.getItem('sky-relay')||'';apiKey=localStorage.getItem('sky-key')||''}catch(e){}
-  var DEFAULT_RELAY='https://skyrelay.joshuasinger123.workers.dev/'; if(!relay||!/^https:\/\//i.test(relay)) relay=DEFAULT_RELAY;
+  var DEFAULT_RELAY='https://skyrelay.aware-bc.workers.dev/'; if(relay&&/^https:\/\/skyrelay\.[a-z0-9-]+\.workers\.dev\/?$/i.test(relay)&&relay!==DEFAULT_RELAY){ relay=DEFAULT_RELAY; try{ localStorage.setItem('sky-relay',relay) }catch(e){} } // the server address moved
+  if(!relay||!/^https:\/\//i.test(relay)) relay=DEFAULT_RELAY;
   try{var qrl=new URLSearchParams(location.search).get('relay'); if(qrl&&/^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w\-./]*)?$/i.test(qrl)&&qrl.length<200){ if(confirm('Use this relay for flight data?\n\n'+qrl+'\n\nOnly say OK if you set this relay up yourself. A relay sees which area of the map you are viewing.')){relay=qrl;localStorage.setItem('sky-relay',qrl)} history.replaceState(null,'',location.pathname) }}catch(e){}
   if(!apiKey) apiKey=DEFAULT_KEY;
   function active(){return SOURCES.filter(function(s){return s.needsKey?!!apiKey:!!relay})}
@@ -787,7 +788,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=121, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=122, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
