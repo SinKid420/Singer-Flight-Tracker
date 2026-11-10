@@ -18,7 +18,7 @@
   // Android's own location service (the one maps apps use): faster and more reliable than the web view's GPS. Older app installs without it keep the old way.
   var GEO = reg('Geolocation'), geoOK = !!(C.isPluginAvailable && C.isPluginAvailable('Geolocation')), gid = null;
   function gErr(e) { var m = String((e && e.message) || e || ''); return { code: /denied|permission|not authorized/i.test(m) ? 1 : /timeout|timed out/i.test(m) ? 3 : 2, message: m } }
-  function gPerm() { return GEO.checkPermissions().then(function (p) { return (p.location === 'granted' || p.coarseLocation === 'granted') ? p : GEO.requestPermissions() }).then(function (p) { if (p.location !== 'granted' && p.coarseLocation !== 'granted') throw new Error('Location permission denied'); return p }) }
+  function gPerm() { return GEO.checkPermissions().then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; return (p.location === 'granted' || p.coarseLocation === 'granted') ? p : GEO.requestPermissions() }).then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; if (p.location !== 'granted' && p.coarseLocation !== 'granted') throw new Error('Location permission denied'); return p }) }
   function gStart() { if (!geoOK || gid != null) return; gid = 'pending';
     gPerm().then(function () { return GEO.watchPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 2000 }, function (p, e) {
       if (e) { var x = gErr(e); if (x.code === 1) each(1, x); return }
