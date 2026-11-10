@@ -22,25 +22,33 @@
   function gStart() { if (!geoOK || gid != null) return; gid = 'pending';
     gPerm().then(function () { return GEO.watchPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 2000 }, function (p, e) {
       if (e) { var x = gErr(e); if (x.code === 1) each(1, x); return }
-      if (p && p.coords) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; each(0, last) } }) })
+      if (p && p.coords) pick('f', { coords: p.coords, timestamp: p.timestamp || Date.now() }) }) })
       .then(function (id) { if (gid === 'stop') { GEO.clearWatch({ id: id }).catch(function () {}); gid = null } else gid = id })
       .catch(function (e) { gid = null; var x = gErr(e); if (x.code === 1) each(1, x); else web() }) }
   function gStop() { if (gid == null) return; if (gid === 'pending') { gid = 'stop'; return } GEO.clearWatch({ id: gid }).catch(function () {}); gid = null }
   function pos(l) { return { coords: { latitude: l.latitude, longitude: l.longitude, accuracy: l.accuracy, altitude: l.altitude, altitudeAccuracy: l.altitudeAccuracy, heading: l.bearing, speed: l.speed }, timestamp: l.time || Date.now() } }
+  // One GPS at a time: Android's location service ('f') is used first. The background GPS ('b') or the phone's web GPS ('w')
+  // only fill in when it has gone quiet for 6 s (weak signal, screen off) or is much less accurate.
+  var fT = 0, fAcc = 1e9;
+  function pick(src, v) { var now = Date.now(), a = (v.coords && v.coords.accuracy) || 9999;
+    if (src === 'f') { fT = now; fAcc = a }
+    else if (now - fT < 6000 && !(fAcc > 40 && a < fAcc * 0.5)) return;
+    if (last && v.timestamp && last.timestamp && v.timestamp < last.timestamp) return; // never step back to an older spot
+    last = v; each(0, v) }
   function each(i, v) { Object.keys(subs).forEach(function (k) { var f = subs[k] && subs[k][i]; if (f) try { f(v) } catch (e) {} }) }
   function start() {
     gStart(); if (wid != null || starting) return; starting = true;
     BG.addWatcher({ backgroundTitle: 'AwareBC is watching the trail ahead', backgroundMessage: 'Danger alerts stay on while you ride. Turn GPS off in AwareBC to stop.', requestPermissions: true, stale: false, distanceFilter: 10 },
       function (l, e) {
         if (e) { if (e.code !== 'NOT_AUTHORIZED') { web(); return } each(1, { code: 1, message: e.message || '' }); return }
-        if (l) { last = pos(l); each(0, last) }
+        if (l) pick('b', pos(l))
       }).then(function (id) { starting = false; wid = id; if (!Object.keys(subs).length) stop() }).catch(function () { starting = false; web() });
     // backup: if the background GPS hasn't given a spot in 20 s, also use the normal phone GPS
     clearTimeout(dog); dog = setTimeout(function () { if (Object.keys(subs).length && (!last || Date.now() - last.timestamp > 20000)) web() }, 20000);
   }
   var wwid = null, dog = null;
   function web() { if (wwid != null || !G || !Object.keys(subs).length || (geoOK && gid != null && gid !== 'stop')) return;
-    try { wwid = G.watchPosition(function (p) { last = { coords: p.coords, timestamp: p.timestamp || Date.now() }; each(0, last) }, function (e) { each(1, e) }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 }) } catch (e) { wwid = null } }
+    try { wwid = G.watchPosition(function (p) { pick('w', { coords: p.coords, timestamp: p.timestamp || Date.now() }) }, function (e) { each(1, e) }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 }) } catch (e) { wwid = null } }
   function stop() { clearTimeout(dog); gStop(); if (wwid != null && G) { G.clearWatch(wwid); wwid = null } if (wid != null) { var id = wid; wid = null; BG.removeWatcher({ id: id }).catch(function () {}) } }
   var shim = {
     getCurrentPosition: function (ok, bad, o) { o = o || {};
