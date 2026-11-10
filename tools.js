@@ -220,7 +220,7 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       function tidy(t){ return String(t||'').replace(/\s+([,.;:!?%)\]'’])/g,'$1').replace(/([(\[$])\s+/g,'$1').replace(/(['’])\s(?=(s|t|re|ll|ve|d|m)\b)/g,'$1').replace(/\b([A-Z])\.\s(?=[A-Z]\.)/g,'$1.').replace(/(\w) - (?=\w)/g,'$1-').slice(0,160) }
       return cached('gd2'+k,20,function(){ var tries=0; function go(){ return T(viaRelay(u)).catch(function(e){ if(++tries>1) throw e; return new Promise(function(r){ setTimeout(r,3500) }).then(go) }) } return go().then(function(x){ var j; try{ j=JSON.parse(x) }catch(e){ j={articles:[]} } return (j.articles||[]).filter(function(a){ return !REL||REL.test(a.title||'') }).map(function(a){ return [tidy(a.title),link(a.url),String(a.domain||'').slice(0,40),String(a.seendate||'')] }) }) }) }
     function gTime(s){ var m=/^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)/.exec(s||''); return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]):0 }
-    function heads(r,max){ return (r.d||[]).slice(0,max).map(function(a){ return '<a class="phead" href="'+esc(a[1]||'#')+'" target="_blank" rel="noopener noreferrer">'+esc(a[0]||'(no title)')+'<small>'+esc(a[2])+(gTime(a[3])?' · '+ago(gTime(a[3])):'')+'</small></a>' }).join('') }
+    function heads(r,max){ return (r.d||[]).slice(0,max).map(function(a){ return '<a class="phead" href="'+esc(link(a[1])||'#')+'" target="_blank" rel="noopener noreferrer">'+esc(a[0]||'(no title)')+'<small>'+esc(a[2])+(gTime(a[3])?' · '+ago(gTime(a[3])):'')+'</small></a>' }).join('') }
     function supPorts(t){ gdelt('port','("Port of Vancouver" OR "Prince Rupert" OR Deltaport OR "Roberts Bank") (port OR terminal OR vessels OR ships OR cargo)','72h',8).then(function(r){
       var h='';
       if((r&&r.relay===false)||(!r&&relayOld)) h+=needRelay();
