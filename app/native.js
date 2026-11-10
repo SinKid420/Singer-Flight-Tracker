@@ -38,6 +38,9 @@
   var lastN = '', lastT = 0, nid = Date.now() % 100000;
   LN.requestPermissions().catch(function () {});
   LN.createChannel({ id: 'danger', name: 'Danger trail alerts', description: 'Caution and Blocked reports ahead of you', importance: 5, visibility: 1, vibration: true }).catch(function () {});
+  // friends & chat messages arrive as phone notifications when AwareBC is in the background
+  LN.createChannel({ id: 'chat', name: 'Friends & chat', description: 'Messages and friend requests', importance: 4, visibility: 1, vibration: true }).catch(function () {});
+  window.__native.notify = function (t, b) { LN.schedule({ notifications: [{ id: nid++, title: String(t || 'AwareBC'), body: String(b || ''), channelId: 'chat', smallIcon: 'ic_tracking' }] }).catch(function () {}) };
   function alertNote() {
     var a = document.getElementById('tralert'); if (!a || !a.classList.contains('show') || !window.__native.bg()) return;
     var b = a.querySelector('b'), s = a.querySelector('span'), t = (b && b.textContent) || 'Trail report ahead', x = ((s && s.textContent) || '').replace(' · tap to see the report', '');
