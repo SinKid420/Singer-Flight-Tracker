@@ -1455,15 +1455,15 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // Live GPS: your dot keeps moving as you travel. Phone GPS works with no cell service.
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
-  var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } locMsg.hidden=true };
-  var AWV=105, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
+  var AWV=106, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
         ['Last spot',ago<0?'None yet':(ago<90?ago+' s ago':Math.round(ago/60)+' min ago')+(lastAcc?' · ±'+Math.round(lastAcc)+' m':'')],['Last problem',lastErr?(E[lastErr.code]||'Error')+(lastErr.msg?' · '+esc(String(lastErr.msg).slice(0,60)):''):'None']];
       say('<b>GPS check</b><table class="gpst">'+rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>' }).join('')+'</table><button type="button" id="gpsgo">Try again</button>',40000) }) }
   function say(t,ms,chk){ clearTimeout(msgT); locMsg.innerHTML=(t||'')+(t&&chk?CHK:''); locMsg.hidden=!t; if(t) msgT=setTimeout(function(){ locMsg.hidden=true },ms||5000) }
-  function why(err){ if(err&&err.code===1) return NATIVE?'<b>Location is blocked for AwareBC</b>Phone Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Location ▸ Allow, then tap My spot again.':'<b>Location is blocked for this site</b>Tap the icon left of the web address ▸ Permissions ▸ Location ▸ Allow, then tap My spot again.';
+  function why(err){ if(err&&err.code===1) return NATIVE?(window.__native&&window.__native.settings?'<b>Location is blocked for AwareBC</b>Tap Open settings ▸ Permissions ▸ Location ▸ Allow, then come back and tap My spot.<button type="button" id="gpsset">Open settings</button>':'<b>Location is blocked for AwareBC</b>Phone Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Location ▸ Allow, then tap My spot again.'):'<b>Location is off for this site</b>Tap Try again and choose Allow. If no question pops up, tap the icon left of the web address ▸ Permissions ▸ Location ▸ Allow.<button type="button" id="gpsgo">Try again</button>';
     return '<b>Can\'t find you yet</b>Turn on Location in your phone\'s quick settings. Indoors, GPS can take a minute; step outside for a clear view of the sky.' }
   var accC=L.circle([me.lat,me.lon],{radius:1,color:'#ff3b30',weight:1,opacity:.45,fillColor:'#ff3b30',fillOpacity:.08,interactive:false});
   function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return; me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
@@ -1473,12 +1473,18 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     else if(follow) map.panTo([nl,nn],{animate:true,duration:.5});
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
-  function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')){ follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
+  function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
+  var told=false;
   function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:true,maximumAge:3000,timeout:30000}) }catch(e){ wId=null } }
   function stopWatch(){ if(wId!=null&&navigator.geolocation) navigator.geolocation.clearWatch(wId); wId=null }
   document.addEventListener('visibilitychange',function(){ if(document.hidden) stopWatch(); else startWatch() });
   map.on('dragstart',function(){ if(follow){ follow=false; locBtn.classList.remove('follow','on'); say('Stopped following · tap My spot to follow again',2500) } });
   startWatch();
+  // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
+  if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){
+    function chk(first){ if(r.state==='granted'){ if(!first){ startWatch(); say('<b>Location on ✅</b>Tap My spot to follow you.',4000) } return }
+      if(told) return; told=true; setTimeout(function(){ if(r.state==='denied') say(why({code:1}),20000,true); else if(r.state==='prompt') say('<b>Turn on location</b>AwareBC needs your location for My spot, trail alerts and nearby planes.<button type="button" id="gpsgo">Allow location</button>',20000) },first?2500:0) }
+    chk(true); r.onchange=function(){ told=r.state!=='denied'?told:false; chk(false) } }).catch(function(){});
   // My spot: centre on you and keep following as you move. Tries precise GPS first, then a rougher fix, and says why if it can't.
   (function(){ var t=null, held=false; locBtn.addEventListener('pointerdown',function(){ held=false; clearTimeout(t); t=setTimeout(function(){ held=true; gpsCheck() },650) });
     ['pointerup','pointercancel','pointerleave'].forEach(function(n){ locBtn.addEventListener(n,function(){ clearTimeout(t) }) });
