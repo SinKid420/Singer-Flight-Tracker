@@ -35,9 +35,9 @@
   btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 19.5c.6-3.4 3.2-5.4 6.2-5.4s5.6 2 6.2 5.4"/><circle cx="17" cy="9" r="2.6"/><path d="M15.8 14.3c2.7-.3 4.9 1.3 5.4 4.2"/></svg><em hidden></em>';
   document.body.appendChild(btn);
   var badge=btn.querySelector('em');
-  function place(){ var ids=['gear','menubtn','trbtn'], bot=0, left=null, w=44;
+  function place(){ var ids=['gear','menubtn','trbtn','trcam'], bot=0, left=null, w=44;
     ids.forEach(function(id){ var e=document.getElementById(id); if(!e||e.offsetParent===null) return; var r=e.getBoundingClientRect(); if(!r.width||getComputedStyle(e).visibility==='hidden') return; if(r.bottom>bot) bot=r.bottom; if(left==null){ left=r.left+(r.width-w)/2 } });
-    if(left==null){ btn.style.display='none'; return } btn.style.display=''; btn.style.left=Math.round(left)+'px'; btn.style.top=Math.round(bot+8)+'px' }
+    if(left==null){ btn.style.display='none'; return } btn.style.display=''; btn.style.left=Math.round(left)+'px'; btn.style.top=Math.round(bot+18)+'px' }
   place(); window.addEventListener('resize',place); setInterval(place,1500);
 
   // ---------- sheet ----------
