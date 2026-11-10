@@ -1,4 +1,4 @@
-const C='sky-v14',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json','./reports.js?v=5','./friends.js?v=3','./offline.js?v=3','./tools.js?v=2','./roads.js?v=2','./winter.js?v=2','./ar.js?v=2','./nav.js?v=1'];
+const C='sky-v15',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json','./reports.js?v=5','./friends.js?v=3','./offline.js?v=3','./tools.js?v=2','./roads.js?v=2','./winter.js?v=2','./ar.js?v=2','./nav.js?v=2'];
 // AwareBC (by Josh Singer). The app opens straight from the phone; new versions download in the background and show next time (with a "tap to refresh" note).
 // Map pictures, trail data and map code are saved as you look at them, so areas you have viewed still work with no service.
 // Your saved offline area (cache awarebc-off-*) is never cleared by updates.
