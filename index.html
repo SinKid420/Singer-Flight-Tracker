@@ -1469,14 +1469,14 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     navigator.geolocation.getCurrentPosition(function(pos){
       var nl=pos.coords.latitude, nn=pos.coords.longitude, moved=distNm(me.lat,me.lon,nl,nn);
       me.lat=nl; me.lon=nn; me.label='you'; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){}
-      recenter(auto===true&&(touched||moved<0.3));
+      if(auto===true){ recenter(true); if(!touched) map.setView([nl,nn],Math.max(map.getZoom(),START_Z)) } else recenter(false);
     },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
   // Live GPS: your dot keeps moving as you travel. Phone GPS works with no cell service.
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=108, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=109, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
   function gpsCheck(){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
       var rows=[['Version','v'+AWV+(NATIVE?' · app':' · website')],['Permission',{granted:'Allowed ✅',denied:'Blocked ❌',prompt:'Not asked yet'}[ps]||'Unknown'],['Live GPS',wId!=null?'Running':'Off'],
@@ -1591,7 +1591,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     try{localStorage.setItem('sky-relay',relay);localStorage.setItem('sky-key',apiKey)}catch(err){}
     runTest(); clearTimeout(timer); busy=false; poll();
   };
-  applyUnits(); syncLabels(); recenter(); locate(true);
+  // Opening the app: start zoomed in close around you (town and road level), not the whole 100 nm plane area
+  var START_Z=13; applyUnits(); syncLabels(); recenter(true); map.setView([me.lat,me.lon],START_Z,{animate:false}); locate(true);
   // ---- Space & night sky: ISS and bright satellites (CelesTrak orbits + satellite.js), aurora (NOAA SWPC), meteor showers ----
   var SATJS='https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js', SATSRI='sha384-e6V1JVpc+kVNTxT0gEOla7yL4c92Romsw7itPoipfzHbEjzUwPhTv6oeVDMHHzqT';
   var sats=[], satReady=null, spaceCfg={map:true,ar:true}, issMks={}, DEG=Math.PI/180, CMP=['N','NE','E','SE','S','SW','W','NW'];
