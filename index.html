@@ -770,8 +770,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
       new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
+      L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
-    fsr:{sat:true,layers:function(){ var a=BASES.sat.layers(); a.splice(1,0,L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'})); return a }},
+    fsr:{sat:true,layers:function(){ return BASES.sat.layers() }},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
