@@ -37,10 +37,22 @@ jobs:
             adb shell am force-stop com.awarebc.app
             adb shell monkey -p com.awarebc.app -c android.intent.category.LAUNCHER 1
             sleep 30
+            adb emu geo fix -120.7900 50.1100
+            sleep 3
+            adb emu geo fix -120.7895 50.1104
+            sleep 3
+            adb emu geo fix -120.7890 50.1108
+            sleep 10
             adb shell input keyevent KEYCODE_HOME
+            sleep 5
+            adb emu geo fix -120.7885 50.1112
             sleep 10
             adb shell monkey -p com.awarebc.app -c android.intent.category.LAUNCHER 1
+            sleep 5
+            adb emu geo fix -120.7880 50.1116
             sleep 10
+            adb shell input tap 40 1000
+            sleep 8
             adb shell pidof com.awarebc.app > pid2.txt || echo "NOT RUNNING" > pid2.txt
             adb logcat -d > logcat.txt || true
       - name: Show crashes
@@ -49,7 +61,7 @@ jobs:
           echo "first open (location not allowed yet): $(cat pid1.txt 2>/dev/null)"
           echo "after allowing location: $(cat pid2.txt 2>/dev/null)"
           grep -n -A40 "FATAL EXCEPTION" logcat.txt | head -150 || echo "no FATAL EXCEPTION"
-          grep -n "AndroidRuntime\|Capacitor/Console.*rror\|chromium.*Uncaught" logcat.txt | head -60 || true
+          grep -n "FATAL\|has died\|ANR in\|crash\|Capacitor/Console\|E Capacitor\|chromium.*Uncaught\|BackgroundGeolocation\|Geolocation" logcat.txt | grep -v "safe area\|VM exiting" | head -80 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
