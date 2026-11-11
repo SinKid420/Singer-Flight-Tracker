@@ -91,6 +91,10 @@ if (step === 'android') {
   s = s.replace(/versionCode \d+/, 'versionCode ' + run).replace(/versionName "[^"]*"/, 'versionName "1.' + NATIVE + '.' + run + '"');
   if (!s.includes('versionCode ' + run)) throw new Error('build.gradle: version not set');
   fs.writeFileSync(g, s);
+  // the app reopens its screen instead of closing if the map's drawing process runs out of memory
+  const ma = path.join(A, 'src', 'main', 'java', 'com', 'awarebc', 'app', 'MainActivity.java');
+  if (!fs.existsSync(ma)) throw new Error('MainActivity.java not found');
+  fs.writeFileSync(ma, "package com.awarebc.app;\n\nimport android.os.Bundle;\nimport android.webkit.RenderProcessGoneDetail;\nimport android.webkit.WebView;\nimport com.getcapacitor.BridgeActivity;\nimport com.getcapacitor.WebViewListener;\n\n// AwareBC (by Josh Singer). If the map's drawing process runs out of memory (fast zooming while the map turns),\n// Android would close the whole app. Instead the app reopens its screen straight away.\npublic class MainActivity extends BridgeActivity {\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        if (bridge != null) bridge.addWebViewListener(new WebViewListener() {\n            @Override\n            public boolean onRenderProcessGone(WebView webView, RenderProcessGoneDetail detail) {\n                try { runOnUiThread(() -> recreate()); } catch (Exception e) { }\n                return true;\n            }\n        });\n    }\n}\n");
   // small white icon for the GPS and alert notifications
   const d = path.join(A, 'src', 'main', 'res', 'drawable'); fs.mkdirSync(d, { recursive: true });
   fs.writeFileSync(path.join(d, 'ic_tracking.xml'), '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"><path android:fillColor="#FFFFFFFF" android:pathData="M12,2L4.5,20.3L5.2,21L12,18L18.8,21L19.5,20.3Z"/></vector>\n');

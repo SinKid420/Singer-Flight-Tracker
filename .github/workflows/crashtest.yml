@@ -54,12 +54,20 @@ jobs:
             adb shell input tap 40 1000
             sleep 8
             adb shell pidof com.awarebc.app > pid2.txt || echo "NOT RUNNING" > pid2.txt
+            adb root || true
+            sleep 5
+            adb shell "ps -A | grep -i sandboxed_process" > rp.txt || true
+            cat rp.txt
+            for p in $(awk '{print $2}' rp.txt); do adb shell kill -9 $p || true; done
+            sleep 15
+            adb shell pidof com.awarebc.app > pid3.txt || echo "NOT RUNNING" > pid3.txt
             adb logcat -d > logcat.txt || true
       - name: Show crashes
         if: always()
         run: |
           echo "first open (location not allowed yet): $(cat pid1.txt 2>/dev/null)"
           echo "after allowing location: $(cat pid2.txt 2>/dev/null)"
+          echo "after the map drawing process was killed: $(cat pid3.txt 2>/dev/null)"
           grep -n -A40 "FATAL EXCEPTION" logcat.txt | head -150 || echo "no FATAL EXCEPTION"
           grep -n "FATAL\|has died\|ANR in\|crash\|Capacitor/Console\|E Capacitor\|chromium.*Uncaught\|BackgroundGeolocation\|Geolocation" logcat.txt | grep -v "safe area\|VM exiting" | head -80 || true
       - uses: actions/upload-artifact@v4

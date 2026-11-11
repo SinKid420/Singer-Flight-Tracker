@@ -35,7 +35,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateInterval=100;
+  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; // fewer map pictures loading mid-pinch (phones ran out of memory zooming fast) L.GridLayer.prototype.options.updateInterval=100;
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
 var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
@@ -643,7 +643,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   }
   document.getElementById('compass').onclick=resetNorth;
   // planes keep pointing the way they fly: update the angle the instant the map turns (touch twist, tap-to-north, anything)
-  function syncBearing(){var bb=map.getBearing?map.getBearing():0; if(typeof bb==='number'&&bb===bb) mapEl.style.setProperty('--bearing',bb+'deg')}
+  var sbQ=false; function syncBearing(){ if(sbQ) return; sbQ=true; requestAnimationFrame(function(){ sbQ=false; var bb=map.getBearing?map.getBearing():0; if(typeof bb==='number'&&bb===bb) mapEl.style.setProperty('--bearing',bb+'deg') }) } // once per frame, not every touch event
   map.on('rotate',syncBearing); syncBearing();
   (function(){
     var K='sky-compass', cfg={cread:'1',cshow:'1',cspin:'55'};
@@ -788,7 +788,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=126, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=127, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
