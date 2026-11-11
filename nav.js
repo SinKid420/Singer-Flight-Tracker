@@ -259,11 +259,18 @@
 
   // ---------- 3D: the map tilts while directions are following you (buttons and panels stay flat) ----------
   var tilted=false, ctlBox=null, sky=null;
-  (function(){ var c3=document.createElement('style'); c3.textContent='body.tilt3d .mapwrap{perspective:800px;background:#0b0e13}body.tilt3d #map{position:absolute!important;flex:none!important;left:-50%;width:200%;top:-70%;height:220%;transform:rotateX(50deg);transform-origin:50% 100%}#tiltsky{position:absolute;left:0;right:0;top:0;height:300px;z-index:450;pointer-events:none;background:linear-gradient(#0b0e13 0,#0b0e13 35%,rgba(11,14,19,0) 100%);display:none}body.tilt3d #tiltsky{display:block}'; document.head.appendChild(c3);
+  (function(){ var c3=document.createElement('style'); c3.textContent='body.tilt3d .mapwrap{perspective:700px;background:#0b0e13}body.tilt3d #map{position:absolute!important;flex:none!important;left:-15%;width:130%;top:-25%;height:145%;transform:rotateX(42deg);transform-origin:50% 100%}#tiltsky{position:absolute;left:0;right:0;top:0;height:300px;z-index:450;pointer-events:none;background:linear-gradient(#0b0e13 0,#0b0e13 35%,rgba(11,14,19,0) 100%);display:none}body.tilt3d #tiltsky{display:block}'; document.head.appendChild(c3);
     var mc=map.getContainer(); sky=document.createElement('div'); sky.id='tiltsky'; mc.parentNode.insertBefore(sky,mc.nextSibling);
-    var lb=document.getElementById('locate'); if(lb&&window.MutationObserver) new MutationObserver(tiltUpd).observe(lb,{attributes:true,attributeFilter:['class']}) })();
-  function tiltUpd(){ var lb=document.getElementById('locate'); tilt(!!(nav&&rt&&!rt.arrived&&lb&&lb.classList.contains('follow'))) }
-  function tilt(on){ if(on===tilted) return; tilted=on; var mc=map.getContainer(), wrap=mc.parentNode;
+    var lb=document.getElementById('locate'); if(lb&&window.MutationObserver) new MutationObserver(tiltUpd).observe(lb,{attributes:true,attributeFilter:['class']});
+    // if the app closed while in 3D last time (phone ran out of memory), 3D turns itself off
+    var died=false; try{ died=localStorage.getItem('aw-3d-open')==='1'; localStorage.removeItem('aw-3d-open'); if(died) localStorage.setItem('aw-3d','0') }catch(e){}
+    var g=document.getElementById('gfolder'); if(g){ var row=document.createElement('label'); row.className='setrow'; row.htmlFor='nav3d'; row.innerHTML='3D map in directions<select id="nav3d" aria-label="3D map in directions"><option value="1">On</option><option value="0">Off</option></select>';
+      var sm=g.querySelector('summary'); g.insertBefore(row,sm?sm.nextSibling:g.firstChild); var sel=row.querySelector('select'); sel.value=on3d()?'1':'0';
+      sel.onchange=function(){ try{ localStorage.setItem('aw-3d',sel.value) }catch(e){} tiltUpd() } }
+    if(died) setTimeout(function(){ var m=document.getElementById('locmsg'); if(!m) return; m.innerHTML='<b>3D map turned off</b>AwareBC closed while the map was in 3D, so it now stays flat. Turn it back on in Settings ▸ Map ▸ Basics ▸ 3D map in directions.'; m.hidden=false; setTimeout(function(){ m.hidden=true },12000) },4000) })();
+  function on3d(){ try{ return localStorage.getItem('aw-3d')!=='0' }catch(e){ return true } }
+  function tiltUpd(){ var lb=document.getElementById('locate'); tilt(!!(on3d()&&nav&&rt&&!rt.arrived&&lb&&lb.classList.contains('follow'))) }
+  function tilt(on){ if(on===tilted) return; tilted=on; var mc=map.getContainer(), wrap=mc.parentNode; try{ if(on) localStorage.setItem('aw-3d-open','1'); else localStorage.removeItem('aw-3d-open') }catch(e){}
     if(on){ ctlBox=mc.querySelector('.leaflet-control-container'); if(ctlBox) wrap.insertBefore(ctlBox,sky.nextSibling) } else if(ctlBox){ mc.appendChild(ctlBox); ctlBox=null }
     var ll=lastPos?[lastPos.lat,lastPos.lon]:map.getCenter(); document.body.classList.toggle('tilt3d',on);
     map.invalidateSize({pan:false}); map.setView(ll,map.getZoom(),{animate:false});
