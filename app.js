@@ -35,7 +35,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; // fewer map pictures loading mid-pinch (phones ran out of memory zooming fast) L.GridLayer.prototype.options.updateInterval=100;
+  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; // map pictures keep loading while you drive, not only when you stop // fewer map pictures loading mid-pinch (phones ran out of memory zooming fast) L.GridLayer.prototype.options.updateInterval=100;
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
 var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
@@ -70,7 +70,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function esriBest(c){ if(c.z<=17) return Promise.resolve(c.z); var z=c.z;
     function tryZ(){ if(z<=17) return Promise.resolve(17); var f=Math.pow(2,c.z-z); return esriHas(z,Math.floor(c.y/f),Math.floor(c.x/f)).then(function(ok){ if(ok) return z; z--; return tryZ() }) }
     return tryZ() }
-  var EsriSmart=L.TileLayer.extend({ createTile:function(c,done){ var tile=document.createElement('div'), self=this, px=this.getTileSize().x;
+  var RET=!!(L.Browser.retina&&!sharpOff()); // sharp picture on sharp screens: twice the detail, half-size pieces
+  function sharpOff(){ try{ return localStorage.getItem('aw-sharp')==='0' }catch(e){ return false } }
+  var EsriSmart=L.TileLayer.extend({ createTile:function(c0,done){ var tile=document.createElement('div'), self=this, px=this.getTileSize().x, c={z:c0.z+(this.options.zoomOffset||0),x:c0.x,y:c0.y};
     esriBest(c).then(function(z){ var f=Math.pow(2,c.z-z), ax=Math.floor(c.x/f), ay=Math.floor(c.y/f), img=document.createElement('img');
       img.alt=''; img.setAttribute('role','presentation'); img.decoding='async';
       img.style.cssText='position:absolute;max-width:none;width:'+(px*f)+'px;height:'+(px*f)+'px;left:'+(-(c.x-ax*f)*px)+'px;top:'+(-(c.y-ay*f)*px)+'px';
@@ -81,7 +83,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
+      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:RET?18:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
       L.tileLayer(ESRI+'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:17})]}},
     fsr:{sat:true,layers:function(){ return BASES.sat.layers() }},
@@ -788,7 +790,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=128, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=129, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -803,7 +805,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return;
     // a rough Wi-Fi/cell spot never replaces a good GPS spot from the last 20 s (stops the dot jumping blocks away)
     var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
-    meMark.setLatLng([nl,nn]); ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ accC.setStyle(ac>120?{fillOpacity:0,weight:1.5,opacity:.7,dashArray:'6 6'}:{fillOpacity:.08,weight:1,opacity:.45,dashArray:null}); if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
+    ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ accC.setStyle(ac>120?{fillOpacity:0,weight:1.5,opacity:.7,dashArray:'6 6'}:{fillOpacity:.08,weight:1,opacity:.45,dashArray:null}); if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
     var el=meMark.getElement(); if(el) el.classList.remove('stale');
     // Driving: speed and direction from the GPS (or worked out from the last spot), arrow shows which way you're heading
     var t=pos.timestamp||Date.now(), sp=(c.speed!=null&&isFinite(c.speed))?c.speed:-1, hd=(c.heading!=null&&isFinite(c.heading))?c.heading:-1;
@@ -814,14 +816,34 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     moving=sp>1.5; if(moving){ stillT=0; if(hd>=0) lastHd=hd } else if(!stillT) stillT=t;
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
+    glideFix(nl,nn,moving&&ac<=60&&lastHd>=0?sp:0,lastHd,pos.timestamp);
     rotCal(); rotStep();
     if(window.__native&&window.__native.approx&&!apxTold){ apxTold=true; setTimeout(function(){ say('<b>Precise location is off</b>Your phone only shares a rough spot, which can be blocks away. Open settings ▸ Permissions ▸ Location ▸ turn on Use precise location.<button type="button" id="gpsset">Open settings</button>',20000) },3500) }
     if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); needZ=false; zoomTo([nl,nn],DRIVEZ) }
-    else if(follow){ if(needZ&&ac<=150){ needZ=false; zoomTo([nl,nn],DRIVEZ) } else if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
+    else if(follow){ if(needZ&&ac<=150){ needZ=false; zoomTo([nl,nn],DRIVEZ) } else if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else if(!glideOn) map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
     if(sp>4&&ac<=50&&pac<=50) driveT=t; pac=ac; awake(follow&&(charging||Date.now()-driveT<180000)); roughB(ac);
     var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
   var driveT=0, pac=9999, charging=false, roughN=0, apxWebTold=false, goodT=0, goodAcc=1e9, apxTold=false, needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
+  // Live movement: the dot and map slide together every frame (not once per GPS reading), predicting ahead from speed and heading
+  var glideOn=false, gF=null, gD=null, gRaf=0, gLast=0, gEnd=0, gSnap=0;
+  function glideFix(lat,lon,sp,hd,ts){ var now=performance.now(), age=0, d=Date.now()-(ts||0); if(ts&&d>0&&d<5000) age=Math.min(d,2000)/1000;
+    var r=hd*Math.PI/180; gF={lat:lat,lon:lon,t:now-age*1000,vN:sp>0?sp*Math.cos(r):0,vE:sp>0?sp*Math.sin(r):0};
+    if(!gD||distNm(gD.lat,gD.lon,lat,lon)*1852>250){ gD={lat:lat,lon:lon}; meMark.setLatLng([lat,lon]) }
+    if(!gRaf){ gLast=now; gSnap=now; gRaf=requestAnimationFrame(gStep) } }
+  function gStep(now){ gRaf=0; if(!gF||document.hidden){ glideOn=false; if(gF&&gD){ meMark.setLatLng([gF.lat,gF.lon]); gD={lat:gF.lat,lon:gF.lon} } return }
+    var dt=Math.min((now-gF.t)/1000,1.8), cl=Math.cos(gF.lat*Math.PI/180)||1, pl=gF.lat+gF.vN*dt/111320, pn=gF.lon+gF.vE*dt/(111320*cl),
+        k=1-Math.exp(-Math.max(1,now-gLast)/160); gLast=now;
+    gD.lat+=(pl-gD.lat)*k; gD.lon+=(pn-gD.lon)*k; meMark.setLatLng([gD.lat,gD.lon]);
+    var still=!gF.vN&&!gF.vE&&Math.abs(pl-gD.lat)*111320<.15&&Math.abs(pn-gD.lon)*111320*cl<.15;
+    glideOn=!!(follow&&!still&&!userDown);
+    if(glideOn&&!map._animatingZoom&&!(map._panAnim&&map._panAnim._inProgress)){
+      var o=map.latLngToContainerPoint([gD.lat,gD.lon]).subtract(map.getSize().divideBy(2));
+      if(Math.abs(o.x)>.3||Math.abs(o.y)>.3){ map._rawPanBy(o); map.fire('move'); if(now-gEnd>1000){ gEnd=now; map.fire('moveend') } } }
+    if(still&&now-gSnap>1500){ glideOn=false; if(follow) map.panTo([gD.lat,gD.lon],{animate:false}); return }
+    if(!still) gSnap=now;
+    gRaf=requestAnimationFrame(gStep) }
+  var userDown=false; map.getContainer().addEventListener('touchstart',function(){ userDown=true },{passive:true}); ['touchend','touchcancel'].forEach(function(e){ map.getContainer().addEventListener(e,function(){ userDown=false },{passive:true}) });
   function zoomTo(ll,z){ ourZoom=true; map.setView(ll,z,{animate:true}); setTimeout(function(){ ourZoom=false },900) }
   var hdPrev=null; function arrow(){ var el=meMark.getElement(); if(!el||lastHd<0) return; var bb=map.getBearing?map.getBearing():0, a=lastHd+(bb||0); if(hdPrev!=null) a=hdPrev+(((a-hdPrev)%360)+540)%360-180; hdPrev=a; el.style.setProperty('--hd',a+'deg') }
   map.on('rotate',arrow);
