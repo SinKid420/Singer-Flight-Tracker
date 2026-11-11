@@ -1,0 +1,57 @@
+# AwareBC app crash test (by Josh Singer): installs the latest test app on a virtual Android phone,
+# opens it like a first-time user (before and after allowing location) and saves the phone's log.
+name: App crash test
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [33, 34]
+    steps:
+      - name: Turn on the phone simulator speed-up
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Get the test app
+        run: curl -sSL -o app.apk https://github.com/SinKid420/Singer-Flight-Tracker/releases/download/android-test/AwareBC.apk && ls -la app.apk
+      - name: Open the app on a virtual phone
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r app.apk
+            adb logcat -c
+            adb shell monkey -p com.awarebc.app -c android.intent.category.LAUNCHER 1
+            sleep 30
+            adb shell pidof com.awarebc.app > pid1.txt || echo "NOT RUNNING" > pid1.txt
+            adb shell pm grant com.awarebc.app android.permission.ACCESS_FINE_LOCATION || true
+            adb shell pm grant com.awarebc.app android.permission.ACCESS_COARSE_LOCATION || true
+            adb shell pm grant com.awarebc.app android.permission.POST_NOTIFICATIONS || true
+            adb shell am force-stop com.awarebc.app
+            adb shell monkey -p com.awarebc.app -c android.intent.category.LAUNCHER 1
+            sleep 30
+            adb shell input keyevent KEYCODE_HOME
+            sleep 10
+            adb shell monkey -p com.awarebc.app -c android.intent.category.LAUNCHER 1
+            sleep 10
+            adb shell pidof com.awarebc.app > pid2.txt || echo "NOT RUNNING" > pid2.txt
+            adb logcat -d > logcat.txt || true
+      - name: Show crashes
+        if: always()
+        run: |
+          echo "first open (location not allowed yet): $(cat pid1.txt 2>/dev/null)"
+          echo "after allowing location: $(cat pid2.txt 2>/dev/null)"
+          grep -n -A40 "FATAL EXCEPTION" logcat.txt | head -150 || echo "no FATAL EXCEPTION"
+          grep -n "AndroidRuntime\|Capacitor/Console.*rror\|chromium.*Uncaught" logcat.txt | head -60 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logcat-api${{ matrix.api }}
+          path: logcat.txt
