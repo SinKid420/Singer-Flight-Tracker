@@ -94,13 +94,20 @@
     }).catch(function () {});
   }
   var busy = false, lastCheck = 0;
-  function check(cur) {
-    if (!navigator.onLine || busy || Date.now() - lastCheck < 600000) return; busy = true; lastCheck = Date.now();
-    Promise.all([APP.getInfo(), fetch(LIVE + 'version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('no version'); return r.json() })]).then(function (a) {
+  // check(cur) runs by itself in the background; Settings ▸ App updates calls it with force (and shows progress)
+  function check(cur, force, prog) {
+    if (!navigator.onLine) return Promise.resolve({ state: 'offline' }); if (busy) return Promise.resolve({ state: 'busy' });
+    if (!force && Date.now() - lastCheck < 600000) return Promise.resolve({ state: 'skip' }); busy = true; lastCheck = Date.now(); var out = { state: 'latest', n: cur.n };
+    return Promise.all([APP.getInfo(), fetch(LIVE + 'version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('no version'); return r.json() })]).then(function (a) {
       var lvl = +String(a[0].version || '').split('.')[1] || 0, v = a[1], p = lsj('aw-pending', null);
-      if (!v || !v.id || !v.files || v.id === cur.id || !(v.n > cur.n) || v.native > lvl || (p && p.id === v.id) || lsj('aw-bad', []).indexOf(v.id) >= 0) return;
+      if (!v || !v.id || !v.files) { out = { state: 'error' }; return }
+      if (v.native > lvl) { out = { state: 'native', n: v.n }; return }          // this update needs a new app install
+      if (v.id === cur.id || !(v.n > cur.n)) return;                          // already up to date
+      if (lsj('aw-bad', []).indexOf(v.id) >= 0) { out = { state: 'error' }; return }
+      if (p && p.id === v.id) { out = { state: 'ready', n: v.n }; return }      // already downloaded, waiting to install
       var dir = 'live/' + v.id, names = Object.keys(v.files), i = 0;
       function next() {
+        if (prog) try { prog(i, names.length) } catch (e) {}
         if (i >= names.length) return FS.writeFile({ path: dir + '/app-version.json', data: JSON.stringify(v), directory: 'DATA', encoding: 'utf8', recursive: true });
         var f = names[i++], same = cur.files && cur.files[f] === v.files[f];
         return fetch(same ? f : LIVE + 'www/' + f, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(f); return r.arrayBuffer() })
@@ -108,11 +115,13 @@
           .then(next);
       }
       return next().then(function () { return FS.getUri({ path: dir, directory: 'DATA' }) })
-        .then(function (u) { lss('aw-pending', { id: v.id, n: v.n, path: decodeURIComponent(String(u.uri).replace(/^file:\/\//, '')) }) });
-    }).catch(function () {}).then(function () { busy = false });
+        .then(function (u) { lss('aw-pending', { id: v.id, n: v.n, path: decodeURIComponent(String(u.uri).replace(/^file:\/\//, '')) }); out = { state: 'ready', n: v.n } });
+    }).catch(function () { out = { state: 'error' } }).then(function () { busy = false; return out });
   }
   fetch('app-version.json', { cache: 'no-store' }).then(function (r) { return r.json() }).then(function (cur) {
     window.__native.version = cur.n;
+    window.__native.update = function (prog) { return check(cur, true, prog) };
+    window.__native.applyUpdate = function () { var p = lsj('aw-pending', null); if (!p) return false; localStorage.removeItem('aw-pending'); WV.setServerBasePath({ path: p.path }).then(persist).catch(function () {}); return true };
     var p = lsj('aw-pending', null);
     if (p && p.n > cur.n && lsj('aw-bad', []).indexOf(p.id) < 0) { // a newer version is saved: open it now (one quick reload)
       localStorage.removeItem('aw-pending'); WV.setServerBasePath({ path: p.path }).then(persist).catch(function () {}); return;

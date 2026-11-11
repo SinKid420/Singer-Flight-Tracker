@@ -788,7 +788,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=125, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>';
+  var AWV=126, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1667,4 +1667,32 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       var b=document.createElement('button'); b.id='updbar'; b.type='button'; b.textContent='AwareBC was updated · tap to refresh';
       b.style.cssText='position:fixed;z-index:1500;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);border:0;border-radius:18px;padding:9px 14px;background:#0a84ff;color:#fff;font:700 13px var(--font);box-shadow:0 4px 12px rgba(0,0,0,.45);white-space:nowrap';
       b.onclick=function(){ location.reload() }; document.body.appendChild(b); setTimeout(function(){ if(b.parentNode) b.remove() },20000) }) }
+})();
+
+// ---------- Settings ▸ App updates: check now, download with progress, install ----------
+(function(){
+  var NAT=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()), $=function(i){ return document.getElementById(i) };
+  var ver=$('updver'), chk=$('updchk'), msg=$('updmsg'), bar=$('updprog'), go=$('updgo'), apk=$('updapk'); if(!chk) return;
+  function showVer(){ var n=window.__native&&window.__native.version; ver.textContent='This phone: v'+(window.__AWV||'?')+(NAT?' · app build '+(n||'?'):' · website') }
+  function say(t,html){ msg.hidden=!t; if(html) msg.innerHTML=t; else msg.textContent=t }
+  function prog(d,t){ bar.hidden=false; bar.firstChild.style.width=(t?Math.round(d/t*100):0)+'%'; say('Downloading update… '+(t?Math.round(d/t*100):0)+'%') }
+  function done(){ chk.disabled=false; chk.textContent='Check for updates'; bar.hidden=true }
+  document.getElementById('fsheet')&&new MutationObserver(showVer).observe(document.getElementById('fsheet'),{attributes:true,attributeFilter:['hidden']}); showVer();
+  chk.onclick=function(){ go.hidden=true; apk.hidden=true;
+    if(navigator.onLine===false){ say('No signal right now. Updates download when you have signal, then install with one tap.'); return }
+    chk.disabled=true; chk.textContent='Checking…'; say('Checking for a newer version…');
+    if(NAT&&window.__native&&window.__native.update) window.__native.update(prog).then(function(r){ done();
+      if(r.state==='latest') say('You have the newest version ✅');
+      else if(r.state==='ready'){ say('Update downloaded (build '+r.n+'). Tap Install: AwareBC restarts in a second with the new version.'); go.hidden=false; go.onclick=function(){ go.disabled=true; go.textContent='Installing…'; if(!window.__native.applyUpdate()){ go.disabled=false; go.textContent='Install update now'; say('Could not install. Close and reopen AwareBC to finish the update.') } } }
+      else if(r.state==='native'){ say('This update adds new phone features, so it needs the new app installed once. Download it, open the file and tap Install. Your saved settings stay.'); apk.hidden=false }
+      else if(r.state==='busy') say('Already downloading an update in the background. Try again in a minute.');
+      else if(r.state==='offline') say('No signal right now. Try again when you have signal.');
+      else say('Could not check right now. Try again in a few minutes.') },function(){ done(); say('Could not check right now. Try again in a few minutes.') });
+    else { // website: compare this copy with the newest one on the server
+      var have=[].map.call(document.querySelectorAll('script[src]'),function(s){ return s.getAttribute('src') }).filter(function(s){ return !/^https?:/.test(s) }).join(' ');
+      fetch('sw.js?check='+Date.now(),{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.text() }).then(function(t){ var m=/const C='([^']+)'/.exec(t), F=(/F=\[([^\]]*)\]/.exec(t)||[])[1]||'';
+        return (window.caches?caches.keys():Promise.resolve([])).then(function(k){ done();
+          var newer=m&&k.length&&k.indexOf(m[1])<0, miss=have.split(' ').some(function(s){ return s&&F.indexOf("'./"+s+"'")<0 });
+          if(newer||miss){ say('A newer version is ready. Tap Install to reload AwareBC with it.'); go.hidden=false; go.onclick=function(){ go.disabled=true; go.textContent='Installing…'; var u=function(){ location.replace(location.pathname+'?v='+Date.now()) }; try{ navigator.serviceWorker.getRegistration().then(function(g){ return g&&g.update() }).then(u,u) }catch(e){ u() } } }
+          else say('You have the newest version ✅') }) }).catch(function(){ done(); say('Could not check right now. Try again in a few minutes.') }) } };
 })();
