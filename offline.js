@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=12','./app2.js?v=2','./nav.js?v=8','./gl.js?v=4','./extras.js?v=1','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=8','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=13','./app2.js?v=2','./nav.js?v=8','./gl.js?v=5','./extras.js?v=2','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=9','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -106,7 +106,7 @@
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&job&&!job.finished){ wl=null; lock(true) } });
 
   // ---------- save the map along a route (offered when directions go through low-service areas) ----------
-  var RC='awarebc-off-route', rjob=null, rLay=null, DEMU='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+  var RC='awarebc-off-route', rjob=null, rLays=[], DEMU='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
   function inHome(lat,lon){ if(!area||!area.done) return false; var b=box(area.lat,area.lon,area.r); return lat>=b.s&&lat<=b.n&&lon>=b.w&&lon<=b.e }
   function corridor(pts){ var samp=[], last=null; pts.forEach(function(p){ if(!last||km(last[0],last[1],p[0],p[1])>0.25){ samp.push(p); last=p } }); if(pts.length) samp.push(pts[pts.length-1]);
     var T={}, V={}, D={}, C={}, N={}, tp=vtpl(), bb={s:90,n:-90,w:180,e:-180};
@@ -122,22 +122,26 @@
     var vurls=Object.keys(V).map(function(k){ var q=k.split('/'); return tp.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2]) });
     var pad=0.02; bb={s:bb.s-pad,n:bb.n+pad,w:bb.w-pad,e:bb.e+pad};
     return {urls:urls,vurls:vurls,names:nm,b:bb,bytes:(Object.keys(T).length*TKB+(urls.length-Object.keys(T).length)*CKB+vurls.length*VKB)*1024} }
-  function addRouteLayer(){ if(rLay){ map.removeLayer(rLay); rLay=null } var r=lj('sky-offroute',null); if(!r||!r.b) return;
-    rLay=L.tileLayer(BCR,{bounds:L.latLngBounds([r.b.s,r.b.w],[r.b.n,r.b.e]),minZoom:ZMIN,maxNativeZoom:ZMAX,maxZoom:19,zIndex:0,attribution:'Offline map © Government of British Columbia (DataBC)'}).addTo(map) }
+  // the last 3 saved routes are kept (each in its own cache and archive slot); older one is replaced
+  function routes(){ var r=lj('sky-offroute',null); if(r&&!Array.isArray(r)) r=r.b?[{b:r.b,at:r.at,bytes:r.bytes,slot:'route',cache:RC}]:[]; return r||[] }
+  function addRouteLayer(){ rLays.forEach(function(l){ map.removeLayer(l) }); rLays=[]; routes().forEach(function(r){ if(!r.b) return;
+    rLays.push(L.tileLayer(BCR,{bounds:L.latLngBounds([r.b.s,r.b.w],[r.b.n,r.b.e]),minZoom:ZMIN,maxNativeZoom:ZMAX,maxZoom:19,zIndex:0,attribution:'Offline map © Government of British Columbia (DataBC)'}).addTo(map)) }) }
   function saveRoute(pts,cb){ if(rjob) return false; var c=corridor(pts), all=c.urls.concat(c.vurls), i=0, ok=0, bad=0, bytes=0, fin=false, nU=c.urls.length;
     rjob={n:all.length,c:c}; rememberNames(c.names);
+    var list0=routes(), used=list0.map(function(r){ return r.slot }), slot=['r0','r1','r2'].filter(function(s){ return used.indexOf(s)<0 })[0], drop=null;
+    if(!slot){ drop=list0.slice().sort(function(a,b){ return a.at-b.at })[0]; slot=drop.slot } var myC=RC+'-'+slot;
     function tell(x){ try{ cb&&cb(x) }catch(e){} }
-    caches.delete(RC).then(function(){ return caches.open(RC) }).then(function(ca){
+    (drop?caches.delete(drop.cache||RC):Promise.resolve()).then(function(){ return caches.delete(myC) }).then(function(){ return caches.open(myC) }).then(function(ca){
       function end(){ if(fin) return; fin=true; var re=/\/(\d+)\/(\d+)\/(\d+)\.pbf/, list=[];
         var pk=c.vurls.length&&window.__pm&&window.__pm.save?Promise.all(c.vurls.map(function(u){ var m=re.exec(u); return ca.match(u).then(function(r){ return r?r.blob():null }).then(function(bl){ if(bl&&bl.size&&m) list.push({z:+m[1],x:+m[2],y:+m[3],blob:bl}) }) }))
-          .then(function(){ return list.length?window.__pm.save(list,{w:c.b.w,s:c.b.s,e:c.b.e,n:c.b.n,z0:ZMIN,z1:ZMAX},'route'):0 }).then(function(){ return Promise.all(c.vurls.map(function(u){ return ca.delete(u) })) }).catch(function(){}):Promise.resolve();
-        pk.then(function(){ ls('sky-offroute',JSON.stringify({b:c.b,at:Date.now(),bytes:bytes,fail:bad})); addRouteLayer(); rjob=null; tell({done:true,bytes:bytes,fail:bad}) }) }
+          .then(function(){ return list.length?window.__pm.save(list,{w:c.b.w,s:c.b.s,e:c.b.e,n:c.b.n,z0:ZMIN,z1:ZMAX},slot):0 }).then(function(){ return Promise.all(c.vurls.map(function(u){ return ca.delete(u) })) }).catch(function(){}):Promise.resolve();
+        pk.then(function(){ var L3=routes().filter(function(r){ return r.slot!==slot&&(!drop||r!==drop&&r.slot!==drop.slot) }); L3.push({b:c.b,at:Date.now(),bytes:bytes,fail:bad,slot:slot,cache:myC}); ls('sky-offroute',JSON.stringify(L3.slice(-3))); addRouteLayer(); rjob=null; tell({done:true,bytes:bytes,fail:bad}) }) }
       function w(){ if(i>=all.length){ if(ok+bad>=all.length) end(); return } var u=all[i++];
         fetch(u,{mode:'cors',credentials:'omit'}).then(function(r){ if(!r.ok) throw 0; if(u.indexOf('/tile/')>0&&!/image/.test(r.headers.get('content-type')||'')) throw 0; var cl=r.clone(); return r.blob().then(function(bl){ bytes+=bl.size; return ca.put(u,cl) }) })
           .then(function(){ ok++ },function(){ bad++ }).then(function(){ tell({pct:Math.floor((ok+bad)/all.length*100),bytes:bytes}); w() }) }
       for(var k=0;k<5;k++) w() }).catch(function(){ rjob=null; tell({error:true}) });
     return true }
-  window.__off={inHome:inHome,corridor:corridor,saveRoute:saveRoute,busy:function(){ return !!rjob },saved:function(){ return lj('sky-offroute',null) },names:function(){ return lj('aw-names',[]) }};
+  window.__off={inHome:inHome,corridor:corridor,saveRoute:saveRoute,busy:function(){ return !!rjob },saved:function(){ return routes() },names:function(){ return lj('aw-names',[]) }};
   addRouteLayer();
 
   // ---------- setup screen ----------

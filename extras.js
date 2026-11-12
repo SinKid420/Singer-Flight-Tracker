@@ -26,10 +26,11 @@
   try{ var C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.registerPlugin) NP=C.registerPlugin('AWSpeak') }catch(e){}
   function web(t){ var S=window.speechSynthesis; if(!S||!window.SpeechSynthesisUtterance) return; try{ S.cancel(); var u=new SpeechSynthesisUtterance(t); u.lang='en-CA'; u.rate=1; S.speak(u) }catch(e){} }
   function speak(t){ if(!voiceOn||!t) return; t=String(t).replace(/\bFSR\b/g,'F S R').replace(/\bRd\b/g,'Road').replace(/\bHwy\b/g,'Highway').replace(/\bSt\b/g,'Street').replace(/\bAve\b/g,'Avenue');
-    if(NP) NP.speak({text:t}).catch(function(){ web(t) }); else web(t) }
+    if(NP) NP.speak({text:t}).catch(function(){ if(window.speechSynthesis) web(t); else noVoice() }); else if(window.speechSynthesis&&window.SpeechSynthesisUtterance) web(t); else noVoice() }
+  var nvTold=false; function noVoice(){ if(nvTold) return; nvTold=true; toast(NP?'<b>Voice needs the new app</b>Settings ▸ App updates ▸ Download the new app (AwareBC.apk), then voice directions work.':'<b>No voice on this browser</b>Open AwareBC in Chrome or the app for spoken directions.',7000) }
   function hush(){ try{ if(NP) NP.stop().catch(function(){}); if(window.speechSynthesis) speechSynthesis.cancel() }catch(e){} }
   function spokenD(m){ if(m<950) return (m<100?Math.round(m/10)*10:Math.round(m/50)*50)+' metres'; var k=m/1000; return (k<9.5?k.toFixed(1).replace(/\.0$/,''):Math.round(k))+' kilometres' }
-  var ann={}, annKey='', lastSpd=0, lastP=null;
+  var ann={}, annKey='', lastSpd=0, lastP=null, lastUpd=0, lastDist=0;
 
   // ============ 2. Elevation (AWS Terrain Tiles, terrarium) ============
   var DEMU='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png', demC={}, demK=[];
@@ -38,7 +39,9 @@
       im.onload=function(){ try{ var c=document.createElement('canvas'); c.width=c.height=256; var g=c.getContext('2d',{willReadFrequently:true}); g.drawImage(im,0,0); var d=g.getImageData(0,0,256,256).data, a=new Float32Array(65536);
           for(var i=0;i<65536;i++) a[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768; ok(a) }catch(e){ ok(null) } };
       im.onerror=function(){ ok(null) }; im.src=DEMU.replace('{z}',z).replace('{x}',x).replace('{y}',y) });
-    demC[k]=p; demK.push(k); if(demK.length>80){ delete demC[demK.shift()] } return p }
+    demC[k]=p; demK.push(k); if(demK.length>DEMMAX){ delete demC[demK.shift()] } return p }
+  var DEMMAX=(navigator.deviceMemory||4)<=4?24:40; // about 6 MB on 4 GB phones
+  window.__demFree=function(){ demC={}; demK=[] };
   function wpx(lat,lon,z){ var n=Math.pow(2,z), r=lat*Math.PI/180; return [(lon+180)/360*n*256,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n*256] }
   function elevAt(lat,lon,z){ var p=wpx(lat,lon,z), X=p[0]-0.5, Y=p[1]-0.5, x0=Math.floor(X), y0=Math.floor(Y), fx=X-x0, fy=Y-y0, tx=Math.floor(x0/256), ty=Math.floor(y0/256);
     return demTile(z,tx,ty).then(function(a){ if(!a) return null; function e(x,y){ var lx=Math.min(255,Math.max(0,x-tx*256)), ly=Math.min(255,Math.max(0,y-ty*256)); return a[ly*256+lx] }
@@ -52,9 +55,10 @@
       var up=0, dn=0, mx=-1e9, mn=1e9; for(i=0;i<sm.length;i++){ if(i){ var de=sm[i]-sm[i-1]; if(de>0) up+=de; else dn-=de } mx=Math.max(mx,sm[i]); mn=Math.min(mn,sm[i]) }
       // steep stretches: grade over ~200 m windows, joined while it stays steep
       var W=Math.max(1,Math.round(200/step)), steep=[], cur=null, top=0;
-      for(i=0;i+W<sm.length;i++){ var g=(sm[i+W]-sm[i])/(S[i+W].d-S[i].d)*100, ag=Math.abs(g); if(ag>top) top=ag;
+      for(i=0;i+W<sm.length;i++){ var g=(sm[i+W]-sm[i])/(S[i+W].d-S[i].d)*100, ag=Math.abs(g);
+        if(ag>22){ cur=null; continue } if(ag>top) top=ag;
         if(ag>=10){ if(cur&&Math.sign(g)===Math.sign(cur.g)&&S[i].d<=cur.d1+step){ cur.d1=S[i+W].d; if(ag>Math.abs(cur.g)) cur.g=g } else { cur={d0:S[i].d,d1:S[i+W].d,g:g}; steep.push(cur) } } else cur=null }
-      steep=steep.filter(function(s){ return s.d1-s.d0>=200 });
+      steep=steep.filter(function(s){ return s.d1-s.d0>=300 }); // terrain squares are ~25 m: short or extreme 'grades' are hillside/cliff noise, not the road
       return {d:S.map(function(s){ return s.d }),e:sm,up:up,dn:dn,mx:mx,mn:mn,top:top,steep:steep,z:z} }) }
   function spark(xs,ys,w,h,col){ var x0=xs[0], x1=xs[xs.length-1]||1, mn=Math.min.apply(null,ys), mx=Math.max.apply(null,ys), rg=Math.max(mx-mn,1);
     var pts=ys.map(function(y,i){ return ((xs[i]-x0)/((x1-x0)||1)*w).toFixed(1)+','+(h-2-(y-mn)/rg*(h-4)).toFixed(1) }).join(' ');
@@ -80,7 +84,7 @@
   // Off road layers ▸ Terrain: Off · 3D hills · Slope · Both
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_terr')) return; var h=pn.querySelector('.fph'), l=document.createElement('label'); l.className='fpt';
     var hill=window.__gl&&window.__gl.hill?window.__gl.hill():ls('aw-hill')==='1', canHill=!!(window.__gl&&window.__gl.setHill);
-    l.innerHTML='Terrain<select id="aw_terr" aria-label="Terrain"><option value="0">Off</option>'+(canHill?'<option value="1">3D hills</option>':'')+'<option value="2">Slope</option>'+(canHill?'<option value="3">Both</option>':'')+'</select>';
+    l.innerHTML='<select id="aw_terr" aria-label="Terrain"><option value="0">Terrain</option>'+(canHill?'<option value="1">3D hills</option>':'')+'<option value="2">Slope</option>'+(canHill?'<option value="3">3D+slope</option>':'')+'</select>';
     h.insertBefore(l,h.querySelector('.fpx')); var s=l.querySelector('select'); s.value=String((hill&&canHill?1:0)+(slopeOn?2:0));
     s.onchange=function(){ var v=+s.value; if(canHill) window.__gl.setHill(v===1||v===3); slopeOn=v>=2; ls('aw-slope',slopeOn?'1':'0'); slopeUpd() } })();
   [].forEach.call(document.querySelectorAll('.seg button'),function(b){ b.addEventListener('click',function(){ setTimeout(slopeUpd,50) }) }); setTimeout(slopeUpd,500);
@@ -90,8 +94,8 @@
   function towns(b){ var f="BBOX(GEOMETRY,"+[b.w,b.s,b.e,b.n].map(function(v){ return v.toFixed(3) }).join(',')+",'EPSG:4326') AND (FEATURE_CATEGORY ILIKE '%opulat%' OR FEATURE_TYPE ILIKE '%City%' OR FEATURE_TYPE ILIKE '%Town%' OR FEATURE_TYPE ILIKE '%Village%' OR FEATURE_TYPE ILIKE '%Community%' OR FEATURE_TYPE ILIKE '%Municipal%')";
     return fetch(GNSQ+encodeURIComponent(f)).then(function(r){ if(!r.ok) throw 0; return r.json() }).then(function(j){ return (j.features||[]).map(function(x){ var p=x.properties||{}; return [+p.LATITUDE,+p.LONGITUDE] }).filter(function(p){ return isFinite(p[0])&&isFinite(p[1]) }) }) }
   function inB(b,la,lo){ return b&&la>=b.s&&la<=b.n&&lo>=b.w&&lo<=b.e }
-  function lowService(r){ var O=window.__off; if(!O||!r||!r.pts) return Promise.resolve(null); var pts=r.pts, sv=O.saved&&O.saved();
-    if(pts.every(function(p){ return O.inHome(p[0],p[1])||(sv&&inB(sv.b,p[0],p[1])) })) return Promise.resolve(null); // already saved
+  function lowService(r){ var O=window.__off; if(!O||!r||!r.pts) return Promise.resolve(null); var pts=r.pts, sv=O.saved&&O.saved()||[];
+    if(pts.every(function(p){ return O.inHome(p[0],p[1])||sv.some(function(x){ return inB(x.b,p[0],p[1]) }) })) return Promise.resolve(null); // already saved
     var why=null; if(r.mode==='off'&&r.dist>3000) why='Off road route'; else if(r.note||(r.warn||[]).some(function(w){ return /forest|rough|decommission|logging/i.test(w) })) why='Uses forest or back roads';
     if(why) return Promise.resolve(why); if(r.dist<15000) return Promise.resolve(null);
     var b={s:90,n:-90,w:180,e:-180}; pts.forEach(function(p){ b.s=Math.min(b.s,p[0]); b.n=Math.max(b.n,p[0]); b.w=Math.min(b.w,p[1]); b.e=Math.max(b.e,p[1]) }); b={s:b.s-.1,n:b.n+.1,w:b.w-.15,e:b.e+.15};
@@ -111,7 +115,7 @@
 
   // ============ directions panel and navigation hooks ============
   window.__navHook=function(ev,r,p){
-    if(ev==='route'){ r.elev=null; profile(r).then(function(e){ if(window.__nav.route()===r){ r.elev=e; window.__nav.panel() } }); if(window.__nav.isNav&&window.__nav.isNav()) speak('Route updated') }
+    if(ev==='route'){ r.elev=null; profile(r).then(function(e){ if(window.__nav.route()===r){ r.elev=e; window.__nav.panel() } }); if(window.__nav.isNav&&window.__nav.isNav()&&Date.now()-lastUpd>60000&&(!lastDist||Math.abs(r.dist-lastDist)>Math.max(300,lastDist*0.05))){ lastUpd=Date.now(); speak('Route updated') } lastDist=r.dist }
     else if(ev==='start'){ ann={}; annKey=''; var s=r.steps&&r.steps[0]; speak('Starting route to '+((r.steps[r.steps.length-1]||{}).tx||'').replace(/^Arrive at /,'')+'. '+(s?s.tx:'')); offer(r) }
     else if(ev==='arrive'){ speak(((r.steps[r.steps.length-1]||{}).tx||'Arrived').replace(/^Arrive at/,'You have arrived at')) }
     else if(ev==='end'){ hush() }
@@ -150,9 +154,18 @@
   function iso(ms){ return new Date(ms).toISOString().replace(/\.\d+Z$/,'Z') }
   function floods(){ if(flood&&Date.now()-floodT<900000) return Promise.resolve(flood); return fetch(RELAY+'?flood=bc').then(function(r){ return r.ok?r.json():null }).then(function(j){ flood=j&&j.items||[]; floodT=Date.now(); window.__floods=flood; return flood }).catch(function(){ return flood||[] }) }
   window.__floodsGet=floods;
+  // which flood bulletins are for your area: their place names matched against BC place names within ~55 km of you
+  var GEN={lake:1,lakes:1,river:1,rivers:1,creek:1,creeks:1,mountain:1,mount:1,park:1,provincial:1,regional:1,district:1,valley:1,north:1,south:1,east:1,west:1,upper:1,lower:1,little:1,island:1,islands:1,coast:1,central:1,inlet:1,sound:1,flood:1,warning:1,watch:1,advisory:1,streamflow:1,high:1,area:1,road:1,forest:1,service:1,canyon:1,plateau:1,range:1,ranges:1,basin:1,the:1,and:1,including:1,tributaries:1,region:1,regions:1,peak:1,ridge:1,brook:1,pond:1,point:1,bay:1,harbour:1};
+  var nearW={}; function nearWords(lat,lon){ var k=Math.round(lat*4)+':'+Math.round(lon*4); if(nearW[k]) return nearW[k];
+    var f="BBOX(GEOMETRY,"+[lon-0.75,lat-0.5,lon+0.75,lat+0.5].map(function(v){ return v.toFixed(2) }).join(',')+",'EPSG:4326')";
+    nearW[k]=fetch(GNSQ.replace('count=3000','count=5000')+encodeURIComponent(f)).then(function(r){ if(!r.ok) throw 0; return r.json() }).then(function(j){ var w={};
+      (j.features||[]).forEach(function(x){ String((x.properties||{}).GEOGRAPHICAL_NAME||'').split(/[^A-Za-z'-]+/).forEach(function(t){ t=t.toLowerCase(); if(t.length>=4&&!GEN[t]) w[t]=1 }) }); return w }).catch(function(){ delete nearW[k]; return {} }); return nearW[k] }
+  window.__floodsLocal=function(lat,lon){ return Promise.all([floods(),nearWords(lat,lon)]).then(function(R){ var W=R[1]; return (R[0]||[]).map(function(x){ var t=String(x.title||'').replace(/^(flood warning|flood watch|high streamflow advisory)/i,''), hit=null;
+      t.split(/[^A-Za-z'-]+/).some(function(w){ var lw=w.toLowerCase(); if(lw.length>=4&&!GEN[lw]&&W[lw]){ hit=w; return true } return false });
+      var o={}; for(var k in x) o[k]=x[k]; o.local=!!hit; o.match=hit; return o }) }) };
   function gauges(){ clearTimeout(gT); gT=null; var on=creeksOn()&&map.getZoom()>=9; if(!on){ if(map.hasLayer(gLay)) map.removeLayer(gLay); gKey=''; return } if(!map.hasLayer(gLay)) gLay.addTo(map);
     var b=map.getBounds().pad(0.1), k=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(function(v){ return (Math.round(v*10)/10).toFixed(1) }).join(','); if(k===gKey) return; gKey=k;
-    fetch(HY+'&bbox='+k+'&datetime='+iso(Date.now()-45*60000)+'/..&sortby=-DATETIME&limit=1500').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(!j||gKey!==k) return; var by={};
+    fetch(HY+'&bbox='+k+'&datetime='+iso(Date.now()-3*3600000)+'/..&sortby=-DATETIME&limit=5000').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(!j||gKey!==k) return; var by={};
       (j.features||[]).forEach(function(f){ var p=f.properties||{}, id=p.STATION_NUMBER, g=f.geometry&&f.geometry.coordinates; if(!id||!g||by[id]) return; by[id]={id:id,n:p.STATION_NAME,lv:p.LEVEL,q:p.DISCHARGE,t:p.DATETIME,lat:g[1],lon:g[0]} });
       gLay.clearLayers(); Object.keys(by).slice(0,150).forEach(function(id){ var s=by[id];
         L.marker([s.lat,s.lon],{icon:L.divIcon({className:'',html:'<span class="gaugemk" role="button" aria-label="River gauge '+esc(s.n||id)+'">≈</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-300,title:s.n}).on('click',function(){ openGauge(s,this) }).addTo(gLay) }) }).catch(function(){}) }

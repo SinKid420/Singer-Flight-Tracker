@@ -17,7 +17,7 @@
   function idb(mode,fn){ return db().then(function(d){ return new Promise(function(ok,no){ var t=d.transaction('a',mode), s=t.objectStore('a'), q=fn(s); t.oncomplete=function(){ ok(q&&q.result) }; t.onerror=function(){ no(t.error) } }) }) }
   function one(k){ return idb('readonly',function(s){ return s.get(k) }).then(function(v){ if(!v||!v.blob||!PM) return null; var bl=v.blob;
       return {m:v.meta,pm:new PM.PMTiles({getKey:function(){ return 'awarebc-'+k+'-'+(v.meta&&v.meta.at||0) },getBytes:function(o,l){ return bl.slice(o,o+l).arrayBuffer().then(function(d){ return {data:d} }) }})} }).catch(function(){ return null }) }
-  function openArch(){ return Promise.all([one('bc'),one('route')]).then(function(r){ ARCH=r.filter(Boolean); arch=ARCH.length?ARCH[0].pm:null; archM=r[0]?r[0].m:null }) }
+  function openArch(){ return Promise.all([one('bc'),one('route'),one('r0'),one('r1'),one('r2')]).then(function(r){ ARCH=r.filter(Boolean); arch=ARCH.length?ARCH[0].pm:null; archM=r[0]?r[0].m:null }) }
   function tx(lon,z){ return Math.floor((lon+180)/360*Math.pow(2,z)) }
   function ty(lat,z){ var r=lat*Math.PI/180; return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)) }
   function covers(m,z,x,y){ if(!m||z<m.z0||z>m.z1) return false; return x>=tx(m.w,z)&&x<=tx(m.e,z)&&y>=ty(m.n,z)&&y<=ty(m.s,z) }
