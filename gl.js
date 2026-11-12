@@ -12,14 +12,18 @@
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
 
   // ---------- saved .pmtiles archive (IndexedDB) ----------
-  var arch=null, archM=null;
+  var arch=null, archM=null, ARCH=[]; // home area ('bc') and the last saved route ('route')
   function db(){ return new Promise(function(ok,no){ try{ var r=indexedDB.open('awarebc-pm',1); r.onupgradeneeded=function(){ r.result.createObjectStore('a') }; r.onsuccess=function(){ ok(r.result) }; r.onerror=function(){ no(r.error) } }catch(e){ no(e) } }) }
   function idb(mode,fn){ return db().then(function(d){ return new Promise(function(ok,no){ var t=d.transaction('a',mode), s=t.objectStore('a'), q=fn(s); t.oncomplete=function(){ ok(q&&q.result) }; t.onerror=function(){ no(t.error) } }) }) }
-  function openArch(){ return idb('readonly',function(s){ return s.get('bc') }).then(function(v){ arch=null; archM=null; if(!v||!v.blob||!PM) return;
-      var bl=v.blob; archM=v.meta; arch=new PM.PMTiles({getKey:function(){ return 'awarebc-bc' },getBytes:function(o,l){ return bl.slice(o,o+l).arrayBuffer().then(function(d){ return {data:d} }) }}) }).catch(function(){}) }
+  function one(k){ return idb('readonly',function(s){ return s.get(k) }).then(function(v){ if(!v||!v.blob||!PM) return null; var bl=v.blob;
+      return {m:v.meta,pm:new PM.PMTiles({getKey:function(){ return 'awarebc-'+k+'-'+(v.meta&&v.meta.at||0) },getBytes:function(o,l){ return bl.slice(o,o+l).arrayBuffer().then(function(d){ return {data:d} }) }})} }).catch(function(){ return null }) }
+  function openArch(){ return Promise.all([one('bc'),one('route')]).then(function(r){ ARCH=r.filter(Boolean); arch=ARCH.length?ARCH[0].pm:null; archM=r[0]?r[0].m:null }) }
   function tx(lon,z){ return Math.floor((lon+180)/360*Math.pow(2,z)) }
   function ty(lat,z){ var r=lat*Math.PI/180; return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)) }
-  function inArch(z,x,y){ var m=archM; if(!m||z<m.z0||z>m.z1) return false; return x>=tx(m.w,z)&&x<=tx(m.e,z)&&y>=ty(m.n,z)&&y<=ty(m.s,z) }
+  function covers(m,z,x,y){ if(!m||z<m.z0||z>m.z1) return false; return x>=tx(m.w,z)&&x<=tx(m.e,z)&&y>=ty(m.n,z)&&y<=ty(m.s,z) }
+  function inArch(z,x,y){ return ARCH.some(function(a){ return covers(a.m,z,x,y) }) }
+  function getArch(z,x,y,sig){ var L2=ARCH.filter(function(a){ return covers(a.m,z,x,y) }), i=0;
+    function nx(){ if(i>=L2.length) return Promise.resolve(null); return L2[i++].pm.getZxy(z,x,y,sig).then(function(t){ return t&&t.data?t:nx() },nx) } return nx() }
 
   // PMTiles v3 writer: Hilbert tile ids, varint directories, leaf directories, no compression
   function tid(z,x,y){ var acc=(Math.pow(4,z)-1)/3, d=0, s, rx, ry, t; for(s=Math.pow(2,z)/2;s>=1;s/=2){ rx=(x&s)>0?1:0; ry=(y&s)>0?1:0; d+=s*s*((3*rx)^ry); if(ry===0){ if(rx===1){ x=s-1-x; y=s-1-y } t=x; x=y; y=t } } return acc+d }
@@ -47,7 +51,7 @@
   tpl().catch(function(){});
   window.__pm={ tpl:function(){ return ls('aw-ofm-tpl') },
     extras:function(){ return [OFM+'planet',OFM+'styles/liberty',OFM+'styles/dark'].concat(['Noto Sans Regular','Noto Sans Bold','Noto Sans Italic'].reduce(function(o,f){ return o.concat(['0-255','256-511','8192-8447'].map(function(r){ return OFM+'fonts/'+encodeURIComponent(f)+'/'+r+'.pbf' })) },[])) },
-    save:function(list,meta){ var b=pack(list,meta); return idb('readwrite',function(s){ return s.put({blob:b,meta:{w:meta.w,s:meta.s,e:meta.e,n:meta.n,z0:meta.z0,z1:meta.z1,at:Date.now(),bytes:b.size}},'bc') }).then(openArch).then(function(){ return b.size }) },
+    save:function(list,meta,key){ var b=pack(list,meta); return idb('readwrite',function(s){ return s.put({blob:b,meta:{w:meta.w,s:meta.s,e:meta.e,n:meta.n,z0:meta.z0,z1:meta.z1,at:Date.now(),bytes:b.size}},key||'bc') }).then(openArch).then(function(){ return b.size }) },
     clear:function(){ return idb('readwrite',function(s){ return s.delete('bc') }).then(function(){ arch=null; archM=null }) },
     info:function(){ return archM }, _pack:pack, _tid:tid };
   openArch();
@@ -56,7 +60,7 @@
   // tiles come from the saved archive first, then the network
   try{ ML.addProtocol('ofm',function(p,ac){ var m=/^ofm:\/\/(\d+)\/(\d+)\/(\d+)/.exec(p.url); if(!m) return Promise.reject(new Error('bad tile')); var z=+m[1], x=+m[2], y=+m[3];
     function net(){ return tpl().then(function(t){ return fetch(t.replace('{z}',z).replace('{x}',x).replace('{y}',y),{signal:ac&&ac.signal}) }).then(function(r){ if(!r.ok) throw new Error('tile '+r.status); return r.arrayBuffer() }).then(function(d){ return {data:d} }) }
-    if(arch&&inArch(z,x,y)) return arch.getZxy(z,x,y,ac&&ac.signal).then(function(t){ return t&&t.data?{data:t.data}:net() },net);
+    if(ARCH.length&&inArch(z,x,y)) return getArch(z,x,y,ac&&ac.signal).then(function(t){ return t&&t.data?{data:t.data}:net() },net);
     return net() }) }catch(e){ return }
 
   // ---------- settings ----------
@@ -134,6 +138,6 @@
     if(top){ var h=pn.querySelector('.fph'); h.insertBefore(l,h.querySelector('.fpx')) } else { var gv=pn.querySelector('.gpxv'); pn.insertBefore(l,gv||null) }
     var s=l.querySelector('select'); s.value=val; s.onchange=function(){ fn(s.value) } }
   row(document.querySelector('.lyrp[aria-label="On road layers"]'),'aw_style','Map style',[['sat','Satellite'],['liberty','Liberty'],['dark','Dark']],style,function(v){ style=v; ls('aw-style',v); apply() });
-  row(document.querySelector('.lyrp[aria-label="Off road layers"]'),'aw_hill','3D hills',[['0','Off'],['1','On']],hill?'1':'0',function(v){ hill=v==='1'; ls('aw-hill',v); apply() },true);
+  window.__gl.setHill=function(v){ hill=!!v; ls('aw-hill',v?'1':'0'); apply() }; window.__gl.hill=function(){ return hill };
   apply();
 })();

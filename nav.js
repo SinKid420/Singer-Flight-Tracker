@@ -46,11 +46,11 @@
     else { var s=rt.steps[rt.next]||rt.steps[rt.steps.length-1], left=Math.max(0,rt.dist-rt.prog), eta=new Date(Date.now()+left/Math.max(rt.dist,1)*rt.dur*1000);
       h='<div class="nh"><span class="ni">'+s.ic+'</span><span class="nt"><b>'+dTxt(Math.max(0,rt.cum[s.i]-rt.prog))+' · '+esc(s.tx)+'</b><span>'+dTxt(left)+' left · '+tTxt(left/Math.max(rt.dist,1)*rt.dur)+' · arrive '+eta.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</span></span></div>'+
         (rt.note?'<div class="nw">'+esc(rt.note)+'</div>':'')+'<div class="nb"><button type="button" data-a="ls">'+(showList?'Hide steps':'Steps')+'</button><button type="button" data-a="end">End</button></div>'+(showList?listH():'') }
-    P.innerHTML=h }
+    P.innerHTML=h; if(window.__navPanel) try{ window.__navPanel(P,{rt:rt,nav:nav,busy:busy,dest:dest}) }catch(e){} }
   function warnH(){ return rt.warn&&rt.warn.length?'<div class="nw">'+rt.warn.slice(0,4).map(function(w){ return '<div>⚠ '+esc(w)+'</div>' }).join('')+'</div>':'' }
   function listH(){ return '<div class="nl">'+rt.steps.map(function(s,k){ var d=(rt.steps[k+1]?rt.cum[rt.steps[k+1].i]:rt.dist)-rt.cum[s.i]; return '<div><i>'+s.ic+'</i><span>'+esc(s.tx)+'</span>'+(d>0&&s.ic!=='🏁'?'<small>'+dTxt(d)+'</small>':'')+'</div>' }).join('')+'</div>' }
   P.onclick=function(e){ var b=e.target.closest('button'); if(!b) return; var a=b.getAttribute('data-a');
-    if(a==='x'||a==='end'){ stop(); dest=null; rt=null; clear(); panel() }
+    if(a==='x'||a==='end'){ stop(); if(window.__navHook) try{ window.__navHook('end',rt) }catch(e){} dest=null; rt=null; clear(); panel() }
     else if(a==='ls'){ showList=!showList; panel() }
     else if(a==='sw'){ route((rt?rt.mode:(offMode()?'off':'on'))==='off'?'on':'off') }
     else if(a==='go'){ start() } };
@@ -65,7 +65,7 @@
     var p=mode==='off'?offRoute(a,dest):onRoute(a,dest).catch(function(e){ var d=dest;
       return offRoute(a,d,true).then(function(r){ (r.warn=r.warn||[]).unshift(navigator.onLine?'Route service not reachable · route from BC road data':'No signal · route from saved BC road data'); return r },
         function(e2){ throw new Error(navigator.onLine?((e&&e.message)||'Route service not reachable'):'No signal and no saved road data here. Save this area for offline when you have signal') }) });
-    p.then(function(r){ if(id!==seq) return; busy=0; rt=r; r.mode=mode; r.prog=0; r.next=1; r.li=0; draw(); if(!quiet&&!nav) map.fitBounds(lineF.getBounds(),{paddingTopLeft:[30,240],paddingBottomRight:[90,90]}); if(nav) track(lastPos); panel() },
+    p.then(function(r){ if(id!==seq) return; busy=0; rt=r; r.mode=mode; r.prog=0; r.next=1; r.li=0; if(window.__navHook) try{ window.__navHook('route',r) }catch(e){} draw(); if(!quiet&&!nav) map.fitBounds(lineF.getBounds(),{paddingTopLeft:[30,240],paddingBottomRight:[90,90]}); if(nav) track(lastPos); panel() },
       function(err){ if(id!==seq) return; busy=0; if(quiet) return; rt=null; dest.err=err&&err.message||'No route found'; panel() }) }
 
   // On road: OSRM
@@ -200,6 +200,7 @@
   // ---------- navigation: follow your GPS along the route ----------
   function start(){ if(!rt) return; nav=true; showList=false; var lb=document.getElementById('locate'); if(lb&&!lb.classList.contains('follow')) lb.click();
     if(wid==null&&navigator.geolocation) try{ wid=navigator.geolocation.watchPosition(function(p){ var c=p.coords; lastPos={lat:c.latitude,lon:c.longitude,acc:c.accuracy||0}; if(nav) track(lastPos) },function(){},{enableHighAccuracy:true,maximumAge:1000,timeout:30000}) }catch(e){}
+    if(window.__navHook) try{ window.__navHook('start',rt) }catch(e){}
     if(lastPos) track(lastPos); panel(); tiltUpd() }
   function stop(){ nav=false; offN=0; setTimeout(tiltUpd,0); if(wid!=null&&navigator.geolocation){ navigator.geolocation.clearWatch(wid); wid=null } }
   function track(p){ if(!rt||!p) return; var pts=rt.pts, lo=Math.max(0,rt.li-30), hi=Math.min(pts.length-1,rt.li+400), bi=rt.li, bd=1e18, bp=0;
@@ -207,8 +208,8 @@
       if(d<bd){ bd=d; bi=i; bp=t } }
     var off=Math.sqrt(bd)*111320; rt.li=bi;
     if(tilted){ var j=Math.min(pts.length-1,bi+4), hd=brg(pts[bi][0],pts[bi][1],pts[j][0],pts[j][1]), want=(360-hd)%360, cur=map.getBearing?map.getBearing():0; if(j>bi&&Math.abs(((want-cur)%360+540)%360-180)>4&&map.setBearing) map.setBearing(want) } rt.prog=rt.cum[bi]+bp*(rt.cum[bi+1]-rt.cum[bi]||0);
-    if(hav(p.lat,p.lon,dest.lat,dest.lon)<35||rt.dist-rt.prog<20){ rt.arrived=true; stop(); panel(); return }
-    var k=1; while(k<rt.steps.length-1&&rt.cum[rt.steps[k].i]<rt.prog+8) k++; rt.next=k;
+    if(hav(p.lat,p.lon,dest.lat,dest.lon)<35||rt.dist-rt.prog<20){ rt.arrived=true; stop(); if(window.__navHook) try{ window.__navHook('arrive',rt) }catch(e){} panel(); return }
+    var k=1; while(k<rt.steps.length-1&&rt.cum[rt.steps[k].i]<rt.prog+8) k++; rt.next=k; if(window.__navHook) try{ window.__navHook('track',rt,p) }catch(e){}
     if(off>(rt.mode==='off'?80:60)&&(p.acc||0)<60){ if(++offN>=3&&Date.now()-lastRe>20000){ lastRe=Date.now(); offN=0; route(rt.mode,true); return } } else offN=0;
     panel() }
 
@@ -280,6 +281,6 @@
 
   // public: other parts of the app open directions with window.__nav.to(latlng, name)
   // urls(box) lists the road data to save for offline (used by "Save area for offline")
-  window.__nav={to:to,clear:function(){ stop(); dest=null; rt=null; clear(); panel() },route:function(){ return rt },setFrom:function(p){ lastPos=p },
+  window.__nav={to:to,panel:function(){ panel() },isNav:function(){ return nav },clear:function(){ stop(); dest=null; rt=null; clear(); panel() },route:function(){ return rt },setFrom:function(p){ lastPos=p },
     urls:function(b){ var o=[]; cells(b).forEach(function(c){ ['dra','ften','mvr'].forEach(function(k){ var q=LAY[k]; o.push(wfs(q[0],c,q[1],q[2],q[3],0)) }) }); return o }};
 })();

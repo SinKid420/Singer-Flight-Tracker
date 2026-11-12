@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=11','./app2.js?v=1','./nav.js?v=7','./gl.js?v=3','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=7','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=12','./app2.js?v=2','./nav.js?v=8','./gl.js?v=4','./extras.js?v=1','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=8','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -29,6 +29,11 @@
   function vtiles(b){ var t=vtpl(), o=[]; if(!t) return o; for(var z=ZMIN;z<=ZMAX;z++){ var x0=tx(b.w,z), x1=tx(b.e,z), y0=ty(b.n,z), y1=ty(b.s,z); for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) o.push(t.replace('{z}',z).replace('{x}',x).replace('{y}',y)) } return o }
   function vex(){ return window.__pm&&window.__pm.extras&&vtpl()?window.__pm.extras():[] }
   function tcount(b){ var n=0; for(var z=ZMIN;z<=ZMAX;z++) n+=(tx(b.e,z)-tx(b.w,z)+1)*(ty(b.s,z)-ty(b.n,z)+1); return n }
+  // BC place names (lakes, peaks, FSRs, towns) in 0.25° squares, saved so search works with no signal
+  var GNS='https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_BASEMAPPING.GNS_GEOGRAPHICAL_NAMES_SP&outputFormat=json&srsName=EPSG:4326&count=5000&propertyName=GEOGRAPHICAL_NAME,FEATURE_TYPE,FEATURE_CATEGORY,LATITUDE,LONGITUDE&CQL_FILTER=';
+  function nameCell(i,j){ var w=j*0.25, s=i*0.25; return GNS+encodeURIComponent('BBOX(GEOMETRY,'+w.toFixed(2)+','+s.toFixed(2)+','+(w+0.25).toFixed(2)+','+(s+0.25).toFixed(2)+",'EPSG:4326')") }
+  function nameUrls(b){ var o=[]; for(var i=Math.floor(b.s/0.25);i<=Math.floor(b.n/0.25);i++) for(var j=Math.floor(b.w/0.25);j<=Math.floor(b.e/0.25);j++) o.push(nameCell(i,j)); return o }
+  function rememberNames(urls){ var l=lj('aw-names',[]); urls.forEach(function(u){ if(l.indexOf(u)<0) l.push(u) }); if(l.length>400) l=l.slice(-400); ls('aw-names',JSON.stringify(l)) }
   function cells(b){ return (window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[]).concat(window.__nav&&window.__nav.urls?window.__nav.urls(b):[]) } // map layers + road data for directions and upright street names
   function est(lat,lon,r){ var b=box(lat,lon,r), t=tcount(b), c=cells(b).length; var nv=vtpl()?t:0; return {t:t,c:c,bytes:(t*TKB+c*CKB+nv*VKB)*1024,min:Math.max(1,Math.round((t+c)/30/60)),km2:Math.round(4*r*r/100)*100} }
 
@@ -77,9 +82,9 @@
   var job=null;
   function saveReports(b){ return fetch(RS+'/list?s='+b.s.toFixed(3)+'&n='+b.n.toFixed(3)+'&w='+b.w.toFixed(3)+'&e='+b.e.toFixed(3)).then(function(r){ return r.json() }).then(function(j){ if(!j||!j.r) throw 0;
       var c=lj('sky-trcache',{r:[]}), keep=(c.r||[]).filter(function(x){ return !(x.lat>=b.s&&x.lat<=b.n&&x.lon>=b.w&&x.lon<=b.e) }); c={at:Date.now(),r:keep.concat(j.r).slice(-3000)}; ls('sky-trcache',JSON.stringify(c)); return true }) }
-  function start(a){ var b=box(a.lat,a.lon,a.r), fs=cells(b), ts=tiles(b), vs=vtiles(b), vx=vex();
+  function start(a){ var b=box(a.lat,a.lon,a.r), nm=nameUrls(b), fs=cells(b).concat(nm), ts=tiles(b), vs=vtiles(b), vx=vex();
     job={a:a,items:LIBS.concat(vx,fs,ts,vs),nl:LIBS.length+vx.length,nv:vs.length,vDone:0,pack:false,vurls:vs,b:b,nf:fs.length,nt:ts.length,i:0,ok:0,fail:0,bytes:0,fsDone:0,tDone:0,rep:false,paused:false,t0:Date.now(),run:0};
-    ls('sky-offjob',JSON.stringify(a)); try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist() }catch(e){}
+    ls('sky-offjob',JSON.stringify(a)); rememberNames(nm); try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist() }catch(e){}
     saveReports(b).then(function(){ job&&(job.rep=true); ui() },function(){ job&&(job.rep='later'); ui() });
     caches.open(OC).then(function(c){ job.cache=c; for(var k=0;k<6;k++) worker() }); lock(true); ui() }
   function worker(){ if(!job||job.paused||job.i>=job.items.length){ if(job&&!job.paused&&!job.finished&&job.run===0&&job.i>=job.items.length) finish(); return } job.run++;
@@ -99,6 +104,41 @@
   addEventListener('online',function(){ if(job&&job.paused==='net'){ job.paused=false; for(var k=0;k<6;k++) worker(); ui() } });
   var wl=null; function lock(on){ try{ if(on&&navigator.wakeLock&&!wl) navigator.wakeLock.request('screen').then(function(x){ wl=x }).catch(function(){}); if(!on&&wl){ wl.release(); wl=null } }catch(e){} }
   document.addEventListener('visibilitychange',function(){ if(!document.hidden&&job&&!job.finished){ wl=null; lock(true) } });
+
+  // ---------- save the map along a route (offered when directions go through low-service areas) ----------
+  var RC='awarebc-off-route', rjob=null, rLay=null, DEMU='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+  function inHome(lat,lon){ if(!area||!area.done) return false; var b=box(area.lat,area.lon,area.r); return lat>=b.s&&lat<=b.n&&lon>=b.w&&lon<=b.e }
+  function corridor(pts){ var samp=[], last=null; pts.forEach(function(p){ if(!last||km(last[0],last[1],p[0],p[1])>0.25){ samp.push(p); last=p } }); if(pts.length) samp.push(pts[pts.length-1]);
+    var T={}, V={}, D={}, C={}, N={}, tp=vtpl(), bb={s:90,n:-90,w:180,e:-180};
+    samp.forEach(function(p){ var la=p[0], lo=p[1]; bb.s=Math.min(bb.s,la); bb.n=Math.max(bb.n,la); bb.w=Math.min(bb.w,lo); bb.e=Math.max(bb.e,lo);
+      for(var z=ZMIN;z<=ZMAX;z++){ var x=tx(lo,z), y=ty(la,z), r=z>=13?1:0; for(var dx=-r;dx<=r;dx++) for(var dy=-r;dy<=r;dy++){ var k=z+'/'+(x+dx)+'/'+(y+dy); T[k]=1; if(tp) V[k]=1 } }
+      var dx2=tx(lo,12), dy2=ty(la,12); for(var a=-1;a<=1;a++) for(var c=-1;c<=1;c++) D['12/'+(dx2+a)+'/'+(dy2+c)]=1;
+      C[Math.floor(la*10)+':'+Math.floor(lo*10)]=1; N[Math.floor(la/0.25)+':'+Math.floor(lo/0.25)]=1 });
+    var urls=[], seen={}; function add(u){ if(!seen[u]){ seen[u]=1; urls.push(u) } }
+    Object.keys(T).forEach(function(k){ var q=k.split('/'); add(BCR.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2])) });
+    Object.keys(C).forEach(function(k){ var q=k.split(':'), s=+q[0]/10, w=+q[1]/10; cells({s:s,n:s+0.1,w:w,e:w+0.1}).forEach(add) });
+    var nm=Object.keys(N).map(function(k){ var q=k.split(':'); return nameCell(+q[0],+q[1]) }); nm.forEach(add);
+    Object.keys(D).forEach(function(k){ var q=k.split('/'); add(DEMU.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2])) });
+    var vurls=Object.keys(V).map(function(k){ var q=k.split('/'); return tp.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2]) });
+    var pad=0.02; bb={s:bb.s-pad,n:bb.n+pad,w:bb.w-pad,e:bb.e+pad};
+    return {urls:urls,vurls:vurls,names:nm,b:bb,bytes:(Object.keys(T).length*TKB+(urls.length-Object.keys(T).length)*CKB+vurls.length*VKB)*1024} }
+  function addRouteLayer(){ if(rLay){ map.removeLayer(rLay); rLay=null } var r=lj('sky-offroute',null); if(!r||!r.b) return;
+    rLay=L.tileLayer(BCR,{bounds:L.latLngBounds([r.b.s,r.b.w],[r.b.n,r.b.e]),minZoom:ZMIN,maxNativeZoom:ZMAX,maxZoom:19,zIndex:0,attribution:'Offline map © Government of British Columbia (DataBC)'}).addTo(map) }
+  function saveRoute(pts,cb){ if(rjob) return false; var c=corridor(pts), all=c.urls.concat(c.vurls), i=0, ok=0, bad=0, bytes=0, fin=false, nU=c.urls.length;
+    rjob={n:all.length,c:c}; rememberNames(c.names);
+    function tell(x){ try{ cb&&cb(x) }catch(e){} }
+    caches.delete(RC).then(function(){ return caches.open(RC) }).then(function(ca){
+      function end(){ if(fin) return; fin=true; var re=/\/(\d+)\/(\d+)\/(\d+)\.pbf/, list=[];
+        var pk=c.vurls.length&&window.__pm&&window.__pm.save?Promise.all(c.vurls.map(function(u){ var m=re.exec(u); return ca.match(u).then(function(r){ return r?r.blob():null }).then(function(bl){ if(bl&&bl.size&&m) list.push({z:+m[1],x:+m[2],y:+m[3],blob:bl}) }) }))
+          .then(function(){ return list.length?window.__pm.save(list,{w:c.b.w,s:c.b.s,e:c.b.e,n:c.b.n,z0:ZMIN,z1:ZMAX},'route'):0 }).then(function(){ return Promise.all(c.vurls.map(function(u){ return ca.delete(u) })) }).catch(function(){}):Promise.resolve();
+        pk.then(function(){ ls('sky-offroute',JSON.stringify({b:c.b,at:Date.now(),bytes:bytes,fail:bad})); addRouteLayer(); rjob=null; tell({done:true,bytes:bytes,fail:bad}) }) }
+      function w(){ if(i>=all.length){ if(ok+bad>=all.length) end(); return } var u=all[i++];
+        fetch(u,{mode:'cors',credentials:'omit'}).then(function(r){ if(!r.ok) throw 0; if(u.indexOf('/tile/')>0&&!/image/.test(r.headers.get('content-type')||'')) throw 0; var cl=r.clone(); return r.blob().then(function(bl){ bytes+=bl.size; return ca.put(u,cl) }) })
+          .then(function(){ ok++ },function(){ bad++ }).then(function(){ tell({pct:Math.floor((ok+bad)/all.length*100),bytes:bytes}); w() }) }
+      for(var k=0;k<5;k++) w() }).catch(function(){ rjob=null; tell({error:true}) });
+    return true }
+  window.__off={inHome:inHome,corridor:corridor,saveRoute:saveRoute,busy:function(){ return !!rjob },saved:function(){ return lj('sky-offroute',null) },names:function(){ return lj('aw-names',[]) }};
+  addRouteLayer();
 
   // ---------- setup screen ----------
   var ov=null, mini=null, circ=null, R=70, moved=false, uiT=null;
