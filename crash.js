@@ -11,6 +11,7 @@
     try{ var bc=document.body&&document.body.classList; if(bc){ s.d3=bc.contains('tilt3d'); s.nav=bc.contains('navon') } }catch(e){}
     try{ var b=document.querySelector('.seg button[aria-pressed=true]'); if(b) s.map=b.getAttribute('data-b') }catch(e){}
     try{ var pm=performance.memory; if(pm) s.mem=Math.round(pm.usedJSHeapSize/1e6)+'/'+Math.round(pm.jsHeapSizeLimit/1e6)+' MB' }catch(e){}
+    try{ s.tiles=document.querySelectorAll('.leaflet-tile').length }catch(e){}
     if(navigator.deviceMemory) s.ram=navigator.deviceMemory+' GB'; s.app=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
     s.scr=screen.width+'x'+screen.height+'@'+(window.devicePixelRatio||1); return s }
   function add(kind,msg,extra){ var l=rd(K,[]); l.unshift({t:Date.now(),k:kind,m:String(msg||'').slice(0,600),s:extra||state()}); if(l.length>MAX) l.length=MAX; wr(K,l); badge() }
@@ -52,7 +53,7 @@
     fold.querySelector('[data-a=clr]').onclick=function(){ window.__crash.clear(); ui() } }
   function toast(){ var l=rd(K,[]); if(!l.length||Date.now()-l[0].t>20000||l[0].k!=='Closed unexpectedly') return; var d=document.createElement('div');
     d.style.cssText='position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:3000;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:10px 12px;font:13px/1.35 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center';
-    d.innerHTML='<b style="display:block;margin-bottom:2px">AwareBC closed unexpectedly</b>A crash report was saved in Settings ▸ Crash reports.'; document.body.appendChild(d); setTimeout(function(){ d.remove() },7000) }
+    d.innerHTML='<b style="display:block;margin-bottom:2px">AwareBC closed unexpectedly</b>A crash report was saved in Settings ▸ Crash reports.'+(window.__glNote?'<br>'+window.__glNote:''); document.body.appendChild(d); setTimeout(function(){ d.remove() },window.__glNote?11000:7000) }
   function ready(){ mount(); toast(); setTimeout(nat,1500) }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
 })();
