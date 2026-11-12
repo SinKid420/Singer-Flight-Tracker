@@ -46,6 +46,9 @@ if (step === 'web') {
   await get(LF + 'leaflet.min.css', path.join(W, 'lib', 'leaflet.min.css'));
   for (const i of ['layers.png', 'layers-2x.png', 'marker-icon.png', 'marker-icon-2x.png', 'marker-shadow.png']) await get(LF + 'images/' + i, path.join(W, 'lib', 'images', i));
   await get(LR, path.join(W, 'lib', 'leaflet-rotate.js'));
+  const MLJ = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js', PMJ = 'https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js';
+  await get(MLJ, path.join(W, 'lib', 'maplibre-gl.js'));
+  await get(PMJ, path.join(W, 'lib', 'pmtiles.js'));
   fs.copyFileSync(path.join(ROOT, 'app', 'native.js'), path.join(W, 'native.js'));
 
   let h = fs.readFileSync(path.join(W, 'index.html'), 'utf8');
@@ -59,6 +62,8 @@ if (step === 'web') {
   h = R(h, '"' + LF + 'leaflet.min.css"', '"lib/leaflet.min.css"', 'index.html');
   h = R(h, '"' + LF + 'leaflet.min.js"', '"lib/leaflet.min.js"', 'index.html');
   h = R(h, '"' + LR + '"', '"lib/leaflet-rotate.js"', 'index.html');
+  h = R(h, '"' + MLJ + '"', '"lib/maplibre-gl.js"', 'index.html');
+  h = R(h, '"' + PMJ + '"', '"lib/pmtiles.js"', 'index.html');
   h = h.replace(/(<script src="lib\/leaflet-rotate\.js"[^>]*><\/script>)/, '$1\n<script src="lib/capacitor.js"></script>\n<script src="native.js"></script>');
   if (!h.includes('<script src="native.js">')) throw new Error('index.html: could not add native.js');
   // the app stores its own files, so no website service worker

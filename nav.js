@@ -221,8 +221,8 @@
     function brg0(){ var b=map.getBearing?map.getBearing():0; return ((b%360)+360)%360 }
     function inBC(c){ return c.lat>48.2&&c.lat<60&&c.lng>-139.5&&c.lng<-114 }
     function trans(){ var b=A.base&&A.base(); return b&&b[1] }
-    function check(){ var b=brg0(), z=map.getZoom(), c=map.getCenter(), want=z>=15&&inBC(c)&&(on?(b>120&&b<240):(b>135&&b<225));
-      var t=trans(); if(t&&t.setOpacity) t.setOpacity(want?0:1);
+    function check(){ var b=brg0(), z=map.getZoom(), c=map.getCenter(), want=!window.__glLab&&z>=15&&inBC(c)&&(on?(b>120&&b<240):(b>135&&b<225));
+      var t=trans(); if(t&&t.setOpacity) t.setOpacity(want||window.__glLab?0:1);
       if(want!==on){ on=want; if(on){ grp.addTo(map); load() } else { map.removeLayer(grp); grp.clearLayers() } }
       else if(on) soon() }
     function soon(){ clearTimeout(tm); tm=setTimeout(place,120) }
@@ -255,6 +255,7 @@
         L.marker(map.containerPointToLatLng(mid),{interactive:false,keyboard:false,icon:L.divIcon({className:'snm',iconSize:[0,0],html:'<span style="transform:rotate('+ang.toFixed(1)+'deg) translate(-50%,-50%)">'+esc(f.n)+'</span>'})}).addTo(grp) }) }
     map.on('rotate',function(){ clearTimeout(tm); tm=setTimeout(check,150) });
     map.on('moveend zoomend',function(){ check(); if(on) load() });
+    window.__navNamesChk=check;
     window.__navNames=function(){ return {on:on,n:grp.getLayers().length,feats:feats.length} };
   })();
 

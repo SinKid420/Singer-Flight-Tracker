@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./app.js?v=9','./app2.js?v=1','./nav.js?v=6','./reports.js?v=6','./offline.js?v=6','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./app.js?v=10','./app2.js?v=1','./nav.js?v=7','./gl.js?v=1','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=7','./friends.js?v=4','./tools.js?v=3','./roads.js?v=3','./winter.js?v=3','./ar.js?v=3','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -24,9 +24,13 @@
   function tx(lon,z){ return Math.floor((lon+180)/360*Math.pow(2,z)) }
   function ty(lat,z){ var r=lat*Math.PI/180; return Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z)) }
   function tiles(b){ var o=[]; for(var z=ZMIN;z<=ZMAX;z++){ var x0=tx(b.w,z), x1=tx(b.e,z), y0=ty(b.n,z), y1=ty(b.s,z); for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) o.push(BCR.replace('{z}',z).replace('{y}',y).replace('{x}',x)) } return o }
+  // street map for the .pmtiles archive (OpenFreeMap vector tiles), packed after download
+  var VKB=25; function vtpl(){ return window.__pm&&window.__pm.tpl&&window.__pm.tpl() }
+  function vtiles(b){ var t=vtpl(), o=[]; if(!t) return o; for(var z=ZMIN;z<=ZMAX;z++){ var x0=tx(b.w,z), x1=tx(b.e,z), y0=ty(b.n,z), y1=ty(b.s,z); for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) o.push(t.replace('{z}',z).replace('{x}',x).replace('{y}',y)) } return o }
+  function vex(){ return window.__pm&&window.__pm.extras&&vtpl()?window.__pm.extras():[] }
   function tcount(b){ var n=0; for(var z=ZMIN;z<=ZMAX;z++) n+=(tx(b.e,z)-tx(b.w,z)+1)*(ty(b.s,z)-ty(b.n,z)+1); return n }
   function cells(b){ return (window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[]).concat(window.__nav&&window.__nav.urls?window.__nav.urls(b):[]) } // map layers + road data for directions and upright street names
-  function est(lat,lon,r){ var b=box(lat,lon,r), t=tcount(b), c=cells(b).length; return {t:t,c:c,bytes:(t*TKB+c*CKB)*1024,min:Math.max(1,Math.round((t+c)/30/60)),km2:Math.round(4*r*r/100)*100} }
+  function est(lat,lon,r){ var b=box(lat,lon,r), t=tcount(b), c=cells(b).length; var nv=vtpl()?t:0; return {t:t,c:c,bytes:(t*TKB+c*CKB+nv*VKB)*1024,min:Math.max(1,Math.round((t+c)/30/60)),km2:Math.round(4*r*r/100)*100} }
 
   // ---------- Home ----------
   var home=lj('sky-home',null), homeMk=null;
@@ -73,18 +77,24 @@
   var job=null;
   function saveReports(b){ return fetch(RS+'/list?s='+b.s.toFixed(3)+'&n='+b.n.toFixed(3)+'&w='+b.w.toFixed(3)+'&e='+b.e.toFixed(3)).then(function(r){ return r.json() }).then(function(j){ if(!j||!j.r) throw 0;
       var c=lj('sky-trcache',{r:[]}), keep=(c.r||[]).filter(function(x){ return !(x.lat>=b.s&&x.lat<=b.n&&x.lon>=b.w&&x.lon<=b.e) }); c={at:Date.now(),r:keep.concat(j.r).slice(-3000)}; ls('sky-trcache',JSON.stringify(c)); return true }) }
-  function start(a){ var b=box(a.lat,a.lon,a.r), fs=cells(b), ts=tiles(b);
-    job={a:a,items:LIBS.concat(fs,ts),nf:fs.length,nt:ts.length,i:0,ok:0,fail:0,bytes:0,fsDone:0,tDone:0,rep:false,paused:false,t0:Date.now(),run:0};
+  function start(a){ var b=box(a.lat,a.lon,a.r), fs=cells(b), ts=tiles(b), vs=vtiles(b), vx=vex();
+    job={a:a,items:LIBS.concat(vx,fs,ts,vs),nl:LIBS.length+vx.length,nv:vs.length,vDone:0,pack:false,vurls:vs,b:b,nf:fs.length,nt:ts.length,i:0,ok:0,fail:0,bytes:0,fsDone:0,tDone:0,rep:false,paused:false,t0:Date.now(),run:0};
     ls('sky-offjob',JSON.stringify(a)); try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist() }catch(e){}
     saveReports(b).then(function(){ job&&(job.rep=true); ui() },function(){ job&&(job.rep='later'); ui() });
     caches.open(OC).then(function(c){ job.cache=c; for(var k=0;k<6;k++) worker() }); lock(true); ui() }
   function worker(){ if(!job||job.paused||job.i>=job.items.length){ if(job&&!job.paused&&!job.finished&&job.run===0&&job.i>=job.items.length) finish(); return } job.run++;
-    var idx=job.i++, u=job.items[idx], kind=idx<LIBS.length?'l':idx<LIBS.length+job.nf?'f':'t';
+    var idx=job.i++, u=job.items[idx], kind=idx<job.nl?'l':idx<job.nl+job.nf?'f':idx<job.nl+job.nf+job.nt?'t':'v';
     job.cache.match(u).then(function(m){ if(m) return 'hit'; return get(u,2) }).then(function(r){ if(r==='hit'||r){ job.ok++; if(r&&r.size) job.bytes+=r.size; else job.bytes+=(kind==='t'?TKB:CKB)*1024 } else job.fail++;
-        if(kind==='f') job.fsDone++; if(kind==='t') job.tDone++ }).catch(function(){ job.fail++ }).then(function(){ job.run--; uiSoon(); if(!navigator.onLine&&job&&!job.paused){ job.paused='net'; ui() } worker() }) }
+        if(kind==='f') job.fsDone++; if(kind==='t') job.tDone++; if(kind==='v') job.vDone++ }).catch(function(){ job.fail++ }).then(function(){ job.run--; uiSoon(); if(!navigator.onLine&&job&&!job.paused){ job.paused='net'; ui() } worker() }) }
   function get(u,tries){ return fetch(u,{mode:'cors',credentials:'omit'}).then(function(r){ if(!r.ok) throw 0; if(u.indexOf('/tile/')>0&&!/image/.test(r.headers.get('content-type')||'')) throw 0; var c=r.clone(); return r.blob().then(function(bl){ return job.cache.put(u,c).then(function(){ return {size:bl.size} }) }) })
       .catch(function(){ if(tries>1) return new Promise(function(ok){ setTimeout(ok,1500) }).then(function(){ return get(u,tries-1) }); return null }) }
-  function finish(){ var a=job.a; area={lat:a.lat,lon:a.lon,r:a.r,at:Date.now(),bytes:job.bytes,done:true,fail:job.fail}; ls('sky-offarea',JSON.stringify(area)); ls('sky-offjob',null); lock(false); addLayer(); job.finished=true; if(ov) ov.hidden=false; ui() }
+  function finish(){ if(job.nv&&!job.pack&&window.__pm&&window.__pm.save){ job.pack='run'; ui(); packV().then(function(){ job.pack=true },function(){ job.pack='fail' }).then(finish); return }
+    if(job.pack==='run') return; var a=job.a; area={lat:a.lat,lon:a.lon,r:a.r,at:Date.now(),bytes:job.bytes,done:true,fail:job.fail}; ls('sky-offarea',JSON.stringify(area)); ls('sky-offjob',null); lock(false); addLayer(); job.finished=true; if(ov) ov.hidden=false; ui() }
+  // pack the downloaded street tiles into one .pmtiles archive (IndexedDB), then drop the loose copies
+  function packV(){ var re=/\/(\d+)\/(\d+)\/(\d+)\.pbf/, list=[], c=job.cache;
+    return Promise.all(job.vurls.map(function(u){ var m=re.exec(u); return c.match(u).then(function(r){ return r?r.blob():null }).then(function(bl){ if(bl&&bl.size&&m) list.push({z:+m[1],x:+m[2],y:+m[3],blob:bl}) }) }))
+      .then(function(){ if(!list.length) throw 0; var b=job.b; return window.__pm.save(list,{w:b.w,s:b.s,e:b.e,n:b.n,z0:ZMIN,z1:ZMAX}) })
+      .then(function(sz){ return Promise.all(job.vurls.map(function(u){ return c.delete(u) })).then(function(){ return sz }) }) }
   function pause(p){ if(!job) return; job.paused=p?'user':false; if(!p){ for(var k=0;k<6;k++) worker() } ui() }
   addEventListener('online',function(){ if(job&&job.paused==='net'){ job.paused=false; for(var k=0;k<6;k++) worker(); ui() } });
   var wl=null; function lock(on){ try{ if(on&&navigator.wakeLock&&!wl) navigator.wakeLock.request('screen').then(function(x){ wl=x }).catch(function(){}); if(!on&&wl){ wl.release(); wl=null } }catch(e){} }
@@ -129,6 +139,7 @@
       '<div class="ofrow">Home pin<span class="ok">'+I('chk',13)+'Saved</span></div>'+
       '<div class="ofrow">FSRs, trails &amp; closures'+(job.fsDone>=job.nf?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+job.fsDone+' of '+job.nf+'</em>')+'</div>'+
       '<div class="ofrow">Trail reports'+(job.rep===true?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+(job.rep==='later'?'saves when online':'…')+'</em>')+'</div>'+
+      (job.nv?'<div class="ofrow">Street map (.pmtiles)'+(job.pack===true?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+(job.pack==='run'?'packing…':job.pack==='fail'?'could not pack':job.vDone.toLocaleString()+' of '+job.nv.toLocaleString())+'</em>')+'</div>':'')+
       '<div class="ofrow">Map tiles'+(job.tDone>=job.nt?'<span class="ok">'+I('chk',13)+'Done</span>':'<em>'+job.tDone.toLocaleString()+' of '+job.nt.toLocaleString()+'</em>')+'</div>'+
       '<div class="ofnote"><span style="color:#ff9f0a">'+I('phone',15)+'</span>Keep AwareBC open until it finishes. If you lose signal it picks up where it left off.</div>'+
       '<button type="button" class="ofghost">'+(job.paused==='user'?'Resume':'Pause')+'</button><button type="button" class="ofskip" data-a="hide">Use the app while it saves</button>';
