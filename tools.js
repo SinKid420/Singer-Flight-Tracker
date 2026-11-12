@@ -175,7 +175,7 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       zWarnEl.innerHTML='<b>'+(inside?'⛔ You are in a snowmobile closure':'⚠️ Closure ahead, '+Math.max(50,Math.round(kmv*1000/50)*50)+' m away')+'</b><span>'+esc(f.n||'Closed area')+' · '+esc(zStatus(f)[0])+'</span><small>Fines apply under the Wildlife Act. Turn back the way you came.</small><button type="button">OK</button>';
       zWarnEl.hidden=false; zWarnEl.querySelector('button').onclick=function(){ zWarnEl.hidden=true };
       try{ if(navigator.vibrate) navigator.vibrate(inside?[300,120,300,120,300]:[200,100,200]) }catch(e){} }
-    function zCheck(){ if(!zOn||!zAlert||!zD||me.label==='Grand Forks') return; var hits=zWhere(me.lat,me.lon), nowIn={}, nowNear={};
+    function zCheck(){ if(!zOn||!zAlert||!zD||me.label!=='you') return; var hits=zWhere(me.lat,me.lon), nowIn={}, nowNear={};
       hits.forEach(function(h){ var id=h.f.n+h.f.b.join(); if(h.inside){ nowIn[id]=1; if(!zIn[id]) zWarn(h.f,true,0) } else { nowNear[id]=1; if(!zNear[id]&&!zIn[id]) zWarn(h.f,false,h.km) } });
       zIn=nowIn; zNear=nowNear }
     setInterval(function(){ if(!document.hidden) zCheck() },15000);
@@ -185,7 +185,7 @@ window.__awm&&window.__awm('tools',function(X){with(X){
           var ll=zPolys(f), d=1e9, inside=false; ll.forEach(function(p){ if(zInRing(la,lo,p[0])) inside=true; d=Math.min(d,zEdge(la,lo,p[0])) }); var key=f.n+f.k; if(seen[key]&&seen[key].d<=d) return; seen[key]={f:f,d:inside?0:d} });
         Object.keys(seen).forEach(function(k){ if(seen[k].d<=100) near.push(seen[k]) }); near.sort(function(a,b){ return a.d-b.d });
         var here=zWhere(la,lo).filter(function(h){return h.inside}), h='';
-        h+='<div class="ptiles">'+tile('Where you are',here.length?'In a closure':'Not in a closure',here.length?esc(here[0].f.n||''):(me.label==='Grand Forks'?'Turn on location for alerts':'Checked against '+zD.f.length+' areas'),here.length?RED:GREEN)+'</div>';
+        h+='<div class="ptiles">'+tile('Where you are',here.length?'In a closure':'Not in a closure',here.length?esc(here[0].f.n||''):(me.label!=='you'?'Turn on location for alerts':'Checked against '+zD.f.length+' areas'),here.length?RED:GREEN)+'</div>';
         h+='<button class="ltbtn2 pacc" id="zbtn">'+(zOn?'Hide zones on the map':'Show zones on the map')+'</button>';
         h+='<div class="row2" style="margin-top:6px"><span>Warn me when I ride into a closure</span><select id="zal" class="psel"><option value="1"'+(zAlert?' selected':'')+'>On</option><option value="0"'+(zAlert?'':' selected')+'>Off</option></select></div>';
         h+=sec('Nearest to you',near.length?near.slice(0,6).map(function(x){ var st=zStatus(x.f); return '<div class="row2 prow2"><span><b>'+esc(x.f.n||ZST[x.f.k][0])+'</b> <small style="color:'+st[1]+'">'+esc(st[0])+'</small></span><span>'+(x.d===0?'Here':kmTxt(x.d))+'</span></div>' }).join(''):'No sled closures or riding areas within 100 km.');

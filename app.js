@@ -1,10 +1,10 @@
 if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function(){document.getElementById('stat').textContent='Map library blocked. Reload with a connection.'})}
 (function(){
   if(typeof L==='undefined') return;
-  // Default: Grand Forks, BC. Replaced by your GPS position if the browser allows it.
-  var me = {lat:49.0306, lon:-118.4448, label:'Grand Forks'};
-  // Open where you were last time (saved to about 100 m on this phone only), then GPS updates it within seconds.
-  try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label='you'}}catch(e){}
+  // Before your phone shares a spot, the map shows all of BC (no town is assumed). Your GPS position replaces it within seconds.
+  var me = {lat:53.7, lon:-127.6, label:'none'};
+  // Open where you were last time (saved to about 100 m on this phone only); older than 6 hours counts as "last known", not where you are.
+  try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label=lp.t&&Date.now()-lp.t<6*3600000?'you':'last'}}catch(e){}
   var cfg2={fsrRdOp:'0.4',waterOp:'0.4',water:'1',fsrOp:'1',fsrWalk:'1',fsrBike:'1',fsrMotor:'1',fsrFsr:'1',fsrRoad:'1',fsrPlan:'1',fsrBcts:'1',fsrTh:'1',fsrCamp:'1',fsrClose:'1',fsrOsm:'1',arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all',ltAge:'30',ltAlert:'off',mt:'auto',mtPins:'1',prepSolar:'off'};
   // ---- The same weather request asked twice at once (or within a minute) goes out only once ----
   (function(){ var of=window.fetch, memo={}, HOSTS=/^https:\/\/(api\.open-meteo\.com|api\.rainviewer\.com)\//;
@@ -13,7 +13,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       Object.keys(memo).forEach(function(k){ if(now-memo[k].t>60000) delete memo[k] });
       var p=of.call(window,u,o); memo[u]={t:now,p:p}; p.then(function(r){ if(!r.ok) delete memo[u] },function(){ delete memo[u] }); return p.then(function(r){ return r.clone() }) } })();
   // ---- Parts of the app that load a moment after the map opens (tools, roads, winter mountains, AR) ----
-  var __mods={}, MODV=3;
+  var __mods={}, MODV=4;
   function __mod(n,ctx,ids){ __mods[n]={ctx:ctx,ids:ids,p:null,done:false} }
   function __load(n){ var m=__mods[n]; if(!m||m.done) return Promise.resolve(); if(m.p) return m.p;
     m.p=new Promise(function(res){ var s=document.createElement('script'); s.src=n+'.js?v='+MODV; s.onload=function(){ res() }; s.onerror=function(){ m.p=null; s.remove(); res() }; document.head.appendChild(s) }); return m.p }
@@ -245,6 +245,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     paint() })();
   var meHalo = {setLatLng:function(){return meHalo}};
   var ring = L.circle([me.lat,me.lon],{radius:radiusNm*1852,color:'#ff3b30',weight:1.5,opacity:.6,fill:false,dashArray:'5 7',interactive:false}).addTo(map);
+  // no spot yet: no vehicle or range ring in the middle of BC; last known spot (6 h+) shows greyed out
+  function meShow(){ var on=me.label!=='none'; meMark.setOpacity(on?1:0); ring.setStyle({opacity:on?.6:0}); var el=meMark.getElement(); if(el&&me.label==='last') el.classList.add('stale') }
+  meShow();
 
   function syncLabels(){document.getElementById('map').classList.toggle('nolabels',map.getZoom()<7)}
   map.on('zoomend',syncLabels);
@@ -780,18 +783,18 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     applyUnits(); recenter(true); render(lastData);
   };
   function locate(auto){
-    if(!navigator.geolocation){setStat('No location<br>using default');return}
+    if(!navigator.geolocation){setStat(me.label==='last'?'No location<br>last known spot':'No location<br>showing all of BC');return}
     navigator.geolocation.getCurrentPosition(function(pos){
       var nl=pos.coords.latitude, nn=pos.coords.longitude, moved=distNm(me.lat,me.lon,nl,nn);
-      me.lat=nl; me.lon=nn; me.label='you'; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){}
+      me.lat=nl; me.lon=nn; me.label='you'; meShow(); try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3),t:Date.now()}))}catch(e){}
       if(auto===true){ recenter(true); if(!touched) map.setView([nl,nn],Math.max(map.getZoom(),START_Z)) } else recenter(false);
-    },function(){setStat('Location off<br>using default',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+    },function(){setStat(me.label==='last'?'Location off<br>last known spot':'Location off<br>showing all of BC',true)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   }
   // Live GPS: your dot keeps moving as you travel. Phone GPS works with no cell service.
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=135, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=136, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -805,7 +808,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var accC=L.circle([me.lat,me.lon],{radius:1,color:'#ff3b30',weight:1,opacity:.45,fillColor:'#ff3b30',fillOpacity:.08,interactive:false});
   function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return;
     // a rough Wi-Fi/cell spot never replaces a good GPS spot from the last 20 s (stops the dot jumping blocks away)
-    var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; lastFix=Date.now(); lastErr=null;
+    var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; meShow(); lastFix=Date.now(); lastErr=null;
     ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ accC.setStyle(ac>120?{fillOpacity:0,weight:1.5,opacity:.7,dashArray:'6 6'}:{fillOpacity:.08,weight:1,opacity:.45,dashArray:null}); if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
     var el=meMark.getElement(); if(el) el.classList.remove('stale');
     // Driving: speed and direction from the GPS (or worked out from the last spot), arrow shows which way you're heading
@@ -823,7 +826,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(locBtn.classList.contains('on')){ locBtn.classList.remove('on'); userZoom=false; say(ac>150?'<b>Rough spot found</b>±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · sharpening with GPS…':moving?'Drive mode · following you up close':'Following you · drag the map to stop',ac>150?6000:3000); recenter(true); needZ=false; zoomTo([nl,nn],DRIVEZ) }
     else if(follow){ if(needZ&&ac<=150){ needZ=false; zoomTo([nl,nn],DRIVEZ) } else if(moving&&!userZoom&&map.getZoom()<DRIVEZ){ zoomTo([nl,nn],DRIVEZ); if(!drove){ drove=true; say('Drive mode · following you up close',2500) } } else if(!glideOn) map.panTo([nl,nn],{animate:true,duration:.8,easeLinearity:1}) }
     if(sp>4&&ac<=50&&pac<=50) driveT=t; pac=ac; awake(follow&&(charging||Date.now()-driveT<180000)); roughB(ac);
-    var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3)}))}catch(e){} }
+    var now=Date.now(); if(now-lastSave>60000){ lastSave=now; try{localStorage.setItem('sky-lastpos',JSON.stringify({lat:+nl.toFixed(3),lon:+nn.toFixed(3),t:now}))}catch(e){} }
     clearTimeout(gpsLost); gpsLost=setTimeout(function(){ var el=meMark.getElement(); if(el) el.classList.add('stale') },90000) }
   var driveT=0, pac=9999, charging=false, roughN=0, apxWebTold=false, goodT=0, goodAcc=1e9, apxTold=false, needZ=false, prevFix=null, moving=false, stillT=0, lastHd=-1, userZoom=false, ourZoom=false, drove=false, DRIVEZ=18, wl=null;
   // Live movement: the dot and map slide together every frame (not once per GPS reading), predicting ahead from speed and heading
@@ -984,7 +987,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     runTest(); clearTimeout(timer); busy=false; poll();
   };
   // Opening the app: start zoomed in close around you (town and road level), not the whole 100 nm plane area
-  var START_Z=13; applyUnits(); syncLabels(); recenter(true); map.setView([me.lat,me.lon],START_Z,{animate:false}); locate(true);
+  var START_Z=13; applyUnits(); syncLabels(); recenter(true); map.setView([me.lat,me.lon],me.label==='none'?5:me.label==='last'?11:START_Z,{animate:false}); locate(true);
   // ---- Space & night sky: ISS and bright satellites (CelesTrak orbits + satellite.js), aurora (NOAA SWPC), meteor showers ----
   var SATJS='https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js', SATSRI='sha384-e6V1JVpc+kVNTxT0gEOla7yL4c92Romsw7itPoipfzHbEjzUwPhTv6oeVDMHHzqT';
   var sats=[], satReady=null, spaceCfg={map:true,ar:true}, issMks={}, DEG=Math.PI/180, CMP=['N','NE','E','SE','S','SW','W','NW'];
@@ -1580,7 +1583,8 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       return {L:L,why:why||'No alerts near you right now'} }
     function paint(){ var lv=H.t?level().L:0; btn.classList.toggle('alert1',cfg2.hubBadge==='1'&&lv===1); btn.classList.toggle('alert2',cfg2.hubBadge==='1'&&lv>=2) }
     function row(i,icon,title,right,col,detail){ return '<div class="hubrow'+(open===i?' open':'')+'"><button class="hubhd" data-i="'+i+'" aria-expanded="'+(open===i)+'"><span>'+icon+' <b>'+title+'</b></span><span style="color:'+(col||'var(--dim)')+'">'+right+'</span></button>'+(open===i?'<div class="hubdt">'+detail+'</div>':'')+'</div>' }
-    function render(){ if(!H.t){ body.innerHTML='<div class="ssec">Checking alerts near you…</div>'; return }
+    function render(){ if(me.label!=='you'){ body.innerHTML='<div class="hubban" style="background:#fb8c00">⚠ Location needed</div><div class="ssec">Alerts are checked around where you are. Turn on location so AwareBC can check evacuations, fires, floods, weather and road closures near you.'+(me.label==='last'?' (Your last known spot is older than 6 hours.)':'')+'</div><div class="abtns"><a href="#" id="hubloc" class="pri" role="button" style="grid-column:1/-1">📍 Find my location</a></div>'; var hl=document.getElementById('hubloc'); if(hl) hl.onclick=function(e){ e.preventDefault(); var lb=document.getElementById('locate'); if(lb) lb.click() }; return }
+      if(!H.t){ body.innerHTML='<div class="ssec">Checking alerts near you…</div>'; return }
       var lv=level(), cols=['#43a047','#fbc02d','#fb8c00','#c62828'], h='<div class="hubban" style="background:'+cols[lv.L]+'">'+(lv.L?'⚠ ':'✓ ')+esc(lv.why)+'</div>';
       var ev=H.evac||[], ords=ev.filter(function(e){return e.order}).length;
       h+=row(0,'🏠','Evacuations',ev.length?(ords?ords+' order'+(ords>1?'s':''):'')+(ords&&ev.length-ords?', ':'')+(ev.length-ords?(ev.length-ords)+' alert'+(ev.length-ords>1?'s':''):''):'None',ev.length?(ords?'#e53935':'#fb8c00'):'#43a047',
