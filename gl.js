@@ -113,9 +113,9 @@
     build(w).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:Math.min(window.devicePixelRatio||1,2)},cam()));
           gl.on('load',function(){ loaded=true; after(want()) }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
-          gl.on('error',function(e){ if(window.console) console.warn('[gl]',e&&e.error&&e.error.message) });
-          gl.getCanvas().addEventListener('webglcontextlost',function(ev){ ev.preventDefault(); dead=true; off(); A.say&&A.say('Vector map paused (low memory) · picture map back',3000) });
-        }catch(e){ dead=true; off(); return } }
+          var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });
+          gl.getCanvas().addEventListener('webglcontextlost',function(ev){ ev.preventDefault(); if(window.__crash) window.__crash.add('Map graphics stopped','WebGL context lost (phone graphics memory full). Vector map switched off for this session.'); dead=true; off(); A.say&&A.say('Vector map paused (low memory) · picture map back',3000) });
+        }catch(e){ if(window.__crash) window.__crash.add('Map graphics could not start',String(e&&e.message||e)); dead=true; off(); return } }
       else { gl.setStyle(st,{diff:false}); sync() }
       setTimeout(function(){ if(my===seq&&!loaded&&w.kind!=='sat'){ curKey=''; leafletBase(true) } },15000) }).catch(function(){ if(my!==seq) return; off() }) }
   function after(w){ if(!loaded||dead) return; var vec=w.kind!=='sat'; leafletBase(!vec); rasterLabels(!w.lab);
