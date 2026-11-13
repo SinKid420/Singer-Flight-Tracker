@@ -70,7 +70,7 @@
   // after a crash with 3D hills on, hills start switched off (turn back on in Off road layers)
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
-  function want(){ var k=baseKey(), vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn} }
+  function want(){ var k=baseKey(), vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn,poi:k==='sat'} } // businesses only on On road
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
   var pane=map.createPane('glmap',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=250; pane.style.pointerEvents='none';
@@ -104,7 +104,7 @@
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
       if(w.lab){ st.sources.openmaptiles=ofmSrc(s).sources.openmaptiles; }
       return (w.lab?esriLabels().catch(function(){ return null }):Promise.resolve([])).then(function(E){
-        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&sl!=='poi'&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
+        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(sl==='poi'&&w.poi)&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
             var o=JSON.parse(JSON.stringify(l)), p=o.paint||{}; if(!(o.layout&&o.layout['icon-image'])||sl==='poi'){ for(var k in WHITE) p[k]=WHITE[k] } o.paint=p; st.layers.push(o) });
           if(E&&E.length){ st.sources.esri={type:'vector',tiles:[ESRIV+'tile/{z}/{y}/{x}.pbf'],maxzoom:14,attribution:'Labels © Esri'}; st.layers=st.layers.concat(E) } }
         if(w.hill) addHill(st); return st }) }) }
@@ -115,7 +115,7 @@
   function setAttr(t){ var c=map.attributionControl; if(!c||t===attr) return; if(attr) c.removeAttribution(attr); attr=t; if(t) c.addAttribution(t) }
   function off(){ box.style.display='none'; curKey=''; leafletBase(true); rasterLabels(true); setAttr(''); map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(1) }) }
   var seq=0;
-  function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab, my=++seq;
+  function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab+'|'+w.poi, my=++seq;
     if(w.kind==='sat'&&!w.lab&&!w.hill){ off(); return }
     if(key===curKey){ after(w); return }
     build(w).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
@@ -131,7 +131,7 @@
     setAttr((vec||w.lab?'© OpenFreeMap © OpenMapTiles':'')+(w.lab&&!vec?' · Labels © Esri':'')+(w.hill?' · Terrain: AWS Terrain Tiles':'')); sync() }
   window.__glBase=function(){ setTimeout(apply,0) };
   // tap a business or place on the map (from the street-map data already on the phone): opens its info card
-  map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin) return; var p=e.containerPoint, F=[];
+  map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin||baseKey()!=='sat') return; var p=e.containerPoint, F=[];
     try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return f.sourceLayer==='poi'&&f.properties&&f.properties.name&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
     if(!F.length) return; F.sort(function(a,b){ var A=gl.project(a.geometry.coordinates), B=gl.project(b.geometry.coordinates); return Math.hypot(A.x-p.x,A.y-p.y)-Math.hypot(B.x-p.x,B.y-p.y) });
     var c=F[0].geometry.coordinates; window.__pin(L.latLng(c[1],c[0]),F[0].properties['name:en']||F[0].properties.name) });
