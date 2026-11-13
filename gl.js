@@ -104,7 +104,8 @@
       .then(function(rel){ ls('aw-ovt-rel',rel); var u='https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/'+rel+'/places.pmtiles';
         // read the file's own description first: its layer and name field (and proof it can be reached from the phone)
         return new PM.PMTiles(u).getMetadata().then(function(m){ var V=(m&&m.vector_layers||[])[0]; if(!V||!V.id) throw 0; var fl=V.fields||{}, nf=['@name','name','names.primary','names'].filter(function(k){ return k in fl })[0]||'@name'; return {u:u,layer:V.id,nf:nf} }) })
-      .catch(function(){ OVR=null; return null }); return OVR }
+      .then(function(o){ if(o) ovLyr=o.layer; return o }).catch(function(){ OVR=null; return null }); return OVR }
+  var ovLyr=null;
   try{ if(PM&&PM.Protocol){ var pmp=new PM.Protocol(); ML.addProtocol('pmtiles',pmp.tile) } }catch(e){}
   var CLOSED=['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]];
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
@@ -132,7 +133,7 @@
     if(key===curKey){ after(w); return }
     (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?24:60,refreshExpiredTiles:false},cam()));
-          gl.on('load',function(){ loaded=true; after(want()) }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
+          gl.on('load',function(){ loaded=true; after(want()) }); var idT=0; gl.on('idle',function(){ if(ovLyr&&window.__osmRedraw&&Date.now()-idT>4000){ idT=Date.now(); window.__osmRedraw() } }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });
           gl.getCanvas().addEventListener('webglcontextlost',function(ev){ ev.preventDefault(); if(window.__crash) window.__crash.add('Map graphics stopped','WebGL context lost (phone graphics memory full). Vector map switched off for this session.'); dead=true; off(); A.say&&A.say('Vector map paused (low memory) · picture map back',3000) });
         }catch(e){ if(window.__crash) window.__crash.add('Map graphics could not start',String(e&&e.message||e)); dead=true; off(); return } }
@@ -154,7 +155,11 @@
     var c=F[0].geometry.coordinates; window.__pin(L.latLng(c[1],c[0]),F[0].properties['name:en']||F[0].properties.name) });
   function pj(v){ if(v==null) return null; if(typeof v==='object') return v; try{ return JSON.parse(v) }catch(e){ return v } }
   function ovName(q){ var n=q['@name']||q.name||q['names.primary']; if(!n){ var N=pj(q.names); n=N&&(N.primary||N.common&&N.common.en) } return n?String(n):'' }
-  window.__ovt={ name:ovName, json:pj };
+  // compare an older OpenStreetMap place with Overture (newer): same spot, similar name
+  function simil(a,b){ a=String(a||'').toLowerCase().replace(/[^a-z0-9 ]/g,''); b=String(b||'').toLowerCase().replace(/[^a-z0-9 ]/g,''); if(!a||!b) return false; return a===b||a.indexOf(b)>=0||b.indexOf(a)>=0||a.split(' ')[0]===b.split(' ')[0]&&a.split(' ')[0].length>3 }
+  function near(lat,lon,name){ if(!gl||!loaded||dead||!gl.getSource||!gl.getSource('ovt')||!ovLyr) return null; var F; try{ F=gl.querySourceFeatures('ovt',{sourceLayer:ovLyr}) }catch(e){ return null } var best=null, bd=80;
+    F.forEach(function(f){ var g=f.geometry; if(!g||g.type!=='Point') return; var c=g.coordinates, d=Math.hypot(c[1]-lat,(c[0]-lon)*Math.cos(lat*Math.PI/180))*111320, n=ovName(f.properties||{}); if(name&&!simil(n,name)) return; if(d<bd){ bd=d; best={n:n,p:f.properties||{},d:d,status:(f.properties||{}).operating_status||'open'} } }); return best }
+  window.__ovt={ name:ovName, json:pj, near:near, ready:function(){ return !!(gl&&loaded&&gl.getSource&&gl.getSource('ovt')) } };
   window.__gl={ apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
 
   // ---------- controls in the layer panels ----------

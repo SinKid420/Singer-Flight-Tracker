@@ -56,14 +56,18 @@
           var ad=[[p.housenumber,p.street].filter(Boolean).join(' '),p.city||p.town||p.village||p.county].filter(Boolean).join(', ');
           el.querySelector('.ptx').innerHTML=(p.name&&p.name!==title?'<div><b>'+esc(p.name)+'</b></div>':'')+(ad?'<div class="pad" style="color:#333">'+esc(ad)+'</div>':'')+(p.osm_value?'<div class="pty">'+esc(NICE[p.osm_value]||cap(p.osm_value))+'</div>':'')+'<small class="psrc">Address © OpenStreetMap'+addLink('Business missing? Add it')+'</small>'; wire({lat:la,lon:lo,ad:ad}); upd() }).catch(function(){ el.remove(); upd() });
       var t=hit.t, k=kind(t), sub=t.cuisine?cap(String(t.cuisine).split(';')[0]):(t.brand&&t.brand!==t.name?t.brand:''), ad=[[t['addr:housenumber'],t['addr:street']].filter(Boolean).join(' '),t['addr:city']].filter(Boolean).join(', ');
-      var ph=tel(t.phone||t['contact:phone']||t['phone:mobile']), ws=web(t.website||t['contact:website']||t.url), oh=openNow(t.opening_hours);
+      var ph=tel(t.phone||t['contact:phone']||t['phone:mobile']), ws=web(t.website||t['contact:website']||t.url), oh=openNow(t.opening_hours), upd2='';
+      // check the older OpenStreetMap entry against Overture (newer): closed, new phone or address
+      var OV=window.__ovt&&window.__ovt.near&&window.__ovt.near(la,lo,t.name); if(OV){ var J3=window.__ovt.json, P3=J3(OV.p.phones), A3=J3(OV.p.addresses), a3=Array.isArray(A3)?A3[0]:A3, p3=tel(Array.isArray(P3)?P3[0]:P3), ad3=a3?[a3.freeform,a3.locality].filter(Boolean).join(', '):'';
+        if(/closed/.test(OV.status)) upd2='<div class="pcl">'+(/temporarily/.test(OV.status)?'Temporarily closed':'Closed')+' (newer data)</div>';
+        if(p3&&p3.replace(/\D/g,'').slice(-10)!==ph.replace(/\D/g,'').slice(-10)){ ph=p3; upd2+='<div class="pad">Phone updated from newer data</div>' } if(ad3&&!ad) ad=ad3 }
       if(!title||title==='Pinned spot'){ if(b) b.textContent=t.name }
       function paint(){ var h=(title&&String(title).toLowerCase()!==String(t.name).toLowerCase()?'<div><b>'+esc(t.name)+'</b></div>':'')+(ad?'<div class="pad" style="color:#333">'+esc(ad)+'</div>':'');
-        h+=ph?'<div class="pln"><a href="tel:'+esc(ph.replace(/[^\d+]/g,''))+'">📞 '+esc(ph)+'</a></div>':'<div class="pad">No phone listed</div>'; // address first, phone second
+        h+=upd2; h+=ph?'<div class="pln"><a href="tel:'+esc(ph.replace(/[^\d+]/g,''))+'">📞 '+esc(ph)+'</a></div>':'<div class="pad">No phone listed</div>'; // address first, phone second
         if(k) h+='<div class="pty">'+esc(k)+(sub?' · '+esc(sub):'')+'</div>';
         if(oh) h+=oh.raw?'<div class="pad">Hours: '+esc(oh.raw)+'</div>':'<div class="'+(oh.open?'popn':'pcl')+'">'+esc(oh.txt)+'</div>';
         if(ws) h+='<div class="pln"><a href="'+esc(ws)+'" target="_blank" rel="noopener noreferrer">Website ›</a></div>';
-        h+='<small class="psrc">© OpenStreetMap'+addLink('Fix info')+goneLink(t.name)+'</small>'; el.querySelector('.ptx').innerHTML=h; wire({lat:la,lon:lo,n:t.name,ad:ad,ph:ph,ws:ws,hr:t.opening_hours||''}); wireGone(t.name); upd() }
+        h+='<small class="psrc">© OpenStreetMap'+(OV?' + Overture':'')+addLink('Fix info')+goneLink(t.name)+'</small>'; el.querySelector('.ptx').innerHTML=h; wire({lat:la,lon:lo,n:t.name,ad:ad,ph:ph,ws:ws,hr:t.opening_hours||''}); wireGone(t.name); upd() }
       paint();
       // photo: the place's own tagged picture, then Wikidata, then its website's preview photo (through the AwareBC server)
       var im=String(t.image||''); if(/^https:\/\/[^\s"<>]+\.(jpe?g|png|webp)(\?|$)/i.test(im)) photo(im); else if(/^File:/i.test(im)) photo(fp(im));
