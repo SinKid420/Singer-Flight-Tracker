@@ -31,7 +31,7 @@
   function hm(t){ var p=t.split(':'), d=new Date(); d.setHours(+p[0]%24,+p[1],0,0); return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) }
   function fp(name){ return 'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(String(name).replace(/^File:/i,'').replace(/ /g,'_'))+'?width=240' }
 
-  window.__placeInfo=function(ll,title,box,pin){ if(navigator.onLine===false||!box) return; var el=document.createElement('div'); el.className='plc'; el.innerHTML='<div class="pim"></div><div class="ptx"><span class="pwait">Looking up this spot…</span></div>';
+  window.__placeInfo=function(ll,title,box,pin,info){ if(navigator.onLine===false||!box) return; var el=document.createElement('div'); el.className='plc'; el.innerHTML='<div class="pim"></div><div class="ptx"><span class="pwait">Looking up this spot…</span></div>';
     var b=box.querySelector('b'); box.insertBefore(el,b?b.nextSibling:box.firstChild); upd();
     var panT=null; function upd(){ try{ var pp=pin&&pin.getPopup&&pin.getPopup(); if(pp&&pp.isOpen()){ pp.update(); clearTimeout(panT); panT=setTimeout(function(){ var w=pp.getElement&&pp.getElement(); if(!w||!pp.isOpen()) return; var r=w.getBoundingClientRect(), top=110, bot=window.innerHeight-70; // keep the bigger card on screen
           var dx=r.right>window.innerWidth-62?r.right-(window.innerWidth-62):r.left<58?r.left-58:0, dy=r.top<top?r.top-top:r.bottom>bot?r.bottom-bot:0; if(dx||dy) A.map.panBy([dx,dy],{animate:true}) },60) } }catch(e){} } // the card sits between the side buttons
@@ -40,8 +40,15 @@
     var AW=window.__awp, onR=AW&&AW.onRoad&&AW.onRoad();
     function addLink(o){ return onR?' · <a href="#" class="pfix" style="font-weight:600">'+o+'</a>':'' }
     function wire(o){ var a=el.querySelector('.pfix'); if(a) a.onclick=function(e){ e.preventDefault(); e.stopPropagation(); A.map.closePopup(); AW.form(o) } }
+    function goneLink(n){ return onR&&n?' · <a href="#" class="pgone" style="font-weight:600">Not here anymore</a>':'' }
+    function wireGone(n){ var a=el.querySelector('.pgone'); if(a) a.onclick=function(e){ e.preventDefault(); e.stopPropagation(); a.textContent='Reporting…'; AW.gone(la,lo,n).then(function(){ a.textContent='Thanks: hidden in AwareBC' },function(er){ a.textContent=er&&er.message||'Could not report' }) } }
     (AW?AW.loadAround(la,lo).catch(function(){}):Promise.resolve()).then(function(){ var own=AW&&AW.at(la,lo,title);
+      if(AW&&AW.isGone(la,lo,title)){ el.querySelector('.ptx').innerHTML='<div class="pcl">Reported closed or gone by AwareBC riders</div>'; upd(); return }
       if(own){ if(b&&(!title||title==='Pinned spot')) b.textContent=own.n; AW.card(own,el.querySelector('.ptx'),upd); return }
+      if(info&&info.src==='ovt'&&window.__ovt){ var q=info.p||{}, J2=window.__ovt.json, A2=J2(q.addresses), a0=Array.isArray(A2)?A2[0]:A2, P2=J2(q.phones), W2=J2(q.websites), C2=J2(q.categories);
+        var ad2=a0?[a0.freeform,a0.locality].filter(Boolean).join(', '):'', ph2=tel(Array.isArray(P2)?P2[0]:P2), ws2=web(Array.isArray(W2)?W2[0]:W2), cat=C2&&(C2.primary||C2.main)||q['basic_category']||q['categories.primary']||'';
+        var h2=(ad2?'<div class="pad" style="color:#333">'+esc(ad2)+'</div>':'')+(ph2?'<div class="pln"><a href="tel:'+esc(ph2.replace(/[^\d+]/g,''))+'">📞 '+esc(ph2)+'</a></div>':'<div class="pad">No phone listed</div>')+(cat?'<div class="pty">'+esc(cap(cat))+'</div>':'')+(ws2?'<div class="pln"><a href="'+esc(ws2)+'" target="_blank" rel="noopener noreferrer">Website ›</a></div>':'');
+        el.querySelector('.ptx').innerHTML=h2+'<small class="psrc">© Overture Maps Foundation'+addLink('Fix info')+goneLink(title)+'</small>'; wire({lat:la,lon:lo,n:title,ad:ad2,ph:ph2,ws:ws2}); wireGone(title); upd(); if(ws2) J(RELAY+'?phone='+encodeURIComponent(ws2)).then(function(j){ if(j&&j.image) photo(j.image) }).catch(function(){}); return }
     J('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q)).then(function(j){ var L2=(j.elements||[]).map(function(e){ var c=e.center||e; return {t:e.tags||{},d:hav(la,lo,c.lat,c.lon)} });
         var tl=String(title||'').toLowerCase(); L2.sort(function(a,b){ var ma=tl&&String(a.t.name).toLowerCase().indexOf(tl)>=0?0:1, mb=tl&&String(b.t.name).toLowerCase().indexOf(tl)>=0?0:1; return ma-mb||a.d-b.d });
         return L2[0]||null }).catch(function(){ return null }).then(function(hit){
@@ -56,7 +63,7 @@
         if(k) h+='<div class="pty">'+esc(k)+(sub?' · '+esc(sub):'')+'</div>';
         if(oh) h+=oh.raw?'<div class="pad">Hours: '+esc(oh.raw)+'</div>':'<div class="'+(oh.open?'popn':'pcl')+'">'+esc(oh.txt)+'</div>';
         if(ws) h+='<div class="pln"><a href="'+esc(ws)+'" target="_blank" rel="noopener noreferrer">Website ›</a></div>';
-        h+='<small class="psrc">© OpenStreetMap'+addLink('Fix info')+'</small>'; el.querySelector('.ptx').innerHTML=h; wire({lat:la,lon:lo,n:t.name,ad:ad,ph:ph,ws:ws,hr:t.opening_hours||''}); upd() }
+        h+='<small class="psrc">© OpenStreetMap'+addLink('Fix info')+goneLink(t.name)+'</small>'; el.querySelector('.ptx').innerHTML=h; wire({lat:la,lon:lo,n:t.name,ad:ad,ph:ph,ws:ws,hr:t.opening_hours||''}); wireGone(t.name); upd() }
       paint();
       // photo: the place's own tagged picture, then Wikidata, then its website's preview photo (through the AwareBC server)
       var im=String(t.image||''); if(/^https:\/\/[^\s"<>]+\.(jpe?g|png|webp)(\?|$)/i.test(im)) photo(im); else if(/^File:/i.test(im)) photo(fp(im));

@@ -21,7 +21,7 @@
   function draw(){ var z=map.getZoom(); if(!onRoad()||z<13){ lay.clearLayers(); mk={}; return }
     var bd=map.getBounds(), cs=[]; for(var i=Math.floor(bd.getSouth()/CELL);i<=Math.floor(bd.getNorth()/CELL);i++) for(var j=Math.floor(bd.getWest()/CELL);j<=Math.floor(bd.getEast()/CELL);j++) cs.push([i,j]); if(cs.length>6) return;
     Promise.all(cs.map(function(c){ return cell(c[0],c[1]) })).then(function(){ var keep={};
-      Object.keys(all).forEach(function(id){ var p=all[id]; if(!bd.pad(0.2).contains([p.lat,p.lon])) return; keep[id]=1; if(mk[id]) return;
+      Object.keys(all).forEach(function(id){ var p=all[id]; if(p.ty==='__gone'||!bd.pad(0.2).contains([p.lat,p.lon])) return; keep[id]=1; if(mk[id]) return;
         mk[id]=L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:'<span class="awpk" role="button" aria-label="'+esc(p.n)+'">'+ic(p.ty)+'</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-150,title:p.n}).on('click',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),p.n) }).addTo(lay) });
       Object.keys(mk).forEach(function(id){ if(!keep[id]){ lay.removeLayer(mk[id]); delete mk[id] } }) }) }
   var dT=null; map.on('moveend zoomend',function(){ clearTimeout(dT); dT=setTimeout(draw,500) }); setTimeout(draw,2000);
@@ -70,11 +70,15 @@
     myIds().then(function(m){ var x=box.querySelector('.awpx'); if(!x) return; var can=m.admin||(m.ids||[]).indexOf(p.id)>=0;
       x.innerHTML=' · <a href="#" data-x="fix">'+(can?'Edit':'Report wrong')+'</a>'; x.querySelector('a').onclick=function(e){ e.preventDefault(); e.stopPropagation();
         if(can){ A.map.closePopup(); form(p); return } var a=this; fetch(RS+'/s/place',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid(),name:ls('sky-trname')||'',op:'flag',id:p.id})}).then(function(){ a.textContent='Reported, thanks' }).catch(function(){}) }; upd&&upd() }) }
-  function at(lat,lon,title){ var best=null, bd=35, tl=String(title||'').toLowerCase(); Object.keys(all).forEach(function(id){ var p=all[id], d=hav(lat,lon,p.lat,p.lon); if(tl&&p.n.toLowerCase()===tl) d-=20; if(d<bd){ bd=d; best=p } }); return best }
+  // places riders said are closed or gone: hidden in AwareBC for everyone
+  function isGone(lat,lon,name){ var tl=String(name||'').toLowerCase(); return Object.keys(all).some(function(id){ var p=all[id]; return p.ty==='__gone'&&hav(lat,lon,p.lat,p.lon)<60&&(!tl||p.n.toLowerCase()===tl) }) }
+  function gone(lat,lon,name){ return fetch(RS+'/s/place',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid(),name:ls('sky-trname')||'AwareBC rider',op:'add',lat:lat,lon:lon,n:name,ty:'__gone'})})
+      .then(function(r){ return r.json().then(function(j){ if(!r.ok||j.error) throw new Error(j.error||'Could not report'); return j }) }).then(function(){ return cell(Math.floor(lat/CELL),Math.floor(lon/CELL),true) }).then(function(){ if(window.__osmRedraw) window.__osmRedraw() }) }
+  function at(lat,lon,title){ var best=null, bd=35, tl=String(title||'').toLowerCase(); Object.keys(all).forEach(function(id){ var p=all[id]; if(p.ty==='__gone') return; var d=hav(lat,lon,p.lat,p.lon); if(tl&&p.n.toLowerCase()===tl) d-=20; if(d<bd){ bd=d; best=p } }); return best }
   function search(q){ q=String(q||'').toLowerCase(); var m=A.me&&A.me()||{lat:0,lon:0};
-    return Object.keys(all).map(function(id){ return all[id] }).filter(function(p){ return p.n.toLowerCase().indexOf(q)>=0||String(p.ty).toLowerCase().indexOf(q)>=0 }).sort(function(a,b){ return hav(m.lat,m.lon,a.lat,a.lon)-hav(m.lat,m.lon,b.lat,b.lon) }).slice(0,8)
+    return Object.keys(all).map(function(id){ return all[id] }).filter(function(p){ return p.ty!=='__gone'&&p.n.toLowerCase().indexOf(q)>=0||String(p.ty).toLowerCase().indexOf(q)>=0 }).sort(function(a,b){ return hav(m.lat,m.lon,a.lat,a.lon)-hav(m.lat,m.lon,b.lat,b.lon) }).slice(0,8)
       .map(function(p){ return {n:p.n,t:(p.ty||'Place')+(p.ad?' · '+p.ad:'')+' · AwareBC',lat:p.lat,lon:p.lon,ic:ic(p.ty),bg:'#fde2e1',z:17,rank:-1} }) }
   // places near home are saved with the offline area
-  window.__awp={form:form,card:card,at:at,search:search,onRoad:onRoad,urls:function(b){ var o=[]; for(var i=Math.floor(b.s/CELL);i<=Math.floor(b.n/CELL);i++) for(var j=Math.floor(b.w/CELL);j<=Math.floor(b.e/CELL);j++) o.push(cellU(i,j)); return o },
+  window.__awp={form:form,card:card,at:at,search:search,gone:gone,isGone:isGone,onRoad:onRoad,urls:function(b){ var o=[]; for(var i=Math.floor(b.s/CELL);i<=Math.floor(b.n/CELL);i++) for(var j=Math.floor(b.w/CELL);j<=Math.floor(b.e/CELL);j++) o.push(cellU(i,j)); return o },
     loadAround:function(lat,lon){ return cell(Math.floor(lat/CELL),Math.floor(lon/CELL)) }};
 })();

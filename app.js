@@ -119,12 +119,12 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function apply(){ var on=cfg2.water!=='0', k=parseFloat(cfg2.waterOp); if(!(k>0&&k<=1)) k=1; lays.forEach(function(l){ l.setOpacity((l._baseOp||(l._baseOp=l.options.opacity||1))*k); if(on&&!map.hasLayer(l)) l.addTo(map); if(!on&&map.hasLayer(l)) map.removeLayer(l) }) }
     window.__water=apply; apply() })();
   (function(){ var pin=null, last=0, tt=null, t0=null;
-    function drop(ll,title){ var now=Date.now(); if(now-last<800) return; last=now; if(pin) map.removeLayer(pin);
+    function drop(ll,title,info){ var now=Date.now(); if(now-last<800) return; last=now; if(pin) map.removeLayer(pin);
       var la=ll.lat.toFixed(5), lo=ll.lng.toFixed(5);
       pin=L.marker(ll,{icon:L.divIcon({className:'gpspin',html:'📍',iconSize:[30,30],iconAnchor:[15,28]}),keyboard:false}).addTo(map);
       var d=document.createElement('div'); d.className='gpsq'; d.innerHTML='<b>'+(title?esc(title):'Pinned spot')+'</b><br><small>'+la+', '+lo+'</small><div class="gpsb"><button type="button" data-a="go">Directions</button><button type="button" data-a="rep" class="trrep">Report trail</button></div><button type="button" class="gpsx" data-a="no">Cancel</button>';
       d.onclick=function(e){ var a=e.target&&e.target.getAttribute('data-a'); if(a==='go'){ if(window.__nav) window.__nav.to(ll,title||'Pinned spot'); else window.open('https://www.google.com/maps/dir/?api=1&destination='+la+','+lo+'&travelmode=driving','_blank','noopener') } if(a){ map.removeLayer(pin); pin=null } };
-      pin.bindPopup(d,{closeButton:false,offset:[0,-24],autoPanPadding:[20,60],maxWidth:200,minWidth:200,className:'pinpop'}).openPopup(); if(window.__placeInfo) try{ window.__placeInfo(ll,title,d,pin) }catch(e){}
+      pin.bindPopup(d,{closeButton:false,offset:[0,-24],autoPanPadding:[20,60],maxWidth:200,minWidth:200,className:'pinpop'}).openPopup(); if(window.__placeInfo) try{ window.__placeInfo(ll,title,d,pin,info) }catch(e){}
       pin.on('popupclose',function(){ var p=pin; if(Date.now()-last<900){ setTimeout(function(){ if(p&&pin===p) p.openPopup() },30); return } setTimeout(function(){ if(p&&pin===p&&!p.isPopupOpen()){ map.removeLayer(p); pin=null } },50) }) }
     window.__pin=drop; map.on('contextmenu',function(e){ drop(e.latlng) });
     var mc=map.getContainer();
@@ -794,7 +794,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=143, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=144, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];

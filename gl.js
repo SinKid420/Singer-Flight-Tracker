@@ -98,16 +98,28 @@
         var wat=/water|marine|ocean|river|lake|stream|bay|sea/i.test(l['source-layer']||''), pt={}; for(k in WHITE) pt[k]=WHITE[k]; if(wat) pt['text-color']='#bfe9ff';
         var o={id:'esri-'+l.id,type:'symbol',source:'esri','source-layer':l['source-layer'],layout:lay,paint:pt}; if(l.filter) o.filter=l.filter; if(l.minzoom!=null) o.minzoom=l.minzoom; if(l.maxzoom!=null) o.maxzoom=l.maxzoom; out.push(o) });
       return out }) }
+  // Overture Maps places (88 million, monthly, with phone numbers and closed-business status), read straight from its free map file
+  var OVR=null; function ovt(){ if(OVR) return OVR; var fb='2026-10-21.0';
+    OVR=fetch('https://awarebc.aware-bc.workers.dev/?overture=1').then(function(r){ return r.json() }).then(function(j){ return j&&/^\d{4}-\d\d-\d\d\.\d+$/.test(j.release)?j.release:fb }).catch(function(){ return fb })
+      .then(function(rel){ ls('aw-ovt-rel',rel); var u='https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/'+rel+'/places.pmtiles';
+        // read the file's own description first: its layer and name field (and proof it can be reached from the phone)
+        return new PM.PMTiles(u).getMetadata().then(function(m){ var V=(m&&m.vector_layers||[])[0]; if(!V||!V.id) throw 0; var fl=V.fields||{}, nf=['@name','name','names.primary','names'].filter(function(k){ return k in fl })[0]||'@name'; return {u:u,layer:V.id,nf:nf} }) })
+      .catch(function(){ OVR=null; return null }); return OVR }
+  try{ if(PM&&PM.Protocol){ var pmp=new PM.Protocol(); ML.addProtocol('pmtiles',pmp.tile) } }catch(e){}
+  var CLOSED=['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]];
+  function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
+      {id:'aw-ovt-dot',type:'circle',source:'ovt','source-layer':lyr,minzoom:14,filter:CLOSED,paint:{'circle-radius':3.5,'circle-color':'#ff3b30','circle-stroke-color':'#fff','circle-stroke-width':1.2}},
+      {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true},paint:WHITE}]} }
   function build(w){
     if(w.kind!=='sat') return getJ(OFM+'styles/'+w.kind).then(function(s){ var st=ofmSrc(JSON.parse(JSON.stringify(s))); return w.hill?addHill(st):st });
     // over the satellite picture: transparent map, upright labels (OpenFreeMap roads + Esri places), optional hillshade
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
       if(w.lab){ st.sources.openmaptiles=ofmSrc(s).sources.openmaptiles; }
       return (w.lab?esriLabels().catch(function(){ return null }):Promise.resolve([])).then(function(E){
-        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(sl==='poi'&&w.poi)&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
+        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(sl==='poi'&&w.poi&&!w.ovt)&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
             var o=JSON.parse(JSON.stringify(l)), p=o.paint||{}; if(!(o.layout&&o.layout['icon-image'])||sl==='poi'){ for(var k in WHITE) p[k]=WHITE[k] } o.paint=p; st.layers.push(o) });
           if(E&&E.length){ st.sources.esri={type:'vector',tiles:[ESRIV+'tile/{z}/{y}/{x}.pbf'],maxzoom:14,attribution:'Labels © Esri'}; st.layers=st.layers.concat(E) } }
-        if(w.hill) addHill(st); return st }) }) }
+        if(w.hill) addHill(st); if(w.ovt){ var O=ovtLayers(w.ovt); st.sources.ovt=O.src; st.layers=st.layers.concat(O.layers) } return st }) }) }
 
   // ---------- switching ----------
   function rasterLabels(show){ var b=A.base&&A.base(); if(!b) return; window.__glLab=!show; if(b[2]&&b[2].setOpacity) b[2].setOpacity(show?1:0); if(b[1]&&b[1].setOpacity) b[1].setOpacity(show?1:0); if(window.__navNamesChk) window.__navNamesChk() }
@@ -118,7 +130,7 @@
   function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab+'|'+w.poi, my=++seq;
     if(w.kind==='sat'&&!w.lab&&!w.hill){ off(); return }
     if(key===curKey){ after(w); return }
-    build(w).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
+    (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?24:60,refreshExpiredTiles:false},cam()));
           gl.on('load',function(){ loaded=true; after(want()) }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });
@@ -132,13 +144,17 @@
   window.__glBase=function(){ setTimeout(apply,0) };
   // tap a business or place on the map (from the street-map data already on the phone): opens its info card
   map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin||baseKey()!=='sat') return; var p=e.containerPoint, F=[];
-    try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return f.sourceLayer==='poi'&&f.properties&&f.properties.name&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
+    try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return (f.sourceLayer==='poi'&&f.properties&&f.properties.name||f.source==='ovt')&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
+    var OV=F.filter(function(f){ return f.source==='ovt' }); if(OV.length){ var q0=OV[0].properties||{}, c0=OV[0].geometry.coordinates, nm=ovName(q0); if(nm){ window.__pin(L.latLng(c0[1],c0[0]),nm,{src:'ovt',p:q0}); return } }
     if(!F.length){ if(map.getZoom()<16||navigator.onLine===false) return; // a business whose name was hidden by other labels: ask OpenStreetMap what's right there
       var ll=e.latlng, q='[out:json][timeout:8];nwr(around:30,'+ll.lat.toFixed(6)+','+ll.lng.toFixed(6)+')[name][~"^(shop|amenity|craft|office|tourism|leisure|healthcare)$"~"."];out tags center 10;';
       fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q)).then(function(r){ return r.ok?r.json():null }).then(function(j){ var best=null, bd=1e9; (j&&j.elements||[]).forEach(function(x){ var c=x.center||x, d=Math.hypot(c.lat-ll.lat,(c.lon-ll.lng)*Math.cos(ll.lat*Math.PI/180)); if(d<bd){ bd=d; best={c:c,n:x.tags.name} } });
         if(best) window.__pin(L.latLng(best.c.lat,best.c.lon),best.n) }).catch(function(){}); return }
     F.sort(function(a,b){ var A=gl.project(a.geometry.coordinates), B=gl.project(b.geometry.coordinates); return Math.hypot(A.x-p.x,A.y-p.y)-Math.hypot(B.x-p.x,B.y-p.y) });
     var c=F[0].geometry.coordinates; window.__pin(L.latLng(c[1],c[0]),F[0].properties['name:en']||F[0].properties.name) });
+  function pj(v){ if(v==null) return null; if(typeof v==='object') return v; try{ return JSON.parse(v) }catch(e){ return v } }
+  function ovName(q){ var n=q['@name']||q.name||q['names.primary']; if(!n){ var N=pj(q.names); n=N&&(N.primary||N.common&&N.common.en) } return n?String(n):'' }
+  window.__ovt={ name:ovName, json:pj };
   window.__gl={ apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
 
   // ---------- controls in the layer panels ----------
