@@ -35,7 +35,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
-  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; // map pictures keep loading while you drive, not only when you stop // fewer map pictures loading mid-pinch (phones ran out of memory zooming fast) L.GridLayer.prototype.options.updateInterval=100;
+  L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; L.GridLayer.prototype.options.updateInterval=50; // map pictures keep loading while you drive, not only when you stop; fewer load mid-pinch (phones ran out of memory zooming fast)
+  // load one extra row of map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
+  (function(){ var o=L.GridLayer.prototype._getTiledPixelBounds, pd=(navigator.deviceMemory||4)<=4?128:256; L.GridLayer.prototype._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||this.getTileSize().x>256) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
 var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
