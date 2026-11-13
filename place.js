@@ -37,23 +37,30 @@
           var dx=r.right>window.innerWidth-62?r.right-(window.innerWidth-62):r.left<58?r.left-58:0, dy=r.top<top?r.top-top:r.bottom>bot?r.bottom-bot:0; if(dx||dy) A.map.panBy([dx,dy],{animate:true}) },60) } }catch(e){} } // the card sits between the side buttons
     function photo(u){ if(!u) return; var im=new Image(); im.referrerPolicy='no-referrer'; im.onload=function(){ if(im.naturalWidth<40) return; var d=el.querySelector('.pim'); if(d&&!d.classList.contains('on')){ d.style.backgroundImage='url("'+u.replace(/"/g,'%22')+'")'; d.classList.add('on'); upd() } }; im.src=u }
     var la=ll.lat, lo=ll.lng, q='[out:json][timeout:9];nwr(around:45,'+la.toFixed(6)+','+lo.toFixed(6)+')[name][~"^('+KEYS.join('|')+')$"~"."];out tags center 20;';
+    var AW=window.__awp, onR=AW&&AW.onRoad&&AW.onRoad();
+    function addLink(o){ return onR?' · <a href="#" class="pfix" style="font-weight:600">'+o+'</a>':'' }
+    function wire(o){ var a=el.querySelector('.pfix'); if(a) a.onclick=function(e){ e.preventDefault(); e.stopPropagation(); A.map.closePopup(); AW.form(o) } }
+    (AW?AW.loadAround(la,lo).catch(function(){}):Promise.resolve()).then(function(){ var own=AW&&AW.at(la,lo,title);
+      if(own){ if(b&&(!title||title==='Pinned spot')) b.textContent=own.n; AW.card(own,el.querySelector('.ptx'),upd); return }
     J('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q)).then(function(j){ var L2=(j.elements||[]).map(function(e){ var c=e.center||e; return {t:e.tags||{},d:hav(la,lo,c.lat,c.lon)} });
         var tl=String(title||'').toLowerCase(); L2.sort(function(a,b){ var ma=tl&&String(a.t.name).toLowerCase().indexOf(tl)>=0?0:1, mb=tl&&String(b.t.name).toLowerCase().indexOf(tl)>=0?0:1; return ma-mb||a.d-b.d });
         return L2[0]||null }).catch(function(){ return null }).then(function(hit){
       if(!hit) return J('https://photon.komoot.io/reverse?lat='+la.toFixed(6)+'&lon='+lo.toFixed(6)+'&limit=1&lang=en').then(function(j){ var p=(j.features&&j.features[0]||{}).properties||{};
           var ad=[[p.housenumber,p.street].filter(Boolean).join(' '),p.city||p.town||p.village||p.county].filter(Boolean).join(', ');
-          el.querySelector('.ptx').innerHTML=(p.name&&p.name!==title?'<div><b>'+esc(p.name)+'</b></div>':'')+(p.osm_value?'<div class="pty">'+esc(NICE[p.osm_value]||cap(p.osm_value))+'</div>':'')+(ad?'<div class="pad">'+esc(ad)+'</div>':'')+'<small class="psrc">Address © OpenStreetMap · <a href="https://www.openstreetmap.org/edit#map=19/'+la.toFixed(5)+'/'+lo.toFixed(5)+'" target="_blank" rel="noopener noreferrer" style="font-weight:500">Business missing? Add it</a></small>'; upd() }).catch(function(){ el.remove(); upd() });
+          el.querySelector('.ptx').innerHTML=(p.name&&p.name!==title?'<div><b>'+esc(p.name)+'</b></div>':'')+(ad?'<div class="pad" style="color:#333">'+esc(ad)+'</div>':'')+(p.osm_value?'<div class="pty">'+esc(NICE[p.osm_value]||cap(p.osm_value))+'</div>':'')+'<small class="psrc">Address © OpenStreetMap'+addLink('Business missing? Add it')+'</small>'; wire({lat:la,lon:lo,ad:ad}); upd() }).catch(function(){ el.remove(); upd() });
       var t=hit.t, k=kind(t), sub=t.cuisine?cap(String(t.cuisine).split(';')[0]):(t.brand&&t.brand!==t.name?t.brand:''), ad=[[t['addr:housenumber'],t['addr:street']].filter(Boolean).join(' '),t['addr:city']].filter(Boolean).join(', ');
       var ph=tel(t.phone||t['contact:phone']||t['phone:mobile']), ws=web(t.website||t['contact:website']||t.url), oh=openNow(t.opening_hours);
       if(!title||title==='Pinned spot'){ if(b) b.textContent=t.name }
-      function paint(){ var h=(title&&String(title).toLowerCase()!==String(t.name).toLowerCase()?'<div><b>'+esc(t.name)+'</b></div>':'')+(k?'<div class="pty">'+esc(k)+(sub?' · '+esc(sub):'')+'</div>':'')+(ad?'<div class="pad">'+esc(ad)+'</div>':'');
+      function paint(){ var h=(title&&String(title).toLowerCase()!==String(t.name).toLowerCase()?'<div><b>'+esc(t.name)+'</b></div>':'')+(ad?'<div class="pad" style="color:#333">'+esc(ad)+'</div>':'');
+        h+=ph?'<div class="pln"><a href="tel:'+esc(ph.replace(/[^\d+]/g,''))+'">📞 '+esc(ph)+'</a></div>':'<div class="pad">No phone listed</div>'; // address first, phone second
+        if(k) h+='<div class="pty">'+esc(k)+(sub?' · '+esc(sub):'')+'</div>';
         if(oh) h+=oh.raw?'<div class="pad">Hours: '+esc(oh.raw)+'</div>':'<div class="'+(oh.open?'popn':'pcl')+'">'+esc(oh.txt)+'</div>';
-        var ln=[]; if(ph) ln.push('<a href="tel:'+esc(ph.replace(/[^\d+]/g,''))+'">📞 '+esc(ph)+'</a>'); if(ws) ln.push('<a href="'+esc(ws)+'" target="_blank" rel="noopener noreferrer">Website ›</a>'); if(ln.length) h+='<div class="pln">'+ln.join('')+'</div>';
-        h+='<small class="psrc">© OpenStreetMap · <a href="https://www.openstreetmap.org/edit#map=19/'+la.toFixed(5)+'/'+lo.toFixed(5)+'" target="_blank" rel="noopener noreferrer" style="font-weight:500">Fix info</a></small>'; el.querySelector('.ptx').innerHTML=h; upd() }
+        if(ws) h+='<div class="pln"><a href="'+esc(ws)+'" target="_blank" rel="noopener noreferrer">Website ›</a></div>';
+        h+='<small class="psrc">© OpenStreetMap'+addLink('Fix info')+'</small>'; el.querySelector('.ptx').innerHTML=h; wire({lat:la,lon:lo,n:t.name,ad:ad,ph:ph,ws:ws,hr:t.opening_hours||''}); upd() }
       paint();
       // photo: the place's own tagged picture, then Wikidata, then its website's preview photo (through the AwareBC server)
       var im=String(t.image||''); if(/^https:\/\/[^\s"<>]+\.(jpe?g|png|webp)(\?|$)/i.test(im)) photo(im); else if(/^File:/i.test(im)) photo(fp(im));
       if(t.wikimedia_commons&&/^File:/i.test(t.wikimedia_commons)) photo(fp(t.wikimedia_commons));
       if(/^Q\d+$/.test(t.wikidata||'')) J('https://www.wikidata.org/w/api.php?action=wbgetentities&ids='+t.wikidata+'&props=claims&format=json&origin=*').then(function(j){ var c=j.entities[t.wikidata].claims||{}, p=c.P18&&c.P18[0]&&c.P18[0].mainsnak.datavalue; if(p) photo(fp(p.value)) }).catch(function(){});
-      if(ws) J(RELAY+'?phone='+encodeURIComponent(ws)).then(function(j){ if(!ph&&j&&Array.isArray(j.phones)){ for(var i=0;i<j.phones.length&&!ph;i++) ph=tel(j.phones[i]); if(ph) paint() } if(j&&j.image&&/^https:\/\//.test(j.image)) photo(j.image) }).catch(function(){}) }) };
+      if(ws) J(RELAY+'?phone='+encodeURIComponent(ws)).then(function(j){ if(!ph&&j&&Array.isArray(j.phones)){ for(var i=0;i<j.phones.length&&!ph;i++) ph=tel(j.phones[i]); if(ph) paint() } if(j&&j.image&&/^https:\/\//.test(j.image)) photo(j.image) }).catch(function(){}) }) }) };
 })();

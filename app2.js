@@ -60,6 +60,7 @@
       if(/^(hospitals?|er|emergency|clinic)$/.test(l)) return go('hosp'); if(/^(gas|fuel|gas stations?)$/.test(l)) return go('gas'); if(/^(rec|rec sites?|camping|campgrounds?|camps?)$/.test(l)) return go('rec');
       var id=++seq, R=ref(); res=[]; pend=0;
       run('r',id,function(){ return recSites(l) });
+      if(window.__awp) run('a',id,function(){ return Promise.resolve(window.__awp.search(l)) }); // AwareBC's own places first
       var off=function(){ return window.__offNames?window.__offNames(l):Promise.resolve([]) };
       if(navigator.onLine===false) run('o',id,off);
       if(navigator.onLine!==false){ run('n',id,function(){ return names(l).catch(off) }); run('p',id,function(){ return photon(s,'',R,4,3) }); run('f',id,function(){ return fsr(l,R) }) } }
