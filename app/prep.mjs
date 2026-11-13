@@ -54,9 +54,10 @@ if (step === 'web') {
   let h = fs.readFileSync(path.join(W, 'index.html'), 'utf8');
   // the saved libraries must match the website's integrity hashes exactly
   const { createHash } = await import('node:crypto');
-  for (const [u, f] of [[LF + 'leaflet.min.css', 'leaflet.min.css'], [LF + 'leaflet.min.js', 'leaflet.min.js'], [LR, 'leaflet-rotate.js']]) {
+  for (const [u, f] of [[LF + 'leaflet.min.css', 'leaflet.min.css'], [LF + 'leaflet.min.js', 'leaflet.min.js'], [LR, 'leaflet-rotate.js'], [MLJ, 'maplibre-gl.js'], [PMJ, 'pmtiles.js']]) {
     const m = new RegExp('"' + u.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '"[^>]*integrity="(sha384-[^"]+)"').exec(h);
     const got = 'sha384-' + createHash('sha384').update(fs.readFileSync(path.join(W, 'lib', f))).digest('base64');
+    console.log('integrity', f, got);
     if (m && m[1] !== got && !process.env.PREP_TEST) throw new Error(f + ': integrity mismatch');
   }
   h = R(h, '"' + LF + 'leaflet.min.css"', '"lib/leaflet.min.css"', 'index.html');

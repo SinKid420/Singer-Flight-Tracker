@@ -29,7 +29,7 @@
     function draw(id){ if(id!==seq) return; var s=String(q.value||'').trim().toLowerCase();
       res.sort(function(a,b){ var sa=s&&a.n.toLowerCase().indexOf(s)===0?0:1, sb=s&&b.n.toLowerCase().indexOf(s)===0?0:1; return (a.rank||0)-(b.rank||0)||sa-sb||a.d-b.d });
       var h=res.slice(0,14).map(function(it,i){ return '<button type="button" class="srr" data-i="'+i+'"><span class="sri" style="background:'+it.bg+'">'+it.ic+'</span><span class="srt"><b>'+esc(it.n)+'</b><small>'+esc(it.t)+'</small></span><span class="srk">'+kmT(it.d)+'</span></button>' }).join('');
-      if(!h) h='<div class="srhint">'+(pend?'Searching…':(navigator.onLine?'No places found.':'No signal: only saved rec sites can be searched.'))+'</div>';
+      if(!h) h='<div class="srhint">'+(pend?'Searching…':(navigator.onLine?'No places found.':'No signal: searching saved places and rec sites.'))+'</div>';
       else if(pend) h+='<div class="srhint">Searching…</div>';
       list.innerHTML=h }
     list.onclick=function(e){ var b=e.target.closest&&e.target.closest('.srr'); if(!b) return; var it=res[+b.getAttribute('data-i')]; if(!it) return; close();

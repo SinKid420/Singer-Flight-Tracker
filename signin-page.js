@@ -4,9 +4,10 @@
   var GCLIENT='', RS='https://awarebc.aware-bc.workers.dev', m=document.getElementById('m');
   function say(t){ m.textContent=t }
   if(!GCLIENT){ say('Google sign-in is being set up. Please try again soon.'); return }
+  var st=(/[?&]st=([a-f0-9]{64})(?:&|$)/.exec(location.search)||[])[1]; if(!st){ say('Open this page from the AwareBC app: Settings ▸ Account ▸ Continue with Google.'); return }
   var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onerror=function(){ say('Google sign-in could not load. Check your signal and try again.') };
   s.onload=function(){ google.accounts.id.initialize({client_id:GCLIENT,ux_mode:'popup',auto_select:false,itp_support:true,callback:function(r){ say('Signing you in…');
-      fetch(RS+'/auth/code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cred:r.credential})}).then(function(x){ return x.json() }).then(function(j){
+      fetch(RS+'/auth/code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cred:r.credential,st:st})}).then(function(x){ return x.json() }).then(function(j){
         if(!j||!j.code) throw new Error(j&&j.error||'Sign-in failed');
         var u='awarebc://signin?code='+encodeURIComponent(j.code)+'&first='+encodeURIComponent(j.first||''); document.getElementById('back').href=u; say('Done. Opening AwareBC…'); location.href=u })
       .catch(function(e){ say((e&&e.message)||'Sign-in failed. Try again.') }) }});

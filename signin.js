@@ -15,10 +15,17 @@
   function note(t,ms){ var d=document.createElement('div'); d.className='awtoast'; d.innerHTML=t; d.style.cssText='position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:6100;background:rgba(28,28,30,.97);color:#fff;border-radius:12px;padding:10px 12px;font:13px/1.35 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center'; document.body.appendChild(d); setTimeout(function(){ d.remove() },ms||5000) }
 
   // ---------- backup of small settings (home pin, map choices, rider name, GPX tracks) ----------
+  // the backup is locked on the phone with a key made from your rider key, so the server can't read it (it holds your home pin)
+  function bkey(){ return crypto.subtle.digest('SHA-256',new TextEncoder().encode('awarebc-backup:'+uid())).then(function(h){ return crypto.subtle.importKey('raw',h,'AES-GCM',false,['encrypt','decrypt']) }) }
+  function b64(u){ var s=''; u=new Uint8Array(u); for(var i=0;i<u.length;i++) s+=String.fromCharCode(u[i]); return btoa(s) }
+  function unb64(s){ var b=atob(s), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u }
   function backupNow(){ if(!acct()) return Promise.resolve(); var o={}; BK.forEach(function(k){ var v=ls(k); if(v!=null) o[k]=v }); var v=JSON.stringify(o);
-    if(v.length>60000){ delete o['sky-gpx']; v=JSON.stringify(o) }
-    return post('/s/backup',{uid:uid(),op:'put',v:v}).then(function(){ var a=acct(); if(a){ a.bk=Date.now(); ls('aw-gacct',JSON.stringify(a)) } }) }
-  function restore(){ return post('/s/backup',{uid:uid(),op:'get'}).then(function(j){ if(!j.v) return false; var o=JSON.parse(j.v); BK.forEach(function(k){ if(o[k]!=null) ls(k,o[k]) }); return true }).catch(function(){ return false }) }
+    if(v.length>40000){ delete o['sky-gpx']; v=JSON.stringify(o) }
+    var iv=crypto.getRandomValues(new Uint8Array(12));
+    return bkey().then(function(k){ return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(v)) }).then(function(ct){
+      return post('/s/backup',{uid:uid(),op:'put',v:JSON.stringify({e:1,iv:b64(iv),ct:b64(ct)})}) }).then(function(){ var a=acct(); if(a){ a.bk=Date.now(); ls('aw-gacct',JSON.stringify(a)) } }) }
+  function restore(){ return post('/s/backup',{uid:uid(),op:'get'}).then(function(j){ if(!j.v) return false; var w=JSON.parse(j.v);
+      return (w&&w.e===1?bkey().then(function(k){ return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(w.iv)},k,unb64(w.ct)) }).then(function(b){ return JSON.parse(new TextDecoder().decode(b)) }):Promise.resolve(w)).then(function(o){ BK.forEach(function(k){ if(o&&o[k]!=null) ls(k,o[k]) }); return true }) }).catch(function(){ return false }) }
 
   // ---------- after Google says who you are ----------
   function done(r){ var mine=ls('sky-uid'); ls('aw-gacct',JSON.stringify({first:r.first||'',at:Date.now()})); ls('aw-acct',null); hide();
@@ -31,11 +38,16 @@
   // so it opens in the phone's browser and comes back with a one-time code.
   var gisP=null; function gis(){ if(gisP) return gisP; gisP=new Promise(function(ok,no){ if(window.google&&google.accounts&&google.accounts.id) return ok(); var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=function(){ ok() }; s.onerror=function(){ gisP=null; no(new Error('Google sign-in could not load. Check your signal.')) }; document.head.appendChild(s) }); return gisP }
   function gButton(el){ if(!GCLIENT){ el.innerHTML='<button type="button" class="aw-gfake" disabled>Continue with Google<small>being set up</small></button>'; return }
-    if(NAT){ el.innerHTML='<button type="button" class="aw-gbtn">Continue with Google</button>'; el.firstChild.onclick=function(){ location.href=SITE+'signin.html?app=1' }; return }
+    if(NAT){ el.innerHTML='<button type="button" class="aw-gbtn">Continue with Google</button>'; el.firstChild.onclick=function(){ startApp() }; return }
     el.innerHTML='<div class="aw-gwait">Loading Google sign-in…</div>';
     gis().then(function(){ google.accounts.id.initialize({client_id:GCLIENT,callback:onCred,ux_mode:'popup',auto_select:false,itp_support:true,context:'signin'}); el.innerHTML=''; google.accounts.id.renderButton(el,{type:'standard',theme:'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'center',width:Math.min(308,el.clientWidth||308)}) },function(e){ el.innerHTML='<div class="aw-gwait">'+esc(e.message)+'</div>' }) }
+  // App sign-in: this phone makes a secret, the browser page only sees its fingerprint, and the returning code works only with the secret.
+  // So a sign-in link from anyone else (a web page, a message) can't swap accounts on this phone.
+  function startApp(){ var a=new Uint8Array(24); crypto.getRandomValues(a); var n=b64(a).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    ls('aw-signn',JSON.stringify({n:n,t:Date.now()})); crypto.subtle.digest('SHA-256',new TextEncoder().encode('awarebc-st:'+n)).then(function(h){ var x=[].map.call(new Uint8Array(h),function(b){ return ('0'+b.toString(16)).slice(-2) }).join(''); location.href=SITE+'signin.html?app=1&st='+x }) }
   if(NAT){ try{ var AP=Capacitor.registerPlugin('App'); AP.addListener('appUrlOpen',function(ev){ var m=/^awarebc:\/\/signin\?code=([A-Za-z0-9]{8,40})(?:&first=([^&]*))?/.exec(ev&&ev.url||''); if(!m) return;
-      post('/auth/redeem',{code:m[1],uid:uid()}).then(function(r){ r.first=r.first||decodeURIComponent(m[2]||''); done(r) },fail) }) }catch(e){} }
+      var sn=null; try{ sn=JSON.parse(ls('aw-signn')||'null') }catch(e){} if(!sn||Date.now()-sn.t>600000) return; ls('aw-signn',null); // only a sign-in this phone started in the last 10 minutes
+      post('/auth/redeem',{code:m[1],uid:uid(),n:sn.n}).then(function(r){ r.first=r.first||decodeURIComponent(m[2]||''); done(r) },fail) }) }catch(e){} }
 
   // ---------- welcome screen (option 1) ----------
   var css=document.createElement('style'); css.textContent='#awwel{position:fixed;inset:0;z-index:6000;background:#0e0e10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 48px) 26px calc(env(safe-area-inset-bottom,0px) + 22px);overflow:hidden}'+
