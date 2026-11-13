@@ -107,7 +107,8 @@
       .then(function(o){ if(o) ovLyr=o.layer; return o }).catch(function(){ OVR=null; return null }); return OVR }
   var ovLyr=null;
   try{ if(PM&&PM.Protocol){ var pmp=new PM.Protocol(); ML.addProtocol('pmtiles',pmp.tile) } }catch(e){}
-  var CLOSED=['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]];
+  // only places Overture is fairly sure about (its confidence score), and not closed
+  var CLOSED=['all',['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]],['>=',['to-number',['coalesce',['get','confidence'],1],1],0.75]];
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
       {id:'aw-ovt-dot',type:'circle',source:'ovt','source-layer':lyr,minzoom:14,filter:CLOSED,paint:{'circle-radius':3.5,'circle-color':'#ff3b30','circle-stroke-color':'#fff','circle-stroke-width':1.2}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true},paint:WHITE}]} }
