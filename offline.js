@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=17','./app2.js?v=3','./nav.js?v=8','./gl.js?v=5','./extras.js?v=2','./signin.js?v=2','./place.js?v=1','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=9','./friends.js?v=4','./tools.js?v=4','./roads.js?v=4','./winter.js?v=4','./ar.js?v=4','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=2','./app.js?v=18','./app2.js?v=3','./nav.js?v=8','./gl.js?v=5','./extras.js?v=3','./signin.js?v=2','./place.js?v=1','./osm.js?v=1','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=6','./offline.js?v=10','./friends.js?v=4','./tools.js?v=4','./roads.js?v=4','./winter.js?v=4','./ar.js?v=4','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -34,7 +34,7 @@
   function nameCell(i,j){ var w=j*0.25, s=i*0.25; return GNS+encodeURIComponent('BBOX(GEOMETRY,'+w.toFixed(2)+','+s.toFixed(2)+','+(w+0.25).toFixed(2)+','+(s+0.25).toFixed(2)+",'EPSG:4326')") }
   function nameUrls(b){ var o=[]; for(var i=Math.floor(b.s/0.25);i<=Math.floor(b.n/0.25);i++) for(var j=Math.floor(b.w/0.25);j<=Math.floor(b.e/0.25);j++) o.push(nameCell(i,j)); return o }
   function rememberNames(urls){ var l=lj('aw-names',[]); urls.forEach(function(u){ if(l.indexOf(u)<0) l.push(u) }); if(l.length>400) l=l.slice(-400); ls('aw-names',JSON.stringify(l)) }
-  function cells(b){ return (window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[]).concat(window.__nav&&window.__nav.urls?window.__nav.urls(b):[]) } // map layers + road data for directions and upright street names
+  function cells(b){ return (window.__fsr&&window.__fsr.urls?window.__fsr.urls(b):[]).concat(window.__nav&&window.__nav.urls?window.__nav.urls(b):[],window.__osm&&window.__osm.urls?window.__osm.urls(b):[]) } // + OpenStreetMap places // map layers + road data for directions and upright street names
   function est(lat,lon,r){ var b=box(lat,lon,r), t=tcount(b), c=cells(b).length; var nv=vtpl()?t:0; return {t:t,c:c,bytes:(t*TKB+c*CKB+nv*VKB)*1024,min:Math.max(1,Math.round((t+c)/30/60)),km2:Math.round(4*r*r/100)*100} }
 
   // ---------- Home ----------
@@ -117,6 +117,7 @@
     var urls=[], seen={}; function add(u){ if(!seen[u]){ seen[u]=1; urls.push(u) } }
     Object.keys(T).forEach(function(k){ var q=k.split('/'); add(BCR.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2])) });
     Object.keys(C).forEach(function(k){ var q=k.split(':'), s=+q[0]/10, w=+q[1]/10; cells({s:s,n:s+0.1,w:w,e:w+0.1}).forEach(add) });
+    if(window.__osm&&window.__osm.speedUrls) samp.forEach(function(p,ix){ if(ix%4===0) window.__osm.speedUrls({s:p[0],n:p[0],w:p[1],e:p[1]}).forEach(add) }); // speed limits along the route
     var nm=Object.keys(N).map(function(k){ var q=k.split(':'); return nameCell(+q[0],+q[1]) }); nm.forEach(add);
     Object.keys(D).forEach(function(k){ var q=k.split('/'); add(DEMU.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2])) });
     var vurls=Object.keys(V).map(function(k){ var q=k.split('/'); return tp.replace('{z}',q[0]).replace('{x}',q[1]).replace('{y}',q[2]) });

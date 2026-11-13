@@ -99,11 +99,12 @@
     var why=null; if(r.mode==='off'&&r.dist>3000) why='Off road route'; else if(r.note||(r.warn||[]).some(function(w){ return /forest|rough|decommission|logging/i.test(w) })) why='Uses forest or back roads';
     if(why) return Promise.resolve(why); if(r.dist<15000) return Promise.resolve(null);
     var b={s:90,n:-90,w:180,e:-180}; pts.forEach(function(p){ b.s=Math.min(b.s,p[0]); b.n=Math.max(b.n,p[0]); b.w=Math.min(b.w,p[1]); b.e=Math.max(b.e,p[1]) }); b={s:b.s-.1,n:b.n+.1,w:b.w-.15,e:b.e+.15};
-    return towns(b).then(function(T){ if(!T.length) return 'Far from towns'; var far=0, run=0, last=null;
-      for(var i=0;i<pts.length;i++){ var p=pts[i]; if(last&&hav(last[0],last[1],p[0],p[1])<1500) continue; last=p; var near=T.some(function(t){ return hav(p[0],p[1],t[0],t[1])<10000 }); if(!near){ run++; if(run>=2) far++ } else run=0 }
-      return far?'Goes 10+ km from towns, where phones often lose signal':null }).catch(function(){ return r.dist>=40000?'Long route outside town':null }) }
+    var TW=window.__osm&&window.__osm.towersAlong?window.__osm.towersAlong(pts).catch(function(){ return null }):Promise.resolve(null);
+    return Promise.all([towns(b),TW]).then(function(R){ var T=R[0], TO=R[1]||[]; if(!T.length&&!TO.length) return 'Far from towns and cell towers'; var far=0, run=0, last=null;
+      for(var i=0;i<pts.length;i++){ var p=pts[i]; if(last&&hav(last[0],last[1],p[0],p[1])<1500) continue; last=p; var near=T.some(function(t){ return hav(p[0],p[1],t[0],t[1])<10000 })||TO.some(function(t){ return hav(p[0],p[1],t[0],t[1])<15000 }); if(!near){ run++; if(run>=2) far++ } else run=0 }
+      return far?'Goes far from towns and mapped cell towers, where phones often lose signal':null }).catch(function(){ return r.dist>=40000?'Long route outside town':null }) }
   var saving=null, offered='';
-  function offer(r){ var k=r.pts.length+':'+Math.round(r.dist); if(offered===k||!window.__off||window.__off.busy()) return; offered=k;
+  function offer(r){ if(ls('aw-offer')==='0') return; var k=r.pts.length+':'+Math.round(r.dist); if(offered===k||!window.__off||window.__off.busy()) return; offered=k;
     lowService(r).then(function(why){ if(!why||window.__nav.route()!==r) return; var c=window.__off.corridor(r.pts), mb=Math.max(1,Math.round(c.bytes/1e6));
       if(navigator.onLine===false) return;
       var d=toast('<b>📶 Low service ahead</b>'+esc(why)+'. Save the map along this route so it works with no signal? About '+mb+' MB.<div class="awb"><button type="button" class="pri" data-a="y">Save map</button><button type="button" data-a="n">Not now</button></div>',30000);
@@ -115,7 +116,9 @@
 
   // ============ directions panel and navigation hooks ============
   window.__navHook=function(ev,r,p){
-    if(ev==='route'){ r.elev=null; profile(r).then(function(e){ if(window.__nav.route()===r){ r.elev=e; window.__nav.panel() } }); if(window.__nav.isNav&&window.__nav.isNav()&&Date.now()-lastUpd>60000&&(!lastDist||Math.abs(r.dist-lastDist)>Math.max(300,lastDist*0.05))){ lastUpd=Date.now(); speak('Route updated') } lastDist=r.dist }
+    if(ev==='route'){ r.elev=null; profile(r).then(function(e){ if(window.__nav.route()===r){ r.elev=e; window.__nav.panel() } });
+      if(window.__osm) window.__osm.gatesOn(r).then(function(G){ if(window.__nav.route()!==r||!G.length) return; r.gates=G; var lk=function(g){ return g.g.t.locked==='yes'||/^(private|no)$/.test(g.g.t.access||'') };
+        (r.warn=r.warn||[]).push(G.length===1?'Gate on this route at km '+(G[0].at/1000).toFixed(1)+(lk(G[0])?' · may be locked':''):G.length+' gates on this route · first at km '+(G[0].at/1000).toFixed(1)+(G.some(lk)?' · some may be locked':'')); window.__nav.panel() }).catch(function(){}); if(window.__nav.isNav&&window.__nav.isNav()&&Date.now()-lastUpd>60000&&(!lastDist||Math.abs(r.dist-lastDist)>Math.max(300,lastDist*0.05))){ lastUpd=Date.now(); speak('Route updated') } lastDist=r.dist }
     else if(ev==='start'){ ann={}; annKey=''; var s=r.steps&&r.steps[0]; speak('Starting route to '+((r.steps[r.steps.length-1]||{}).tx||'').replace(/^Arrive at /,'')+'. '+(s?s.tx:'')); offer(r) }
     else if(ev==='arrive'){ speak(((r.steps[r.steps.length-1]||{}).tx||'Arrived').replace(/^Arrive at/,'You have arrived at')) }
     else if(ev==='end'){ hush() }
@@ -124,17 +127,19 @@
       if(s.ic==='🏁'){ if(d<300&&!a.n){ a.n=1; speak('Your destination is ahead in '+spokenD(d)) } }
       else if(d<=(lastSpd>16?160:90)&&!a.n){ a.n=a.f=1; speak('Now, '+s.tx.charAt(0).toLowerCase()+s.tx.slice(1)) }
       else if(d<=far&&d>(lastSpd>16?300:150)&&!a.f){ a.f=1; speak('In '+spokenD(d)+', '+s.tx.charAt(0).toLowerCase()+s.tx.slice(1)) }
-      var e=r.elev; if(e&&e.steep) e.steep.forEach(function(st,i){ var ahead=st.d0-r.prog; if(ahead>0&&ahead<450&&!ann['st'+i]){ ann['st'+i]=1; speak('Steep '+(st.g<0?'downhill':'uphill')+' ahead, '+Math.round(Math.abs(st.g))+' percent for '+spokenD(st.d1-st.d0)) } }) } };
+      (r.gates||[]).forEach(function(g,i){ var ah=g.at-r.prog; if(ah>0&&ah<450&&!ann['g'+i]){ ann['g'+i]=1; speak('Gate ahead in '+spokenD(ah)) } });
+      var e=ls('aw-steep')==='0'?null:r.elev; if(e&&e.steep) e.steep.forEach(function(st,i){ var ahead=st.d0-r.prog; if(ahead>0&&ahead<450&&!ann['st'+i]){ ann['st'+i]=1; speak('Steep '+(st.g<0?'downhill':'uphill')+' ahead, '+Math.round(Math.abs(st.g))+' percent for '+spokenD(st.d1-st.d0)) } }) } };
   window.__navPanel=function(P,o){ var r=o.rt; if(!r||o.busy) return; var nb=P.querySelector('.nb');
     if(nb&&!r.arrived&&!nb.querySelector('[data-x=voice]')){ var vb=document.createElement('button'); vb.type='button'; vb.setAttribute('data-x','voice'); vb.setAttribute('aria-pressed',voiceOn?'true':'false'); vb.setAttribute('aria-label',voiceOn?'Voice on (tap to mute)':'Voice off (tap to turn on)'); vb.textContent=voiceOn?'🔊':'🔇'; nb.insertBefore(vb,nb.querySelector('[data-a=x],[data-a=end]')) }
     var e=r.elev, nh=P.querySelector('.nh');
     if(!o.nav&&!r.arrived&&e&&nh){ var div=document.createElement('div'); div.className='nelv';
       div.innerHTML=spark(e.d,e.e,96,30,'#ff8a80')+'<span>↑ <b>'+Math.round(e.up).toLocaleString()+' m</b> ↓ <b>'+Math.round(e.dn).toLocaleString()+' m</b> · high '+Math.round(e.mx).toLocaleString()+' m'+(e.top>=6?' · steepest '+Math.round(e.top)+'%':'')+'</span>';
       var after=P.querySelector('.nw')||nh; after.parentNode.insertBefore(div,after.nextSibling);
-      if(e.steep.length){ var nw=P.querySelector('.nw'); var s0=e.steep.slice().sort(function(a,b){ return Math.abs(b.g)-Math.abs(a.g) })[0], line='⛰ Steep '+(s0.g<0?'downhill':'uphill')+' '+Math.round(Math.abs(s0.g))+'% for '+dTxt(s0.d1-s0.d0)+' at km '+(s0.d0/1000).toFixed(1)+(e.steep.length>1?' (+'+(e.steep.length-1)+' more)':'');
+      if(e.steep.length&&ls('aw-steep')!=='0'){ var nw=P.querySelector('.nw'); var s0=e.steep.slice().sort(function(a,b){ return Math.abs(b.g)-Math.abs(a.g) })[0], line='⛰ Steep '+(s0.g<0?'downhill':'uphill')+' '+Math.round(Math.abs(s0.g))+'% for '+dTxt(s0.d1-s0.d0)+' at km '+(s0.d0/1000).toFixed(1)+(e.steep.length>1?' (+'+(e.steep.length-1)+' more)':'');
         var w=document.createElement('div'); w.textContent=line; if(nw) nw.appendChild(w); else { var x=document.createElement('div'); x.className='nw'; x.appendChild(w); nh.parentNode.insertBefore(x,div) } } }
     if(o.nav&&!r.arrived){ var ex=[];
       if(e&&e.steep) e.steep.some(function(st){ var ah=st.d0-r.prog; if(ah>-(st.d1-st.d0)&&ah<1500){ ex.push(ah>0?'⛰ Steep '+(st.g<0?'downhill':'uphill')+' '+Math.round(Math.abs(st.g))+'% in '+dTxt(ah):'⛰ On a steep '+(st.g<0?'downhill':'uphill')+' · '+Math.round(Math.abs(st.g))+'%'); return true } return false });
+      (r.gates||[]).some(function(g){ var ah=g.at-r.prog; if(ah>-30&&ah<2000){ ex.push('🚧 Gate '+(ah>20?'in '+dTxt(ah):'here')); return true } return false });
       if(altTxt) ex.push('Elevation '+altTxt.replace(' (terrain data)',''));
       if(ex.length&&nh){ var sv=document.createElement('div'); sv.className='nsv'; sv.textContent=ex.join(' · '); nh.parentNode.insertBefore(sv,nh.nextSibling) } }
     if(saving&&nh){ var sp=document.createElement('div'); sp.className='nsv'; sp.textContent='💾 Saving route map '+saving.pct+'%'; nh.parentNode.insertBefore(sp,nh.nextSibling) } };
@@ -163,7 +168,7 @@
   window.__floodsLocal=function(lat,lon){ return Promise.all([floods(),nearWords(lat,lon)]).then(function(R){ var W=R[1]; return (R[0]||[]).map(function(x){ var t=String(x.title||'').replace(/^(flood warning|flood watch|high streamflow advisory)/i,''), hit=null;
       t.split(/[^A-Za-z'-]+/).some(function(w){ var lw=w.toLowerCase(); if(lw.length>=4&&!GEN[lw]&&W[lw]){ hit=w; return true } return false });
       var o={}; for(var k in x) o[k]=x[k]; o.local=!!hit; o.match=hit; return o }) }) };
-  function gauges(){ clearTimeout(gT); gT=null; var on=creeksOn()&&map.getZoom()>=9; if(!on){ if(map.hasLayer(gLay)) map.removeLayer(gLay); gKey=''; return } if(!map.hasLayer(gLay)) gLay.addTo(map);
+  function gauges(){ clearTimeout(gT); gT=null; var on=creeksOn()&&ls('aw-gauges')!=='0'&&map.getZoom()>=9; if(!on){ if(map.hasLayer(gLay)) map.removeLayer(gLay); gKey=''; return } if(!map.hasLayer(gLay)) gLay.addTo(map);
     var b=map.getBounds().pad(0.1), k=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(function(v){ return (Math.round(v*10)/10).toFixed(1) }).join(','); if(k===gKey) return; gKey=k;
     fetch(HY+'&bbox='+k+'&datetime='+iso(Date.now()-3*3600000)+'/..&sortby=-DATETIME&limit=5000').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(!j||gKey!==k) return; var by={};
       (j.features||[]).forEach(function(f){ var p=f.properties||{}, id=p.STATION_NUMBER, g=f.geometry&&f.geometry.coordinates; if(!id||!g||by[id]) return; by[id]={id:id,n:p.STATION_NAME,lv:p.LEVEL,q:p.DISCHARGE,t:p.DATETIME,lat:g[1],lon:g[0]} });
@@ -194,4 +199,11 @@
       var w=/water|lake|river|creek/i.test(x.c+x.t), mt=/Mountain|Peak|Ridge|Range/i.test(x.t), town=/Populat|Municipal|City|Town|Village|Community/i.test(x.c+x.t);
       return {n:x.n,t:x.t+' · saved offline',lat:x.lat,lon:x.lon,ic:w?'💧':mt?'⛰':town?'🏘':'📍',bg:w?'#e0f7fa':mt?'#eceff1':town?'#e8f0fe':'#f1f3f4',z:town?12:13} }) }) };
   addEventListener('online',function(){ NM=null });
+  // ---------- Settings ▸ Directions & safety ----------
+  (function(){ var after=document.getElementById('rfolder'); if(!after||document.getElementById('dirfolder')) return; var f=document.createElement('details'); f.className='folder'; f.id='dirfolder';
+    var R=[['aw-voice','Spoken directions'],['aw-steep','Steep hill warnings'],['aw-offer','Offer to save map on low-service routes'],['aw-gauges','River gauges (with Creeks)']];
+    f.innerHTML='<summary>Directions &amp; safety</summary>'+R.map(function(r){ return '<label class="setrow">'+r[1]+'<select data-k="'+r[0]+'"><option value="1">On</option><option value="0">Off</option></select></label>' }).join('')+'<div class="fhelp">Gate warnings, the speed limit and map places are in Map places (OpenStreetMap). Smoke is under WildfireBC.</div>';
+    after.parentNode.insertBefore(f,after.nextSibling);
+    [].forEach.call(f.querySelectorAll('select'),function(sl){ var k=sl.getAttribute('data-k'); sl.value=ls(k)==='0'?'0':'1'; sl.onchange=function(){ ls(k,sl.value); if(k==='aw-voice'){ voiceOn=sl.value==='1'; if(!voiceOn) hush() } if(k==='aw-gauges'){ gKey=''; gauges() } if(window.__nav&&window.__nav.panel) window.__nav.panel() } });
+    f.addEventListener('toggle',function(){ [].forEach.call(f.querySelectorAll('select'),function(sl){ sl.value=ls(sl.getAttribute('data-k'))==='0'?'0':'1' }); var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) }) })();
 })();
