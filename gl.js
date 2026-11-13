@@ -104,8 +104,8 @@
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
       if(w.lab){ st.sources.openmaptiles=ofmSrc(s).sources.openmaptiles; }
       return (w.lab?esriLabels().catch(function(){ return null }):Promise.resolve([])).then(function(E){
-        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(E===null&&/^(place|water_name|mountain_peak|poi)$/.test(sl||''))) return;
-            var o=JSON.parse(JSON.stringify(l)), p=o.paint||{}; if(!(o.layout&&o.layout['icon-image'])){ for(var k in WHITE) p[k]=WHITE[k] } o.paint=p; st.layers.push(o) });
+        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&sl!=='poi'&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
+            var o=JSON.parse(JSON.stringify(l)), p=o.paint||{}; if(!(o.layout&&o.layout['icon-image'])||sl==='poi'){ for(var k in WHITE) p[k]=WHITE[k] } o.paint=p; st.layers.push(o) });
           if(E&&E.length){ st.sources.esri={type:'vector',tiles:[ESRIV+'tile/{z}/{y}/{x}.pbf'],maxzoom:14,attribution:'Labels © Esri'}; st.layers=st.layers.concat(E) } }
         if(w.hill) addHill(st); return st }) }) }
 
@@ -130,6 +130,11 @@
     map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(vec?0:1) }); // the saved picture map would cover the street map
     setAttr((vec||w.lab?'© OpenFreeMap © OpenMapTiles':'')+(w.lab&&!vec?' · Labels © Esri':'')+(w.hill?' · Terrain: AWS Terrain Tiles':'')); sync() }
   window.__glBase=function(){ setTimeout(apply,0) };
+  // tap a business or place on the map (from the street-map data already on the phone): opens its info card
+  map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin) return; var p=e.containerPoint, F=[];
+    try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return f.sourceLayer==='poi'&&f.properties&&f.properties.name&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
+    if(!F.length) return; F.sort(function(a,b){ var A=gl.project(a.geometry.coordinates), B=gl.project(b.geometry.coordinates); return Math.hypot(A.x-p.x,A.y-p.y)-Math.hypot(B.x-p.x,B.y-p.y) });
+    var c=F[0].geometry.coordinates; window.__pin(L.latLng(c[1],c[0]),F[0].properties['name:en']||F[0].properties.name) });
   window.__gl={ apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
 
   // ---------- controls in the layer panels ----------
