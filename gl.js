@@ -133,7 +133,11 @@
   // tap a business or place on the map (from the street-map data already on the phone): opens its info card
   map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin||baseKey()!=='sat') return; var p=e.containerPoint, F=[];
     try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return f.sourceLayer==='poi'&&f.properties&&f.properties.name&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
-    if(!F.length) return; F.sort(function(a,b){ var A=gl.project(a.geometry.coordinates), B=gl.project(b.geometry.coordinates); return Math.hypot(A.x-p.x,A.y-p.y)-Math.hypot(B.x-p.x,B.y-p.y) });
+    if(!F.length){ if(map.getZoom()<16||navigator.onLine===false) return; // a business whose name was hidden by other labels: ask OpenStreetMap what's right there
+      var ll=e.latlng, q='[out:json][timeout:8];nwr(around:30,'+ll.lat.toFixed(6)+','+ll.lng.toFixed(6)+')[name][~"^(shop|amenity|craft|office|tourism|leisure|healthcare)$"~"."];out tags center 10;';
+      fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q)).then(function(r){ return r.ok?r.json():null }).then(function(j){ var best=null, bd=1e9; (j&&j.elements||[]).forEach(function(x){ var c=x.center||x, d=Math.hypot(c.lat-ll.lat,(c.lon-ll.lng)*Math.cos(ll.lat*Math.PI/180)); if(d<bd){ bd=d; best={c:c,n:x.tags.name} } });
+        if(best) window.__pin(L.latLng(best.c.lat,best.c.lon),best.n) }).catch(function(){}); return }
+    F.sort(function(a,b){ var A=gl.project(a.geometry.coordinates), B=gl.project(b.geometry.coordinates); return Math.hypot(A.x-p.x,A.y-p.y)-Math.hypot(B.x-p.x,B.y-p.y) });
     var c=F[0].geometry.coordinates; window.__pin(L.latLng(c[1],c[0]),F[0].properties['name:en']||F[0].properties.name) });
   window.__gl={ apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
 

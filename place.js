@@ -42,14 +42,14 @@
         return L2[0]||null }).catch(function(){ return null }).then(function(hit){
       if(!hit) return J('https://photon.komoot.io/reverse?lat='+la.toFixed(6)+'&lon='+lo.toFixed(6)+'&limit=1&lang=en').then(function(j){ var p=(j.features&&j.features[0]||{}).properties||{};
           var ad=[[p.housenumber,p.street].filter(Boolean).join(' '),p.city||p.town||p.village||p.county].filter(Boolean).join(', ');
-          el.querySelector('.ptx').innerHTML=(p.name&&p.name!==title?'<div><b>'+esc(p.name)+'</b></div>':'')+(p.osm_value?'<div class="pty">'+esc(NICE[p.osm_value]||cap(p.osm_value))+'</div>':'')+(ad?'<div class="pad">'+esc(ad)+'</div>':'')+'<small class="psrc">Address © OpenStreetMap (Photon)</small>'; upd() }).catch(function(){ el.remove(); upd() });
+          el.querySelector('.ptx').innerHTML=(p.name&&p.name!==title?'<div><b>'+esc(p.name)+'</b></div>':'')+(p.osm_value?'<div class="pty">'+esc(NICE[p.osm_value]||cap(p.osm_value))+'</div>':'')+(ad?'<div class="pad">'+esc(ad)+'</div>':'')+'<small class="psrc">Address © OpenStreetMap · <a href="https://www.openstreetmap.org/edit#map=19/'+la.toFixed(5)+'/'+lo.toFixed(5)+'" target="_blank" rel="noopener noreferrer" style="font-weight:500">Business missing? Add it</a></small>'; upd() }).catch(function(){ el.remove(); upd() });
       var t=hit.t, k=kind(t), sub=t.cuisine?cap(String(t.cuisine).split(';')[0]):(t.brand&&t.brand!==t.name?t.brand:''), ad=[[t['addr:housenumber'],t['addr:street']].filter(Boolean).join(' '),t['addr:city']].filter(Boolean).join(', ');
       var ph=tel(t.phone||t['contact:phone']||t['phone:mobile']), ws=web(t.website||t['contact:website']||t.url), oh=openNow(t.opening_hours);
       if(!title||title==='Pinned spot'){ if(b) b.textContent=t.name }
       function paint(){ var h=(title&&String(title).toLowerCase()!==String(t.name).toLowerCase()?'<div><b>'+esc(t.name)+'</b></div>':'')+(k?'<div class="pty">'+esc(k)+(sub?' · '+esc(sub):'')+'</div>':'')+(ad?'<div class="pad">'+esc(ad)+'</div>':'');
         if(oh) h+=oh.raw?'<div class="pad">Hours: '+esc(oh.raw)+'</div>':'<div class="'+(oh.open?'popn':'pcl')+'">'+esc(oh.txt)+'</div>';
         var ln=[]; if(ph) ln.push('<a href="tel:'+esc(ph.replace(/[^\d+]/g,''))+'">📞 '+esc(ph)+'</a>'); if(ws) ln.push('<a href="'+esc(ws)+'" target="_blank" rel="noopener noreferrer">Website ›</a>'); if(ln.length) h+='<div class="pln">'+ln.join('')+'</div>';
-        h+='<small class="psrc">© OpenStreetMap</small>'; el.querySelector('.ptx').innerHTML=h; upd() }
+        h+='<small class="psrc">© OpenStreetMap · <a href="https://www.openstreetmap.org/edit#map=19/'+la.toFixed(5)+'/'+lo.toFixed(5)+'" target="_blank" rel="noopener noreferrer" style="font-weight:500">Fix info</a></small>'; el.querySelector('.ptx').innerHTML=h; upd() }
       paint();
       // photo: the place's own tagged picture, then Wikidata, then its website's preview photo (through the AwareBC server)
       var im=String(t.image||''); if(/^https:\/\/[^\s"<>]+\.(jpe?g|png|webp)(\?|$)/i.test(im)) photo(im); else if(/^File:/i.test(im)) photo(fp(im));
