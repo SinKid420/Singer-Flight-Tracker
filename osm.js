@@ -60,7 +60,8 @@
     var bd=map.getBounds(), b={s:bd.getSouth(),n:bd.getNorth(),w:bd.getWest(),e:bd.getEast()}; if(cellsFor(b,CS).length>16){ return }
     inArea(b).then(function(P){ if(my!==gen) return; var keep={}, n=0;
       var AW=window.__awp, OV=window.__ovt; P.forEach(function(p){ if(AW&&AW.isGone&&AW.isGone(p.lat,p.lon,p.t.name||p.t.brand||'')) return;
-        if(OV&&OV.near&&(p.t.name||p.t.brand)){ var o=OV.near(p.lat,p.lon,p.t.name||p.t.brand); if(o&&/closed/.test(o.status)) return } // newer data says it closed if(p.k==='tower'||!GT[p.k==='gate'?'gates':p.k]||z<MINZ[p.k]||n>400) return; if(!bd.pad(0.1).contains([p.lat,p.lon])) return; n++; keep[p.id]=1; if(seen[p.id]) return;
+        if(OV&&OV.near&&(p.t.name||p.t.brand)){ var o=OV.near(p.lat,p.lon,p.t.name||p.t.brand); if(o&&/closed/.test(o.status)) return } /* newer data says it closed */
+        if(p.k==='tower'||!GT[p.k==='gate'?'gates':p.k]||z<MINZ[p.k]||n>400) return; if(!bd.pad(0.1).contains([p.lat,p.lon])) return; n++; keep[p.id]=1; if(seen[p.id]) return;
         seen[p.id]=L.marker([p.lat,p.lon],{icon:icon(p),keyboard:false,zIndexOffset:p.k==='help'?-100:-450,title:label(p)}).on('click',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),label(p)) }).addTo(lay) });
       Object.keys(seen).forEach(function(id){ if(!keep[id]){ lay.removeLayer(seen[id]); delete seen[id] } }) }) }
   map.on('moveend zoomend',function(){ clearTimeout(drawT); drawT=setTimeout(draw,700) }); setTimeout(draw,2500); window.__osmRedraw=function(){ lay.clearLayers(); seen={}; draw() };
