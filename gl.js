@@ -109,8 +109,14 @@
   try{ if(PM&&PM.Protocol){ var pmp=new PM.Protocol(); ML.addProtocol('pmtiles',pmp.tile) } }catch(e){}
   // only places Overture is fairly sure about (its confidence score), and not closed
   var CLOSED=['all',['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]],['>=',['to-number',['coalesce',['get','confidence'],1],1],0.75]];
+  // 3D business pins by kind (bizpins.js draws them when the map first needs one)
+  var BK=[['fast',['fast_food','burger','pizza']],['cafe',['cafe','coffee','bakery','donut']],['tire',['tyre','tire']],['auto',['car_parts','car_repair','auto']],['gas',['fuel','gas_station']],
+    ['groc',['grocery','supermarket','convenience']],['rest',['restaurant']],['motel',['hotel','motel','lodging','hostel','guest_house']],['pharm',['pharmacy','chemist']],['bank',['bank','atm']],
+    ['bar',['pub','beer','alcohol','liquor','|bar']],['hard',['hardware','doityourself']],['doc',['doctor','clinic','dentist','hospital']]];
+  function bizIcon(str){ var c=['case']; BK.forEach(function(k){ c.push(['any'].concat(k[1].map(function(w){ return ['in',w,str] }))); c.push('bz-'+k[0]) }); c.push('bz-shop'); return c }
+  var BIZL={'icon-anchor':'bottom','icon-size':.85,'icon-allow-overlap':false,'text-font':['Noto Sans Regular'],'text-size':11,'text-anchor':'top','text-offset':[0,0.15],'text-max-width':8,'text-optional':true};
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
-      {id:'aw-ovt-dot',type:'circle',source:'ovt','source-layer':lyr,minzoom:14,filter:CLOSED,paint:{'circle-radius':3.5,'circle-color':'#ff3b30','circle-stroke-color':'#fff','circle-stroke-width':1.2}},
+      {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:CLOSED,layout:L.extend({'icon-image':bizIcon(['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]])},BIZL),paint:{}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true},paint:WHITE}]} }
   function build(w){
     if(w.kind!=='sat') return getJ(OFM+'styles/'+w.kind).then(function(s){ var st=ofmSrc(JSON.parse(JSON.stringify(s))); return w.hill?addHill(st):st });
@@ -118,9 +124,10 @@
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
       if(w.lab){ st.sources.openmaptiles=ofmSrc(s).sources.openmaptiles; }
       return (w.lab?esriLabels().catch(function(){ return null }):Promise.resolve([])).then(function(E){
-        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(sl==='poi'&&w.poi&&!w.ovt)&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
+        if(w.lab){ s.layers.forEach(function(l){ if(l.type!=='symbol') return; var sl=l['source-layer']; if(sl!=='transportation_name'&&!(E===null&&/^(place|water_name|mountain_peak)$/.test(sl||''))) return; // road names, businesses and places
             var o=JSON.parse(JSON.stringify(l)), p=o.paint||{}; if(!(o.layout&&o.layout['icon-image'])||sl==='poi'){ for(var k in WHITE) p[k]=WHITE[k] } o.paint=p; st.layers.push(o) });
           if(E&&E.length){ st.sources.esri={type:'vector',tiles:[ESRIV+'tile/{z}/{y}/{x}.pbf'],maxzoom:14,attribution:'Labels © Esri'}; st.layers=st.layers.concat(E) } }
+        if(w.lab&&w.poi&&!w.ovt) st.layers.push({id:'aw-biz-osm',type:'symbol',source:'openmaptiles','source-layer':'poi',minzoom:14.5,filter:['has','name'],layout:L.extend({'icon-image':bizIcon(['downcase',['concat','|',['coalesce',['get','class'],''],'|',['coalesce',['get','subclass'],'']]]),'text-field':['coalesce',['get','name:en'],['get','name']]},BIZL),paint:WHITE});
         if(w.hill) addHill(st); if(w.ovt){ var O=ovtLayers(w.ovt); st.sources.ovt=O.src; st.layers=st.layers.concat(O.layers) } return st }) }) }
 
   // ---------- switching ----------
@@ -134,6 +141,7 @@
     if(key===curKey){ after(w); return }
     (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?24:60,refreshExpiredTiles:false},cam()));
+          gl.on('styleimagemissing',function(e){ if(/^bz-/.test(e.id)&&window.__biz&&!gl.hasImage(e.id)) try{ gl.addImage(e.id,window.__biz.image(e.id.slice(3)),{pixelRatio:2}) }catch(x){} });
           gl.on('load',function(){ loaded=true; after(want()) }); var idT=0; gl.on('idle',function(){ if(ovLyr&&window.__osmRedraw&&Date.now()-idT>4000){ idT=Date.now(); window.__osmRedraw() } }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });
           gl.getCanvas().addEventListener('webglcontextlost',function(ev){ ev.preventDefault(); if(window.__crash) window.__crash.add('Map graphics stopped','WebGL context lost (phone graphics memory full). Vector map switched off for this session.'); dead=true; off(); A.say&&A.say('Vector map paused (low memory) · picture map back',3000) });
