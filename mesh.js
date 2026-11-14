@@ -28,6 +28,7 @@
       Promise.all([tagOf(chat),keyOf(chat)]).then(function(r){ var iv=crypto.getRandomValues(new Uint8Array(12));
         return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},r[1],enc.encode(JSON.stringify(body))).then(function(ct){ post({k:'m',c:r[0],v:b64(iv),e:b64(ct)}) }) }).catch(function(){}) },
     help:function(lat,lon,note){ if(!can) return; post({k:'s',n:myName(),lat:lat,lon:lon,x:String(note||'Needs help').slice(0,200)}) },
+    rlpost:function(o){ if(!can) return; post(Object.assign({k:'p'},o)) },
     hazard:function(b){ if(!can||!b) return; post({k:'r',n:myName(),lat:b.lat,lon:b.lon,st:b.st,tg:b.tg,x:String(b.note||'').slice(0,200)}) },
     set:set, inbox:inbox };
 
@@ -40,9 +41,15 @@
           var a=inbox(c.chat); if(a.some(function(x){ return x.i===it.i })) return; a.push({i:it.i,n:String(m.n||'Rider').slice(0,24),x:String(m.x||'').slice(0,500),lat:m.lat,lon:m.lon,t:+m.t||it.t}); sj('aw-meshin-'+c.chat,a.slice(-60));
           f.got(c.chat,c.n,m) }) }).catch(function(){}) }) }
     else if(it.k==='s'){ alarm('🆘 '+String(it.n||'A rider')+' needs help nearby',it); mark(it) }
-    else if(it.k==='r'){ mark(it); toast('⚠️ Trail hazard reported nearby by '+String(it.n||'a rider')) } }
+    else if(it.k==='r'){ mark(it); toast('⚠️ Trail hazard reported nearby by '+String(it.n||'a rider')) }
+    else if(it.k==='p'){ relayUp() } }
+  // Rig Link posts carried through a dead zone: the first phone back in service uploads them (and earns Relay)
+  var upBusy=false;
+  function relayUp(){ if(upBusy||navigator.onLine===false||!window.__rlRelay) return; var done=lj('aw-meshup',[]), mine=window.__frApi&&window.__frApi.tag(); var it=store().filter(function(x){ return x.k==='p'&&done.indexOf(x.i)<0&&x.tg!==mine })[0]; if(!it) return;
+    upBusy=true; window.__rlRelay(it).then(function(){ done.push(it.i); sj('aw-meshup',done.slice(-300)); upBusy=false; relayUp() },function(e){ upBusy=false; if(!/fetch|network|load failed/i.test(String(e&&e.message))){ done.push(it.i); sj('aw-meshup',done.slice(-300)) } }) }
+  addEventListener('online',function(){ setTimeout(relayUp,4000) }); setTimeout(relayUp,8000);
   function onData(d){ var j; try{ j=JSON.parse(d.data) }catch(e){ return } if(!j||j.aw!==1||!Array.isArray(j.it)) return; var fwd=[];
-    j.it.slice(0,60).forEach(function(it){ if(!it||typeof it.i!=='string'||it.i.length>40||!/^[msr]$/.test(it.k)) return; if(Date.now()-(+it.t||0)>KEEP) return;
+    j.it.slice(0,60).forEach(function(it){ if(!it||typeof it.i!=='string'||it.i.length>40||!/^[msrp]$/.test(it.k)) return; if(Date.now()-(+it.t||0)>KEEP) return;
       if(JSON.stringify(it).length>3000) return; it.h=(+it.h||0)+1; if(!add(it)) return; handle(it); if(it.h<MAXH) fwd.push(it) });
     if(fwd.length) push(fwd); paint() }
 
