@@ -70,7 +70,8 @@
   // after a crash with 3D hills on, hills start switched off (turn back on in Off road layers)
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
-  function want(){ var k=baseKey(), vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn,poi:k==='sat'} } // businesses only on On road
+  var neon=ls('aw-neon')==='1'; // Off-road "Neon topo" theme: charcoal relief, white labels, glowing red trails
+  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:true,lab:true,poi:false}; var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn,poi:k==='sat'} } // businesses only on On road
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
   var pane=map.createPane('glmap',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=250; pane.style.pointerEvents='none';
@@ -118,7 +119,18 @@
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
       {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:CLOSED,layout:L.extend({'icon-image':bizIcon(['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]])},BIZL),paint:{}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true},paint:WHITE}]} }
+  function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
+      var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:12,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
+        layers:[{id:'nn-bg',type:'background',paint:{'background-color':'#15171a'}},
+          {id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-highlight-color':'#5d626a','hillshade-accent-color':'#2a1016','hillshade-illumination-direction':315}},
+          {id:'nn-water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0f1a22','fill-opacity':0.9}},
+          {id:'nn-river',type:'line',source:'openmaptiles','source-layer':'waterway',paint:{'line-color':'#2b4656','line-width':['interpolate',['linear'],['zoom'],8,0.4,14,1.6]}},
+          {id:'nn-road',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in',['get','class'],['literal',['motorway','trunk','primary','secondary','tertiary','minor','service']]],paint:{'line-color':'#6b7078','line-opacity':0.55,'line-width':['interpolate',['linear'],['zoom'],8,0.4,15,1.8]}}]};
+      s.layers.forEach(function(l){ var sl=l['source-layer']; if(l.type!=='symbol'||!/^(place|water_name|mountain_peak|transportation_name)$/.test(sl||'')) return; var o=JSON.parse(JSON.stringify(l)), p=o.paint||{};
+        p['text-color']=sl==='water_name'?'#7fa6bd':'#e6e8ec'; p['text-halo-color']='rgba(0,0,0,0.9)'; p['text-halo-width']=1.3; if(o.layout){ delete o.layout['icon-image'] } o.paint=p; st.layers.push(o) });
+      if(s.sprite) st.sprite=s.sprite; return st }) }
   function build(w){
+    if(w.kind==='neon') return neonStyle();
     if(w.kind!=='sat') return getJ(OFM+'styles/'+w.kind).then(function(s){ var st=ofmSrc(JSON.parse(JSON.stringify(s))); return w.hill?addHill(st):st });
     // over the satellite picture: transparent map, upright labels (OpenFreeMap roads + Esri places), optional hillshade
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
@@ -146,7 +158,7 @@
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });
           gl.getCanvas().addEventListener('webglcontextlost',function(ev){ ev.preventDefault(); if(window.__crash) window.__crash.add('Map graphics stopped','WebGL context lost (phone graphics memory full). Vector map switched off for this session.'); dead=true; off(); A.say&&A.say('Vector map paused (low memory) · picture map back',3000) });
         }catch(e){ if(window.__crash) window.__crash.add('Map graphics could not start',String(e&&e.message||e)); dead=true; off(); return } }
-      else { gl.setStyle(st,{diff:false}); sync() }
+      else { gl.setStyle(st,{diff:false}); sync(); gl.once('idle',function(){ if(my===seq&&!loaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } }) } // a style with few images can finish before its last styledata event
       setTimeout(function(){ if(my===seq&&!loaded&&w.kind!=='sat'){ curKey=''; leafletBase(true) } },15000) }).catch(function(){ if(my!==seq) return; off() }) }
   function after(w){ if(!loaded||dead) return; var vec=w.kind!=='sat'; leafletBase(!vec); rasterLabels(!w.lab);
     map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(vec?0:1) }); // the saved picture map would cover the street map
@@ -177,6 +189,7 @@
     if(top){ var h=pn.querySelector('.fph'); h.insertBefore(l,h.querySelector('.fpx')) } else { var gv=pn.querySelector('.gpxv'); pn.insertBefore(l,gv||null) }
     var s=l.querySelector('select'); s.value=val; s.onchange=function(){ fn(s.value) } }
   row(document.querySelector('.lyrp[aria-label="On road layers"]'),'aw_style','Map style',[['sat','Satellite'],['liberty','Liberty'],['dark','Dark']],style,function(v){ style=v; ls('aw-style',v); apply() });
+  window.__gl.setNeon=function(v){ neon=!!v; ls('aw-neon',v?'1':'0'); document.body.classList.toggle('neon',neon); apply() }; window.__gl.neon=function(){ return neon }; document.body.classList.toggle('neon',neon);
   window.__gl.setHill=function(v){ hill=!!v; ls('aw-hill',v?'1':'0'); apply() }; window.__gl.hill=function(){ return hill };
   apply();
 })();

@@ -96,9 +96,19 @@
   // Layer menus ▸ Map theme (Day · Night · Auto), same setting as before, now next to the map layers
   (function(){ var mt=document.getElementById('maptheme'); if(!mt) return; [].forEach.call(document.querySelectorAll('.lyrp'),function(pn){ var h=pn.querySelector('.fph'); if(!h||h.querySelector('.awtheme')) return;
       var t=h.querySelector('span'); if(t) t.textContent=/^Off/.test(t.textContent)?'Off-road':'On-road';
-      var l=document.createElement('label'); l.className='fpt'; l.innerHTML='<select class="awtheme" aria-label="Map theme: day, night or auto"><option value="day">☀️</option><option value="night">🌙</option><option value="auto">🌗</option></select>';
-      if(t){ t.style.whiteSpace='nowrap'; t.style.marginRight='auto' } h.insertBefore(l,t?t.nextSibling:h.firstChild); h.style.gap='6px'; var s=l.querySelector('select'); s.value=mt.value; s.onchange=function(){ mt.value=s.value; mt.dispatchEvent(new Event('change')); [].forEach.call(document.querySelectorAll('.awtheme'),function(o){ o.value=s.value }) };
-      new MutationObserver(function(){ if(!pn.hidden) s.value=mt.value }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }) })();
+      var l=document.createElement('label'); l.className='fpt'; var offp=/Off/.test(pn.getAttribute('aria-label')||''); l.innerHTML='<select class="awtheme" aria-label="Map theme: day, night or auto'+(offp?', or neon topo':'')+'"><option value="day">☀️</option><option value="night">🌙</option><option value="auto">🌗</option>'+(offp?'<option value="neon">🔺</option>':'')+'</select>';
+      if(t){ t.style.whiteSpace='nowrap'; t.style.marginRight='auto' } h.insertBefore(l,t?t.nextSibling:h.firstChild); h.style.gap='6px'; var s=l.querySelector('select'); function cur(){ s.value=offp&&window.__gl&&window.__gl.neon&&window.__gl.neon()?'neon':mt.value } cur();
+      s.onchange=function(){ if(s.value==='neon'){ if(window.__gl&&window.__gl.setNeon) window.__gl.setNeon(true); return } if(offp&&window.__gl&&window.__gl.setNeon) window.__gl.setNeon(false); mt.value=s.value; mt.dispatchEvent(new Event('change')); [].forEach.call(document.querySelectorAll('.awtheme'),function(o){ if(o.value!=='neon') o.value=s.value }) };
+      new MutationObserver(function(){ if(!pn.hidden) cur() }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }) })();
+  // Neon topo look (Off-road only): glass buttons, red glow on trails, monospaced labels
+  (function(){ var st=document.createElement('style'); st.textContent='body.fsron.neon{--accent:#ff2d55}'+
+    'body.fsron.neon .sidebtn{background:linear-gradient(180deg,rgba(52,56,63,.85),rgba(28,31,36,.9));border:1px solid rgba(255,255,255,.09);box-shadow:0 6px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)}'+
+    'body.fsron.neon .leaflet-overlay-pane canvas,body.fsron.neon .leaflet-overlay-pane svg{filter:drop-shadow(0 0 2.5px rgba(255,45,85,.95)) drop-shadow(0 0 6px rgba(255,45,85,.45))}'+
+    'body.fsron.neon .lyrp,body.fsron.neon #fsrleg{background:linear-gradient(180deg,rgba(40,43,49,.92),rgba(22,24,28,.94));border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)}'+
+    'body.fsron.neon .seg button,body.fsron.neon .sidebtn::after,body.fsron.neon #rlbtn::after{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;letter-spacing:.04em}'+
+    'body.fsron.neon .seg button[aria-pressed=true]{color:#ff5a78;box-shadow:inset 0 0 0 1px rgba(255,45,85,.6),0 0 10px rgba(255,45,85,.35)}'+
+    '.lyrp .fph{gap:4px}.lyrp .fph select{padding-left:6px;padding-right:4px}'+
+    'body.fsron.neon .lyrp .fpc button[aria-pressed=true]{box-shadow:inset 0 0 0 1.5px #ff2d55,0 0 8px rgba(255,45,85,.35)}'; document.head.appendChild(st) })();
   // Off road layers ▸ Terrain: Off · 3D hills · Slope · Both
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_terr')) return; var h=pn.querySelector('.fph'), l=document.createElement('label'); l.className='fpt';
     var hill=window.__gl&&window.__gl.hill?window.__gl.hill():ls('aw-hill')==='1', canHill=!!(window.__gl&&window.__gl.setHill);
