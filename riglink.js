@@ -58,6 +58,26 @@
     h+='<div class="rlact" style="padding:8px 0 0">'+(j.me?'':'<button type="button" class="rlbt '+(fr?'b':'g')+'" data-m="chat">'+(fr?'💬 Chat':'➕ Add friend')+'</button>')+(isFinite(o.lat)&&!j.me?'<button type="button" class="rlbt" data-m="go">🧭 Directions</button>':'')+(X&&!X.hidden?'<button type="button" class="rlbt" data-m="full">Full profile</button>':'')+'</div></div>';
     MP.innerHTML=h }
   window.__rlMini=mini;
+
+  // ---------- Nearby riders (Off-road only, opt-in): see and be seen, rough spot (about 1 km) ----------
+  (function(){ var NL=L.layerGroup().addTo(MAP), nT=null, NK='aw-near';
+    function on(){ return ls(NK)==='1' }
+    function clear(){ NL.clearLayers() }
+    function tick(){ clearTimeout(nT); nT=setTimeout(tick,60000); if(!on()||!offRoad()||document.hidden||navigator.onLine===false){ if(!offRoad()) clear(); return }
+      var p=me(); if(!p.real) return;
+      api({op:'near',lat:p.lat,lon:p.lon,share:1,rig:ls('aw-rlrig')||''}).then(function(j){ clear(); if(!offRoad()) return;
+        (j.r||[]).forEach(function(r){ if(window.__frApi&&window.__frApi.isFriend(r.tg)) return; // friends already show with their exact spot
+          L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="nrmk'+(r.fd?' fd':'')+'" role="button" aria-label="'+esc(r.by)+'">🚙<small>'+esc(r.by)+'</small></span>',iconSize:[0,0]}),zIndexOffset:850})
+            .on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'Nearby rider · about 1 km · '+ago(r.at)}) }).addTo(NL) }) }).catch(function(){}) }
+    function stop(){ clear(); var p=me(); if(navigator.onLine!==false) api({op:'near',lat:p.lat,lon:p.lon,share:0}).catch(function(){}) }
+    document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.seg button')) setTimeout(function(){ if(offRoad()) tick(); else clear() },80) },true);
+    setTimeout(tick,6000);
+    // Settings ▸ Off-road ▸ Nearby riders
+    var f=document.createElement('details'); f.className='folder'; f.id='nrfolder';
+    f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. Riders who also turn this on show as 🚙, and you show to them. Only a rough spot (about 1 km) is shared.</div>';
+    var host=document.getElementById('mtfolder'); if(host&&host.parentNode) host.parentNode.insertBefore(f,host.nextSibling);
+    var sel=f.querySelector('select'); sel.value=on()?'1':'0'; sel.onchange=function(){ ls(NK,sel.value); if(sel.value==='1'){ toast('Nearby riders on (Off-road)'); tick() } else stop() };
+    var st=document.createElement('style'); st.textContent='.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}'; document.head.appendChild(st) })();
   function minis(bd){ var a=BD.map(function(b){ return [b[0],(bd||{})[b[0]]||0] }).filter(function(x){ return tier(x[1]) }).sort(function(p,q){ return q[1]-p[1] }).slice(0,3);
     return a.length?'<span class="rlmini">'+a.map(function(x){ return shield(x[0],x[1],17) }).join('')+'</span>':'' }
   function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){
