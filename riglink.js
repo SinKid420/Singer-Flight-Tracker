@@ -47,7 +47,7 @@
         if(a==='go'){ MP.hidden=true; if(X&&!X.hidden) close(); var ll=L.latLng(mpo.lat,mpo.lon); if(window.__nav) window.__nav.to(ll,mpo.n||'Rider'); else MAP.flyTo(ll,15); return }
         if(a==='full'){ MP.hidden=true; if(X&&!X.hidden) profile(mpo.tg); return } }) }
     paintMini(o.n?{n:o.n,t:tg,bd:{},tags:[],rig:o.rig||'',wait:1}:{n:'Rider',t:tg,bd:{},tags:[],rig:'',wait:1}); MP.hidden=false;
-    if(!tg||navigator.onLine===false){ paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}); return }
+    if(navigator.onLine===false){ paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}); return }
     api({op:'prof',tg:tg}).then(function(j){ if(mpo.tg===tg) paintMini(j) }).catch(function(){ if(mpo.tg===tg) paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}) }) }
   function paintMini(j){ var o=mpo||{}, fr=window.__frApi&&window.__frApi.isFriend&&window.__frApi.isFriend(j.t), earned=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) });
     var p=me(), d=isFinite(o.lat)&&p.real?kmT(km(p.lat,p.lon,o.lat,o.lon))+' away':'';

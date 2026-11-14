@@ -245,6 +245,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
 
   // Location dot with a soft red halo
   var meMark = L.marker([me.lat,me.lon],{icon:L.divIcon({className:'me',html:'<i></i><b></b>',iconSize:[34,34],iconAnchor:[17,17]}),interactive:false,keyboard:false,zIndexOffset:950}).addTo(map);
+  // tap your own vehicle: your mini profile (badges, rig) like other riders see it
+  map.on('click',function(e){ if(!window.__rlMini||me.label==='none') return; var a=map.latLngToContainerPoint(meMark.getLatLng()), b=e.containerPoint; if(Math.abs(a.x-b.x)>24||Math.abs(a.y-b.y)>24) return; var n=''; try{ n=localStorage.getItem('sky-trname')||'' }catch(x){} window.__rlMini(window.__frApi&&window.__frApi.tag()||'',{n:n||'You',sub:'Your spot'}) });
   // My spot icon: the red dot or a car, pickup, SUV or quad seen from above (it turns to face the way you're going), in your colour
   var ME_IC=(function(){ function w(y1,y2){ return '<rect x="-1.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y1+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="-1.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/><rect x="18.5" y="'+y2+'" width="3" height="7" rx="1.2" fill="#111"/>' }
     var G='#1d2733', S=' stroke="#fff" stroke-width="1.6"';
@@ -816,7 +818,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=165, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=166, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
