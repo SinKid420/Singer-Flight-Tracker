@@ -24,11 +24,36 @@
       sites=j.features.filter(function(f){ return f.geometry&&f.geometry.coordinates }).map(function(f){ var p=f.properties||{}, c=f.geometry.coordinates; return {n:p.PROJECT_NAME||'Recreation site', loc:p.SITE_LOCATION, lat:c[1], lon:c[0]} }); return sites }).catch(function(){ sitesP=null; return null }); return sitesP }
     function chipsOnly(){ res=[]; list.innerHTML='<div class="srhint">Type a place, or tap a quick search.</div>' }
     // results: newest list is drawn as soon as any source answers, nearest first
-    function add(id,items){ if(id!==seq) return; var R=ref(); items.forEach(function(it){ it.d=km(R.lat,R.lon,it.lat,it.lon); var k=(it.n+'|'+it.t).toLowerCase(); if(!res.some(function(x){ return (x.n+'|'+x.t).toLowerCase()===k&&Math.abs(x.lat-it.lat)<.02&&Math.abs(x.lon-it.lon)<.02 })) res.push(it) }); draw(id) }
+    // clean results: simple icon, short type, then town and BC / US
+    var IC={road:['#5f6368','#f1f3f4','<path d="M8 3 5 21M16 3l3 18M12 4v3M12 11v3M12 18v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'],
+      fsr:['#188038','#e6f4ea','<path d="M12 2 6 10h3l-4 6h5v5h4v-5h5l-4-6h3z"/>'], water:['#1a73e8','#e8f0fe','<path d="M12 2.5S5 10.2 5 14.5a7 7 0 0 0 14 0C19 10.2 12 2.5 12 2.5z"/>'],
+      mtn:['#795548','#efebe9','<path d="M2 20 9 7l4 7 2-3 7 9z"/>'], town:['#1a73e8','#e8f0fe','<path d="M12 3 3 10.5V21h6v-6h6v6h6V10.5z"/>'],
+      rec:['#e37400','#fef3e0','<path d="M12 3 2 20h20zM12 10l-4 10h8z" fill-rule="evenodd"/>'], hosp:['#d93025','#fce8e6','<path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/>'],
+      gas:['#1a73e8','#e8f0fe','<path d="M5 3h9v18H5zM7 5v5h5V5zM15 8l3 3v7a1.5 1.5 0 0 0 3 0V9l-3-3-1 1 2 2v9h-1v-6h-3z"/>'],
+      biz:['#c2185b','#fce4ec','<path d="M6 7V6a6 6 0 0 1 12 0v1h3l-1 14H4L3 7zm2 0h8V6a4 4 0 0 0-8 0z"/>'], place:['#5f6368','#f1f3f4','<path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/>']};
+    var ROADT=/^(unclassified|residential|track|tertiary|secondary|primary|trunk|service|road|living street|motorway|street)$/i;
+    function region(la,lo){ if(la>=60) return lo>-123.8?'NT, Canada':'Yukon, Canada';
+      if(la>=48.3&&(la>=49||lo<-123.2)){ var e=la<53.8?-114.05-(la-49)*1.24:-120; return lo<e?'BC':'Alberta, Canada' }
+      return lo<-117.04?'WA, US':lo<-111.05?'ID, US':'MT, US' }
+    function tidy(it){ if(it.ty!=null) return; var p=String(it.t||'').split(' · ').filter(function(x){ return x&&x!=='AwareBC' }), ty=p[0]||'Place', w=(p[1]||'').replace(/^near /i,'');
+      if(it.rank===-1&&w.indexOf(',')>0) w=w.split(',').pop().trim(); // AwareBC: the town from the address
+      var e=it.ic||''; it.k=e==='💧'?'water':e==='🛣'?'fsr':e==='⛰'?'mtn':e==='🏘'?'town':e==='⛺'?'rec':e==='🏥'?'hosp':e==='⛽'?'gas':it.rank===-1?'biz':ROADT.test(ty)?'road':'place';
+      var pm=w.match(/\(([^)]+)\)/); if(pm) w=pm[1]; w=w.replace(/^(Regional District of|Electoral Area)\s*/i,'').replace(/\s*Regional District$/i,''); if(ROADT.test(ty)) ty='Road'; if(/^forest service road$/i.test(ty)) ty='Forest road'; it.ty=ty; it.w=w; it.rg=region(it.lat,it.lon) }
+    function same(a,b){ var g=function(k){ return k==='road'||k==='fsr'?'r':k }; return a.n.toLowerCase()===b.n.toLowerCase()&&g(a.k)===g(b.k)&&Math.abs(a.lat-b.lat)<.05&&Math.abs(a.lon-b.lon)<.07 }
+    function add(id,items){ if(id!==seq) return; var R=ref(); items.forEach(function(it){ tidy(it); it.d=km(R.lat,R.lon,it.lat,it.lon); var h=null; for(var i=0;i<res.length;i++) if(same(res[i],it)){ h=res[i]; break }
+      if(!h) res.push(it); else if(!h.w&&it.w) h.w=it.w }); draw(id); towns(id) }
+    // fill in the nearest town for results that don't have one (OpenStreetMap, top results only)
+    var TW={}, twBusy=false;
+    function cleanTown(p){ var t=p.city||p.town||p.village||p.locality||p.district||''; if(!t&&p.county){ var m=String(p.county).match(/\(([^)]+)\)/); t=m?m[1]:String(p.county).replace(/^(Regional District of|Electoral Area|Area [A-Z])\s*/i,'').replace(/\s*Regional District$/i,'') } return t }
+    function towns(id){ if(twBusy||navigator.onLine===false) return; var it=null; for(var i=0;i<Math.min(res.length,10);i++){ var r=res[i]; if(!r.w&&!r.twd){ it=r; break } } if(!it) return;
+      it.twd=1; var k=it.lat.toFixed(2)+','+it.lon.toFixed(2); if(TW[k]!=null){ if(TW[k]&&TW[k]!==it.n) it.w=TW[k]; draw(id); return towns(id) }
+      twBusy=true; J('https://photon.komoot.io/reverse?lat='+it.lat.toFixed(5)+'&lon='+it.lon.toFixed(5)+'&limit=1&lang=en').then(function(j){ TW[k]=cleanTown((j.features&&j.features[0]||{}).properties||{}) }).catch(function(){ TW[k]='' })
+        .then(function(){ twBusy=false; if(TW[k]&&TW[k]!==it.n) it.w=TW[k]; if(id===seq){ draw(id); towns(id) } }) }
     var pend=0;
     function draw(id){ if(id!==seq) return; var s=String(q.value||'').trim().toLowerCase();
       res.sort(function(a,b){ var sa=s&&a.n.toLowerCase().indexOf(s)===0?0:1, sb=s&&b.n.toLowerCase().indexOf(s)===0?0:1; return (a.rank||0)-(b.rank||0)||sa-sb||a.d-b.d });
-      var h=res.slice(0,14).map(function(it,i){ return '<button type="button" class="srr" data-i="'+i+'"><span class="sri" style="background:'+it.bg+'">'+it.ic+'</span><span class="srt"><b>'+esc(it.n)+'</b><small>'+esc(it.t)+'</small></span><span class="srk">'+kmT(it.d)+'</span></button>' }).join('');
+      var h=res.slice(0,14).map(function(it,i){ var c=IC[it.k]||IC.place, w=it.w&&it.w.toLowerCase()!==it.n.toLowerCase()?it.w:'', sub=it.ty+' · '+(w?w+', '+it.rg:(it.rg==='BC'?'BC, Canada':it.rg.replace(/^WA,/,'Washington,').replace(/^ID,/,'Idaho,').replace(/^MT,/,'Montana,')));
+        return '<button type="button" class="srr" data-i="'+i+'"><span class="sri" style="color:'+c[0]+';background:'+c[1]+'"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'+c[2]+'</svg></span><span class="srt"><b>'+esc(it.n)+'</b><small>'+esc(sub)+'</small></span><span class="srk">'+kmT(it.d)+'</span></button>' }).join('');
       if(!h) h='<div class="srhint">'+(pend?'Searching…':(navigator.onLine?'No places found.':'No signal: searching saved places and rec sites.'))+'</div>';
       else if(pend) h+='<div class="srhint">Searching…</div>';
       list.innerHTML=h }
