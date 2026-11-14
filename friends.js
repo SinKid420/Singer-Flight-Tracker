@@ -66,6 +66,8 @@
     if(S.me&&S.me.muted) h+='<div class="frnote red">Your chat is paused until '+new Date(S.me.muted).toLocaleDateString()+' after reports from other riders. You can still see friends on the map.</div>';
     if(!name()) h+='<form class="fradd" data-f="name"><input maxlength="24" placeholder="Your name (shown to friends)" aria-label="Your name"><button type="submit" class="frbt g">Save</button></form>';
     h+='<button type="button" class="frshare" data-a="share"><span>📍 Share my spot with friends<small>'+shareTxt()+'</small></span><i class="frtg'+(share?' on':'')+'"></i></button>';
+    var MS=window.__mesh; if(MS&&MS.can()) h+='<button type="button" class="frshare" data-a="mesh"><span>📡 Nearby mesh (no signal needed)<small>'+(MS.err()?esc(MS.err()):MS.on()?(MS.peers()?MS.peers()+' AwareBC phone'+(MS.peers()===1?'':'s')+' connected nearby':'On · looking for AwareBC phones nearby'):'Messages, help calls and hazards hop phone to phone')+'</small></span><i class="frtg'+(MS.on()?' on':'')+'"></i></button>';
+    else if(window.Capacitor) h+='<div class="frsmall">📡 Nearby mesh needs the newest AwareBC app: reinstall it from the download link.</div>';
     if(pickHrs) h+='<div class="frhrs"><button type="button" class="frbt" data-a="hrs" data-h="1">1 hour</button><button type="button" class="frbt" data-a="hrs" data-h="4">4 hours</button><button type="button" class="frbt" data-a="hrs" data-h="0">Until I turn off</button></div>';
     h+='<form class="fradd" data-f="add"><input maxlength="6" placeholder="Add friend: their rider tag, e.g. 7QHD" aria-label="Friend\'s rider tag" autocapitalize="characters"><input class="frwho" maxlength="24" placeholder="Their name" aria-label="Their name" hidden><button type="submit" class="frbt g">Add</button></form>';
     if(S.req.length) h+='<div class="frh">REQUESTS</div>'+S.req.map(function(r){ return '<div class="frrow"><span class="frav" style="background:'+col(r.id)+'">'+ini(r.n)+'</span><div><b>'+esc(r.n)+'<small>#'+esc(r.t)+'</small></b><small>wants to be friends</small></div><button type="button" class="frbt g" data-a="yes" data-id="'+esc(r.id)+'">Accept</button><button type="button" class="frbt" data-a="no" data-id="'+esc(r.id)+'">No</button></div>' }).join('');
@@ -101,11 +103,13 @@
     sh.innerHTML=h+'</div>'; sh.className='list' }
   function chatTitle(){ if(!chat) return ''; return chat.g?esc(chat.n):esc(chat.n)+' <span>#'+esc(chat.t)+'</span>' }
   function renderChat(){ var sub=chat.g?((chat.mem?chat.mem.length:chat.c)+' riders'):(chat.on?'🟢 Online':'Seen '+ago(chat.seen||Date.now())+' ago');
-    var h=head(chatTitle(),sub,true)+'<div class="frmsgs" id="frmsgs">'+(msgs.length||lq().some(function(q){ return q.chat===chat.chat })?'':'<div class="frnone">No messages yet. Say hi.</div>')+msgs.map(function(m){
+    var mi=window.__mesh?__mesh.inbox(chat.chat).filter(function(x){ return !msgs.some(function(m){ return !m.me&&m.x===x.x&&Math.abs(m.t-x.t)<7200000 }) }).map(function(x){ return {id:'m'+x.i,mesh:1,x:x.x,n:x.n,lat:x.lat,lon:x.lon,t:x.t} }):[];
+    var all=msgs.concat(mi).sort(function(p,q){ return p.t-q.t });
+    var h=head(chatTitle(),sub,true)+'<div class="frmsgs" id="frmsgs">'+(all.length||lq().some(function(q){ return q.chat===chat.chat })?'':'<div class="frnone">No messages yet. Say hi.</div>')+all.map(function(m){
       var spot=m.lat!=null, body=(m.x?esc(m.x):'')+(spot?(m.x?'<br>':'')+'<button type="button" class="frspot" data-a="msgspot" data-lat="'+m.lat+'" data-lon="'+m.lon+'" data-n="'+esc(m.n)+'">📍 '+(m.me?'My spot':esc(m.n)+'\'s spot')+' · tap to see</button>':'');
       var act='';
       if(selM===m.id) act='<div class="frmact'+(m.me?' me':'')+'">'+(m.me?'<button type="button" class="frbt r" data-a="unsend" data-id="'+m.id+'">Unsend</button>':repM===m.id?WHY.map(function(w){ return '<button type="button" class="frbt" data-a="why" data-w="'+w[0]+'" data-id="'+m.id+'">'+w[1]+'</button>' }).join(''):'<button type="button" class="frbt" data-a="rep" data-id="'+m.id+'">⚑ Report</button><button type="button" class="frbt r" data-a="mblock" data-id="'+m.id+'">Block '+esc(m.n)+'</button>')+'</div>';
-      return '<div class="frmsg'+(m.me?' me':'')+'" data-a="sel" data-id="'+m.id+'">'+(chat.g&&!m.me?'<b style="color:'+col(m.n)+'">'+esc(m.n)+' <small>#'+esc(m.tg||'')+'</small></b>':'')+body+'<small>'+clock(m.t)+'</small></div>'+act }).join('')+
+      return '<div class="frmsg'+(m.me?' me':'')+'" data-a="sel" data-id="'+m.id+'">'+(chat.g&&!m.me?'<b style="color:'+col(m.n)+'">'+esc(m.n)+' <small>#'+esc(m.tg||'')+'</small></b>':'')+body+'<small>'+(m.mesh?'📡 via nearby phones · ':'')+clock(m.t)+'</small></div>'+act }).join('')+
       lq().filter(function(q){ return q.chat===chat.chat }).map(function(q){ return '<div class="frmsg me frpend">'+(q.text?esc(q.text):'')+(q.lat!=null?(q.text?'<br>':'')+'📍 My spot':'')+'<small>⏳ Waiting for signal · '+clock(q.t)+' <button type="button" class="frqx" data-a="qdel" data-q="'+esc(q.q)+'" aria-label="Cancel this message">Cancel</button></small></div>' }).join('')+'</div>';
     if(navigator.onLine===false) h+='<div class="frnote" style="margin:6px 0 0">📵 No signal. You can still type and send: messages wait on this phone and go out by themselves.</div>';
     h+='<div class="frquick"><button type="button" class="frbt" data-a="qspot">📍 Send my spot</button><button type="button" class="frbt" data-a="qok">👍 OK</button><button type="button" class="frbt r" data-a="qhelp">🆘 Need help</button></div>';
@@ -123,7 +127,7 @@
   function lq(){ try{ var a=JSON.parse(localStorage.getItem('aw-msgq')||'[]'); return Array.isArray(a)?a:[] }catch(e){ return [] } }
   function sq(a){ try{ localStorage.setItem('aw-msgq',JSON.stringify(a.slice(-50))) }catch(e){} }
   function netErr(e){ return navigator.onLine===false||/fetch|network|load failed|abort/i.test(String(e&&e.message||e)) }
-  function queue(b){ var a=lq(); a.push(Object.assign({q:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now()},b)); sq(a); if(view==='chat') reChat() }
+  function queue(b){ var a=lq(); a.push(Object.assign({q:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now()},b)); sq(a); if(window.__mesh&&__mesh.on()) __mesh.chat(b.chat,b.text,b.lat,b.lon); if(view==='chat') reChat() }
   var qBusy=false;
   function flushQ(){ var a=lq(); if(!a.length||qBusy||navigator.onLine===false) return; qBusy=true; var m=a[0], b={chat:m.chat,text:m.text||''}; if(m.lat!=null){ b.lat=m.lat; b.lon=m.lon }
     api('send',b).then(function(){ sq(lq().filter(function(x){ return x.q!==m.q })); qBusy=false; if(chat&&chat.chat===m.chat&&view==='chat') loadMsgs(); if(lq().length) flushQ(); else toast('Waiting messages sent') },
@@ -131,6 +135,9 @@
   addEventListener('online',function(){ setTimeout(flushQ,2500) }); setInterval(flushQ,20000); setTimeout(flushQ,6000);
   function cacheMsgs(c){ try{ localStorage.setItem('aw-msgc-'+c.chat,JSON.stringify(msgs.slice(-60))); var ix=JSON.parse(localStorage.getItem('aw-msgc')||'[]').filter(function(k){ return k!==c.chat }); ix.unshift(c.chat); ix.slice(12).forEach(function(k){ localStorage.removeItem('aw-msgc-'+k) }); localStorage.setItem('aw-msgc',JSON.stringify(ix.slice(0,12))) }catch(e){} }
   function savedMsgs(c){ try{ var a=JSON.parse(localStorage.getItem('aw-msgc-'+c.chat)||'[]'); return Array.isArray(a)?a:[] }catch(e){ return [] } }
+  window.__frMesh={name:name, chats:function(){ return S.friends.map(function(f){ return {chat:f.chat,n:f.n} }).concat(S.groups.map(function(g){ return {chat:g.chat,n:g.n} })).filter(function(c){ return c.chat }) },
+    got:function(c,cn,m){ buzz(); if(!sh.hidden&&view==='chat'&&chat&&chat.chat===c) reChat(); else { toast('📡 '+m.n+': '+String(m.x||'sent a spot').slice(0,60)); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC',m.n+' (nearby): '+String(m.x||'sent a spot').slice(0,80)) } },
+    refresh:function(){ if(!sh.hidden&&view==='list') render() } };
   function send(text,spot){ if(!chat) return; var b={chat:chat.chat,text:text||''}; if(spot){ b.lat=spot.lat; b.lon=spot.lon }
     if(navigator.onLine===false||lq().some(function(x){ return x.chat===b.chat })){ queue(b); return } // keep the order: newer ones wait behind older ones
     api('send',b).then(function(){ loadMsgs() }).catch(function(e){ if(netErr(e)){ queue(b); toast('No signal: saved, it will send by itself') } else toast(e.message) }) }
@@ -168,6 +175,7 @@
     if(a==='kick'){ if(!sure(b,'Tap again')) return; return api('gkick',{g:chat.id,id:id}).then(function(){ toast('Removed from the group'); chat.mem=(chat.mem||[]).filter(function(m){ return m.id!==id }); render() }).catch(function(x){ toast(x.message) }) }
     if(a==='ublock'){ if(!sure(b,'Tap again')) return; return api('block',{id:id}).then(function(){ toast('Blocked. You won\'t see their messages.'); msgs=msgs.filter(function(m){ return m.a!==id }); render() }).catch(function(x){ toast(x.message) }) }
     if(a==='back'){ if(view==='mem'){ view='chat'; return renderChat() } chat=null; clearTimeout(chatT); view='list'; render(); return sync() }
+    if(a==='mesh'){ if(needName()) return; window.__mesh.set(!window.__mesh.on()).then(function(v){ toast(v?'Nearby mesh on':'Nearby mesh off'); render() }); return }
     if(a==='share'){ if(needName()) return; if(share){ shareOff(); pickHrs=false; render(); setBadge(); sync(); toast('Your spot is hidden from friends.') } else { pickHrs=!pickHrs; render() } return }
     if(a==='yes'||a==='no') return api('answer',{id:id,ok:a==='yes'}).then(function(){ toast(a==='yes'?'Friend added':'Request declined'); return sync() }).then(render).catch(function(x){ toast(x.message) });
     if(a==='chat'){ var f=S.friends.filter(function(x){return x.id===id})[0]; if(f) openChat({id:f.id,n:f.n,t:f.t,on:f.on,seen:f.seen,chat:f.chat}); return }
@@ -177,7 +185,7 @@
     if(a==='msgspot'){ var la=+b.getAttribute('data-lat'), lo=+b.getAttribute('data-lon'); close(); var ll=L.latLng(la,lo); map.once('moveend',function(){ setTimeout(function(){ if(window.__pin) window.__pin(ll,(b.getAttribute('data-n')||'Friend')+'\'s spot') },60) }); map.flyTo(ll,Math.max(map.getZoom(),14),{duration:1}); return }
     if(a==='qspot'){ var sp=mySpot(); if(!sp) return toast('No GPS spot yet.'); return send('',sp) }
     if(a==='qok') return send('👍 OK');
-    if(a==='qhelp'){ if(!sure(b,'Tap again: sends your spot here (not 911)')) return; var hp=mySpot(); return send('🆘 Need help!',hp) }
+    if(a==='qhelp'){ if(!sure(b,'Tap again: sends your spot here (not 911)')) return; var hp=mySpot(); if(navigator.onLine===false&&window.__mesh&&__mesh.on()&&hp){ __mesh.help(hp.lat,hp.lon,'Needs help'); toast('🆘 Sent to everyone nearby with AwareBC') } return send('🆘 Need help!',hp) }
     if(a==='gaddsel'){ var sel=sh.querySelector('.frgadd'); var have={}; (chat.mem||[]).forEach(function(m){ have[m.id]=1 }); var opts=S.friends.filter(function(f){ return !have[f.id] });
       if(!opts.length) return toast('All your friends are already in this group.'); sel.innerHTML='<option value="">Pick a friend…</option>'+opts.map(function(f){ return '<option value="'+esc(f.id)+'">'+esc(f.n)+' #'+esc(f.t)+'</option>' }).join(''); sel.hidden=false; b.hidden=true; return }
     if(a==='gleave'){ if(b.getAttribute('data-sure')!=='1'){ b.setAttribute('data-sure','1'); b.textContent='Tap again to leave'; return } return api('gleave',{g:chat.id}).then(function(){ toast('You left the group'); chat=null; view='list'; return sync() }).then(render).catch(function(x){ toast(x.message) }) }
