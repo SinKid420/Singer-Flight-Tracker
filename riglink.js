@@ -63,12 +63,16 @@
   (function(){ var NL=L.layerGroup().addTo(MAP), nT=null, NK='aw-near';
     function on(){ return ls(NK)==='1' }
     function clear(){ NL.clearLayers() }
-    function tick(){ clearTimeout(nT); nT=setTimeout(tick,60000); if(!on()||!offRoad()||document.hidden||navigator.onLine===false){ if(!offRoad()) clear(); return }
-      var p=me(); if(!p.real) return;
-      api({op:'near',lat:p.lat,lon:p.lon,share:1,rig:ls('aw-rlrig')||''}).then(function(j){ clear(); if(!offRoad()) return;
-        (j.r||[]).forEach(function(r){ if(window.__frApi&&window.__frApi.isFriend(r.tg)) return; // friends already show with their exact spot
-          L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="nrmk'+(r.fd?' fd':'')+'" role="button" aria-label="'+esc(r.by)+'">🚙<small>'+esc(r.by)+'</small></span>',iconSize:[0,0]}),zIndexOffset:850})
-            .on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'Nearby rider · about 1 km · '+ago(r.at)}) }).addTo(NL) }) }).catch(function(){}) }
+    // main map (Off-road): your convoy's rigs (exact spot when they share it) and nearby riders who chose to be seen (rough spot)
+    function tick(){ clearTimeout(nT); nT=setTimeout(tick,60000); var ck=ls('aw-rlkey')||''; if((!on()&&!ck)||!offRoad()||document.hidden||navigator.onLine===false){ if(!offRoad()||(!on()&&!ck)) clear(); return }
+      var p=me(); if(!p.real) return; var rig=ls('aw-rlrig')||'';
+      Promise.all([ck?api({op:'crigs',key:ck,lat:p.lat,lon:p.lon,share:ls('aw-rlshare')==='1'?1:0,rig:rig}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]}),
+        on()?api({op:'near',lat:p.lat,lon:p.lon,share:1,rig:rig}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]})]).then(function(J){ clear(); if(!offRoad()) return; var shown={};
+        function put(r,cv){ if(shown[r.tg]||(window.__frApi&&window.__frApi.isFriend(r.tg))) return; shown[r.tg]=1; // friends already show with their exact spot
+          L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="nrmk'+(r.fd?' fd':'')+(cv?' cv':'')+'" role="button" aria-label="'+esc(r.by)+'">🚙<small>'+esc(r.by)+'</small></span>',iconSize:[0,0]}),zIndexOffset:850})
+            .on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:(cv?'Convoy '+ck+' · ':'Nearby rider · about 1 km · ')+ago(r.at)}) }).addTo(NL) }
+        (J[0].r||[]).forEach(function(r){ put(r,true) }); (J[1].r||[]).forEach(function(r){ put(r,false) }) }) }
+    window.__rlNear={ tick:function(){ setTimeout(tick,50) }, on:on, set:function(v){ ls(NK,v?'1':'0'); var s=document.getElementById('s_near'); if(s) s.value=v?'1':'0'; if(v) tick(); else stop() } };
     function stop(){ clear(); var p=me(); if(navigator.onLine!==false) api({op:'near',lat:p.lat,lon:p.lon,share:0}).catch(function(){}) }
     document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.seg button')) setTimeout(function(){ if(offRoad()) tick(); else clear() },80) },true);
     setTimeout(tick,6000);
@@ -77,7 +81,7 @@
     f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. Riders who also turn this on show as 🚙, and you show to them. Only a rough spot (about 1 km) is shared.</div>';
     var host=document.getElementById('mtfolder'); if(host&&host.parentNode) host.parentNode.insertBefore(f,host.nextSibling);
     var sel=f.querySelector('select'); sel.value=on()?'1':'0'; sel.onchange=function(){ ls(NK,sel.value); if(sel.value==='1'){ toast('Nearby riders on (Off-road)'); tick() } else stop() };
-    var st=document.createElement('style'); st.textContent='.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}'; document.head.appendChild(st) })();
+    var st=document.createElement('style'); st.textContent='.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}.nrmk.cv small{background:#14532d;color:#bbf7d0}'; document.head.appendChild(st) })();
   function minis(bd){ var a=BD.map(function(b){ return [b[0],(bd||{})[b[0]]||0] }).filter(function(x){ return tier(x[1]) }).sort(function(p,q){ return q[1]-p[1] }).slice(0,3);
     return a.length?'<span class="rlmini">'+a.map(function(x){ return shield(x[0],x[1],17) }).join('')+'</span>':'' }
   function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){
@@ -117,7 +121,7 @@
       '<div class="rlsheet" id="rlsh" hidden></div><div class="rlrec" id="rlrec" hidden><b>🎙️ Recording…</b><span id="rlrect">0:00</span><small>Let go to send · slide away to cancel</small></div>';
     document.body.appendChild(X);
     mm=L.map('rlmap',{zoomControl:false,rotate:false,rotateControl:false,touchRotate:false,attributionControl:true,minZoom:5,maxZoom:17}).setView([49.5,-120],10);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:17,attribution:'Topo © Esri'}).addTo(mm);
+    // (no tiles: Rig Link's own map is hidden; rigs, posts and hazards show on the main map)
     pinL=L.layerGroup().addTo(mm); rigL=L.layerGroup().addTo(mm);
     X.addEventListener('click',click); X.addEventListener('submit',submit);
     var ptt=X.querySelector('#rlptt'); ptt.addEventListener('pointerdown',function(e){ e.preventDefault(); startRec() }); ptt.addEventListener('pointerup',function(){ stopRec(true) }); ptt.addEventListener('pointerleave',function(){ stopRec(false) }); ptt.addEventListener('contextmenu',function(e){ e.preventDefault() });
@@ -128,6 +132,8 @@
     [].forEach.call(X.querySelectorAll('.rlfl button'),function(b){ b.className=b.getAttribute('data-f')===filt?'on':'' });
     X.querySelector('#rlmap').classList.toggle('big',big); lobby(); chips() }
   function lobby(){ var el=X.querySelector('#rllobby'), sh=ls('aw-rlshare')==='1';
+    var nOn=window.__rlNear&&window.__rlNear.on(), nr='<div class="rlrow"><button type="button" class="rlsw'+(nOn?' on':'')+'" data-a="near"><i></i>Show my rig on the main map to nearby riders (about 1 km)</button></div>';
+    if(pub){ el.innerHTML=nr; return }
     if(pub||!key){ el.innerHTML=!pub&&!key?'<form class="rlkey" data-f="join"><input maxlength="8" placeholder="#884-BCR" aria-label="Convoy key" autocapitalize="characters" autocomplete="off"><button type="submit" class="rlbt b">Unlock</button><button type="button" class="rlbt" data-a="mkkey">New convoy</button></form><div class="rlsm">A key unlocks a convoy’s private posts, hidden waypoints and live rig spots. Only share it with your crew.</div>':''; return }
     el.innerHTML='<div class="rlrow"><button type="button" class="rlsw'+(sh?' on':'')+'" data-a="share"><i></i>Share my rig’s spot with this convoy</button><button type="button" class="rllink" data-a="sendkey">Send to friend</button><button type="button" class="rllink" data-a="showkey">Key</button><button type="button" class="rllink red" data-a="leave">Leave</button></div>'+(X._showKey?'<input class="rlkeyshow" readonly value="'+esc(key)+'" aria-label="Convoy key to share">':'') }
   function chips(){ var el=X.querySelector('#rlchips'); if(pub||!rigs.length){ el.innerHTML=''; el.hidden=true; return } var p=me(); el.hidden=false;
@@ -171,9 +177,9 @@
   function click(e){ var t=e.target, b=t.closest&&t.closest('[data-a],[data-f],[data-rig],.rlcd,.rlimg'); if(!b) return;
     if(b.classList.contains('rlimg')){ sheet('<img src="'+RS+'/rlm/'+esc(b.getAttribute('data-full'))+'" alt="" style="width:100%;border-radius:12px">'+closeBt()); return }
     if(b.hasAttribute('data-f')&&b.closest('.rlfl')){ filt=b.getAttribute('data-f'); posts=[]; paintTop(); load(); return }
-    if(b.hasAttribute('data-rig')){ var r=rigs[+b.getAttribute('data-rig')]; if(r){ mm.setView([r.lat,r.lon],14); mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) } return }
+    if(b.hasAttribute('data-rig')){ var r=rigs[+b.getAttribute('data-rig')]; if(r){ close(); MAP.flyTo([r.lat,r.lon],Math.max(MAP.getZoom(),14),{duration:1}); mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) } return }
     var a=b.getAttribute('data-a'), cd=t.closest('.rlcd'), p=cd?posts[+cd.getAttribute('data-i')]:null;
-    if(!a&&b.classList.contains('rlcd')){ if(p) mm.setView([p.lat,p.lon],Math.max(mm.getZoom(),13),{animate:true}); return }
+    if(!a&&b.classList.contains('rlcd')) return;
     if(a==='qx'){ var mid=b.getAttribute('data-m'); var q=lj('aw-rlq',[]).filter(function(x){ return (x.mid||'')!==mid }); ls('aw-rlq',JSON.stringify(q)); if(mid&&window.__mesh) window.__mesh.recall(mid); toast('Unsent'); draw(); return }
     if(a==='close') return close();
     if(a==='badges') return profile('');
@@ -183,8 +189,9 @@
     if(a==='key'){ pub=false; posts=[]; paintTop(); if(key) load(); else { X.querySelector('#rlfeed').innerHTML=''; pins() } return }
     if(a==='mkkey'){ if(!needName()) return; api({op:'mkkey'}).then(function(j){ key=j.key; ls('aw-rlkey',key); X._showKey=true; posts=[]; paintTop(); load(); toast('Convoy '+key+' started. Share the key with your crew.') }).catch(function(e){ toast(e.message) }); return }
     if(a==='showkey'){ X._showKey=!X._showKey; lobby(); var ki=X.querySelector('.rlkeyshow'); if(ki){ ki.focus(); ki.select() } return }
-    if(a==='leave'){ key=''; ls('aw-rlkey',null); pub=true; posts=[]; paintTop(); load(); return }
-    if(a==='share'){ ls('aw-rlshare',ls('aw-rlshare')==='1'?'0':'1'); lobby(); load(true); return }
+    if(a==='leave'){ key=''; ls('aw-rlkey',null); pub=true; posts=[]; paintTop(); load(); if(window.__rlNear) window.__rlNear.tick(); return }
+    if(a==='share'){ ls('aw-rlshare',ls('aw-rlshare')==='1'?'0':'1'); lobby(); load(true); if(window.__rlNear) window.__rlNear.tick(); return }
+    if(a==='near'){ if(!needName()) return; var nv=!window.__rlNear.on(); window.__rlNear.set(nv); toast(nv?'Your rig shows to nearby riders (about 1 km)':'Your rig is hidden from nearby riders'); lobby(); return }
     if(a==='me') return centerMe();
     if(a==='big'){ big=!big; paintTop(); setTimeout(function(){ mm.invalidateSize() },260); return }
     if(a==='photo') return compose('c');
@@ -253,7 +260,7 @@
         var th=j.owner&&j.kind==='h'&&!c.me?'<div class="rlthk"><button type="button" class="rlbt sm'+(c.rec?' g':'')+'" data-a="thank" data-b="recovery" data-c="'+c.cid+'"'+(c.rec?' disabled':'')+'>🪝 '+(c.rec?'Thanked: pulled me out':'Pulled me out')+'</button><button type="button" class="rlbt sm'+(c.wr?' g':'')+'" data-a="thank" data-b="wrench" data-c="'+c.cid+'"'+(c.wr?' disabled':'')+'>🔧 '+(c.wr?'Thanked: fixed me':'Fixed me / lent a part')+'</button></div>':'';
         return '<div class="rlcm'+(q?' q':'')+'"><b>'+(c.q?(q?'? ':'✓ '):'')+esc(c.by)+' <small>#'+esc(c.tg)+' · '+ago(c.t)+'</small>'+(c.fd?founder(20):'')+minis(c.bd)+'</b><div>'+esc(c.x)+'</div>'+(q?'<button type="button" class="rllink" data-a="ans" data-c="'+c.cid+'">Answer</button>':'')+th+'</div>' }).join(''):'<div class="rlsm">No comments yet.</div>'; if(ask) X.querySelector('#rlcin').focus() }).catch(function(e){ var el=X.querySelector('#rlcl'); if(el) el.innerHTML='<div class="rlsm">'+esc(e.message)+'</div>' }) }
   function submit(e){ e.preventDefault(); var f=e.target, k=f.getAttribute('data-f'), i=f.querySelector('input');
-    if(k==='join'){ var v=i.value.trim().toUpperCase(); if(!/^#?\d{3}-?[A-Z]{3}$/.test(v)) return toast('Keys look like #884-BCR'); api({op:'join',key:v}).then(function(j){ key=j.key; ls('aw-rlkey',key); pub=false; posts=[]; paintTop(); load(); toast('Convoy '+key+' unlocked') }).catch(function(e){ toast(e.message) }); return }
+    if(k==='join'){ var v=i.value.trim().toUpperCase(); if(!/^#?\d{3}-?[A-Z]{3}$/.test(v)) return toast('Keys look like #884-BCR'); api({op:'join',key:v}).then(function(j){ key=j.key; ls('aw-rlkey',key); pub=false; posts=[]; paintTop(); load(); if(window.__rlNear) window.__rlNear.tick(); toast('Convoy '+key+' unlocked') }).catch(function(e){ toast(e.message) }); return }
     if(k==='cmt'){ if(!needName()||!cmFor) return; var x=i.value.trim(); if(!x) return; var q=X.querySelector('.rlqt.on')&&!X._re?1:0;
       api({op:'cmt',id:cmFor.id,x:x,q:q,re:X._re||undefined,key:curKey()||undefined}).then(function(){ cmFor.nc=(cmFor.nc||0)+1; comments(false); load(true) }).catch(function(e){ toast(e.message) }) } }
 
@@ -289,7 +296,7 @@
   '.rlsm{color:#9aa4b2;font-size:12.5px;line-height:1.4;margin:2px 0 6px}.rlrow{display:flex;align-items:center;gap:10px;margin:2px 0 4px}.rlsw{flex:1;display:flex;align-items:center;gap:8px;border:0;background:none;color:#e5e9ee;font:600 13px var(--font,system-ui);text-align:left;padding:4px 0}'+
   '.rlsw i{flex:none;width:40px;height:24px;border-radius:12px;background:#48484a;position:relative}.rlsw i:after{content:"";position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}.rlsw.on i{background:#22c55e}.rlsw.on i:after{left:18px}'+
   '.rllink{border:0;background:none;color:#60a5fa;font:800 13px var(--font,system-ui);padding:6px 2px}.rllink.red{color:#f87171}.rlkeyshow{width:100%;height:40px;border:1px solid #3a424d;border-radius:10px;background:#000;color:#ffd60a;font:800 18px ui-monospace,monospace;text-align:center;margin-bottom:6px;user-select:all;-webkit-user-select:all}'+
-  '.rlmap{position:relative;isolation:isolate;z-index:0;flex:none;height:30vh;min-height:150px;transition:height .25s;background:#1d2a22}.rlmap.big{height:62vh}.rlmb{position:absolute;right:8px;top:8px;z-index:500;display:flex;flex-direction:column;gap:6px}.rlmb button{width:40px;height:40px;border:0;border-radius:12px;background:rgba(11,13,16,.88);color:#fff;font-size:17px}'+
+  '.rlmap{display:none!important;position:relative;isolation:isolate;z-index:0;flex:none;height:30vh;min-height:150px;transition:height .25s;background:#1d2a22}.rlmap.big{height:62vh}.rlmb{position:absolute;right:8px;top:8px;z-index:500;display:flex;flex-direction:column;gap:6px}.rlmb button{width:40px;height:40px;border:0;border-radius:12px;background:rgba(11,13,16,.88);color:#fff;font-size:17px}'+
   '.rlpin{display:grid;place-items:center;width:28px;height:28px;border-radius:50% 50% 50% 0;border:2px solid #fff;transform:translate(-50%,-100%) rotate(-45deg);box-shadow:0 2px 4px #000;font-size:13px;line-height:1}.rlpin>*{transform:rotate(45deg)}.rlpin.rig{background:#22c55e;border-radius:50%;transform:translate(-50%,-50%)}'+
   '.rlchips{display:flex;gap:6px;padding:6px 10px 0;overflow-x:auto;flex:none}.rlchips[hidden]{display:none}.rlchips button{flex:none;display:flex;align-items:center;gap:6px;background:#151a20;border:1px solid #262d36;border-radius:12px;padding:6px 10px;color:#f2f4f7;font:700 12.5px var(--font,system-ui)}.rlchips i{width:9px;height:9px;border-radius:50%;display:block}'+
   '.rlfl{display:flex;gap:6px;padding:8px 10px;overflow-x:auto;flex:none}.rlfl button{flex:none;border:1px solid #2a313b;background:#1b2027;color:#d5dbe3;font:800 13px var(--font,system-ui);padding:8px 13px;border-radius:18px}.rlfl .on{background:#f2f4f7;color:#0b0d10;border-color:#f2f4f7}'+
