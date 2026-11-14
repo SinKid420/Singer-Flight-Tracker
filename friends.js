@@ -111,7 +111,7 @@
     h+=S.friends.length?S.friends.map(function(f){ return '<label class="frrow frpick"><span class="frav" style="background:'+col(f.id)+'">'+ini(f.n)+'</span><div><b>'+esc(f.n)+'<small>#'+esc(f.t)+'</small></b></div><input type="checkbox" data-id="'+esc(f.id)+'"'+(newSel[f.id]?' checked':'')+'></label>' }).join(''):'<div class="frnone">Add friends first, then make a group.</div>';
     sh.innerHTML=h+'</div>'; sh.className='list' }
   function chatTitle(){ if(!chat) return ''; return chat.g?esc(chat.n):esc(chat.n)+' <span>#'+esc(chat.t)+'</span>' }
-  function renderChat(){ var sub=chat.g?((chat.mem?chat.mem.length:chat.c)+' riders'):(chat.on?'🟢 Online':'Seen '+ago(chat.seen||Date.now())+' ago');
+  function renderChat(){ var sub=(chat.g?((chat.mem?chat.mem.length:chat.c)+' riders'):(chat.on?'🟢 Online':'Seen '+ago(chat.seen||Date.now())+' ago'))+(window.__e2e?' · 🔒':'');
     var mi=window.__mesh?__mesh.inbox(chat.chat).filter(function(x){ return !msgs.some(function(m){ return !m.me&&m.x===x.x&&Math.abs(m.t-x.t)<7200000 }) }).map(function(x){ return {id:'m'+x.i,mesh:1,x:x.x,n:x.n,lat:x.lat,lon:x.lon,t:x.t} }):[];
     var all=msgs.concat(mi).sort(function(p,q){ return p.t-q.t });
     var h=head(chatTitle(),sub,true)+'<div class="frmsgs" id="frmsgs">'+(all.length||lq().some(function(q){ return q.chat===chat.chat })?'':'<div class="frnone">No messages yet. Say hi.</div>')+all.map(function(m){
@@ -130,7 +130,7 @@
   var keepScroll=0; function reChat(){ var box=document.getElementById('frmsgs'); keepScroll=box?box.scrollTop||1:0; renderChat() }
   function openChat(c){ chat=c; msgs=savedMsgs(c); lastId=msgs.length?msgs[msgs.length-1].id:0; selM=repM=null; view='chat'; render(); loadMsgs(true) }
   function loadMsgs(first){ if(!chat||view!=='chat') return; clearTimeout(chatT); var c=chat;
-    api('msgs',{chat:c.chat,since:lastId}).then(function(j){ if(chat!==c) return; if(j.mem){ c.mem=j.mem; c.own=!!j.own } var gone=false;
+    api('msgs',{chat:c.chat,since:lastId}).then(unlockAll).then(function(j){ if(chat!==c) return; if(j.mem){ c.mem=j.mem; c.own=!!j.own } var gone=false;
       if(j.keep){ var ks={}, lo=j.keep.length>=100?Math.min.apply(null,j.keep):0; j.keep.forEach(function(x){ ks[x]=1 }); var n0=msgs.length; msgs=msgs.filter(function(m){ return m.id<lo||ks[m.id] }); gone=msgs.length!==n0 } if(j.m&&j.m.length){ var neu=j.m.filter(function(m){ return m.id>lastId }); msgs=msgs.concat(neu); lastId=msgs[msgs.length-1].id; if(!first&&neu.some(function(m){return !m.me})) buzz(); S.unread[c.chat]=0; setBadge() }
       cacheMsgs(c); if(view!=='chat') return; if(first) renderChat(); else if((j.m&&j.m.length)||gone) reChat() }).catch(function(e){ if(first&&!netErr(e)) toast(e.message) }).then(function(){ if(chat===c&&!sh.hidden) chatT=setTimeout(loadMsgs,document.hidden?20000:4000) }) }
   // ---- no signal: messages wait on the phone and send by themselves; chats stay readable ----
@@ -140,7 +140,7 @@
   function queue(b){ var a=lq(); a.push(Object.assign({q:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now()},b)); sq(a); if(window.__mesh&&__mesh.on()) __mesh.chat(b.chat,b.text,b.lat,b.lon); if(view==='chat') reChat() }
   var qBusy=false;
   function flushQ(){ var a=lq(); if(!a.length||qBusy||navigator.onLine===false) return; qBusy=true; var m=a[0], b={chat:m.chat,text:m.text||''}; if(m.lat!=null){ b.lat=m.lat; b.lon=m.lon }
-    api('send',b).then(function(){ sq(lq().filter(function(x){ return x.q!==m.q })); qBusy=false; if(chat&&chat.chat===m.chat&&view==='chat') loadMsgs(); if(lq().length) flushQ(); else toast('Waiting messages sent') },
+    sendOut(b).then(function(){ sq(lq().filter(function(x){ return x.q!==m.q })); qBusy=false; if(chat&&chat.chat===m.chat&&view==='chat') loadMsgs(); if(lq().length) flushQ(); else toast('Waiting messages sent') },
       function(e){ qBusy=false; if(!netErr(e)){ sq(lq().filter(function(x){ return x.q!==m.q })); toast('A waiting message was not sent: '+e.message); if(view==='chat') reChat() } }) }
   addEventListener('online',function(){ setTimeout(flushQ,2500) }); setInterval(flushQ,20000); setTimeout(flushQ,6000);
   function cacheMsgs(c){ try{ localStorage.setItem('aw-msgc-'+c.chat,JSON.stringify(msgs.slice(-60))); var ix=JSON.parse(localStorage.getItem('aw-msgc')||'[]').filter(function(k){ return k!==c.chat }); ix.unshift(c.chat); ix.slice(12).forEach(function(k){ localStorage.removeItem('aw-msgc-'+k) }); localStorage.setItem('aw-msgc',JSON.stringify(ix.slice(0,12))) }catch(e){} }
@@ -148,9 +148,20 @@
   window.__frMesh={name:name, chats:function(){ return S.friends.map(function(f){ return {chat:f.chat,n:f.n} }).concat(S.groups.map(function(g){ return {chat:g.chat,n:g.n} })).filter(function(c){ return c.chat }) },
     got:function(c,cn,m){ buzz(); if(!sh.hidden&&view==='chat'&&chat&&chat.chat===c) reChat(); else { toast('📡 '+m.n+': '+String(m.x||'sent a spot').slice(0,60)); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC',m.n+' (nearby): '+String(m.x||'sent a spot').slice(0,80)) } },
     refresh:function(){ if(!sh.hidden&&view==='list') render() } };
+
+  // ---- end-to-end locked messages (e2e.js): locked on this phone for each person in the chat, the server can't read them ----
+  var pkSent=false;
+  function keysFor(c){ var key='aw-e2ek-'+c, old=null; try{ old=JSON.parse(localStorage.getItem(key)||'null') }catch(e){}
+    if(old&&Date.now()-old.t<600000) return Promise.resolve(old.k);
+    if(navigator.onLine===false) return old?Promise.resolve(old.k):Promise.reject(new Error('offline'));
+    return api('keys',{chat:c}).then(function(j){ try{ localStorage.setItem(key,JSON.stringify({t:Date.now(),k:j.k||[]})) }catch(e){} return j.k||[] },function(e){ if(old) return old.k; throw e }) }
+  function sendOut(b){ var E=window.__e2e, my=S.me&&S.me.id; if(!E||!my) return api('send',b);
+    return keysFor(b.chat).then(function(k){ return E.lock({x:b.text||'',lat:b.lat,lon:b.lon},k,my) }).then(function(e){ return api('send',{chat:b.chat,e:e}) }) }
+  function unlockAll(j){ var E=window.__e2e, my=S.me&&S.me.id; if(!E||!j||!j.m) return Promise.resolve(j);
+    return Promise.all(j.m.map(function(m){ if(!m.e) return null; return E.unlock(m.e,my).then(function(o){ m.x=String(o.x||'').slice(0,500); if(isFinite(o.lat)&&o.lat!=null){ m.lat=o.lat; m.lon=o.lon } m.lk=1 },function(){ m.x='🔒 Locked message: it was sent before this phone had its lock.'; m.lk=2 }) })).then(function(){ return j }) }
   function send(text,spot){ if(!chat) return; var b={chat:chat.chat,text:text||''}; if(spot){ b.lat=spot.lat; b.lon=spot.lon }
     if(navigator.onLine===false||lq().some(function(x){ return x.chat===b.chat })){ queue(b); return } // keep the order: newer ones wait behind older ones
-    api('send',b).then(function(){ loadMsgs() }).catch(function(e){ if(netErr(e)){ queue(b); toast('No signal: saved, it will send by itself') } else toast(e.message) }) }
+    sendOut(b).then(function(){ loadMsgs() }).catch(function(e){ if(netErr(e)){ queue(b); toast('No signal: saved, it will send by itself') } else toast(e.message) }) }
   function needName(){ if(name()) return false; toast('Add your name first.'); view='list'; render(); return true }
 
   sh.addEventListener('submit',function(e){ e.preventDefault(); var f=e.target, k=f.getAttribute('data-f'), i=f.querySelector('input');
@@ -217,7 +228,7 @@
   // ---------- keep in step with the server ----------
   var busy=false;
   function sync(){ if(busy) return Promise.resolve(); if(share&&until&&Date.now()>until){ shareOff(); toast('Spot sharing stopped (timer ended).') } busy=true; var b={}; if(share){ if(sendHrs!=null){ b.hours=sendHrs } var s=fix&&Date.now()-fix.t<180000?fix:null; b.share=true; if(s){ b.lat=s.lat; b.lon=s.lon } } else b.share=false;
-    return api('sync',b).then(function(j){ S=j; S.blocked=S.blocked||[]; try{ localStorage.setItem('aw-frS',JSON.stringify({friends:j.friends||[],groups:j.groups||[],me:j.me||null})) }catch(e){} if(b.hours!=null) sendHrs=null; if(share&&S.me&&!S.me.share&&b.share){ /* server turned it off */ } if(chat&&chat.g){ var gg=S.groups.filter(function(x){ return x.chat===chat.chat })[0]; if(gg) chat.own=gg.own } var u=total()+S.req.length; if(prevUn>=0&&u>prevUn){ buzz(); if(sh.hidden){ toast(S.req.length&&u-prevUn<=S.req.length?'New friend request':'New message from a friend'); if(window.__native&&window.__native.notify&&window.__native.bg()) window.__native.notify('AwareBC','New message from a friend') } } prevUn=u;
+    return api('sync',b).then(function(j){ S=j; S.blocked=S.blocked||[]; if(!pkSent&&window.__e2e){ pkSent=true; window.__e2e.ready.then(function(m){ if(m) return api('pk',{pk:m.pub}) }).catch(function(){ pkSent=false }) } try{ localStorage.setItem('aw-frS',JSON.stringify({friends:j.friends||[],groups:j.groups||[],me:j.me||null})) }catch(e){} if(b.hours!=null) sendHrs=null; if(share&&S.me&&!S.me.share&&b.share){ /* server turned it off */ } if(chat&&chat.g){ var gg=S.groups.filter(function(x){ return x.chat===chat.chat })[0]; if(gg) chat.own=gg.own } var u=total()+S.req.length; if(prevUn>=0&&u>prevUn){ buzz(); if(sh.hidden){ toast(S.req.length&&u-prevUn<=S.req.length?'New friend request':'New message from a friend'); if(window.__native&&window.__native.notify&&window.__native.bg()) window.__native.notify('AwareBC','New message from a friend') } } prevUn=u;
       setBadge(); drawMarks(); if(!sh.hidden&&view==='list') render() }).catch(function(){}).then(function(){ busy=false }) }
   function loop(){ clearTimeout(syncT); var t=document.hidden?(share?60000:180000):(!sh.hidden?10000:30000); syncT=setTimeout(function(){ sync().then(loop) },t) }
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ sync(); loop() } });
