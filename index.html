@@ -324,7 +324,7 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
 #fsrleg .lp{border-top:3px dashed #ff9800}#fsrleg .lc{border-top:4px dotted #fff}@media (max-width:480px){.leaflet-popup-content{max-width:calc(100vw - 130px)!important}}#fsrleg .lk{border-top:2px solid #4dd0e1}#fsrleg .lr{width:10px;height:10px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-sizing:border-box;margin:0 8px 0 3px}.ptc{width:26px;height:26px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:grid;place-items:center;box-sizing:border-box}.ptc svg{width:16px;height:16px;fill:#3e2723}.ptc.ptx{background:#9e9e9e}.ptc.ptu{border-style:dashed}#fsrleg .lf,#fsrleg .lm{opacity:.75}
 #fsrleg small{grid-column:1/-1;color:var(--dim);font-weight:500}#fsrleg small[hidden]{display:none}
 #toolbtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:178px}body.toolon #toolbtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
-.sidebtn.ti{display:none;top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}body.toolon .sidebtn.ti{display:grid}#t_sled{bottom:230px}#t_supply{bottom:278px}#t_planet{bottom:326px}#t_comms{bottom:374px}#t_rescue{bottom:422px}
+.sidebtn.ti{display:none;top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}body.toolon .sidebtn.ti{display:grid}#t_sled{bottom:230px}#t_supply{bottom:278px}#t_planet{bottom:326px}#t_comms{bottom:374px}#t_rescue{bottom:422px}#t_saved{bottom:470px}
 .sidebtn.ti::after{content:attr(data-l);position:absolute;left:52px;top:50%;transform:translateY(-50%);background:var(--bg);color:var(--fg);font:500 12px/1 var(--font);padding:7px 10px;border-radius:12px;white-space:nowrap;box-shadow:var(--shadow);pointer-events:none}
 #pral{position:absolute;z-index:796;top:148px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 82px);display:flex;align-items:center;gap:6px;background:#8e24aa;color:#fff;border-radius:12px;padding:6px 6px 6px 12px;font:600 13px/1.3 var(--font);box-shadow:var(--shadow)}#pral[hidden]{display:none}#pral span{flex:1;min-width:0}#pral button{width:30px;height:30px;border-radius:50%;padding:0;background:rgba(0,0,0,.2);color:#fff;font:700 14px/1 var(--font);flex:none}
 .ptabs{display:flex;gap:6px;margin:0 0 8px}.ptab{flex:1;min-height:34px;border-radius:17px;border:0;background:var(--chip);color:var(--fg);font:600 12px var(--font);cursor:pointer;padding:0 4px}.ptab.on{background:var(--accent);color:#fff}
@@ -498,6 +498,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
   <button class="sidebtn ti" id="t_planet" data-l="Planetary threats" aria-label="Planetary threats"><span style="font-size:19px;line-height:1" aria-hidden="true">☄️</span></button>
   <button class="sidebtn ti" id="t_comms" data-l="Off-grid comms" aria-label="Off-grid comms"><span style="font-size:19px;line-height:1" aria-hidden="true">📻</span></button>
   <button class="sidebtn ti" id="t_rescue" data-l="Rescue & signal" aria-label="Rescue card, signal finder and first aid"><span style="font-size:19px;line-height:1" aria-hidden="true">🆘</span></button>
+  <button class="sidebtn ti" id="t_saved" data-l="Saved" aria-label="Saved places"><span style="font-size:19px;line-height:1" aria-hidden="true">⭐</span></button>
   <div id="pral" role="alert" hidden><span id="praltxt"></span><button id="pralx" aria-label="Dismiss solar storm alert">✕</button></div>
   <button class="sidebtn" id="keybtn" aria-label="Map key: rain and plane altitude" aria-expanded="false">KEY</button>
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
@@ -695,7 +696,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js" integrity="sha384-MtIdllebpZyms2pw9K3YJl8BEqrKNQCdSFAySjeglab6z2PkeFdF4Lb9cDsnxQuG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="icons3d.js?v=1"></script>
-<script src="app.js?v=26"></script>
+<script src="app.js?v=27"></script>
 <script src="app2.js?v=4"></script>
 <script src="reports.js?v=6"></script>
 <script src="friends.js?v=4"></script>
@@ -706,9 +707,10 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="bizpins.js?v=1" defer></script>
 <script src="gl.js?v=12" defer></script>
 <script src="extras.js?v=3" defer></script>
-<script src="signin.js?v=2" defer></script>
+<script src="signin.js?v=3" defer></script>
 <script src="place.js?v=5" defer></script>
 <script src="osm.js?v=5" defer></script>
 <script src="awplaces.js?v=3" defer></script>
+<script src="saved.js?v=1" defer></script>
 </body>
 </html>

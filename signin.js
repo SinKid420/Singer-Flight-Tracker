@@ -5,7 +5,7 @@
   var GCLIENT=''; // Google OAuth Web client ID (public). Empty = sign-in hidden (preview with ?signin=1)
   var RS='https://awarebc.aware-bc.workers.dev', SITE='https://sinkid420.github.io/Singer-Flight-Tracker/';
   var NAT=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()), PREVIEW=/[?&]signin=1/.test(location.search);
-  var BK=['sky-home','sky-meicon','sky-trname','aw-style','aw-voice','aw-hill','aw-slope','aw-smoke','sky-units','sky-autorot','aw-3d','sky-gpx'];
+  var BK=['sky-home','sky-meicon','sky-trname','aw-style','aw-voice','aw-hill','aw-slope','aw-smoke','sky-units','sky-autorot','aw-3d','aw-saved','sky-gpx'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function ss(k,v){ try{ if(v===undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k,v) }catch(e){ return null } }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) }
