@@ -103,8 +103,10 @@
   // ---------- Settings ▸ Map places (OpenStreetMap) ----------
   (function(){ var after=document.getElementById('rfolder'); if(!after) return; var f=document.createElement('details'); f.className='folder'; f.id='osmfolder';
     var R=[['gates','Gates & barriers'],['fuel','Gas & EV charging'],['help','Emergency help'],['water','Water & rest stops'],['peaks','Peaks, passes & views'],['speed','Speed limit while driving']];
-    f.innerHTML='<summary>Map places (OpenStreetMap)</summary>'+R.map(function(r){ return '<label class="setrow">'+r[1]+'<select data-k="'+r[0]+'"><option value="1">Show</option><option value="0">Hide</option></select></label>' }).join('')+'<div class="fhelp">Free data from OpenStreetMap volunteers: some places may be missing or out of date. Directions warn about gates on your route.</div>';
+    f.innerHTML='<summary>Map places (OpenStreetMap)</summary>'+R.map(function(r){ return '<label class="setrow">'+r[1]+'<select data-k="'+r[0]+'"><option value="1">Show</option><option value="0">Hide</option></select></label>' }).join('')+'<div class="fhelp">Free data from OpenStreetMap volunteers: some places may be missing or out of date. Directions warn about gates on your route. The speed limit sign is in Directions &amp; safety.</div>';
     after.parentNode.insertBefore(f,after.nextSibling);
     [].forEach.call(f.querySelectorAll('select'),function(s){ var k=s.getAttribute('data-k'); s.value=GT[k]?'1':'0'; s.onchange=function(){ GT[k]=s.value==='1'; ls('aw-osm-'+k,s.value); lay.clearLayers(); seen={}; draw(); if(k==='speed') upSpeed() } });
-    f.addEventListener('toggle',function(){ var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) }) })();
+    f.addEventListener('toggle',function(){ var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) });
+    // the speed limit sign is a driving setting: it lives in Directions & safety
+    (function mv(n){ var d=document.getElementById('dirfolder'), row=f.querySelector('select[data-k=speed]'); row=row&&row.closest('.setrow'); if(!row) return; if(!d){ if(n<20) setTimeout(function(){ mv(n+1) },300); return } d.insertBefore(row,d.querySelector('.fhelp')) })(0) })();
 })();

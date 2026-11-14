@@ -92,6 +92,12 @@
     s.onchange=function(){ off=s.value==='off'; ls('aw-rainoff',off?'1':'0'); apply(); if(!off&&ro&&ro.value!==s.value){ ro.value=s.value; ro.dispatchEvent(new Event('change')) } };
     if(ro) ro.addEventListener('change',function(){ if(!off) cur() }); new MutationObserver(function(){ if(!pn.hidden) cur() }).observe(pn,{attributes:true,attributeFilter:['hidden']});
     var css=document.createElement('style'); css.textContent='body.fsron.norain .rainlyr{display:none}.lyrp[aria-label="Off road layers"] .fpc{gap:4px}.lyrp[aria-label="Off road layers"] .fpc button{min-height:28px}'; document.head.appendChild(css) })();
+  // Layer menus ▸ Map theme (Day · Night · Auto), same setting as before, now next to the map layers
+  (function(){ var mt=document.getElementById('maptheme'); if(!mt) return; [].forEach.call(document.querySelectorAll('.lyrp'),function(pn){ var h=pn.querySelector('.fph'); if(!h||h.querySelector('.awtheme')) return;
+      var t=h.querySelector('span'); if(t) t.textContent=t.textContent.replace(/ layers$/,'');
+      var l=document.createElement('label'); l.className='fpt'; l.innerHTML='<select class="awtheme" aria-label="Map theme: day, night or auto"><option value="day">☀️</option><option value="night">🌙</option><option value="auto">🌗</option></select>';
+      if(t){ t.style.whiteSpace='nowrap'; t.style.marginRight='auto' } h.insertBefore(l,t?t.nextSibling:h.firstChild); h.style.gap='6px'; var s=l.querySelector('select'); s.value=mt.value; s.onchange=function(){ mt.value=s.value; mt.dispatchEvent(new Event('change')); [].forEach.call(document.querySelectorAll('.awtheme'),function(o){ o.value=s.value }) };
+      new MutationObserver(function(){ if(!pn.hidden) s.value=mt.value }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }) })();
   // Off road layers ▸ Terrain: Off · 3D hills · Slope · Both
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_terr')) return; var h=pn.querySelector('.fph'), l=document.createElement('label'); l.className='fpt';
     var hill=window.__gl&&window.__gl.hill?window.__gl.hill():ls('aw-hill')==='1', canHill=!!(window.__gl&&window.__gl.setHill);
@@ -213,7 +219,7 @@
   // ---------- Settings ▸ Directions & safety ----------
   (function(){ var after=document.getElementById('rfolder'); if(!after||document.getElementById('dirfolder')) return; var f=document.createElement('details'); f.className='folder'; f.id='dirfolder';
     var R=[['aw-voice','Spoken directions'],['aw-steep','Steep hill warnings'],['aw-offer','Offer to save map on low-service routes'],['aw-gauges','River gauges (with Creeks)']];
-    f.innerHTML='<summary>Directions &amp; safety</summary>'+R.map(function(r){ return '<label class="setrow">'+r[1]+'<select data-k="'+r[0]+'"><option value="1">On</option><option value="0">Off</option></select></label>' }).join('')+'<div class="fhelp">Gate warnings, the speed limit and map places are in Map places (OpenStreetMap). Smoke is under WildfireBC.</div>';
+    f.innerHTML='<summary>Directions &amp; safety</summary>'+R.map(function(r){ return '<label class="setrow">'+r[1]+'<select data-k="'+r[0]+'"><option value="1">On</option><option value="0">Off</option></select></label>' }).join('')+'<div class="fhelp">Gates, gas, help and other map places are in Map places (OpenStreetMap). Smoke is under Weather, fire &amp; lightning.</div>';
     after.parentNode.insertBefore(f,after.nextSibling);
     [].forEach.call(f.querySelectorAll('select'),function(sl){ var k=sl.getAttribute('data-k'); sl.value=ls(k)==='0'?'0':'1'; sl.onchange=function(){ ls(k,sl.value); if(k==='aw-voice'){ voiceOn=sl.value==='1'; if(!voiceOn) hush() } if(k==='aw-gauges'){ gKey=''; gauges() } if(window.__nav&&window.__nav.panel) window.__nav.panel() } });
     f.addEventListener('toggle',function(){ [].forEach.call(f.querySelectorAll('select'),function(sl){ sl.value=ls(sl.getAttribute('data-k'))==='0'?'0':'1' }); var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) }) })();
