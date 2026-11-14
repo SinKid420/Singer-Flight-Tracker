@@ -207,6 +207,7 @@
   function drawMarks(){ var keep={};
     S.friends.forEach(function(f){ if(!f.spot) return; keep[f.id]=1; var html='<div class="frmk"><b style="background:'+col(f.id)+'">'+ini(f.n)+'</b>'+(f.on?'<i></i>':'')+'<span>'+esc(f.n)+' · '+ago(f.spot.at)+'</span></div>', m=marks[f.id];
       if(!m){ m=marks[f.id]=L.marker([f.spot.lat,f.spot.lon],{icon:L.divIcon({className:'',html:html,iconSize:[40,40],iconAnchor:[20,20]}),keyboard:false,zIndexOffset:900}).addTo(layer);
+        if(window.__rlMini){ m.on('click',function(){ var x=S.friends.filter(function(q){return q.id===f.id})[0]||f; window.__rlMini(x.t,{n:x.n,lat:x.spot&&x.spot.lat,lon:x.spot&&x.spot.lon,sub:(x.on?'Online':'Seen '+ago(x.seen)+' ago')+(x.spot?' · spot '+ago(x.spot.at)+' ago':'')}) }) } else
         m.bindPopup(function(){ var x=S.friends.filter(function(q){return q.id===f.id})[0]||f; return '<b>'+esc(x.n)+' <small style="opacity:.7">#'+esc(x.t)+'</small></b><br><small>'+(x.on?'Online':'Seen '+ago(x.seen)+' ago')+' · spot '+(x.spot?ago(x.spot.at)+' ago':'')+'</small><div class="gpsb"><button type="button" data-fr="chat" data-id="'+esc(x.id)+'">💬 Chat</button><button type="button" data-fr="go" data-id="'+esc(x.id)+'">GPS directions</button></div>' },{closeButton:false,offset:[0,-14]}) }
       else { m.setLatLng([f.spot.lat,f.spot.lon]); m.setIcon(L.divIcon({className:'',html:html,iconSize:[40,40],iconAnchor:[20,20]})) } });
     Object.keys(marks).forEach(function(id){ if(!keep[id]){ layer.removeLayer(marks[id]); delete marks[id] } }) }
