@@ -65,7 +65,7 @@
         if(p.k==='tower'||!GT[p.k==='gate'?'gates':p.k]||z<MINZ[p.k]||n>400) return; if(!bd.pad(0.1).contains([p.lat,p.lon])) return; n++; keep[p.id]=1; if(seen[p.id]) return;
         seen[p.id]=L.marker([p.lat,p.lon],{icon:icon(p),keyboard:false,zIndexOffset:p.k==='help'?-100:-450,title:label(p)}).on('click',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),label(p)) }).addTo(lay) });
       Object.keys(seen).forEach(function(id){ if(!keep[id]){ lay.removeLayer(seen[id]); delete seen[id] } }) }) }
-  map.on('moveend zoomend',function(){ clearTimeout(drawT); drawT=setTimeout(draw,700) }); setTimeout(draw,2500); window.__osmRedraw=function(){ lay.clearLayers(); seen={}; draw() };
+  map.on('moveend zoomend',function(){ clearTimeout(drawT); drawT=setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },700) }); setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },2500); window.__osmRedraw=function(){ lay.clearLayers(); seen={}; draw() };
 
   // ---------- gates on a route (warning in the directions panel, spoken ahead) ----------
   function segD(p,a,b){ var cx=Math.cos(a[0]*Math.PI/180), ax=(b[1]-a[1])*cx, ay=b[0]-a[0], px=(p.lon-a[1])*cx, py=p.lat-a[0], L2=ax*ax+ay*ay, t=L2?Math.max(0,Math.min(1,(px*ax+py*ay)/L2)):0; return {d:Math.hypot(px-t*ax,py-t*ay)*111320,t:t} }

@@ -1,4 +1,4 @@
-const C='sky-v50',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json','./fb.js?v=1','./crash.js?v=2','./icons3d.js?v=1','./app.js?v=28','./app2.js?v=4','./reports.js?v=6','./friends.js?v=4','./offline.js?v=11','./tools.js?v=4','./roads.js?v=4','./winter.js?v=4','./ar.js?v=4','./nav.js?v=8','./bizpins.js?v=1','./gl.js?v=13','./extras.js?v=3','./signin.js?v=3','./place.js?v=5','./osm.js?v=5','./awplaces.js?v=3','./saved.js?v=1'];
+const C='sky-v51',T='sky-tiles-1',F=['./','./index.html','./manifest.webmanifest','./icon.svg','./awarebc-512.png','./sled-zones.json','./fb.js?v=1','./crash.js?v=2','./icons3d.js?v=1','./app.js?v=29','./app2.js?v=4','./reports.js?v=6','./friends.js?v=4','./offline.js?v=11','./tools.js?v=4','./roads.js?v=4','./winter.js?v=4','./ar.js?v=4','./nav.js?v=8','./bizpins.js?v=1','./gl.js?v=13','./extras.js?v=3','./signin.js?v=3','./place.js?v=5','./osm.js?v=6','./awplaces.js?v=4','./saved.js?v=1'];
 // AwareBC (by Josh Singer). The app opens straight from the phone; new versions download in the background and show next time (with a "tap to refresh" note).
 // Map pictures, trail data and map code are saved as you look at them, so areas you have viewed still work with no service.
 // Your saved offline area (cache awarebc-off-*) is never cleared by updates.
@@ -13,10 +13,10 @@ function age(r){const d=+r.headers.get('x-sw-t');return d?Date.now()-d:1e15}
 function keep(c,url,r){return r.blob().then(b=>{const h=new Headers(r.headers);h.set('x-sw-t',String(Date.now()));return c.put(url,new Response(b,{status:r.status,statusText:r.statusText,headers:h}))}).then(()=>trim(c))}
 // Map tiles and libraries: a saved copy that is fresh enough opens at once (libraries never change; map pictures 7 days; map data 1 day).
 // Otherwise the network is tried, and if it is slow (over 4 s) the saved copy opens instead.
-function xNet(req){const url=req.url,u=new URL(url);return caches.open(T).then(c=>c.match(url).then(m=>{
+function xNet(req){const u=new URL(req.url),url=u.hostname==='services.arcgisonline.com'?req.url.replace('//services.','//server.'):req.url;return caches.open(T).then(c=>c.match(url).then(m=>{
 const max=LIB.test(u.hostname)?1e16:/\/tile|GetMap|\/\d+\/\d+\/\d+(\.\w+)?$/i.test(url)?7*DAY:DAY;
 if(m&&age(m)<max)return m;
-const net=fetch(url,{mode:'cors',credentials:'omit'}).then(r=>{if(r.ok){keep(c,url,r.clone()).catch(()=>{})}return r}).catch(()=>null);
+const net=fetch(req.url,{mode:'cors',credentials:'omit'}).then(r=>{if(r.ok){keep(c,url,r.clone()).catch(()=>{})}return r}).catch(()=>null);
 return Promise.race([net,new Promise(r=>setTimeout(()=>r('slow'),4000))]).then(r=>{if(r&&r!=='slow')return r;
 return (m?Promise.resolve(m):caches.match(url)).then(x=>x||net.then(y=>y||fetch(req)))})}))}
 // BC Government offline map: saved copy first, then the network

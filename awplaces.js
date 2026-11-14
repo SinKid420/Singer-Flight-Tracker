@@ -24,7 +24,7 @@
       Object.keys(all).forEach(function(id){ var p=all[id]; if(p.ty==='__gone'||!bd.pad(0.2).contains([p.lat,p.lon])) return; keep[id]=1; if(mk[id]) return;
         mk[id]=L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:'<span class="awpk" role="button" aria-label="'+esc(p.n)+'">'+(window.__biz?window.__biz.svg(window.__biz.kind(p.ty)):ic(p.ty))+'</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-150,title:p.n}).on('click',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),p.n) }).addTo(lay) });
       Object.keys(mk).forEach(function(id){ if(!keep[id]){ lay.removeLayer(mk[id]); delete mk[id] } }) }) }
-  var dT=null; map.on('moveend zoomend',function(){ clearTimeout(dT); dT=setTimeout(draw,500) }); setTimeout(draw,2000);
+  var dT=null; map.on('moveend zoomend',function(){ clearTimeout(dT); dT=setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },500) }); setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },2000);
   [].forEach.call(document.querySelectorAll('.seg button'),function(b){ b.addEventListener('click',function(){ setTimeout(draw,60) }) });
   var css=document.createElement('style'); css.textContent='.awpk{display:inline-block;transform:translate(-50%,-100%);font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85))}'+
     '#awpf{position:fixed;inset:0;z-index:5500;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}#awpf[hidden]{display:none}#awpf .sh{width:100%;background:var(--bg,#1c1c1e);color:var(--fg,#fff);border-radius:18px 18px 0 0;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);font:13px var(--font,system-ui)}'+
