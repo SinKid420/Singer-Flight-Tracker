@@ -86,7 +86,7 @@
 
   function build(){
     X=document.createElement('div'); X.id='rlx'; X.hidden=true; X.setAttribute('role','dialog'); X.setAttribute('aria-label','Rig Link');
-    X.innerHTML='<div class="rlhd"><div class="rlt"><b id="rlreg">Offroad Layer</b><small id="rlsub"></small></div><span class="rlrig" id="rlrig">● 0 rigs</span><button type="button" class="rlx" data-a="badges" aria-label="My badges">🛡️</button><button type="button" class="rlx rlfr" data-a="friends" aria-label="Friends and chat">👥<em id="rlun" hidden></em></button><button type="button" class="rlx" data-a="close" aria-label="Close Rig Link">✕</button></div>'+
+    X.innerHTML='<div class="rlhd"><div class="rlt"><b id="rlreg">Off-road layer</b><small id="rlsub"></small></div><span class="rlrig" id="rlrig">● 0 rigs</span><button type="button" class="rlx" data-a="badges" aria-label="My badges">🛡️</button><button type="button" class="rlx rlfr" data-a="friends" aria-label="Friends and chat">👥<em id="rlun" hidden></em></button><button type="button" class="rlx" data-a="close" aria-label="Close Rig Link">✕</button></div>'+
       '<div class="rltog" role="tablist"><button type="button" data-a="pub" role="tab">🌍 Public Layer</button><button type="button" data-a="key" role="tab">🔒 Private Key Lobby</button></div>'+
       '<div id="rllobby"></div>'+
       '<div class="rlmap" id="rlmap"><div class="rlmb"><button type="button" data-a="me" aria-label="Center on me">◎</button><button type="button" data-a="big" aria-label="Bigger map">⤢</button></div></div>'+
@@ -104,7 +104,7 @@
   }
   function centerMe(){ var p=me(); mm.setView([p.lat,p.lon],posts.length?10:11) }
   function paintTop(){ var t=X.querySelectorAll('.rltog button'); t[0].className=pub?'on':''; t[1].className=!pub?'lk':''; t[1].textContent=!pub?'🔒 '+key+' unlocked':'🔒 Private Key Lobby';
-    X.querySelector('#rlsub').textContent=pub?'Offroad Layer · public feed':'Offroad Layer · 🔒 convoy '+key; X.querySelector('#rlrig').textContent='● '+nRigs+' rig'+(nRigs===1?'':'s');
+    X.querySelector('#rlsub').textContent=pub?'Off-road layer · public feed':'Off-road layer · 🔒 convoy '+key; X.querySelector('#rlrig').textContent='● '+nRigs+' rig'+(nRigs===1?'':'s');
     [].forEach.call(X.querySelectorAll('.rlfl button'),function(b){ b.className=b.getAttribute('data-f')===filt?'on':'' });
     X.querySelector('#rlmap').classList.toggle('big',big); lobby(); chips() }
   function lobby(){ var el=X.querySelector('#rllobby'), sh=ls('aw-rlshare')==='1';
@@ -157,7 +157,7 @@
     if(a==='close') return close();
     if(a==='badges') return profile('');
     if(a==='friends'){ if(window.__frApi) window.__frApi.send('',''); return }
-    if(a==='sendkey'){ if(window.__frApi) window.__frApi.send('Join my Rig Link convoy: '+key+' (Off road ▸ Rig Link ▸ Private Key Lobby)','Tap 💬 next to a friend to send convoy key '+key+'.'); return }
+    if(a==='sendkey'){ if(window.__frApi) window.__frApi.send('Join my Rig Link convoy: '+key+' (Off-road ▸ Rig Link ▸ Private Key Lobby)','Tap 💬 next to a friend to send convoy key '+key+'.'); return }
     if(a==='pub'){ pub=true; posts=[]; paintTop(); load(); return }
     if(a==='key'){ pub=false; posts=[]; paintTop(); if(key) load(); else { X.querySelector('#rlfeed').innerHTML=''; pins() } return }
     if(a==='mkkey'){ if(!needName()) return; api({op:'mkkey'}).then(function(j){ key=j.key; ls('aw-rlkey',key); X._showKey=true; posts=[]; paintTop(); load(); toast('Convoy '+key+' started. Share the key with your crew.') }).catch(function(e){ toast(e.message) }); return }

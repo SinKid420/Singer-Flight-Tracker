@@ -816,7 +816,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=164, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=165, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1301,8 +1301,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(window.MutationObserver){ new MutationObserver(lbl).observe(btn,{attributes:true,attributeFilter:['aria-pressed']});
           new MutationObserver(function(){ bc.toggle('fsrp',all.some(function(p){ return !p.pn.hidden })); if(!pn.hidden) bc.remove('menuon','toolon','keyon') }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }
         lbl(); var o={pn:pn,show:show,sync:sync}; all.push(o); return o }
-      var fp=mk(fb,'Off road','Off road layers',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4x4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid']],[['s_fsrRdOp','Road lines opacity']]);
-      var sp=mk(sb,'On road','On road layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrOp','Trail lines opacity'],['s_waterOp','Creeks opacity'],['radop','Rain opacity']]);
+      var fp=mk(fb,'Off-road','Off road layers',[['s_fsrFsr','FSRs','#ff1744','solid'],['s_fsrRoad','Back roads','#ff3b30','solid'],['s_fsrMotor','Motor & 4×4','#ff3b30','solid'],['s_fsrBcts','Timber sales','#9e9e9e','dashed'],['s_fsrPlan','Planned','#ff9800','dashed'],['s_fsrClose','Closures','#ffffff','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid']],[['s_fsrRdOp','Road lines opacity']]);
+      var sp=mk(sb,'On-road','On road layers',[['s_fsrWalk','Walking','#3ddc5a','dashed'],['s_fsrBike','Biking','#40a9ff','solid'],['s_fsrTh','Trailheads','#2e7d32','dotted'],['s_fsrCamp','Camping','#ffb300','dotted'],['s_water','Creeks','#4dd0e1','solid'],['s_fsrOsm','OSM trails','#3ddc5a','dashed'],['s_gpsTr','GPS traces','#b388ff','solid'],['s_fsrClose','Closures','#ffffff','dotted']],[['s_fsrOp','Trail lines opacity'],['s_waterOp','Creeks opacity'],['radop','Rain opacity']]);
       var pn=sp.pn; function show(v){ all.forEach(function(p){ p.show(v) }) } function sync(){ all.forEach(function(p){ p.sync() }) }
       map.on('click dragstart',function(){ show(false) });
       var ff=document.getElementById('fsfolder'); if(ff) ff.style.display='none';
@@ -1728,8 +1728,8 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
         merge('pcfolder','Planes, sky & space',[['pcfolder','Planes on the map'],['apfolder','Airports'],['arfolder','AR sky camera'],['v3folder','3D view'],['spfolder','Space & night sky'],['ffolder','Flight feeds & key']]);
         merge('hbfolder','Safety & survival',[['hbfolder','Emergency hub (SOS)'],['prfolder','Survival tools']]);
         var G=[['Map',[['gfolder','Basics'],['mefolder','My spot icon'],['wffolder','Weather, fire & lightning'],['cfolder','Compass']]],
-          ['On road',[['dirfolder','Directions & safety'],['osmfolder','Map places (OpenStreetMap)'],['rdfolder','DriveBC roads & cameras'],['bfolder','BC Ferries']]],
-          ['Off road',[['mtfolder','Winter mountains']]],
+          ['On-road',[['dirfolder','Directions & safety'],['osmfolder','Map places (OpenStreetMap)'],['rdfolder','DriveBC roads & cameras'],['bfolder','BC Ferries']]],
+          ['Off-road',[['mtfolder','Winter mountains']]],
           ['Sky & planes',[['pcfolder','Planes, sky & space']]],
           ['Safety',[['hbfolder','Safety & survival']]],
           ['App & account',[['acctfolder','Account'],['updfolder','App updates'],['crashfolder','Crash reports']]]];

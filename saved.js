@@ -30,7 +30,7 @@
   var P=null, tab='fav';
   function km(a){ var me=A.me&&A.me(); if(!me||!me.lat||me.label==='none') return ''; var r=Math.PI/180, d=6371*2*Math.asin(Math.sqrt(Math.pow(Math.sin((a.lat-me.lat)*r/2),2)+Math.cos(me.lat*r)*Math.cos(a.lat*r)*Math.pow(Math.sin((a.lon-me.lon)*r/2),2))); return d<10?d.toFixed(1)+' km':Math.round(d)+' km' }
   function list(){ var m=mode(), L2=all()[m].filter(function(a){ return (a.l==='want'?'want':'fav')===tab });
-    P.querySelector('h3').textContent='Saved · '+(m==='on'?'On road':'Off road');
+    P.querySelector('h3').textContent='Saved · '+(m==='on'?'On-road':'Off-road');
     [].forEach.call(P.querySelectorAll('.svt button'),function(b){ var on=b.getAttribute('data-t')===tab; b.className=on?'on':''; b.setAttribute('aria-pressed',on?'true':'false') });
     P.querySelector('.svl').innerHTML=L2.length?L2.map(function(a,i){ return '<div class="svi"><button type="button" class="svgo" data-i="'+i+'"><b>'+esc(a.n)+'</b><small>'+esc(km(a))+'</small></button><button type="button" class="svx" data-x="'+i+'" aria-label="Remove '+esc(a.n)+'">✕</button></div>' }).join('')
       :'<div class="sve">Nothing saved yet. Tap a spot on the map, then '+LS[tab].ic+' '+LS[tab].one+'.</div>';

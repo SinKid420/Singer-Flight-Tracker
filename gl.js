@@ -68,7 +68,7 @@
   // phones with 4 GB or less: lighter drawing (fewer helpers, sharp-enough canvas, smaller tile memory)
   var LOW=(navigator.deviceMemory||4)<=4; try{ if(LOW){ if(ML.setWorkerCount) ML.setWorkerCount(2); else ML.workerCount=2 } }catch(e){}
   // after a crash with 3D hills on, hills start switched off (turn back on in Off road layers)
-  try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off road layers.' } }catch(e){}
+  try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
   function want(){ var k=baseKey(), vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn,poi:k==='sat'} } // businesses only on On road
 

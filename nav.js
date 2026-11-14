@@ -37,12 +37,12 @@
   function clear(keepDest){ if(lineB) map.removeLayer(lineB); if(lineF) map.removeLayer(lineF); lineB=lineF=null; if(!keepDest&&destM){ map.removeLayer(destM); destM=null } }
 
   function panel(){ if(!dest){ P.hidden=true; document.body.classList.remove('navon'); return } P.hidden=false; document.body.classList.add('navon');
-    var h='', mode=(rt?rt.mode:(offMode()?'off':'on'))==='off'?'Off road':'On road';
+    var h='', mode=(rt?rt.mode:(offMode()?'off':'on'))==='off'?'Off-road':'On-road';
     if(busy){ h='<div class="nh"><span class="ni">🧭</span><span class="nt"><b>Finding a route…</b><span>'+mode+' · to '+esc(dest.n)+'</span></span></div><div class="nb"><button type="button" data-a="x">Cancel</button></div>' }
-    else if(!rt){ h='<div class="nh"><span class="ni">⚠</span><span class="nt"><b>'+esc(dest.err||'No route found')+'</b><span>'+mode+' · to '+esc(dest.n)+'</span></span></div><div class="nb"><button type="button" data-a="sw">Try '+(mode==='On road'?'Off road':'On road')+'</button><button type="button" data-a="x">Close</button></div>' }
+    else if(!rt){ h='<div class="nh"><span class="ni">⚠</span><span class="nt"><b>'+esc(dest.err||'No route found')+'</b><span>'+mode+' · to '+esc(dest.n)+'</span></span></div><div class="nb"><button type="button" data-a="sw">Try '+(mode==='On-road'?'Off-road':'On-road')+'</button><button type="button" data-a="x">Close</button></div>' }
     else if(rt.arrived){ h='<div class="nh"><span class="ni">🏁</span><span class="nt"><b>You have arrived</b><span>'+esc(dest.n)+'</span></span></div><div class="nb"><button type="button" data-a="end">Done</button></div>' }
     else if(!nav){ h='<div class="nh"><span class="ni">🧭</span><span class="nt"><b>'+esc(dest.n)+'</b><span>'+dTxt(rt.dist)+' · '+tTxt(rt.dur)+' · '+mode+'</span></span></div>'+warnH()+
-      '<div class="nb"><button type="button" class="pri" data-a="go">Start</button><button type="button" data-a="ls">'+(showList?'Hide':'Steps')+'</button><button type="button" data-a="sw">'+(mode==='On road'?'Off road':'On road')+'</button><button type="button" class="nx" data-a="x" aria-label="Close directions">✕</button></div>'+(showList?listH():'') }
+      '<div class="nb"><button type="button" class="pri" data-a="go">Start</button><button type="button" data-a="ls">'+(showList?'Hide':'Steps')+'</button><button type="button" data-a="sw">'+(mode==='On-road'?'Off-road':'On-road')+'</button><button type="button" class="nx" data-a="x" aria-label="Close directions">✕</button></div>'+(showList?listH():'') }
     else { var s=rt.steps[rt.next]||rt.steps[rt.steps.length-1], left=Math.max(0,rt.dist-rt.prog), eta=new Date(Date.now()+left/Math.max(rt.dist,1)*rt.dur*1000);
       h='<div class="nh"><span class="ni">'+s.ic+'</span><span class="nt"><b>'+dTxt(Math.max(0,rt.cum[s.i]-rt.prog))+' · '+esc(s.tx)+'</b><span>'+dTxt(left)+' left · '+tTxt(left/Math.max(rt.dist,1)*rt.dur)+' · arrive '+eta.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</span></span></div>'+
         (rt.note?'<div class="nw">'+esc(rt.note)+'</div>':'')+'<div class="nb"><button type="button" data-a="ls">'+(showList?'Hide steps':'Steps')+'</button><button type="button" data-a="end">End</button></div>'+(showList?listH():'') }
@@ -106,8 +106,8 @@
   function loadZones(){ if(zones) return zones; zones=fetch('sled-zones.json').then(function(r){ return r.ok?r.json():null }).then(function(j){ return j&&j.f?j.f.filter(function(f){ return !f.l&&f.w!=='Road Closure'&&(f.k==='mv'||(f.k==='c'&&/ATV/.test(f.t||''))) }):[] }).catch(function(){ zones=null; return [] }); return zones }
   function offRoute(a,b,on){
     var inBC=function(p){ return p.lat>48.2&&p.lat<60&&p.lon>-139.5&&p.lon<-114 };
-    if(!inBC(a)||!inBC(b)) return Promise.reject(new Error(on?'No signal: routes without signal work inside BC only':'Off road routes work inside BC only'));
-    var km=hav(a.lat,a.lon,b.lat,b.lon)/1000; if(km>90) return Promise.reject(new Error(on?'No signal: routes without signal reach up to 90 km ('+Math.round(km)+' km)':'Too far for Off road ('+Math.round(km)+' km). Use On road to get close, then switch'));
+    if(!inBC(a)||!inBC(b)) return Promise.reject(new Error(on?'No signal: routes without signal work inside BC only':'Off-road routes work inside BC only'));
+    var km=hav(a.lat,a.lon,b.lat,b.lon)/1000; if(km>90) return Promise.reject(new Error(on?'No signal: routes without signal reach up to 90 km ('+Math.round(km)+' km)':'Too far for Off-road ('+Math.round(km)+' km). Use On-road to get close, then switch'));
     var pad=Math.max(0.04,0.18*Math.max(Math.abs(a.lat-b.lat),Math.abs(a.lon-b.lon))), bb={w:Math.min(a.lon,b.lon)-pad*1.5,e:Math.max(a.lon,b.lon)+pad*1.5,s:Math.min(a.lat,b.lat)-pad,n:Math.max(a.lat,b.lat)+pad};
     var cs=cells(bb), jobs=[];
     cs.forEach(function(c){
@@ -158,7 +158,7 @@
     g[sN.i]=0; push(sN.i,0);
     while(hp.length){ var u=pop(); if(done[u]) continue; done[u]=1; if(u===eN.i) break; var L3=adj[u];
       for(k=0;k<L3.length;k+=4){ var v=L3[k], nc=g[u]+L3[k+1]; if(nc<g[v]){ g[v]=nc; prev[v]=u; pe[v]=L3[k+3]; push(v,nc+hav(nLa[v],nLo[v],tl,tn)/VMAX) } } }
-    if(!isFinite(g[eN.i])) throw new Error('No connected road route found. Try On road');
+    if(!isFinite(g[eN.i])) throw new Error('No connected road route found. Try On-road');
     var path=[]; for(var x=eN.i;x>=0;x=prev[x]) path.push(x); path.reverse();
     var pts=path.map(function(i){ return [nLa[i],nLo[i]] }), eds=path.map(function(i){ return pe[i] }); eds[0]=eds[1];
     var cum=cumul(pts), dur=g[eN.i], warn=[], wk={};

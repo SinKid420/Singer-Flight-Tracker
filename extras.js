@@ -86,7 +86,7 @@
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_rain')) return; var off=ls('aw-rainoff')==='1';
     function apply(){ document.body.classList.toggle('norain',off) } apply();
     var ro=document.getElementById('radop'); // one row: Rain & snow [On/Off] [opacity], opacity is the same setting as On road
-    var l=document.createElement('label'); l.className='fps'; l.innerHTML='<span>Rain &amp; opacity</span><span class="fps2"><select id="aw_rain" aria-label="Rain and snow radar in Off road"><option value="1">On</option><option value="0">Off</option></select><select id="aw_rainop" aria-label="Rain opacity">'+(ro?ro.innerHTML:'')+'</select></span>';
+    var l=document.createElement('label'); l.className='fps'; l.innerHTML='<span>Rain opacity</span><span class="fps2"><select id="aw_rain" aria-label="Rain and snow radar in Off road"><option value="1">On</option><option value="0">Off</option></select><select id="aw_rainop" aria-label="Rain opacity">'+(ro?ro.innerHTML:'')+'</select></span>';
     var st=pn.querySelector('.fps'); if(st) pn.insertBefore(l,st); else pn.appendChild(l);
     var s=l.querySelector('#aw_rain'), o=l.querySelector('#aw_rainop'); function cur(){ s.value=off?'0':'1'; if(ro) o.value=ro.value; o.disabled=off } cur();
     s.onchange=function(){ off=s.value==='0'; ls('aw-rainoff',off?'1':'0'); apply(); cur() };
@@ -95,14 +95,14 @@
     var css=document.createElement('style'); css.textContent='body.fsron.norain .rainlyr{display:none}.lyrp[aria-label="Off road layers"] .fpc{gap:4px}.lyrp[aria-label="Off road layers"] .fpc button{min-height:28px}'; document.head.appendChild(css); var c2=document.createElement('style'); c2.textContent='.fps2{display:flex;gap:4px}.fps2 select[disabled]{opacity:.4}'; document.head.appendChild(c2) })();
   // Layer menus ▸ Map theme (Day · Night · Auto), same setting as before, now next to the map layers
   (function(){ var mt=document.getElementById('maptheme'); if(!mt) return; [].forEach.call(document.querySelectorAll('.lyrp'),function(pn){ var h=pn.querySelector('.fph'); if(!h||h.querySelector('.awtheme')) return;
-      var t=h.querySelector('span'); if(t) t.textContent=t.textContent.replace(/ layers$/,'');
+      var t=h.querySelector('span'); if(t) t.textContent=/^Off/.test(t.textContent)?'Off-road':'On-road';
       var l=document.createElement('label'); l.className='fpt'; l.innerHTML='<select class="awtheme" aria-label="Map theme: day, night or auto"><option value="day">☀️</option><option value="night">🌙</option><option value="auto">🌗</option></select>';
       if(t){ t.style.whiteSpace='nowrap'; t.style.marginRight='auto' } h.insertBefore(l,t?t.nextSibling:h.firstChild); h.style.gap='6px'; var s=l.querySelector('select'); s.value=mt.value; s.onchange=function(){ mt.value=s.value; mt.dispatchEvent(new Event('change')); [].forEach.call(document.querySelectorAll('.awtheme'),function(o){ o.value=s.value }) };
       new MutationObserver(function(){ if(!pn.hidden) s.value=mt.value }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }) })();
   // Off road layers ▸ Terrain: Off · 3D hills · Slope · Both
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_terr')) return; var h=pn.querySelector('.fph'), l=document.createElement('label'); l.className='fpt';
     var hill=window.__gl&&window.__gl.hill?window.__gl.hill():ls('aw-hill')==='1', canHill=!!(window.__gl&&window.__gl.setHill);
-    l.innerHTML='<select id="aw_terr" aria-label="Terrain"><option value="0">Terrain</option>'+(canHill?'<option value="1">3D hills</option>':'')+'<option value="2">Slope</option>'+(canHill?'<option value="3">3D+slope</option>':'')+'</select>';
+    l.innerHTML='<select id="aw_terr" aria-label="Terrain"><option value="0">Terrain</option>'+(canHill?'<option value="1">3D hills</option>':'')+'<option value="2">Slope</option>'+(canHill?'<option value="3">3D + slope</option>':'')+'</select>';
     h.insertBefore(l,h.querySelector('.fpx')); var s=l.querySelector('select'); s.value=String((hill&&canHill?1:0)+(slopeOn?2:0));
     s.onchange=function(){ var v=+s.value; if(canHill) window.__gl.setHill(v===1||v===3); slopeOn=v>=2; ls('aw-slope',slopeOn?'1':'0'); slopeUpd() } })();
   [].forEach.call(document.querySelectorAll('.seg button'),function(b){ b.addEventListener('click',function(){ setTimeout(slopeUpd,50) }) }); setTimeout(slopeUpd,500);
@@ -114,7 +114,7 @@
   function inB(b,la,lo){ return b&&la>=b.s&&la<=b.n&&lo>=b.w&&lo<=b.e }
   function lowService(r){ var O=window.__off; if(!O||!r||!r.pts) return Promise.resolve(null); var pts=r.pts, sv=O.saved&&O.saved()||[];
     if(pts.every(function(p){ return O.inHome(p[0],p[1])||sv.some(function(x){ return inB(x.b,p[0],p[1]) }) })) return Promise.resolve(null); // already saved
-    var why=null; if(r.mode==='off'&&r.dist>3000) why='Off road route'; else if(r.note||(r.warn||[]).some(function(w){ return /forest|rough|decommission|logging/i.test(w) })) why='Uses forest or back roads';
+    var why=null; if(r.mode==='off'&&r.dist>3000) why='Off-road route'; else if(r.note||(r.warn||[]).some(function(w){ return /forest|rough|decommission|logging/i.test(w) })) why='Uses forest or back roads';
     if(why) return Promise.resolve(why); if(r.dist<15000) return Promise.resolve(null);
     var b={s:90,n:-90,w:180,e:-180}; pts.forEach(function(p){ b.s=Math.min(b.s,p[0]); b.n=Math.max(b.n,p[0]); b.w=Math.min(b.w,p[1]); b.e=Math.max(b.e,p[1]) }); b={s:b.s-.1,n:b.n+.1,w:b.w-.15,e:b.e+.15};
     var TW=window.__osm&&window.__osm.towersAlong?window.__osm.towersAlong(pts).catch(function(){ return null }):Promise.resolve(null);
