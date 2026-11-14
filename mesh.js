@@ -22,13 +22,18 @@
   // ---------- sending ----------
   function push(items){ if(!on||!peers||!items.length) return; for(var i=0;i<items.length;i+=30) P.send({data:JSON.stringify({aw:1,it:items.slice(i,i+30)})}).catch(function(){}) }
   function add(it){ var a=store(); if(a.some(function(x){ return x.i===it.i })) return false; a.push(it); save(a); return true }
-  function post(it){ it.i=it.i||rid(); it.t=it.t||Date.now(); it.h=0; add(it); push([it]); paint() }
+  function post(it){ it.i=it.i||rid(); it.t=it.t||Date.now(); it.h=0; add(it); push([it]); paint(); return it.i }
+  // unsend: take an item back from every phone it reached (and stop it travelling further)
+  function forget(ref){ save(store().filter(function(x){ return x.i!==ref }));
+    try{ for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i); if(k&&k.indexOf('aw-meshin-')===0){ var a=lj(k,[]); var b=a.filter(function(x){ return x.i!==ref }); if(b.length!==a.length) sj(k,b) } } }catch(e){}
+    if(drawn[ref]&&drawn[ref]!==1){ lay.removeLayer(drawn[ref]) } delete drawn[ref]; var f=F(); if(f&&f.refreshChat) f.refreshChat() }
   window.__mesh={ can:function(){ return can }, on:function(){ return on }, peers:function(){ return peers }, err:function(){ return err },
-    chat:function(chat,text,lat,lon){ if(!can) return; var body={n:myName(),x:String(text||'').slice(0,500),t:Date.now()}; if(lat!=null){ body.lat=lat; body.lon=lon }
+    recall:function(ref){ if(!can||!ref) return; forget(ref); post({k:'x',ref:String(ref).slice(0,40)}) },
+    chat:function(chat,text,lat,lon,id){ if(!can) return; var body={n:myName(),x:String(text||'').slice(0,500),t:Date.now()}; if(lat!=null){ body.lat=lat; body.lon=lon }
       Promise.all([tagOf(chat),keyOf(chat)]).then(function(r){ var iv=crypto.getRandomValues(new Uint8Array(12));
-        return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},r[1],enc.encode(JSON.stringify(body))).then(function(ct){ post({k:'m',c:r[0],v:b64(iv),e:b64(ct)}) }) }).catch(function(){}) },
-    help:function(lat,lon,note){ if(!can) return; post({k:'s',n:myName(),lat:lat,lon:lon,x:String(note||'Needs help').slice(0,200)}) },
-    rlpost:function(o){ if(!can) return; post(Object.assign({k:'p'},o)) },
+        return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},r[1],enc.encode(JSON.stringify(body))).then(function(ct){ post({i:id,k:'m',c:r[0],v:b64(iv),e:b64(ct)}) }) }).catch(function(){}); return id },
+    help:function(lat,lon,note){ if(!can) return; return post({k:'s',n:myName(),lat:lat,lon:lon,x:String(note||'Needs help').slice(0,200)}) },
+    rlpost:function(o){ if(!can) return; return post(Object.assign({k:'p',i:o.mid},o)) },
     hazard:function(b){ if(!can||!b) return; post({k:'r',n:myName(),lat:b.lat,lon:b.lon,st:b.st,tg:b.tg,x:String(b.note||'').slice(0,200)}) },
     set:set, inbox:inbox };
 
@@ -42,21 +47,22 @@
           f.got(c.chat,c.n,m) }) }).catch(function(){}) }) }
     else if(it.k==='s'){ alarm('🆘 '+String(it.n||'A rider')+' needs help nearby',it); mark(it) }
     else if(it.k==='r'){ mark(it); toast('⚠️ Trail hazard reported nearby by '+String(it.n||'a rider')) }
-    else if(it.k==='p'){ relayUp() } }
+    else if(it.k==='p'){ relayUp() }
+    else if(it.k==='x'){ forget(it.ref) } }
   // Rig Link posts carried through a dead zone: the first phone back in service uploads them (and earns Relay)
   var upBusy=false;
   function relayUp(){ if(upBusy||navigator.onLine===false||!window.__rlRelay) return; var done=lj('aw-meshup',[]), mine=window.__frApi&&window.__frApi.tag(); var it=store().filter(function(x){ return x.k==='p'&&done.indexOf(x.i)<0&&x.tg!==mine })[0]; if(!it) return;
     upBusy=true; window.__rlRelay(it).then(function(){ done.push(it.i); sj('aw-meshup',done.slice(-300)); upBusy=false; relayUp() },function(e){ upBusy=false; if(!/fetch|network|load failed/i.test(String(e&&e.message))){ done.push(it.i); sj('aw-meshup',done.slice(-300)) } }) }
   addEventListener('online',function(){ setTimeout(relayUp,4000) }); setTimeout(relayUp,8000);
   function onData(d){ var j; try{ j=JSON.parse(d.data) }catch(e){ return } if(!j||j.aw!==1||!Array.isArray(j.it)) return; var fwd=[];
-    j.it.slice(0,60).forEach(function(it){ if(!it||typeof it.i!=='string'||it.i.length>40||!/^[msrp]$/.test(it.k)) return; if(Date.now()-(+it.t||0)>KEEP) return;
+    j.it.slice(0,60).forEach(function(it){ if(!it||typeof it.i!=='string'||it.i.length>40||!/^[msrpx]$/.test(it.k)) return; if(it.k==='x'&&typeof it.ref!=='string') return; if(Date.now()-(+it.t||0)>KEEP) return; if(it.k!=='x'&&store().some(function(x){ return x.k==='x'&&x.ref===it.i })) return;
       if(JSON.stringify(it).length>3000) return; it.h=(+it.h||0)+1; if(!add(it)) return; handle(it); if(it.h<MAXH) fwd.push(it) });
     if(fwd.length) push(fwd); paint() }
 
   // ---------- help calls and hazards on the map ----------
   var lay=L.layerGroup().addTo(map), drawn={};
   function mark(it){ if(drawn[it.i]||!isFinite(it.lat)||!isFinite(it.lon)) return; drawn[it.i]=1; var sos=it.k==='s';
-    L.marker([it.lat,it.lon],{icon:L.divIcon({className:'',html:'<span class="mshmk'+(sos?' sos':'')+'" role="img" aria-label="'+(sos?'Help call':'Trail hazard')+'">'+(sos?'🆘':'⚠️')+'</span>',iconSize:[0,0]}),zIndexOffset:900})
+    drawn[it.i]=L.marker([it.lat,it.lon],{icon:L.divIcon({className:'',html:'<span class="mshmk'+(sos?' sos':'')+'" role="img" aria-label="'+(sos?'Help call':'Trail hazard')+'">'+(sos?'🆘':'⚠️')+'</span>',iconSize:[0,0]}),zIndexOffset:900})
       .bindPopup('<b>'+(sos?'🆘 '+esc(it.n)+' needs help':'⚠️ Trail hazard')+'</b><br>'+(it.x?esc(it.x)+'<br>':'')+'<small>'+(sos?'':'From '+esc(it.n)+' · ')+'via nearby phones · '+new Date(it.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</small><br><button type="button" class="mshgo" data-lat="'+it.lat+'" data-lon="'+it.lon+'">Directions</button>',{closeButton:false,maxWidth:200,minWidth:200,className:'pinpop'}).addTo(lay) }
   map.on('popupopen',function(e){ var b=e.popup.getElement()&&e.popup.getElement().querySelector('.mshgo'); if(b) b.onclick=function(){ map.closePopup(); var ll=L.latLng(+b.getAttribute('data-lat'),+b.getAttribute('data-lon')); if(window.__nav) window.__nav.to(ll,'Help call'); } });
   function alarm(t,it){ try{ if(navigator.vibrate) navigator.vibrate([400,150,400,150,400]) }catch(e){} toast(t); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC',t+(it.x?': '+it.x:'')) }

@@ -144,7 +144,7 @@
       .then(function(){ busy=false; paintTop() }) }
   function draw(note){ var fe=X.querySelector('#rlfeed'), q=lj('aw-rlq',[]).filter(function(x){ return (x.key||'')===curKey() });
     var h=note?'<div class="rlnote">'+esc(note)+'</div>':'';
-    h+=q.map(function(x){ return '<div class="rlcd pend"><div class="rltx">⏳ Waiting for signal: '+esc(x.x||ST[x.st]||(x.au?'voice clip':x.img?'photo':'post'))+'</div></div>' }).join('');
+    h+=q.map(function(x){ return '<div class="rlcd pend"><div class="rltx">⏳ Waiting for signal: '+esc(x.x||ST[x.st]||(x.au?'voice clip':x.img?'photo':'post'))+'</div><div class="rlact"><button type="button" class="rlbt sm" data-a="qx" data-m="'+esc(x.mid||'')+'">↩ Unsend</button></div></div>' }).join('');
     h+=posts.length?posts.map(card).join(''):'<div class="rlnone">'+(pub?'No posts in this area yet. Be the first: drop an alert or post a photo.':'No convoy posts yet. Anything you post with Key-Only shows here.')+'</div>';
     fe.innerHTML=h; pins() }
   function card(p,i){ var k=KIND[p.kind]||KIND.h, h='<div class="rlcd" data-i="'+i+'"><div class="rltop"><span class="rlav" data-a="prof" style="background:'+col(p.by+p.tg)+'">'+ini(p.by)+'</span><div><b data-a="prof">'+esc(p.by)+' <small>#'+esc(p.tg)+'</small>'+(p.fd?founder(22):'')+minis(p.bd)+'</b><small>'+ago(p.t)+(p.st?' · '+esc(ST[p.st]||p.st):'')+(p.rb?' · 📡 relayed by '+esc(p.rb):'')+'</small></div><span class="rltag" style="background:'+k[2]+';color:'+k[3]+'">'+k[0]+'</span></div>';
@@ -174,6 +174,7 @@
     if(b.hasAttribute('data-rig')){ var r=rigs[+b.getAttribute('data-rig')]; if(r){ mm.setView([r.lat,r.lon],14); mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) } return }
     var a=b.getAttribute('data-a'), cd=t.closest('.rlcd'), p=cd?posts[+cd.getAttribute('data-i')]:null;
     if(!a&&b.classList.contains('rlcd')){ if(p) mm.setView([p.lat,p.lon],Math.max(mm.getZoom(),13),{animate:true}); return }
+    if(a==='qx'){ var mid=b.getAttribute('data-m'); var q=lj('aw-rlq',[]).filter(function(x){ return (x.mid||'')!==mid }); ls('aw-rlq',JSON.stringify(q)); if(mid&&window.__mesh) window.__mesh.recall(mid); toast('Unsent'); draw(); return }
     if(a==='close') return close();
     if(a==='badges') return profile('');
     if(a==='friends'){ if(window.__frApi) window.__frApi.send('',''); return }
