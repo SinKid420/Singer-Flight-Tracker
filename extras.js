@@ -85,13 +85,14 @@
   // Off road layers ▸ Rain radar on/off (Off road only; On road keeps its own rain setting)
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_rain')) return; var off=ls('aw-rainoff')==='1';
     function apply(){ document.body.classList.toggle('norain',off) } apply();
-    var ro=document.getElementById('radop'); // one row: Off, or how see-through the rain is (same setting as On road)
-    var l=document.createElement('label'); l.className='fps'; l.innerHTML='Rain &amp; snow radar<select id="aw_rain" aria-label="Rain and snow radar in Off road"><option value="off">Off</option>'+(ro?[].map.call(ro.options,function(o){ return '<option value="'+o.value+'">'+(o.value==='1'?'On · solid':'On · '+o.textContent)+'</option>' }).join(''):'<option value="1">On</option>')+'</select>';
+    var ro=document.getElementById('radop'); // one row: Rain & snow [On/Off] [opacity], opacity is the same setting as On road
+    var l=document.createElement('label'); l.className='fps'; l.innerHTML='<span>Rain &amp; opacity</span><span class="fps2"><select id="aw_rain" aria-label="Rain and snow radar in Off road"><option value="1">On</option><option value="0">Off</option></select><select id="aw_rainop" aria-label="Rain opacity">'+(ro?ro.innerHTML:'')+'</select></span>';
     var st=pn.querySelector('.fps'); if(st) pn.insertBefore(l,st); else pn.appendChild(l);
-    var s=l.querySelector('select'); function cur(){ s.value=off?'off':(ro?ro.value:'1') } cur();
-    s.onchange=function(){ off=s.value==='off'; ls('aw-rainoff',off?'1':'0'); apply(); if(!off&&ro&&ro.value!==s.value){ ro.value=s.value; ro.dispatchEvent(new Event('change')) } };
-    if(ro) ro.addEventListener('change',function(){ if(!off) cur() }); new MutationObserver(function(){ if(!pn.hidden) cur() }).observe(pn,{attributes:true,attributeFilter:['hidden']});
-    var css=document.createElement('style'); css.textContent='body.fsron.norain .rainlyr{display:none}.lyrp[aria-label="Off road layers"] .fpc{gap:4px}.lyrp[aria-label="Off road layers"] .fpc button{min-height:28px}'; document.head.appendChild(css) })();
+    var s=l.querySelector('#aw_rain'), o=l.querySelector('#aw_rainop'); function cur(){ s.value=off?'0':'1'; if(ro) o.value=ro.value; o.disabled=off } cur();
+    s.onchange=function(){ off=s.value==='0'; ls('aw-rainoff',off?'1':'0'); apply(); cur() };
+    o.onchange=function(){ if(ro){ ro.value=o.value; ro.dispatchEvent(new Event('change')) } };
+    if(ro) ro.addEventListener('change',cur); new MutationObserver(function(){ if(!pn.hidden) cur() }).observe(pn,{attributes:true,attributeFilter:['hidden']});
+    var css=document.createElement('style'); css.textContent='body.fsron.norain .rainlyr{display:none}.lyrp[aria-label="Off road layers"] .fpc{gap:4px}.lyrp[aria-label="Off road layers"] .fpc button{min-height:28px}'; document.head.appendChild(css); var c2=document.createElement('style'); c2.textContent='.fps2{display:flex;gap:4px}.fps2 select[disabled]{opacity:.4}'; document.head.appendChild(c2) })();
   // Layer menus ▸ Map theme (Day · Night · Auto), same setting as before, now next to the map layers
   (function(){ var mt=document.getElementById('maptheme'); if(!mt) return; [].forEach.call(document.querySelectorAll('.lyrp'),function(pn){ var h=pn.querySelector('.fph'); if(!h||h.querySelector('.awtheme')) return;
       var t=h.querySelector('span'); if(t) t.textContent=t.textContent.replace(/ layers$/,'');
