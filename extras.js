@@ -46,6 +46,7 @@
   function elevAt(lat,lon,z){ var p=wpx(lat,lon,z), X=p[0]-0.5, Y=p[1]-0.5, x0=Math.floor(X), y0=Math.floor(Y), fx=X-x0, fy=Y-y0, tx=Math.floor(x0/256), ty=Math.floor(y0/256);
     return demTile(z,tx,ty).then(function(a){ if(!a) return null; function e(x,y){ var lx=Math.min(255,Math.max(0,x-tx*256)), ly=Math.min(255,Math.max(0,y-ty*256)); return a[ly*256+lx] }
       return e(x0,y0)*(1-fx)*(1-fy)+e(x0+1,y0)*fx*(1-fy)+e(x0,y0+1)*(1-fx)*fy+e(x0+1,y0+1)*fx*fy }) }
+  window.__elevAt=function(lat,lon){ return elevAt(lat,lon,13) };
   function profile(r){ var pts=r.pts, cum=r.cum, D=r.dist||cum[cum.length-1]; if(!pts||pts.length<2||!D) return Promise.resolve(null);
     var z=D<30000?12:D<120000?11:10, step=Math.max(40,D/500), S=[], j=0;
     for(var d=0;d<=D;d+=step){ while(j<cum.length-2&&cum[j+1]<d) j++; var seg=cum[j+1]-cum[j]||1, t=Math.min(1,Math.max(0,(d-cum[j])/seg)); S.push({d:d,la:pts[j][0]+(pts[j+1][0]-pts[j][0])*t,lo:pts[j][1]+(pts[j+1][1]-pts[j][1])*t}) }
