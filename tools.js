@@ -276,19 +276,31 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       else h+=sec('Ground magnetometer','Newport, WA readings unavailable right now.');
       h+='<div class="skynote">NOAA SWPC · USGS Geomagnetism, Newport observatory ('+kmTxt(km(me.lat,me.lon,48.265,-117.122))+' from you) · '+when(r)+'</div>'; put(t,h) }) }
     var radLayer=null;
-    function plRad(t){ var on=!!radLayer, h=sec('Radiation map','Shows background gamma radiation measured by Safecast volunteers with handheld and fixed sensors. Blue and green are normal; yellow, orange and red are higher than usual.')+
-      '<button class="ltbtn2 pacc" id="radbtn">'+(on?'Hide radiation map':'Show radiation map')+'</button>';
-      h+='<div id="radnear">'+sec('Nearest readings',relay?'Loading…':'Needs your relay update (v6).')+'</div>';
-      h+=sec('What’s normal','Natural background is about <b>0.05–0.20 µSv/h</b>. A chest X-ray is about 100 µSv. Official monitors: <a href="https://www.canada.ca/en/health-canada/services/health-risks-safety/radiation/understanding/measurements.html" target="_blank" rel="noopener">Health Canada</a> · <a href="https://www.epa.gov/radnet" target="_blank" rel="noopener">EPA RadNet</a>');
+    function plRad(t){ var on=!!radLayer;
+      var h='<div id="radlive">'+sec('Live radiation near you',relay?'Loading…':'Needs your relay update (v6).')+'</div>';
+      h+='<button class="ltbtn2 pacc" id="radbtn">'+(on?'Hide radiation map':'Show radiation map')+'</button>';
+      h+='<div id="radnear"></div>';
+      h+=sec('What’s normal','Natural background is about <b>0.05–0.20 µSv/h</b>. A chest X-ray is about 100 µSv. More: <a href="https://www.canada.ca/en/health-canada/services/health-risks-safety/radiation/understanding/measurements.html" target="_blank" rel="noopener">Health Canada</a> · <a href="https://www.epa.gov/radnet" target="_blank" rel="noopener">EPA RadNet</a>');
       if(!put(t,h)) return;
       document.getElementById('radbtn').onclick=function(){ if(radLayer){ map.removeLayer(radLayer); radLayer=null; plRad(vt) } else { radLayer=L.tileLayer('https://s3.amazonaws.com/te512.safecast.org/{z}/{x}/{y}.png',{maxNativeZoom:15,maxZoom:19,opacity:.7,zIndex:440,attribution:'Radiation © Safecast (CC BY-NC)'}).addTo(map); sh.hidden=true; vt++ } };
       if(!relay) return;
+      // 1. Health Canada monitoring stations: live readings (only shown when updated in the last 3 days)
+      cached('fps2',30,function(){ return J(relay.replace(/\/?$/,'/')+'?rad=1').then(function(j){ return j&&j.s&&j.s.length?j.s:null }) }).then(function(r){
+        var el=document.getElementById('radlive'); if(!el||t!==vt) return;
+        var a=r?r.d.filter(function(x){ return x[4]&&Date.now()-x[4]<3*86400000 }).map(function(x){ return x.concat([km(me.lat,me.lon,x[1],x[2])]) }).sort(function(p,q){ return p[5]-q[5] }):[];
+        if(!a.length){ el.innerHTML=''; return }
+        var n=a[0], hi=n[3]>0.3, x=a.slice(0,4);
+        el.innerHTML='<div class="ptiles">'+tile('Nearest station',n[3].toFixed(3)+' <small>µSv/h</small>',esc(cap1(n[0]))+' · '+kmTxt(n[5]),hi?AMBER:GREEN)+tile('Level',hi?'Above normal':'Normal','Updated '+ago(n[4]),hi?AMBER:GREEN)+'</div>'+
+          sec('Monitoring stations',x.map(function(m){ var hh=m[3]>0.3; return '<div class="row2 prow2"><span><b>'+esc(cap1(m[0]))+'</b> <small>'+kmTxt(m[5])+' · '+ago(m[4])+'</small></span><b style="color:'+(hh?AMBER:'inherit')+'">'+m[3].toFixed(3)+' µSv/h</b></div>' }).join(''))+
+          '<div class="skynote">Live gamma readings: Health Canada Fixed Point Surveillance Network · '+when(r)+'</div>' });
+      // 2. Safecast volunteers: only readings from the last 12 months
       cached('sc'+me.lat.toFixed(1)+me.lon.toFixed(1),720,function(){ return T(viaRelay('https://api.safecast.org/measurements.json?latitude='+me.lat.toFixed(2)+'&longitude='+me.lon.toFixed(2)+'&distance=300000&per_page=50&order=captured_at desc')).then(function(x){ var a=JSON.parse(x);
         return a.filter(function(m){ return m&&(m.unit==='cpm'||m.unit==='usv')&&isFinite(m.value)&&isFinite(m.latitude) }).map(function(m){ return [m.unit==='cpm'?m.value/334:m.value,+(+m.latitude).toFixed(3),+(+m.longitude).toFixed(3),Date.parse(m.captured_at)||0] }) }) }).then(function(r){
-        var el=document.getElementById('radnear'); if(!el||t!==vt) return;
-        if(!r||!r.d.length){ el.innerHTML=sec('Nearest readings',!r&&relayOld?'Needs your relay update (v6).':!r?'Could not load readings right now.':'No volunteer readings within 300 km.'); return }
-        var a=r.d.map(function(m){ return m.concat([km(me.lat,me.lon,m[1],m[2])]) }).sort(function(p,q){return q[3]-p[3]}).slice(0,3);
-        el.innerHTML=sec('Latest volunteer readings near you',a.map(function(m){ var hi=m[0]>0.3; return '<div class="row2"><span>'+kmTxt(m[4])+' away · '+esc(new Date(m[3]).toLocaleDateString([], {month:'short',year:'numeric'}))+'</span><b style="color:'+(hi?AMBER:'inherit')+'">'+m[0].toFixed(2)+' µSv/h</b></div>' }).join('')+'<small>Volunteer readings here are sparse and can be years old.</small>') }) }
+        var el=document.getElementById('radnear'); if(!el||t!==vt||!r) return;
+        var a=r.d.filter(function(m){ return Date.now()-m[3]<365*86400000 }).map(function(m){ return m.concat([km(me.lat,me.lon,m[1],m[2])]) }).sort(function(p,q){return q[3]-p[3]}).slice(0,3);
+        if(!a.length) return;
+        el.innerHTML=sec('Recent volunteer readings',a.map(function(m){ var hi=m[0]>0.3; return '<div class="row2 prow2"><span><b>'+kmTxt(m[4])+' away</b> <small>'+esc(new Date(m[3]).toLocaleDateString([], {month:'short',day:'numeric',year:'numeric'}))+'</small></span><b style="color:'+(hi?AMBER:'inherit')+'">'+m[0].toFixed(2)+' µSv/h</b></div>' }).join('')+'<small>Safecast volunteers · last 12 months</small>') }) }
+    function cap1(s){ s=String(s||''); return s===s.toUpperCase()?s.toLowerCase().replace(/\b[a-z]/g,function(c){return c.toUpperCase()}):s }
     function plNeo(t){ var d0=new Date().toISOString().slice(0,10), d1=new Date(Date.now()+6*86400000).toISOString().slice(0,10);
       cached('neo'+d0,360,function(){ return J('https://api.nasa.gov/neo/rest/v1/feed?start_date='+d0+'&end_date='+d1+'&api_key=DEMO_KEY').then(function(j){ var out=[];
         Object.keys(j.near_earth_objects||{}).forEach(function(k){ (j.near_earth_objects[k]||[]).forEach(function(o){ var ca=(o.close_approach_data||[])[0]; if(!ca) return; var dm=o.estimated_diameter&&o.estimated_diameter.meters;
