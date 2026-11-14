@@ -37,7 +37,10 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; L.GridLayer.prototype.options.updateInterval=50; // map pictures keep loading while you drive, not only when you stop; fewer load mid-pinch (phones ran out of memory zooming fast)
   // load one extra row of map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
-  (function(){ var o=L.GridLayer.prototype._getTiledPixelBounds, pd=(navigator.deviceMemory||4)<=4?128:256; L.GridLayer.prototype._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||this.getTileSize().x>256) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) } })();
+  // the screen loads first; the extra row only starts once everything on screen has arrived
+  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=(navigator.deviceMemory||4)<=4?128:256;
+    G._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||!this._awRdy||this.getTileSize().x>256||(this.options.opacity===0)) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) };
+    G.onAdd=function(m){ var s=this; if(!s._awHk){ s._awHk=1; s.on('loading',function(){ if(!s._awPre) s._awRdy=false }); s.on('load',function(){ if(s._awRdy||!s._map) return; s._awRdy=true; s._awPre=1; try{ s._update() }catch(e){} s._awPre=0 }) } return oa.call(this,m) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
 var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
@@ -75,11 +78,13 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var RET=!!(L.Browser.retina&&!sharpOff()); // sharp picture on sharp screens: twice the detail, half-size pieces
   function sharpOff(){ try{ return localStorage.getItem('aw-sharp')==='0' }catch(e){ return false } }
   var EsriSmart=L.TileLayer.extend({ createTile:function(c0,done){ var tile=document.createElement('div'), self=this, px=this.getTileSize().x, c={z:c0.z+(this.options.zoomOffset||0),x:c0.x,y:c0.y};
-    esriBest(c).then(function(z){ var f=Math.pow(2,c.z-z), ax=Math.floor(c.x/f), ay=Math.floor(c.y/f), img=document.createElement('img');
-      img.alt=''; img.setAttribute('role','presentation'); img.decoding='async';
+    var img=document.createElement('img'), cur=-1, fin=false; img.alt=''; img.setAttribute('role','presentation'); img.decoding='async'; tile.appendChild(img);
+    function show(z){ if(z===cur) return; cur=z; var f=Math.pow(2,c.z-z), ax=Math.floor(c.x/f), ay=Math.floor(c.y/f);
       img.style.cssText='position:absolute;max-width:none;width:'+(px*f)+'px;height:'+(px*f)+'px;left:'+(-(c.x-ax*f)*px)+'px;top:'+(-(c.y-ay*f)*px)+'px';
-      img.onload=function(){done(null,tile)}; img.onerror=function(e){done(e,tile)};
-      img.src=ESRI+'World_Imagery/MapServer/tile/'+z+'/'+ay+'/'+ax; tile.appendChild(img) });
+      img.src=ESRI+'World_Imagery/MapServer/tile/'+z+'/'+ay+'/'+ax }
+    var known=false; esriBest(c).then(function(z){ known=true; show(z); if(img.complete&&img.naturalWidth&&!fin){ fin=true; done(null,tile) } });
+    if(!known&&c.z>17) show(c.z); // start loading the sharpest picture right away while the coverage check runs (most towns have it)
+    img.onload=function(){ if(known&&!fin){ fin=true; done(null,tile) } }; img.onerror=function(e){ if(known&&!fin){ fin=true; done(e,tile) } };
     tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } });
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -798,7 +803,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=148, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=149, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];

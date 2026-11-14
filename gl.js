@@ -131,7 +131,7 @@
         if(w.hill) addHill(st); if(w.ovt){ var O=ovtLayers(w.ovt); st.sources.ovt=O.src; st.layers=st.layers.concat(O.layers) } return st }) }) }
 
   // ---------- switching ----------
-  function rasterLabels(show){ var b=A.base&&A.base(); if(!b) return; window.__glLab=!show; if(b[2]&&b[2].setOpacity) b[2].setOpacity(show?1:0); if(b[1]&&b[1].setOpacity) b[1].setOpacity(show?1:0); if(window.__navNamesChk) window.__navNamesChk() }
+  function rasterLabels(show){ var b=A.base&&A.base(); if(!b) return; window.__glLab=!show; [b[1],b[2]].forEach(function(l){ if(!l) return; if(l.setOpacity) l.setOpacity(show?1:0); if(!show&&map.hasLayer(l)) map.removeLayer(l); if(show&&!map.hasLayer(l)&&b[0]&&map.hasLayer(b[0])) l.addTo(map) }); /* hidden label pictures stop downloading */ if(window.__navNamesChk) window.__navNamesChk() }
   function leafletBase(show){ var b=A.base&&A.base(); if(!b) return; b.forEach(function(l){ if(show&&!map.hasLayer(l)) l.addTo(map); if(!show&&map.hasLayer(l)) map.removeLayer(l) }) }
   function setAttr(t){ var c=map.attributionControl; if(!c||t===attr) return; if(attr) c.removeAttribution(attr); attr=t; if(t) c.addAttribution(t) }
   function off(){ box.style.display='none'; curKey=''; leafletBase(true); rasterLabels(true); setAttr(''); map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(1) }) }
