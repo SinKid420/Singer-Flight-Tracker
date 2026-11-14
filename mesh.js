@@ -62,8 +62,8 @@
   // ---------- help calls and hazards on the map ----------
   var lay=L.layerGroup().addTo(map), drawn={};
   function mark(it){ if(drawn[it.i]||!isFinite(it.lat)||!isFinite(it.lon)) return; drawn[it.i]=1; var sos=it.k==='s';
-    drawn[it.i]=L.marker([it.lat,it.lon],{icon:L.divIcon({className:'',html:'<span class="mshmk'+(sos?' sos':'')+'" role="img" aria-label="'+(sos?'Help call':'Trail hazard')+'">'+(sos?'🆘':'⚠️')+'</span>',iconSize:[0,0]}),zIndexOffset:900})
-      .bindPopup('<b>'+(sos?'🆘 '+esc(it.n)+' needs help':'⚠️ Trail hazard')+'</b><br>'+(it.x?esc(it.x)+'<br>':'')+'<small>'+(sos?'':'From '+esc(it.n)+' · ')+'via nearby phones · '+new Date(it.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</small><br><button type="button" class="mshgo" data-lat="'+it.lat+'" data-lon="'+it.lon+'">Directions</button>',{closeButton:false,maxWidth:200,minWidth:200,className:'pinpop'}).addTo(lay) }
+    drawn[it.i]=L.marker([it.lat,it.lon],{icon:L.divIcon({className:'',html:'<span class="mshmk'+(sos?' sos':'')+'" role="img" aria-label="'+(sos?'Help call':'Trail hazard')+'">'+(sos?'🆘':it.st==='beacon'?'🚙':'⚠️')+'</span>',iconSize:[0,0]}),zIndexOffset:900})
+      .bindPopup('<b>'+(sos?'🆘 '+esc(it.n)+' needs help':it.st==='beacon'?'🚙 Rider '+esc(it.n)+' nearby':'⚠️ Trail hazard')+'</b><br>'+(it.x?esc(it.x)+'<br>':'')+'<small>'+(sos?'':'From '+esc(it.n)+' · ')+'via nearby phones · '+new Date(it.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</small><br><button type="button" class="mshgo" data-lat="'+it.lat+'" data-lon="'+it.lon+'">Directions</button>',{closeButton:false,maxWidth:200,minWidth:200,className:'pinpop'}).addTo(lay) }
   map.on('popupopen',function(e){ var b=e.popup.getElement()&&e.popup.getElement().querySelector('.mshgo'); if(b) b.onclick=function(){ map.closePopup(); var ll=L.latLng(+b.getAttribute('data-lat'),+b.getAttribute('data-lon')); if(window.__nav) window.__nav.to(ll,'Help call'); } });
   function alarm(t,it){ try{ if(navigator.vibrate) navigator.vibrate([400,150,400,150,400]) }catch(e){} toast(t); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC',t+(it.x?': '+it.x:'')) }
   function toast(t){ var d=document.createElement('div'); d.className='frtoast'; d.textContent=t; document.body.appendChild(d); setTimeout(function(){ d.classList.add('go') },3500); setTimeout(function(){ d.remove() },4200) }
@@ -80,6 +80,22 @@
     lj('aw-meshon',0)&&setTimeout(function(){ set(true) },4000);
     store().forEach(function(it){ if(it.k!=='m') mark(it) });
   }
+
+  // ---------- sound relay (sonic.js): help calls and "here I am" beacons hop phone to phone as near-ultrasonic sound ----------
+  var SO=window.__sonic, sOn=false, sErr='', beaconT=null;
+  function myTag(){ return window.__frApi&&window.__frApi.tag&&window.__frApi.tag()||'' }
+  function mySpot(){ var m=A.me&&A.me(); return m&&m.label!=='none'&&isFinite(m.lat)?m:null }
+  function heard(o){ var who=o.tag===myTag()?null:o.tag; if(!who) return; var it={i:'snd'+o.type+o.tag+o.lat.toFixed(3)+o.lon.toFixed(3),t:Date.now(),h:o.hops,n:'#'+o.tag,lat:o.lat,lon:o.lon};
+    if(o.type===1){ it.k='s'; it.x='Needs help (heard by sound)'; if(add(it)){ alarm('🆘 #'+o.tag+' needs help nearby (heard by sound)',it); mark(it); push([it]) } }
+    else if(o.type===2){ it.k='r'; it.st='beacon'; it.x='Rider beacon heard by sound'; if(add(it)){ mark(it); toast('📡 Rider #'+o.tag+' is nearby (sound beacon)') } }
+    if(o.hops<2) setTimeout(function(){ if(sOn) SO.play({type:o.type,hops:o.hops+1,lat:o.lat,lon:o.lon,tag:o.tag}) },1500+Math.random()*2500) } // pass it on once
+  function beacon(){ clearTimeout(beaconT); if(!sOn) return; beaconT=setTimeout(beacon,60000); var m=mySpot(), tg=myTag(); if(m&&tg&&navigator.onLine===false) SO.play({type:2,hops:0,lat:m.lat,lon:m.lon,tag:tg}) }
+  function sSet(v){ if(!SO) return Promise.resolve(false); sErr=''; sj('aw-sound',v?1:0);
+    if(!v){ sOn=false; SO.stop(); clearTimeout(beaconT); paint(); return Promise.resolve(false) }
+    return SO.listen(heard).then(function(){ sOn=true; beacon(); paint(); return true },function(e){ sErr=String(e&&e.message||'Allow the microphone for AwareBC to hear sound packets.'); sOn=false; sj('aw-sound',0); paint(); return false }) }
+  window.__mesh.sound={ can:function(){ return !!SO }, on:function(){ return sOn }, err:function(){ return sErr }, set:sSet,
+    help:function(){ var m=mySpot(), tg=myTag(); if(!sOn||!m||!tg) return; var o={type:1,hops:0,lat:m.lat,lon:m.lon,tag:tg}; SO.play(o); setTimeout(function(){ if(sOn) SO.play(o) },20000); setTimeout(function(){ if(sOn) SO.play(o) },40000) } };
+  if(SO&&lj('aw-sound',0)) document.addEventListener('click',function once(){ document.removeEventListener('click',once,true); sSet(true) },true); // phones only start the mic after a tap
   var st=document.createElement('style'); st.textContent='.mshmk{display:inline-block;transform:translate(-50%,-50%);font-size:24px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}.mshmk.sos{animation:mshp 1.2s infinite}@keyframes mshp{50%{transform:translate(-50%,-50%) scale(1.25)}}.mshgo{margin-top:6px;width:100%;padding:8px;border:0;border-radius:10px;background:#1a73e8;color:#fff;font:600 13px var(--font,system-ui)}';
   document.head.appendChild(st);
 })();
