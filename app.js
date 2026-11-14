@@ -816,7 +816,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=162, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=163, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1357,6 +1357,15 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       clearTimeout(timer); if(!busy) poll() };
     map.removeLayer(ring); paint() })();
   (function(){ var mb=document.getElementById('menubtn'), kb=document.getElementById('keybtn'), hub=document.getElementById('hubbtn'); if(!mb||!kb) return;
+    // Map key now sits in the Layers list (frees the left button column)
+    kb.style.display='none'; // opened from the 🔑 in the On road / Off road layer menus
+    setTimeout(function(){ [].forEach.call(document.querySelectorAll('.lyrp'),function(pn){ var h=pn.querySelector('.fph'), x=h&&h.querySelector('.fpx'); if(!x||h.querySelector('.fpkey')) return;
+      var k=document.createElement('button'); k.type='button'; k.className='fpx fpkey'; k.setAttribute('aria-label','Map key: rain and plane altitude'); k.textContent='🔑'; h.insertBefore(k,x);
+      k.onclick=function(e){ e.stopPropagation(); x.click(); kb.click() } }) },0);
+    // the trail colours box folds away with a tap (remembered)
+    (function(){ var lg=document.getElementById('fsrleg'); if(!lg) return; var st=document.createElement('style'); st.textContent='#fsrleg{pointer-events:auto;cursor:pointer}#fsrleg.min>*{display:none}#fsrleg.min{display:block}#fsrleg.min::after{content:"Trail colours ▸";font:700 11px var(--font)}#fsrleg.min[hidden]{display:none}#fsrleg:not(.min)::after{content:"▾ tap to hide";grid-column:1/-1;color:var(--dim);font:600 10px var(--font)}'; document.head.appendChild(st);
+      try{ if(localStorage.getItem('aw-legmin')==='1') lg.classList.add('min') }catch(e){}
+      lg.setAttribute('role','button'); lg.addEventListener('click',function(e){ e.stopPropagation(); var m=lg.classList.toggle('min'); try{ localStorage.setItem('aw-legmin',m?'1':'0') }catch(x){} }) })();
     function setMenu(v){ if(v){ var n=0, ORD=['roadbtn','firebtn','ltbtn','planebtn','spacebtn','aptbtn','mtbtn','ferrybtn','arbtn','hubbtn'], all=[].slice.call(document.querySelectorAll('.sidebtn.mi')); all.sort(function(a,b){ var i=ORD.indexOf(a.id), j=ORD.indexOf(b.id); return (i<0?50:i)-(j<0?50:j) }); all.forEach(function(b){ if(b.classList.contains('off')) return; b.style.top=(226+n*41)+'px'; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
     mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
@@ -1709,6 +1718,24 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
         if(lt){ wf.appendChild(hd('Lightning')); [].slice.call(lt.querySelectorAll('.setrow')).forEach(function(r){ wf.appendChild(r) }); lt.style.display='none' }
         ['maptheme','s_water','s_waterOp'].forEach(function(id){ var el=document.getElementById(id), row=el&&el.closest('.setrow'); if(row) row.style.display='none' });
         setTimeout(function(){ if(rf&&![].some.call(rf.querySelectorAll('.setrow'),function(r){ return r.style.display!=='none' })) rf.style.display='none' },0) })();
+
+      // Settings in sections: Map · On road · Off road · Sky & planes · Safety · App & account (runs once every part of the app has added its folder)
+      function regroup(){ var sh=document.querySelector('#fsheet .sheet'), about=sh&&sh.querySelector('.about'); if(!sh||sh.getAttribute('data-rg')) return; sh.setAttribute('data-rg','1');
+        [].forEach.call(sh.querySelectorAll('.sethd'),function(h){ h.remove() });
+        function hd(t){ var d=document.createElement('div'); d.className='subh'; d.style.cssText='margin-top:8px;text-transform:none;letter-spacing:0;font-weight:700'; d.textContent=t; return d }
+        function merge(host,title,parts){ var H=document.getElementById(host); if(!H) return; var su=H.querySelector('summary'); su.textContent=title;
+          parts.forEach(function(p,i){ var F=document.getElementById(p[0]); if(!F) return; if(i===0){ H.insertBefore(hd(p[1]),su.nextSibling); return } H.appendChild(hd(p[1])); [].slice.call(F.childNodes).forEach(function(n){ if(n.nodeName!=='SUMMARY') H.appendChild(n) }); F.style.display='none' }) }
+        merge('pcfolder','Planes, sky & space',[['pcfolder','Planes on the map'],['apfolder','Airports'],['arfolder','AR sky camera'],['v3folder','3D view'],['spfolder','Space & night sky'],['ffolder','Flight feeds & key']]);
+        merge('hbfolder','Safety & survival',[['hbfolder','Emergency hub (SOS)'],['prfolder','Survival tools']]);
+        var G=[['Map',[['gfolder','Basics'],['mefolder','My spot icon'],['wffolder','Weather, fire & lightning'],['cfolder','Compass']]],
+          ['On road',[['dirfolder','Directions & safety'],['osmfolder','Map places (OpenStreetMap)'],['rdfolder','DriveBC roads & cameras'],['bfolder','BC Ferries']]],
+          ['Off road',[['mtfolder','Winter mountains']]],
+          ['Sky & planes',[['pcfolder','Planes, sky & space']]],
+          ['Safety',[['hbfolder','Safety & survival']]],
+          ['App & account',[['acctfolder','Account'],['updfolder','App updates'],['crashfolder','Crash reports']]]];
+        G.forEach(function(g){ var h=document.createElement('div'); h.className='sethd'; h.textContent=g[0]; sh.insertBefore(h,about); g[1].forEach(function(f){ var d=document.getElementById(f[0]); if(!d) return; var su=d.querySelector('summary'); if(su) su.textContent=f[1]; sh.insertBefore(d,about) }) });
+        ['rfolder','fsfolder','ltfolder'].forEach(function(id){ var d=document.getElementById(id); if(d){ sh.insertBefore(d,about); d.style.display='none' } }) }
+      if(document.readyState==='complete') setTimeout(regroup,300); else addEventListener('load',function(){ setTimeout(regroup,300) });
       // plane settings live with the planes
       var pc=document.getElementById('pcfolder'), su=pc&&pc.querySelector('summary'); ['lgalt','routemode','maxpl'].forEach(function(id){ var el=document.getElementById(id), row=el&&el.closest('.setrow'); if(row&&pc) pc.insertBefore(row,su.nextSibling) });
       var RN={lgwx:'Rain colour key',lgalt:'Altitude colour key',s_declutter:'When zoomed out',s_nearRef:'Measure "nearest" from',radloop:'Radar animation',routemode:'Flight route lines',maxpl:'Planes shown',s_apt:'Airport weather tags',s_atype:'Airport icons for',s_aMax:'Airport icons shown',s_aptBad:'Weather tags show',s_wxMax:'Weather tags shown',s_adir:'Airport icons',s_hubKm:'Area to check',s_ferryFill:'Car space shown as',s_road:'Road info on the map',s_ferry:'Ferry terminals on the map'};
