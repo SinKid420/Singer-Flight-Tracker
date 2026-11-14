@@ -82,6 +82,13 @@
   function legend(){ var lg=document.getElementById('fsrleg'); if(!lg) return; var el=document.getElementById('slopeleg'); var want=slopeOn&&offMode();
     if(want&&!el){ el=document.createElement('small'); el.id='slopeleg'; el.className='slopeleg'; el.title='Slope angle (avalanche terrain)'; el.innerHTML=[['#ffeb3b','27°'],['#ff9800','30°'],['#f44336','35°'],['#9c27b0','45°+']].map(function(x){ return '<span><b style="background:'+x[0]+'"></b>'+x[1]+'</span>' }).join(''); lg.appendChild(el) }
     if(!want&&el) el.remove() }
+  // Off road layers ▸ Rain radar on/off (Off road only; On road keeps its own rain setting)
+  (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_rain')) return; var off=ls('aw-rainoff')==='1';
+    function apply(){ document.body.classList.toggle('norain',off) } apply();
+    var l=document.createElement('label'); l.className='fps'; l.innerHTML='Rain &amp; snow radar<select id="aw_rain" aria-label="Rain and snow radar in Off road"><option value="1">On</option><option value="0">Off</option></select>';
+    var st=pn.querySelector('.fps'); if(st) pn.insertBefore(l,st); else pn.appendChild(l);
+    var s=l.querySelector('select'); s.value=off?'0':'1'; s.onchange=function(){ off=s.value==='0'; ls('aw-rainoff',off?'1':'0'); apply() };
+    var css=document.createElement('style'); css.textContent='body.fsron.norain .rainlyr{display:none}.lyrp[aria-label="Off road layers"] .fpc{gap:4px}.lyrp[aria-label="Off road layers"] .fpc button{min-height:28px}'; document.head.appendChild(css) })();
   // Off road layers ▸ Terrain: Off · 3D hills · Slope · Both
   (function(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||document.getElementById('aw_terr')) return; var h=pn.querySelector('.fph'), l=document.createElement('label'); l.className='fpt';
     var hill=window.__gl&&window.__gl.hill?window.__gl.hill():ls('aw-hill')==='1', canHill=!!(window.__gl&&window.__gl.setHill);

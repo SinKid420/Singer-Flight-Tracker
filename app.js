@@ -168,7 +168,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function wxOp(k){return Math.min(1,wxOpacity*(WX[k].boost||1))}
   ['cloud','rain','snow'].forEach(function(k){
     var w=WX[k];
-    wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',tileSize:512,zoomOffset:-1,updateWhenIdle:true,opacity:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
+    wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',tileSize:512,zoomOffset:-1,updateWhenIdle:true,opacity:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'rainlyr',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
   });
   (function(){var img=document.getElementById('wxlegimg');img.onerror=function(){img.hidden=true};img.loading='lazy';img.src=WX.rain.legend})();
   // New frames arrive every 6 to 10 minutes. A changing parameter makes the browser fetch fresh tiles.
@@ -183,7 +183,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=(+rcfg.op>0&&+rcfg.op<=1)?+rcfg.op:.1, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
   function want(k){ var v=rcfg.src; if(k==='mx'&&v==='auto'){ var c=map.getCenter(); if(c.lat>24&&c.lat<58&&c.lng>-135&&c.lng<-52) return false } return v==='auto'||v===k }
   var lazyT=null;
-  function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,attribution:attr}) }
+  function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,className:'rainlyr',attribution:attr}) }
   function clearFrames(){ frames.forEach(function(f){ ['rv','iem'].forEach(function(k){ if(f[k]) map.removeLayer(f[k]) }) }); frames=[] }
   function buildFrame(st){ // st = steps of 10 minutes back from now
     var f={st:st}, b=Math.floor(Date.now()/300000);
@@ -816,7 +816,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=159, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=160, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
