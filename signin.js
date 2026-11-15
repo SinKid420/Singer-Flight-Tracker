@@ -36,6 +36,8 @@
 
   // Google's own sign-in button (website). In the Android app, Google doesn't allow sign-in inside the app's web view,
   // so it opens in the phone's browser and comes back with a one-time code.
+  // shared with Friends ▸ Invite ▸ Google contacts (same Google client, website only)
+  window.__gsi={ client:function(){ return NAT?'':GCLIENT }, preview:function(){ return PREVIEW&&!NAT }, load:function(){ return gis() } };
   var gisP=null; function gis(){ if(gisP) return gisP; gisP=new Promise(function(ok,no){ if(window.google&&google.accounts&&google.accounts.id) return ok(); var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=function(){ ok() }; s.onerror=function(){ gisP=null; no(new Error('Google sign-in could not load. Check your signal.')) }; document.head.appendChild(s) }); return gisP }
   function gButton(el){ if(!GCLIENT){ el.innerHTML='<button type="button" class="aw-gfake" disabled>Continue with Google<small>being set up</small></button>'; return }
     if(NAT){ el.innerHTML='<button type="button" class="aw-gbtn">Continue with Google</button>'; el.firstChild.onclick=function(){ startApp() }; return }
