@@ -35,10 +35,11 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   ];
   var src = 0;
 
+  (function(){ var v='auto'; try{ v=localStorage.getItem('aw-perf')||'auto' }catch(e){} window.__awPerf=v; window.__awLow=v==='low'||(v==='auto'&&(navigator.deviceMemory||4)<=4) })();
   L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; L.GridLayer.prototype.options.updateInterval=50; // map pictures keep loading while you drive, not only when you stop; fewer load mid-pinch (phones ran out of memory zooming fast)
   // load one extra row of map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
   // the screen loads first; the extra row only starts once everything on screen has arrived
-  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=(navigator.deviceMemory||4)<=4?64:256;
+  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=window.__awLow?64:256;
     G._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||!this._awRdy||this.getTileSize().x>256||(this.options.opacity===0)) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) };
     G.onAdd=function(m){ var s=this; if(!s._awHk){ s._awHk=1; s.on('loading',function(){ if(!s._awPre) s._awRdy=false }); s.on('load',function(){ if(s._awRdy||!s._map) return; s._awRdy=true; s._awPre=1; try{ s._update() }catch(e){} s._awPre=0 }) } return oa.call(this,m) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
@@ -75,8 +76,13 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function esriBest(c){ if(c.z<=17) return Promise.resolve(c.z); var z=c.z;
     function tryZ(){ if(z<=17) return Promise.resolve(17); var f=Math.pow(2,c.z-z); return esriHas(z,Math.floor(c.y/f),Math.floor(c.x/f)).then(function(ok){ if(ok) return z; z--; return tryZ() }) }
     return tryZ() }
-  var LOWMEM=(navigator.deviceMemory||4)<=4;
-  var RET=!!(L.Browser.retina&&!sharpOff()); // sharp picture on sharp screens: twice the detail, half-size pieces
+  // Phone speed (Settings ▸ Basics): Auto picks "older phone" on phones with 4 GB or less
+  var PERF=window.__awPerf, LOWMEM=window.__awLow;
+  (function(){ var s=document.getElementById('s_perf'), h=document.getElementById('s_perfh'); if(!s) return; s.value=PERF;
+    function help(){ h.textContent=(s.value==='auto'?'This phone: '+(LOWMEM?'older phone mode':'fast phone mode')+'. ':'')+(LOWMEM||s.value==='low'?'Lighter satellite pictures and less memory, so the map stays steady.':'Sharpest satellite pictures. Uses more memory.') }
+    help(); s.onchange=function(){ try{ localStorage.setItem('aw-perf',s.value) }catch(e){} help(); var v=s.value, now=v==='low'||(v==='auto'&&(navigator.deviceMemory||4)<=4); if(now!==LOWMEM&&confirm0()) location.reload() };
+    function confirm0(){ var d=document.createElement('div'); d.className='awtoast'; d.textContent='Restarting the map to apply…'; document.body.appendChild(d); return true } })();
+  var RET=!!(L.Browser.retina&&!sharpOff()&&!LOWMEM); // older phone mode: standard pictures (a quarter as many pieces) // sharp picture on sharp screens: twice the detail, half-size pieces
   function sharpOff(){ try{ return localStorage.getItem('aw-sharp')==='0' }catch(e){ return false } }
   // two Esri servers share the work, so the phone downloads twice as many pictures at once
   var ESRI2='https://services.arcgisonline.com/ArcGIS/rest/services/'; function eh(x,y){ return ((x+y)&1)?ESRI2:ESRI }
@@ -827,7 +833,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=192, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=193, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];

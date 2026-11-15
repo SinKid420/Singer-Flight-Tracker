@@ -66,7 +66,7 @@
   // ---------- settings ----------
   var style=ls('aw-style')||'sat', hill=ls('aw-hill')==='1', labOn=ls('aw-gllab')!=='0', dead=false;
   // phones with 4 GB or less: lighter drawing (fewer helpers, sharp-enough canvas, smaller tile memory)
-  var LOW=(navigator.deviceMemory||4)<=4; try{ if(LOW){ if(ML.setWorkerCount) ML.setWorkerCount(2); else ML.workerCount=2 } }catch(e){}
+  var LOW=window.__awLow!=null?!!window.__awLow:(navigator.deviceMemory||4)<=4; try{ if(LOW){ if(ML.setWorkerCount) ML.setWorkerCount(2); else ML.workerCount=2 } }catch(e){}
   // after a crash with 3D hills on, hills start switched off (turn back on in Off road layers)
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
