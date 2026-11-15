@@ -80,11 +80,18 @@
   function size(){ var s=map.getSize(); box.style.width=s.x+'px'; box.style.height=s.y+'px'; return s }
   function place(){ var p=map.containerPointToLayerPoint([0,0]), b=map.getBearing?map.getBearing():0; box.style.transform='translate3d('+p.x+'px,'+p.y+'px,0) rotate('+(-b)+'deg)' }
   function cam(){ var s=map.getSize(), c=map.containerPointToLatLng([s.x/2,s.y/2]); return {center:[c.lng,c.lat],zoom:Math.max(0,map.getZoom()-1),bearing:-(map.getBearing?map.getBearing():0)} }
-  function sync(){ if(!gl||anim||box.style.display==='none') return; place(); try{ gl.jumpTo(cam()) }catch(e){} }
+  // Older phone mode: the labels & roads layer rests while you drag or pinch, then redraws once when you stop (smoother panning)
+  var rest=false, restT=null;
+  function pause(){ if(!LOW||!gl||box.style.display==='none') return; rest=true; clearTimeout(restT); box.style.visibility='hidden' }
+  function wake(){ if(!rest) return; rest=false; sync(); clearTimeout(restT); restT=setTimeout(function(){ box.style.visibility='' },120) }
+  map.on('dragstart',pause); map.on('moveend',function(){ if(rest&&!map._animatingZoom) wake() });
+  map.on('zoomstart',function(){ if(LOW&&!follow0()) pause() });
+  function follow0(){ var b=document.getElementById('locate'); return !!(b&&b.classList.contains('follow')) }
+  function sync(){ if(!gl||anim||rest||box.style.display==='none') return; place(); try{ gl.jumpTo(cam()) }catch(e){} }
   map.on('move zoom rotate viewreset',sync);
   map.on('resize',function(){ if(!gl) return; size(); try{ gl.resize() }catch(e){} sync() });
-  map.on('zoomanim',function(e){ if(!gl||box.style.display==='none') return; anim=true; try{ gl.easeTo({center:[e.center.lng,e.center.lat],zoom:Math.max(0,e.zoom-1),bearing:-(map.getBearing?map.getBearing():0),duration:250,easing:function(t){ return 1-Math.pow(1-t,3) }}) }catch(x){} });
-  map.on('zoomend',function(){ anim=false; sync() });
+  map.on('zoomanim',function(e){ if(!gl||rest||box.style.display==='none') return; anim=true; try{ gl.easeTo({center:[e.center.lng,e.center.lat],zoom:Math.max(0,e.zoom-1),bearing:-(map.getBearing?map.getBearing():0),duration:250,easing:function(t){ return 1-Math.pow(1-t,3) }}) }catch(x){} });
+  map.on('zoomend',function(){ anim=false; if(rest) wake(); else sync() });
 
   // ---------- styles ----------
   var WHITE={'text-color':'#ffffff','text-halo-color':'rgba(0,0,0,0.85)','text-halo-width':1.4,'text-halo-blur':0.3};

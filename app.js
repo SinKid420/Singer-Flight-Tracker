@@ -89,7 +89,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // warm up the satellite pictures around a spot before going there (search results), so it shows straight away
   var warmed={}; window.__warm=function(lat,lon,z){ var cz=Math.min(18,Math.round(z)+(RET?1:0)), k=cz+'/'+lat.toFixed(3)+'/'+lon.toFixed(3); if(warmed[k]||navigator.onLine===false) return; warmed[k]=1;
     var n=Math.pow(2,cz), x=Math.floor((lon+180)/360*n), r=lat*Math.PI/180, y=Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n);
-    (LOWMEM?[[cz-2,0]]:[[cz,1],[cz-2,0]]).forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
+    (LOWMEM?[[cz-1,0]]:[[cz,1],[cz-1,0]]).forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
   // map extras (places, pins) wait until the satellite pictures on screen have arrived (2.5 s at most)
   var tilePend=new Set(), afterQ=[], afterT=null;
   function afterFlush(){ clearTimeout(afterT); afterT=null; var q=afterQ; afterQ=[]; q.forEach(function(f){ try{ f() }catch(e){} }) }
@@ -102,8 +102,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     // free a picture's memory as soon as its piece leaves the screen (phones with 4 GB or less run out of graphics memory)
     if(!self._awU){ self._awU=1; self.on('tileunload',function(e){ tileDone(e.tile); [].forEach.call(e.tile.querySelectorAll('img'),function(i){ i.onload=i.onerror=null; i.src='data:image/gif;base64,R0lGODlhAQABAAAAACw=' }) }) }
     var shown=false; function vis(err){ if(!shown){ shown=true; done(err,tile) } }
-    // blurry first: a zoomed-out picture (one download covers 16 spots) fills in at once, the sharp one lands on top
-    if(c.z>=8){ var lo=document.createElement('img'); lo.alt=''; lo.setAttribute('role','presentation'); lo.decoding='async'; lo.onload=function(){ vis(null) }; lo.src=pos(lo,c,c.z-2,px); tile.appendChild(lo) }
+    // blurry first: a zoomed-out picture (one download covers 4 spots) fills in at once, the sharp one lands on top
+    if(c.z>=8){ var lo=document.createElement('img'); lo.alt=''; lo.setAttribute('role','presentation'); lo.decoding='async'; lo.onload=function(){ vis(null) }; lo.src=pos(lo,c,c.z-1,px); tile.appendChild(lo) } // stand-in one level softer (less blotchy)
     var img=document.createElement('img'), cur=-1, fin=false; img.alt=''; img.setAttribute('role','presentation'); img.decoding='async'; tile.appendChild(img); tilePend.add(tile);
     function end(err){ if(fin) return; fin=true; tileDone(tile); if(lo&&!err) setTimeout(function(){ if(lo.parentNode) lo.parentNode.removeChild(lo) },400); vis(err&&!shown?err:null) }
     function show(z){ if(z===cur) return; cur=z; img.src=pos(img,c,z,px) }
@@ -833,7 +833,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=199, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=200, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
