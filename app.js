@@ -825,7 +825,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=176, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=177, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1356,7 +1356,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(window.MutationObserver){ new MutationObserver(vis).observe(fb,{attributes:true,attributeFilter:['aria-pressed']}); new MutationObserver(function(){ if(pn.hidden&&!gv.hidden) mode(false) }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }
         lab(); draw(); vis() })();
       document.addEventListener('error',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('phimg')&&t.parentNode) t.parentNode.remove() },true);
-window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return me },esc:esc,fb:fb,pn:pn,show:show};
+window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return me },esc:esc,fb:fb,pn:pn,show:show,relay:function(){ return relay||'https://awarebc.aware-bc.workers.dev/' }};
     })();
     set(true); mode(baseKey==='fsr');
   })();

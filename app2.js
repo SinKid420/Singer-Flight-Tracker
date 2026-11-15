@@ -4,7 +4,7 @@
     var SITES='https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_SITE_POINTS_SVW&outputFormat=json&count=5000&srsName=EPSG:4326&propertyName=FOREST_FILE_ID,PROJECT_NAME,SITE_LOCATION,GEOMETRY';
     var btn=document.createElement('button'); btn.type='button'; btn.id='srch'; btn.setAttribute('aria-label','Search places'); btn.innerHTML=MAG; document.body.appendChild(btn);
     var box=document.createElement('div'); box.id='srbox'; box.hidden=true; box.setAttribute('role','dialog'); box.setAttribute('aria-label','Search places');
-    box.innerHTML='<div class="srbar">'+MAG+'<input id="srq" type="search" placeholder="Search places, rec sites, creeks…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search"><button type="button" class="srx" aria-label="Close search">✕</button></div>'+
+    box.innerHTML='<div class="srbar">'+MAG+'<input id="srq" type="search" placeholder="Search all of Canada: places, creeks, rec sites…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search"><button type="button" class="srx" aria-label="Close search">✕</button></div>'+
       '<div class="srres"><div class="srchips"><button type="button" data-c="hosp">🏥 Hospital</button><button type="button" data-c="gas">⛽ Gas</button><button type="button" data-c="rec">⛺ Rec sites</button></div><div id="srlist"></div></div>';
     document.body.appendChild(box);
     var q=box.querySelector('#srq'), list=box.querySelector('#srlist'), res=[], seq=0, tmr=null, sites=null, sitesP=null;
@@ -38,8 +38,11 @@
     function tidy(it){ if(it.ty!=null) return; var p=String(it.t||'').split(' · ').filter(function(x){ return x&&x!=='AwareBC' }), ty=p[0]||'Place', w=(p[1]||'').replace(/^near /i,'');
       if(it.rank===-1&&w.indexOf(',')>0) w=w.split(',').pop().trim(); // AwareBC: the town from the address
       var e=it.ic||''; it.k=e==='💧'?'water':e==='🛣'?'fsr':e==='⛰'?'mtn':e==='🏘'?'town':e==='⛺'?'rec':e==='🏥'?'hosp':e==='⛽'?'gas':it.rank===-1?'biz':ROADT.test(ty)?'road':'place';
-      var pm=w.match(/\(([^)]+)\)/); if(pm) w=pm[1]; w=w.replace(/^(Regional District of|Electoral Area)\s*/i,'').replace(/\s*Regional District$/i,''); if(ROADT.test(ty)) ty='Road'; if(/^forest service road$/i.test(ty)) ty='Forest road'; it.ty=ty; it.w=w; it.rg=region(it.lat,it.lon) }
-    function same(a,b){ var g=function(k){ return k==='road'||k==='fsr'?'r':k }; return a.n.toLowerCase()===b.n.toLowerCase()&&g(a.k)===g(b.k)&&Math.abs(a.lat-b.lat)<.05&&Math.abs(a.lon-b.lon)<.07 }
+      var pm=w.match(/\(([^)]+)\)/); if(pm) w=pm[1]; w=w.replace(/^(Regional District of|Electoral Area)\s*/i,'').replace(/\s*Regional District$/i,''); if(ROADT.test(ty)) ty='Road'; if(/^forest service road$/i.test(ty)) ty='Forest road'; it.ty=ty; it.w=w; it.rg=it.rg||region(it.lat,it.lon) }
+    // one result per real place: same name (ignoring case, punctuation and "the"), same kind, close together (rivers and roads are long, so they may be further apart)
+    function nk(n){ return String(n||'').toLowerCase().replace(/^the\s+/,'').replace(/[^a-z0-9]+/g,' ').replace(/\b(creek|crk|cr)\b/g,'creek').replace(/\b(road|rd)\b/g,'road').replace(/\b(mount|mt)\b/g,'mount').trim() }
+    function same(a,b){ var g=function(k){ return k==='road'||k==='fsr'?'r':k==='place'?'*':k }, ga=g(a.k), gb=g(b.k); if(nk(a.n)!==nk(b.n)) return false; if(ga!==gb&&ga!=='*'&&gb!=='*') return false;
+      var far=ga==='water'||ga==='r'?0.25:ga==='town'?0.12:0.05; return Math.abs(a.lat-b.lat)<far&&Math.abs(a.lon-b.lon)<far*1.5 }
     function add(id,items){ if(id!==seq) return; var R=ref(); items.forEach(function(it){ tidy(it); it.d=km(R.lat,R.lon,it.lat,it.lon); var h=null; for(var i=0;i<res.length;i++) if(same(res[i],it)){ h=res[i]; break }
       if(!h) res.push(it); else if(!h.w&&it.w) h.w=it.w }); draw(id); towns(id) }
     // fill in the nearest town for results that don't have one (OpenStreetMap, top results only)
@@ -69,10 +72,20 @@
       return (j.features||[]).filter(function(f){ var n=f.properties&&f.properties.name; return n&&n.toLowerCase().indexOf(s)>=0&&f.geometry&&f.geometry.coordinates }).map(function(f){ var p=f.properties, c=p.featureCategoryDescription||'', t=String(p.featureType||'').replace(/\s*\(\d+\)$/,'');
         var w=/water/i.test(c), m=/Mountain|Peak|Ridge|Range/i.test(t), town=/Populated|Municipal|Unincorporated|Rural/i.test(c);
         return {n:p.name, t:t||'Place', lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0], ic:w?'💧':m?'⛰':town?'🏘':'📍', bg:w?'#e0f7fa':m?'#eceff1':town?'#e8f0fe':'#f1f3f4', z:town?12:13} }) }) }
-    function photon(s,tag,R,dx,dy,rank){ return J('https://photon.komoot.io/api/?q='+encodeURIComponent(s)+'&limit=10&lang=en&lat='+R.lat.toFixed(3)+'&lon='+R.lon.toFixed(3)+'&bbox='+bbox(R,dx,dy).map(function(v){return v.toFixed(3)}).join(',')+(tag?'&osm_tag='+tag:'')).then(function(j){
+    // all of Canada: the federal Canadian Geographical Names Database (creeks, lakes, mountains, towns, rec sites in every province)
+    var PV={10:'NL',11:'PE',12:'NS',13:'NB',24:'QC',35:'ON',46:'MB',47:'SK',48:'AB',59:'BC',60:'YT',61:'NT',62:'NU'};
+    var CN={CITY:'City',TOWN:'Town',VILG:'Village',HAM:'Hamlet',UNP:'Community',IR:'First Nation reserve',PARK:'Park',RIV:'River',RIVF:'River feature',FALL:'Falls',LAKE:'Lake',SPRG:'Spring',BAY:'Bay',ISL:'Island',MTN:'Mountain',VALL:'Valley',GLAC:'Glacier',CAMP:'Campsite',RECR:'Recreation site',ROAD:'Road',RAIL:'Railway',AIR:'Airport',CAPE:'Point',BCH:'Beach',CHAN:'Channel',RAP:'Rapids',CLF:'Cliff',PLN:'Plain',FOR:'Forest',CAVE:'Cave'};
+    var STAB={'British Columbia':'BC','Alberta':'AB','Saskatchewan':'SK','Manitoba':'MB','Ontario':'ON','Quebec':'QC','Québec':'QC','New Brunswick':'NB','Nova Scotia':'NS','Prince Edward Island':'PE','Newfoundland and Labrador':'NL','Yukon':'YT','Northwest Territories':'NT','Nunavut':'NU'};
+    function stRg(st,cc){ cc=String(cc||'').toUpperCase(); if(cc==='CA'&&STAB[st]) return STAB[st]==='BC'?'BC':STAB[st]+', Canada'; if(cc==='US'&&st) return st+', US'; return '' }
+    function cgn(s,R){ var u='https://geogratis.gc.ca/services/geoname/en/geonames.json?q='+encodeURIComponent(s)+'&num=25';
+      function go(x){ return J(x).then(function(j){ return (j.items||[]).filter(function(f){ return f.name&&isFinite(f.latitude) }).map(function(f){ var c=f.concise&&f.concise.code||'', nm=f.name, pv=PV[+(f.province&&f.province.code)]||'';
+          var ty=/\bcreek\b/i.test(nm)?'Creek':/\bbrook\b/i.test(nm)?'Brook':CN[c]||'Place', w=/^(RIV|RIVF|FALL|LAKE|SPRG|BAY|RAP|CHAN)$/.test(c), m=/^(MTN|CLF|GLAC|VALL)$/.test(c), town=/^(CITY|TOWN|VILG|HAM|UNP|IR)$/.test(c);
+          return {n:nm, t:ty, rg:pv?(pv==='BC'?'BC':pv+', Canada'):'', lat:+f.latitude, lon:+f.longitude, ic:w?'💧':m?'⛰':town?'🏘':c==='ROAD'?'🛣':c==='CAMP'||c==='RECR'?'⛺':'📍', bg:'#f1f3f4', z:town?12:13} }) }) }
+      return go(u).catch(function(){ var r=window.__AW&&window.__AW.relay&&window.__AW.relay(); if(!r) throw 0; return go(r.replace(/\/?$/,'/')+'?u='+encodeURIComponent(u)) }) } // through the AwareBC relay if the phone can't reach it directly
+    function photon(s,tag,R,dx,dy,rank){ return J('https://photon.komoot.io/api/?q='+encodeURIComponent(s)+'&limit=10&lang=en&lat='+R.lat.toFixed(3)+'&lon='+R.lon.toFixed(3)+(dx?'&bbox='+bbox(R,dx,dy).map(function(v){return v.toFixed(3)}).join(','):'')+(tag?'&osm_tag='+tag:'')).then(function(j){
       return (j.features||[]).filter(function(f){ var p=f.properties||{}; return p.name&&p.osm_key!=='waterway' }).map(function(f){ var p=f.properties, v=p.osm_value||'', k=p.osm_key||'', c=f.geometry.coordinates, hosp=v==='hospital'||v==='clinic', fuel=v==='fuel', town=k==='place';
         var where=p.city||p.town||p.village||p.county||''; if(where===p.name) where='';
-        return {n:p.name, t:(hosp?'Hospital':fuel?'Gas station':town?cap(v):cap(v.replace(/_/g,' ')))+(where?' · '+where:''), lat:c[1], lon:c[0], ic:hosp?'🏥':fuel?'⛽':town?'🏘':'📍', bg:hosp?'#fde2e1':fuel?'#fde2e1':town?'#e8f0fe':'#f1f3f4', z:hosp||fuel?16:town?12:15, rank:rank||0} }) }) }
+        return {n:p.name, t:(hosp?'Hospital':fuel?'Gas station':town?cap(v):cap(v.replace(/_/g,' ')))+(where?' · '+where:''), rg:stRg(p.state,p.countrycode), lat:c[1], lon:c[0], ic:hosp?'🏥':fuel?'⛽':town?'🏘':'📍', bg:hosp?'#fde2e1':fuel?'#fde2e1':town?'#e8f0fe':'#f1f3f4', z:hosp||fuel?16:town?12:15, rank:rank||0} }) }) }
     function fsr(s,R){ var t=s.replace(/[^a-z0-9 \-]/gi,'').toUpperCase(); if(t.length<2) return Promise.resolve([]); var b=bbox(R,2.5,1.8);
       var u='https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW&outputFormat=json&srsName=EPSG:4326&count=40&propertyName=ROAD_SECTION_NAME,GEOMETRY&CQL_FILTER='+encodeURIComponent("RETIREMENT_DATE IS NULL AND FILE_TYPE_DESCRIPTION='Forest Service Road' AND ROAD_SECTION_NAME ILIKE '%"+t+"%' AND BBOX(GEOMETRY,"+b.map(function(v){return v.toFixed(3)}).join(',')+",'EPSG:4326')");
       return J(u).then(function(j){ var seen={}, o=[]; (j.features||[]).forEach(function(f){ var n=f.properties&&f.properties.ROAD_SECTION_NAME, g=f.geometry; if(!n||!g||seen[n]) return; var c=g.type==='MultiLineString'?g.coordinates[0]:g.coordinates; if(!c||!c.length) return; seen[n]=1; var m=c[Math.floor(c.length/2)];
@@ -90,7 +103,7 @@
       if(window.__awp) run('a',id,function(){ return Promise.resolve(window.__awp.search(l)) }); // AwareBC's own places first
       var off=function(){ return window.__offNames?window.__offNames(l):Promise.resolve([]) };
       if(navigator.onLine===false) run('o',id,off);
-      if(navigator.onLine!==false){ run('n',id,function(){ return names(l).catch(off) }); run('p',id,function(){ return photon(s,'',R,4,3) }); run('f',id,function(){ return fsr(l,R) }) } }
+      if(navigator.onLine!==false){ run('n',id,function(){ return names(l).catch(off) }); run('p',id,function(){ return photon(s,'',R,4,3) }); run('w',id,function(){ return photon(s,'',R,0,0,1) }); run('c',id,function(){ return cgn(s,R) }); run('f',id,function(){ return fsr(l,R) }) } }
     q.addEventListener('input',function(){ clearTimeout(tmr); tmr=setTimeout(search,220) });
     q.addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(tmr); search(); q.blur() } });
   })();
