@@ -60,7 +60,7 @@
 
   // ---------- mini profile: tap any rider's vehicle (Rig Link rigs, friends on the map) ----------
   var MP=null, mpo=null;
-  var mpj=null, profOnly=false;
+  var mpj=null;
   function mini(tg,o){ o=o||{}; mpo=o; mpo.tg=tg; if(!MP){ MP=document.createElement('div'); MP.id='rlmp'; MP.hidden=true; MP.setAttribute('role','dialog'); MP.setAttribute('aria-label','Rider'); document.body.appendChild(MP);
       MP.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-m]'); if(e.target===MP){ MP.hidden=true; return } if(!b) return; var a=b.getAttribute('data-m');
         if(a==='x'){ MP.hidden=true; return }
@@ -68,7 +68,7 @@
           F2.request(mpo.tg,(mpj&&mpj.n)||mpo.n||'').then(function(m){ b.textContent='⏳ Request sent'; b.className='rlbt'; toast(m) },function(err){ b.disabled=false; b.textContent='➕ Add friend'; toast(err.message) }); return }
         if(a==='chat'){ MP.hidden=true; if(window.__frApi) window.__frApi.chatTag(mpo.tg,''); return }
         if(a==='go'){ MP.hidden=true; if(X&&!X.hidden) close(); var ll=L.latLng(mpo.lat,mpo.lon); if(window.__nav) window.__nav.to(ll,mpo.n||'Rider'); else MAP.flyTo(ll,15); return }
-        if(a==='full'){ MP.hidden=true; if(!X) build(); if(X.hidden){ if(offRoad()) open(); else { X.hidden=false; document.body.classList.add('rlon'); profOnly=true } } profile(mpo.tg); return } }) }
+        if(a==='full'){ if(!offRoad()) return; MP.hidden=true; if(!X||X.hidden) open(); if(X&&!X.hidden) profile(mpo.tg); return } }) }
     paintMini(o.n?{n:o.n,t:tg,bd:{},tags:[],rig:o.rig||'',wait:1}:{n:'Rider',t:tg,bd:{},tags:[],rig:'',wait:1}); MP.hidden=false;
     if(navigator.onLine===false){ paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}); return }
     api({op:'prof',tg:tg}).then(function(j){ if(mpo.tg===tg) paintMini(j) }).catch(function(){ if(mpo.tg===tg) paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}) }) }
@@ -79,7 +79,7 @@
     var picks=pbList(j.pb); h+=earned.length||picks.length?'<div class="mpbd">'+earned.map(function(b){ var n=j.bd[b[0]]; return '<div>'+shield(b[0],n,40)+'<small>'+b[1]+'<br>'+TN[tier(n)]+'</small></div>' }).join('')+picks.map(function(id){ return '<div>'+pbIcon(id,40)+'<small>'+pbOf(id)[1]+'</small></div>' }).join('')+'</div>':'<div class="rlsm" style="margin:6px 0">'+(j.wait?'Loading badges…':j.off?'No signal: badges show when you’re back online.':'No badges yet.')+'</div>';
     var mv=(pf.cv?['🤝 Open to convoy']:[]).concat((pf.sk||[]).filter(function(k){ return SKN[k] }).map(function(k){ return SKN[k][0]+' '+SKN[k][1] })).concat(pf.radio?['📻 '+esc(pf.radio)]:[]); if(mv.length) h+='<div class="pfmv">'+mv.map(function(x){ return '<span>'+x+'</span>' }).join('')+'</div>';
     if(j.tags&&j.tags.length) h+='<div class="rltel" style="padding:0 0 4px">'+j.tags.slice(0,5).map(function(x){ return '<span>'+esc(x)+'</span>' }).join('')+'</div>';
-    h+='<div class="rlact" style="padding:8px 0 0">'+(j.me?'':fr?'<button type="button" class="rlbt b" data-m="chat">💬 Chat</button>':window.__frApi&&window.__frApi.sent&&window.__frApi.sent(j.t)?'<button type="button" class="rlbt" disabled>⏳ Request sent</button>':'<button type="button" class="rlbt g" data-m="add">➕ Add friend</button>')+(isFinite(o.lat)&&!j.me?'<button type="button" class="rlbt" data-m="go">🧭 Directions</button>':'')+'<button type="button" class="rlbt" data-m="full">Profile</button>'+'</div></div>';
+    h+='<div class="rlact" style="padding:8px 0 0">'+(j.me?'':fr?'<button type="button" class="rlbt b" data-m="chat">💬 Chat</button>':window.__frApi&&window.__frApi.sent&&window.__frApi.sent(j.t)?'<button type="button" class="rlbt" disabled>⏳ Request sent</button>':'<button type="button" class="rlbt g" data-m="add">➕ Add friend</button>')+(isFinite(o.lat)&&!j.me?'<button type="button" class="rlbt" data-m="go">🧭 Directions</button>':'')+(offRoad()?'<button type="button" class="rlbt" data-m="full">Profile</button>':'')+'</div></div>';
     MP.innerHTML=h }
   window.__rlMini=mini;
 
@@ -274,7 +274,7 @@
     if(a==='photo') return compose('c');
     if(a==='alert') return alertSheet();
     if(a==='note') return noteSheet();
-    if(a==='sx'){ closeSheet(); if(profOnly){ profOnly=false; close() } return }
+    if(a==='sx') return closeSheet();
     if(!p) return sheetClick(a,b);
     if(a==='fly'){ close(); var fz=Math.max(MAP.getZoom(),15); if(window.__goTo) window.__goTo(L.latLng(p.lat,p.lon),fz); else MAP.flyTo([p.lat,p.lon],fz,{duration:1.2}); MAP.once('moveend',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),(KIND[p.kind]||KIND.h)[0]==='TRAIL'?(ST[p.st]||'Trail condition'):p.by) }); return }
     if(a==='prof') return profile(p.tg);
