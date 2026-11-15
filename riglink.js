@@ -208,7 +208,7 @@
   }
   function centerMe(){ var p=me(); mm.setView([p.lat,p.lon],posts.length?10:11) }
   function paintTop(){ var t=X.querySelectorAll('.rltog button'); t[0].className=pub?'on':''; t[1].className=!pub?'lk':''; t[1].textContent=!pub?'🔒 '+key+' unlocked':'🔒 Private Key Lobby';
-    X.querySelector('#rlsub').textContent=pub?'Off-road layer · public feed':'Off-road layer · 🔒 convoy '+key; X.querySelector('#rlrig').textContent='● '+nRigs+' rig'+(nRigs===1?'':'s');
+    X.querySelector('#rlsub').textContent=pub?'Public feed':'🔒 Convoy '+key; X.querySelector('#rlrig').textContent='● '+nRigs+' rig'+(nRigs===1?'':'s');
     [].forEach.call(X.querySelectorAll('.rlfl button'),function(b){ b.className=b.getAttribute('data-f')===filt?'on':'' });
     X.querySelector('#rlmap').classList.toggle('big',big); lobby(); chips() }
   function lobby(){ var el=X.querySelector('#rllobby'), sh=ls('aw-rlshare')==='1';
