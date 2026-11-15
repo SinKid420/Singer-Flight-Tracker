@@ -15,7 +15,7 @@
   function me(){ var m=A.me&&A.me(); if(m&&m.label!=='none'&&isFinite(m.lat)) return {lat:m.lat,lon:m.lon,alt:m.alt,real:true}; var c=MAP.getCenter(); return {lat:c.lat,lon:c.lng,real:false} }
   function offRoad(){ return document.body.classList.contains('fsron') }
   var KIND={c:['TRAIL','#ef4444','#3b1515','#fca5a5'],r:['RIG','#3b82f6','#132341','#93c5fd'],h:['HELP','#f59e0b','#3a2a0d','#fcd34d']};
-  var ST={hazard:'⚠️ Hazard',snow:'❄️ Snow',recovery:'🪝 Recovery needed',mud:'🟫 Mud',tree:'🌲 Tree down',ok:'✅ All clear'};
+  var ST={hazard:'⚠️ Hazard',snow:'❄️ Snow',recovery:'🪝 Recovery needed',mud:'🟫 Mud',tree:'🌲 Tree down',ok:'✅ All clear','wl-bear':'🐻 Bear seen','wl-moose':'🫎 Moose seen','wl-elk':'🦌 Elk seen','wl-deer':'🦌 Deer seen','wl-cougar':'🐆 Cougar seen','wl-wolf':'🐺 Wolf seen','wl-other':'🐾 Wildlife seen'};
 
 
   // ---------- badges: metal shields (Bronze 3 · Silver 10 · Gold 25) ----------
@@ -62,12 +62,13 @@
   function pbOf(id){ return PB.filter(function(x){ return x[0]===id })[0] }
   function pbIcon(id,px){ var p=pbOf(id); return p?'<span class="pbi" style="color:'+p[2]+';width:'+px+'px;height:'+px+'px"><svg viewBox="0 0 24 24" width="'+(px*0.62|0)+'" height="'+(px*0.62|0)+'" aria-hidden="true">'+p[3]+'</svg></span>':'' }
   function pbList(a){ return (a||[]).filter(pbOf).slice(0,10) }
-  var BD=[['recovery','Recovery','Pulling stuck rigs out','#ff6b35','#b83a0e'],['sawyer','Sawyer','Clearing downed trees and rocks','#7bc96f','#2e7d32'],['scout','Scout','Verified trail, gate and snow reports','#5fb4ff','#1565c0'],['wrench','Wrench','Trailside fixes and lending tools or parts','#c0c6cf','#56606d'],['relay','Relay','Carrying trail posts through dead zones','#c792ea','#6a1b9a']];
+  var BD=[['recovery','Recovery','Pulling stuck rigs out','#ff6b35','#b83a0e'],['sawyer','Sawyer','Clearing downed trees and rocks','#7bc96f','#2e7d32'],['scout','Scout','Verified trail, gate and snow reports','#5fb4ff','#1565c0'],['wrench','Wrench','Trailside fixes and lending tools or parts','#c0c6cf','#56606d'],['relay','Relay','Carrying trail posts through dead zones','#c792ea','#6a1b9a'],['explorer','Explorer','Reaching summits, passes and lookouts','#ffd54f','#b7791f']];
   var BIC={recovery:'<g fill="none" stroke="#fff" stroke-linecap="round"><rect x="9.3" y="0.8" width="5.4" height="7.4" rx="2.7" stroke-width="2"/><rect x="9.3" y="10.4" width="5.4" height="6.4" rx="2.7" stroke-width="2"/><path d="M12 15.6v3.1a3.4 3.4 0 0 1-6.8 0v-1.3" stroke-width="2.4"/></g><rect x="11" y="6" width="2" height="6.2" rx="1" fill="#fff"/><path d="M3.3 18.6 5.2 14.6l2.3 3.3z" fill="#fff"/>',
     sawyer:'<path d="M3 10.2V7.8A2.3 2.3 0 0 1 5.3 5.5h3.4A2.3 2.3 0 0 1 11 7.8v2.4H9.3V7.9a.6.6 0 0 0-.6-.6H5.3a.6.6 0 0 0-.6.6v2.3z"/><rect x="1.8" y="10" width="8.8" height="7.6" rx="1.8"/><rect x="0.6" y="12" width="1.8" height="3.4" rx=".6"/><rect x="10.2" y="11.6" width="12.2" height="4.4" rx="2.2" fill-opacity=".9"/><rect x="9.9" y="10.8" width="13.1" height="6" rx="3" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="1.1 .9"/><circle cx="6.2" cy="13.8" r="1.6" fill="#000" fill-opacity=".3"/>',
     scout:'<path d="M4 9a3 3 0 0 1 6 0v1h4V9a3 3 0 0 1 6 0l1 7a3.5 3.5 0 0 1-7 .6V14h-4v2.6A3.5 3.5 0 0 1 3 16zm2.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm11 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>',
     wrench:'<path d="M14.7 3.3a5 5 0 0 0-5.9 6.5L3.5 15.1a2 2 0 1 0 2.8 2.8l5.3-5.3a5 5 0 0 0 6.5-5.9l-2.7 2.7-2.6-.7-.7-2.6z"/>',
-    relay:'<path d="M11 10.5a1.5 1.5 0 1 1 2 1.4V21h-2v-9.1a1.5 1.5 0 0 1 0-1.4zM7.8 6.8l1.4 1.4a4 4 0 0 0 0 5.6l-1.4 1.4a6 6 0 0 1 0-8.4zm8.4 0a6 6 0 0 1 0 8.4l-1.4-1.4a4 4 0 0 0 0-5.6zM5 4l1.4 1.4a8 8 0 0 0 0 11.2L5 18A10 10 0 0 1 5 4zm14 0a10 10 0 0 1 0 14l-1.4-1.4a8 8 0 0 0 0-11.2z"/>'};
+    relay:'<path d="M11 10.5a1.5 1.5 0 1 1 2 1.4V21h-2v-9.1a1.5 1.5 0 0 1 0-1.4zM7.8 6.8l1.4 1.4a4 4 0 0 0 0 5.6l-1.4 1.4a6 6 0 0 1 0-8.4zm8.4 0a6 6 0 0 1 0 8.4l-1.4-1.4a4 4 0 0 0 0-5.6zM5 4l1.4 1.4a8 8 0 0 0 0 11.2L5 18A10 10 0 0 1 5 4zm14 0a10 10 0 0 1 0 14l-1.4-1.4a8 8 0 0 0 0-11.2z"/>',
+    explorer:'<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2.2a7.8 7.8 0 1 1 0 15.6 7.8 7.8 0 0 1 0-15.6zm4.2 3.6-5.6 2.8-2.8 5.6 5.6-2.8zM12 10.6a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"/>'};
   var RIM={1:['#ffd2a6','#cd7f32','#5c3310'],2:['#ffffff','#b8c0c8','#4a525a'],3:['#fff1b8','#d4a017','#7a5a06'],0:['#8a8f96','#4b5058','#24272c']};
   function tier(n){ return n>=25?3:n>=10?2:n>=3?1:0 } var TN=['Not earned yet','Bronze','Silver','Gold'], gid=0;
   function shield(k,n,px){ var b=BD.filter(function(x){ return x[0]===k })[0], t=tier(n||0), r=RIM[t], g='rb'+(++gid), l=t?b[3]:'#6b7078', d=t?b[4]:'#3a3e44';
@@ -118,12 +119,12 @@
     // main map (Off-road): your convoy's rigs (exact spot when they share it) and nearby riders who chose to be seen (rough spot)
     function tick(){ clearTimeout(nT); nT=setTimeout(tick,60000); var ck=ls('aw-rlkey')||''; if((!on()&&!ck)||!offRoad()||document.hidden||navigator.onLine===false){ if(!offRoad()||(!on()&&!ck)) clear(); return }
       var p=me(); if(!p.real) return; var rig=ls('aw-rlrig')||''; if(on()) told();
-      Promise.all([ck?api({op:'crigs',key:ck,lat:p.lat,lon:p.lon,share:ls('aw-rlshare')==='1'?1:0,rig:rig}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]}),
+      Promise.all([ck?api({op:'crigs',key:ck,lat:p.lat,lon:p.lon,share:ls('aw-rlshare')==='1'?1:0,rig:rig,role:ls('aw-cvrole')||''}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]}),
         api({op:'near',lat:p.lat,lon:p.lon,share:1,ex:exact()?1:0,rig:rig}).catch(function(){ return {r:[]} })]).then(function(J){ clear(); if(!offRoad()) return; var shown={};
         function put(r,cv){ if(shown[r.tg]||(window.__frApi&&window.__frApi.isFriend(r.tg))) return; shown[r.tg]=1; // friends already show with their exact spot
           L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="nrmk'+(r.fd?' fd':'')+(cv?' cv':'')+'" role="button" aria-label="'+esc(r.by)+'">🚙<small>'+esc(r.by)+(r.cv?' 🤝':'')+'</small></span>',iconSize:[0,0]}),zIndexOffset:850})
             .on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:(cv?'Convoy '+ck+' · ':r.ex?'Nearby rider · ':'Nearby rider · about 1 km · ')+ago(r.at)}) }).addTo(NL) }
-        (J[0].r||[]).forEach(function(r){ put(r,true) }); (J[1].r||[]).forEach(function(r){ put(r,false) }) }) }
+        window.__cvRigs={t:Date.now(),r:J[0].r||[]}; (J[0].r||[]).forEach(function(r){ put(r,true) }); (J[1].r||[]).forEach(function(r){ put(r,false) }) }) }
     window.__rlNear={ tick:function(){ setTimeout(tick,50) }, on:on, exact:exact, set:function(v){ ls(NK,v==='e'?'e':'a'); var s=document.getElementById('s_near'); if(s) s.value=exact()?'e':'a'; tick() } };
     function stop(){ clear(); var p=me(); if(navigator.onLine!==false) api({op:'near',lat:p.lat,lon:p.lon,share:0}).catch(function(){}) }
     document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.seg button')) setTimeout(function(){ if(offRoad()) tick(); else clear() },80) },true);
