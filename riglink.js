@@ -78,7 +78,7 @@
     setTimeout(tick,6000);
     // Settings ▸ Off-road ▸ Nearby riders
     var f=document.createElement('details'); f.className='folder'; f.id='nrfolder';
-    f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. Riders who also turn this on show as 🚙, and you show to them. Only a rough spot (about 1 km) is shared.</div>';
+    f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. Riders who also turn this on show as 🚙, and you show to them. You see each other within about 60 km, and only a rough spot is shared. Friends show anywhere: Friends ▸ Share my spot.</div>';
     var host=document.getElementById('mtfolder'); if(host&&host.parentNode) host.parentNode.insertBefore(f,host.nextSibling);
     var sel=f.querySelector('select'); sel.value=on()?'1':'0'; sel.onchange=function(){ ls(NK,sel.value); if(sel.value==='1'){ toast('Nearby riders on (Off-road)'); tick() } else stop() };
     var st=document.createElement('style'); st.textContent='.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}.nrmk.cv small{background:#14532d;color:#bbf7d0}'; document.head.appendChild(st) })();
@@ -132,7 +132,7 @@
     [].forEach.call(X.querySelectorAll('.rlfl button'),function(b){ b.className=b.getAttribute('data-f')===filt?'on':'' });
     X.querySelector('#rlmap').classList.toggle('big',big); lobby(); chips() }
   function lobby(){ var el=X.querySelector('#rllobby'), sh=ls('aw-rlshare')==='1';
-    var nOn=window.__rlNear&&window.__rlNear.on(), nr='<div class="rlrow"><button type="button" class="rlsw'+(nOn?' on':'')+'" data-a="near"><i></i>Show my rig on the main map to nearby riders (about 1 km)</button></div>';
+    var nOn=window.__rlNear&&window.__rlNear.on(), nr='<div class="rlrow"><button type="button" class="rlsw'+(nOn?' on':'')+'" data-a="near"><i></i>Show my rig to riders within about 60 km (rough spot only)</button></div>';
     if(pub){ el.innerHTML=nr; return }
     if(pub||!key){ el.innerHTML=!pub&&!key?'<form class="rlkey" data-f="join"><input maxlength="8" placeholder="#884-BCR" aria-label="Convoy key" autocapitalize="characters" autocomplete="off"><button type="submit" class="rlbt b">Unlock</button><button type="button" class="rlbt" data-a="mkkey">New convoy</button></form><div class="rlsm">A key unlocks a convoy’s private posts, hidden waypoints and live rig spots. Only share it with your crew.</div>':''; return }
     el.innerHTML='<div class="rlrow"><button type="button" class="rlsw'+(sh?' on':'')+'" data-a="share"><i></i>Share my rig’s spot with this convoy</button><button type="button" class="rllink" data-a="sendkey">Send to friend</button><button type="button" class="rllink" data-a="showkey">Key</button><button type="button" class="rllink red" data-a="leave">Leave</button></div>'+(X._showKey?'<input class="rlkeyshow" readonly value="'+esc(key)+'" aria-label="Convoy key to share">':'') }
