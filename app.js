@@ -833,7 +833,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=198, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=199, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1272,6 +1272,12 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(mi>0&&mx>t*t){ keepI[mi]=1; st.push([r[0],mi],[mi,r[1]]) } }
       var o=[]; for(var k=0;k<p.length;k++) if(keepI[k]) o.push([Math.round(p[k][0]*1e5)/1e5,Math.round(p[k][1]*1e5)/1e5]); return o }
     function thin(j){ (j.features||[]).forEach(function(f){ var g=f.geometry; if(!g) return; if(g.type==='LineString') g.coordinates=rdp(g.coordinates,4e-5); else if(g.type==='MultiLineString') g.coordinates=g.coordinates.map(function(c){ return rdp(c,4e-5) }) }); return j }
+    // nearest forest road to a spot (for the radio card): official FSRs and permit roads already loaded on the map
+    window.__fsrNear=function(lat,lon,maxM){ var best=null, kx=Math.cos(lat*Math.PI/180)*111320, ky=110540;
+      Object.keys(data).forEach(function(key){ var k=key.split(':')[0]; if(k!=='fsr'&&k!=='frd') return; (data[key].features||[]).forEach(function(f){ var g=f.geometry; if(!g) return; var L2=g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[];
+        L2.forEach(function(c){ for(var i=1;i<c.length;i++){ var ax=(c[i-1][0]-lon)*kx, ay=(c[i-1][1]-lat)*ky, bx=(c[i][0]-lon)*kx, by=(c[i][1]-lat)*ky, dx=bx-ax, dy=by-ay, l=dx*dx+dy*dy, t=l?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/l)):0, x=ax+t*dx, y=ay+t*dy, d=Math.sqrt(x*x+y*y);
+          if(d<=(maxM||60)&&(!best||d<best.d-1||(k==='fsr'&&!best.fsr&&d<=best.d+5))){ var p=f.properties||{}; best={d:d,fid:String(p.FOREST_FILE_ID||'')+(p.ROAD_SECTION_ID?'-'+p.ROAD_SECTION_ID:''),file:String(p.FOREST_FILE_ID||''),name:k==='fsr'?(p.ROAD_SECTION_NAME?cap(p.ROAD_SECTION_NAME)+' FSR':'Forest Service Road'):(cap(p.LOCATION)||'Forest road'),fsr:k==='fsr'} } } }) }) });
+      return best };
     function keep(key,j){ j=thin(j); data[key]=j; dataKeys.push(key); if(dataKeys.length>120){ var old=dataKeys.shift(); if(!drawn[old]) delete data[old] } }
     function load(){ if(!on) return; var z=map.getZoom(), bb=map.getBounds().pad(.1), b={s:bb.getSouth(),n:bb.getNorth(),w:bb.getWest(),e:bb.getEast()}, want={};
       if(hint){ hint.hidden=z>=13||!fsrMode; hint.textContent=z<12?'Zoom in for trails':'Zoom in for all roads' }

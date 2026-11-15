@@ -56,6 +56,7 @@
   var fill='', note='';
   window.__frApi={ unread:function(){ return total()+S.req.length },
     send:function(text,why){ if(needName()) return; fill=text||''; note=why||''; open('list') },
+    list:function(){ return (S.friends||[]).map(function(f){ return {id:f.id,n:f.n,t:f.t} }) }, myId:function(){ return S.me&&S.me.id },
     sent:function(tag){ return (S.sent||[]).some(function(x){ return x.t===tag }) },
     // one-tap friend request from a rider's mini profile (the name sorts out two riders with the same tag)
     request:function(tag,who){ if(navigator.onLine===false) return Promise.reject(new Error('No signal. Try again when you have service.'));
@@ -275,7 +276,7 @@
   // ---------- keep in step with the server ----------
   var busy=false;
   function sync(){ if(busy) return Promise.resolve(); if(share&&until&&Date.now()>until){ shareOff(); toast('Spot sharing stopped (timer ended).') } busy=true; var b={}; if(share){ if(sendHrs!=null){ b.hours=sendHrs } var s=fix&&Date.now()-fix.t<180000?fix:null; b.share=true; if(s){ b.lat=s.lat; b.lon=s.lon } } else b.share=false;
-    return api('sync',b).then(function(j){ S=j; S.blocked=S.blocked||[]; try{ var rs=JSON.parse(localStorage.getItem('aw-frreq')||'null'), now=(j.req||[]).map(function(r){ return r.id });
+    return api('sync',b).then(function(j){ S=j; S.blocked=S.blocked||[]; try{ if(window.__onSync) window.__onSync(j) }catch(e){} try{ var rs=JSON.parse(localStorage.getItem('aw-frreq')||'null'), now=(j.req||[]).map(function(r){ return r.id });
         if(rs) (j.req||[]).filter(function(r){ return rs.indexOf(r.id)<0 }).slice(0,3).forEach(function(r){ var t='👋 '+r.n+' #'+r.t+' wants to be friends. Open Friends to accept.'; buzz(); toast(t); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC',t) });
         localStorage.setItem('aw-frreq',JSON.stringify(now)) }catch(e){} setTimeout(function(){ (j.friends||[]).map(function(f){ return f.chat }).concat((j.groups||[]).map(function(g){ return g.chat })).filter(Boolean).slice(0,40).forEach(function(c,i){ setTimeout(function(){ keysFor(c).catch(function(){}) },i*400) }) },3000); if(!pkSent&&window.__e2e){ pkSent=true; window.__e2e.ready.then(function(m){ if(m) return api('pk',{pk:m.pub}) }).catch(function(){ pkSent=false }) } try{ localStorage.setItem('aw-frS',JSON.stringify({friends:j.friends||[],groups:j.groups||[],me:j.me||null})) }catch(e){} if(b.hours!=null) sendHrs=null; if(share&&S.me&&!S.me.share&&b.share){ /* server turned it off */ } if(chat&&chat.g){ var gg=S.groups.filter(function(x){ return x.chat===chat.chat })[0]; if(gg) chat.own=gg.own } var u=total()+S.req.length; if(prevUn>=0&&u>prevUn){ buzz(); if(sh.hidden){ toast(S.req.length&&u-prevUn<=S.req.length?'New friend request':'New message from a friend'); if(window.__native&&window.__native.notify&&window.__native.bg()) window.__native.notify('AwareBC','New message from a friend') } } prevUn=u;
       setBadge(); drawMarks(); if(!sh.hidden&&view==='list') render() }).catch(function(){}).then(function(){ busy=false }) }
