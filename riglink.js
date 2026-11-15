@@ -40,22 +40,25 @@
 
   // ---------- mini profile: tap any rider's vehicle (Rig Link rigs, friends on the map) ----------
   var MP=null, mpo=null;
+  var mpj=null;
   function mini(tg,o){ o=o||{}; mpo=o; mpo.tg=tg; if(!MP){ MP=document.createElement('div'); MP.id='rlmp'; MP.hidden=true; MP.setAttribute('role','dialog'); MP.setAttribute('aria-label','Rider'); document.body.appendChild(MP);
       MP.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-m]'); if(e.target===MP){ MP.hidden=true; return } if(!b) return; var a=b.getAttribute('data-m');
         if(a==='x'){ MP.hidden=true; return }
+        if(a==='add'){ if(!needName()) return; var F2=window.__frApi; if(!F2||!F2.request) return; b.disabled=true; b.textContent='Sending…';
+          F2.request(mpo.tg,(mpj&&mpj.n)||mpo.n||'').then(function(m){ b.textContent='⏳ Request sent'; b.className='rlbt'; toast(m) },function(err){ b.disabled=false; b.textContent='➕ Add friend'; toast(err.message) }); return }
         if(a==='chat'){ MP.hidden=true; if(window.__frApi) window.__frApi.chatTag(mpo.tg,''); return }
         if(a==='go'){ MP.hidden=true; if(X&&!X.hidden) close(); var ll=L.latLng(mpo.lat,mpo.lon); if(window.__nav) window.__nav.to(ll,mpo.n||'Rider'); else MAP.flyTo(ll,15); return }
         if(a==='full'){ MP.hidden=true; if(X&&!X.hidden) profile(mpo.tg); return } }) }
     paintMini(o.n?{n:o.n,t:tg,bd:{},tags:[],rig:o.rig||'',wait:1}:{n:'Rider',t:tg,bd:{},tags:[],rig:'',wait:1}); MP.hidden=false;
     if(navigator.onLine===false){ paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}); return }
     api({op:'prof',tg:tg}).then(function(j){ if(mpo.tg===tg) paintMini(j) }).catch(function(){ if(mpo.tg===tg) paintMini({n:o.n||'Rider',t:tg,bd:{},tags:[],rig:o.rig||'',off:1}) }) }
-  function paintMini(j){ var o=mpo||{}, fr=window.__frApi&&window.__frApi.isFriend&&window.__frApi.isFriend(j.t), earned=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) });
+  function paintMini(j){ mpj=j; var o=mpo||{}, fr=window.__frApi&&window.__frApi.isFriend&&window.__frApi.isFriend(j.t), earned=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) });
     var p=me(), d=isFinite(o.lat)&&p.real?kmT(km(p.lat,p.lon,o.lat,o.lon))+' away':'';
     var h='<div class="mpin"><div class="mphd">'+(j.fd?founder(60):'<span class="rlav big" style="background:'+col(j.n+j.t)+'">'+ini(j.n)+'</span>')+'<div class="mpt"><b>'+esc(j.n)+(j.t?' <small>#'+esc(j.t)+'</small>':'')+'</b>'+(j.fd?'<div class="rlfdt">FOUNDER OF AWAREBC</div>':'')+
       '<small>'+[o.rig||j.rig?'🚙 '+esc(o.rig||j.rig):'',o.sub?esc(o.sub):'',d].filter(Boolean).join(' · ')+'</small></div><button type="button" class="rlx" data-m="x" aria-label="Close">✕</button></div>';
     h+=earned.length?'<div class="mpbd">'+earned.map(function(b){ var n=j.bd[b[0]]; return '<div>'+shield(b[0],n,40)+'<small>'+b[1]+'<br>'+TN[tier(n)]+'</small></div>' }).join('')+'</div>':'<div class="rlsm" style="margin:6px 0">'+(j.wait?'Loading badges…':j.off?'No signal: badges show when you’re back online.':'No badges yet.')+'</div>';
     if(j.tags&&j.tags.length) h+='<div class="rltel" style="padding:0 0 4px">'+j.tags.slice(0,5).map(function(x){ return '<span>'+esc(x)+'</span>' }).join('')+'</div>';
-    h+='<div class="rlact" style="padding:8px 0 0">'+(j.me?'':'<button type="button" class="rlbt '+(fr?'b':'g')+'" data-m="chat">'+(fr?'💬 Chat':'➕ Add friend')+'</button>')+(isFinite(o.lat)&&!j.me?'<button type="button" class="rlbt" data-m="go">🧭 Directions</button>':'')+(X&&!X.hidden?'<button type="button" class="rlbt" data-m="full">Full profile</button>':'')+'</div></div>';
+    h+='<div class="rlact" style="padding:8px 0 0">'+(j.me?'':fr?'<button type="button" class="rlbt b" data-m="chat">💬 Chat</button>':window.__frApi&&window.__frApi.sent&&window.__frApi.sent(j.t)?'<button type="button" class="rlbt" disabled>⏳ Request sent</button>':'<button type="button" class="rlbt g" data-m="add">➕ Add friend</button>')+(isFinite(o.lat)&&!j.me?'<button type="button" class="rlbt" data-m="go">🧭 Directions</button>':'')+(X&&!X.hidden?'<button type="button" class="rlbt" data-m="full">Full profile</button>':'')+'</div></div>';
     MP.innerHTML=h }
   window.__rlMini=mini;
 
