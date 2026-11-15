@@ -58,7 +58,8 @@
       else if(pend) h+='<div class="srhint">Searching…</div>';
       list.innerHTML=h }
     list.onclick=function(e){ var b=e.target.closest&&e.target.closest('.srr'); if(!b) return; var it=res[+b.getAttribute('data-i')]; if(!it) return; close();
-      var ll=L.latLng(it.lat,it.lon), z=it.z||13; map.once('moveend',function(){ setTimeout(function(){ if(window.__pin) window.__pin(ll,it.n) },60) }); map.flyTo(ll,Math.max(z,Math.min(map.getZoom(),17)),{duration:1.2}) };
+      var ll=L.latLng(it.lat,it.lon), z=map.distance(map.getCenter(),[it.lat,it.lon])>30000?(it.z||13):Math.max(it.z||13,Math.min(map.getZoom(),17)), pin=function(){ if(window.__pin) window.__pin(ll,it.n) };
+      if(window.__goTo) window.__goTo(ll,z,pin); else { map.once('moveend',function(){ setTimeout(pin,60) }); map.flyTo(ll,z,{duration:1.2}) } };
     function run(src,id,fn){ pend++; draw(id); fn().then(function(items){ pend--; add(id,items||[]) },function(){ pend--; draw(id) }) }
     function J(u){ return fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json() }) }
     function bbox(R,dx,dy){ return [R.lon-dx,R.lat-dy,R.lon+dx,R.lat+dy] }

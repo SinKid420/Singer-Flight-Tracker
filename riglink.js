@@ -177,7 +177,7 @@
   function click(e){ var t=e.target, b=t.closest&&t.closest('[data-a],[data-f],[data-rig],.rlcd,.rlimg'); if(!b) return;
     if(b.classList.contains('rlimg')){ sheet('<img src="'+RS+'/rlm/'+esc(b.getAttribute('data-full'))+'" alt="" style="width:100%;border-radius:12px">'+closeBt()); return }
     if(b.hasAttribute('data-f')&&b.closest('.rlfl')){ filt=b.getAttribute('data-f'); posts=[]; paintTop(); load(); return }
-    if(b.hasAttribute('data-rig')){ var r=rigs[+b.getAttribute('data-rig')]; if(r){ close(); MAP.flyTo([r.lat,r.lon],Math.max(MAP.getZoom(),14),{duration:1}); mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) } return }
+    if(b.hasAttribute('data-rig')){ var r=rigs[+b.getAttribute('data-rig')]; if(r){ close(); if(window.__goTo) window.__goTo(L.latLng(r.lat,r.lon),Math.max(MAP.getZoom(),14)); else MAP.flyTo([r.lat,r.lon],Math.max(MAP.getZoom(),14),{duration:1}); mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) } return }
     var a=b.getAttribute('data-a'), cd=t.closest('.rlcd'), p=cd?posts[+cd.getAttribute('data-i')]:null;
     if(!a&&b.classList.contains('rlcd')) return;
     if(a==='qx'){ var mid=b.getAttribute('data-m'); var q=lj('aw-rlq',[]).filter(function(x){ return (x.mid||'')!==mid }); ls('aw-rlq',JSON.stringify(q)); if(mid&&window.__mesh) window.__mesh.recall(mid); toast('Unsent'); draw(); return }
@@ -199,7 +199,7 @@
     if(a==='note') return noteSheet();
     if(a==='sx') return closeSheet();
     if(!p) return sheetClick(a,b);
-    if(a==='fly'){ close(); MAP.flyTo([p.lat,p.lon],Math.max(MAP.getZoom(),15),{duration:1.2}); MAP.once('moveend',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),(KIND[p.kind]||KIND.h)[0]==='TRAIL'?(ST[p.st]||'Trail condition'):p.by) }); return }
+    if(a==='fly'){ close(); var fz=Math.max(MAP.getZoom(),15); if(window.__goTo) window.__goTo(L.latLng(p.lat,p.lon),fz); else MAP.flyTo([p.lat,p.lon],fz,{duration:1.2}); MAP.once('moveend',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),(KIND[p.kind]||KIND.h)[0]==='TRAIL'?(ST[p.st]||'Trail condition'):p.by) }); return }
     if(a==='prof') return profile(p.tg);
     if(a==='clear'||a==='cfm'){ if(!needName()) return; api({op:a,id:p.id,key:curKey()||undefined}).then(function(){ toast(a==='clear'?'Marked cleared. When another rider confirms, you earn Sawyer.':'Confirmed. Thanks!'); load(true) }).catch(function(e){ toast(e.message) }); return }
     if(a==='verify'||a==='like'){ api({op:a,id:p.id,key:curKey()||undefined}).then(function(j){ if(a==='verify'){ p.ver=j.c; p.verd=true } else { p.likes=j.c; p.liked=j.on } draw() }).catch(function(e){ toast(e.message) }); return }

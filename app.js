@@ -821,7 +821,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=174, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=175, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -936,6 +936,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function resumeLater(){ clearTimeout(resT); resT=setTimeout(resumeFollow,10000) }
   map.on('dragstart',function(){ if(follow){ follow=false; awake(false); locBtn.classList.remove('follow','on'); if(moving){ resumeLater(); say('Stopped following · back to you in 10 s',2500) } else say('Stopped following · tap My spot to follow again',2500) } else if(resT) resumeLater() });
   map.on('zoomstart',function(){ if(resT&&!ourZoom) resumeLater() });
+  // go to a searched / tapped spot: stop following your GPS first (it was pulling the map back), jump straight there when it's far
+  window.__goTo=function(ll,z,cb){ if(follow){ follow=false; awake(false); locBtn.classList.remove('follow','on') } clearTimeout(resT); resT=null; glideOn=false;
+    var far=map.distance(map.getCenter(),ll)>30000; if(cb) map.once('moveend',function(){ setTimeout(cb,80) }); if(far) map.setView(ll,z,{animate:false}); else map.flyTo(ll,z,{duration:.8}) };
   startWatch();
   // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
   if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){
