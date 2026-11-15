@@ -79,6 +79,10 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function sharpOff(){ try{ return localStorage.getItem('aw-sharp')==='0' }catch(e){ return false } }
   // two Esri servers share the work, so the phone downloads twice as many pictures at once
   var ESRI2='https://services.arcgisonline.com/ArcGIS/rest/services/'; function eh(x,y){ return ((x+y)&1)?ESRI2:ESRI }
+  // warm up the satellite pictures around a spot before going there (search results), so it shows straight away
+  var warmed={}; window.__warm=function(lat,lon,z){ var cz=Math.min(18,Math.round(z)+(RET?1:0)), k=cz+'/'+lat.toFixed(3)+'/'+lon.toFixed(3); if(warmed[k]||navigator.onLine===false) return; warmed[k]=1;
+    var n=Math.pow(2,cz), x=Math.floor((lon+180)/360*n), r=lat*Math.PI/180, y=Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n);
+    [[cz,1],[cz-2,0]].forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
   // map extras (places, pins) wait until the satellite pictures on screen have arrived (2.5 s at most)
   var tilePend=new Set(), afterQ=[], afterT=null;
   function afterFlush(){ clearTimeout(afterT); afterT=null; var q=afterQ; afterQ=[]; q.forEach(function(f){ try{ f() }catch(e){} }) }
@@ -821,7 +825,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=175, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=176, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -938,7 +942,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   map.on('zoomstart',function(){ if(resT&&!ourZoom) resumeLater() });
   // go to a searched / tapped spot: stop following your GPS first (it was pulling the map back), jump straight there when it's far
   window.__goTo=function(ll,z,cb){ if(follow){ follow=false; awake(false); locBtn.classList.remove('follow','on') } clearTimeout(resT); resT=null; glideOn=false;
-    var far=map.distance(map.getCenter(),ll)>30000; if(cb) map.once('moveend',function(){ setTimeout(cb,80) }); if(far) map.setView(ll,z,{animate:false}); else map.flyTo(ll,z,{duration:.8}) };
+    var far=map.distance(map.getCenter(),ll)>5000; if(cb) map.once('moveend',function(){ setTimeout(cb,80) }); if(far) map.setView(ll,z,{animate:false}); else map.flyTo(ll,z,{duration:.5}) };
   startWatch();
   // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
   if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){

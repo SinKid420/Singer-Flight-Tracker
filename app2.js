@@ -50,7 +50,8 @@
       twBusy=true; J('https://photon.komoot.io/reverse?lat='+it.lat.toFixed(5)+'&lon='+it.lon.toFixed(5)+'&limit=1&lang=en').then(function(j){ TW[k]=cleanTown((j.features&&j.features[0]||{}).properties||{}) }).catch(function(){ TW[k]='' })
         .then(function(){ twBusy=false; if(TW[k]&&TW[k]!==it.n) it.w=TW[k]; if(id===seq){ draw(id); towns(id) } }) }
     var pend=0;
-    function draw(id){ if(id!==seq) return; var s=String(q.value||'').trim().toLowerCase();
+    var warmT=null; function warmTop(){ clearTimeout(warmT); warmT=setTimeout(function(){ if(!window.__warm) return; res.slice(0,3).forEach(function(it){ var far=map.distance(map.getCenter(),[it.lat,it.lon])>30000; window.__warm(it.lat,it.lon,far?(it.z||13):Math.max(it.z||13,Math.min(map.getZoom(),17))) }) },400) }
+    function draw(id){ if(id!==seq) return; warmTop(); var s=String(q.value||'').trim().toLowerCase();
       res.sort(function(a,b){ var sa=s&&a.n.toLowerCase().indexOf(s)===0?0:1, sb=s&&b.n.toLowerCase().indexOf(s)===0?0:1; return (a.rank||0)-(b.rank||0)||sa-sb||a.d-b.d });
       var h=res.slice(0,14).map(function(it,i){ var c=IC[it.k]||IC.place, w=it.w&&it.w.toLowerCase()!==it.n.toLowerCase()?it.w:'', sub=it.ty+' · '+(w?w+', '+it.rg:(it.rg==='BC'?'BC, Canada':it.rg.replace(/^WA,/,'Washington,').replace(/^ID,/,'Idaho,').replace(/^MT,/,'Montana,')));
         return '<button type="button" class="srr" data-i="'+i+'"><span class="sri" style="color:'+c[0]+';background:'+c[1]+'"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'+c[2]+'</svg></span><span class="srt"><b>'+esc(it.n)+'</b><small>'+esc(sub)+'</small></span><span class="srk">'+kmT(it.d)+'</span></button>' }).join('');
@@ -90,6 +91,6 @@
       var off=function(){ return window.__offNames?window.__offNames(l):Promise.resolve([]) };
       if(navigator.onLine===false) run('o',id,off);
       if(navigator.onLine!==false){ run('n',id,function(){ return names(l).catch(off) }); run('p',id,function(){ return photon(s,'',R,4,3) }); run('f',id,function(){ return fsr(l,R) }) } }
-    q.addEventListener('input',function(){ clearTimeout(tmr); tmr=setTimeout(search,350) });
+    q.addEventListener('input',function(){ clearTimeout(tmr); tmr=setTimeout(search,220) });
     q.addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(tmr); search(); q.blur() } });
   })();
