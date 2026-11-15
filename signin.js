@@ -71,7 +71,8 @@
       W.querySelector('[data-a=none]').onclick=function(){ ls('aw-acct','none'); hide(); note('<b>No account</b>Everything stays on this phone. You can sign in any time in Settings ▸ Account.',5000) } }
     W.hidden=false; gButton(W.querySelector('.gb')) }
   function hide(){ if(W) W.hidden=true }
-  function want(){ if(PREVIEW) return true; if(!GCLIENT||acct()||ls('aw-acct')==='none'||ss('aw-skip')) return false; return navigator.onLine!==false }
+  window.__siButton=function(el){ gButton(el) };
+  function want(){ if(window.__awOb&&window.__awOb.isNew) return false; if(PREVIEW) return true; if(!GCLIENT||acct()||ls('aw-acct')==='none'||ss('aw-skip')) return false; return navigator.onLine!==false }
   if(want()) show();
 
   // ---------- Settings ▸ Account ----------

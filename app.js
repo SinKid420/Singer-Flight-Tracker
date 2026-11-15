@@ -833,7 +833,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=195, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=196, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -951,9 +951,11 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // go to a searched / tapped spot: stop following your GPS first (it was pulling the map back), jump straight there when it's far
   window.__goTo=function(ll,z,cb){ if(follow){ follow=false; awake(false); locBtn.classList.remove('follow','on') } clearTimeout(resT); resT=null; glideOn=false;
     var far=map.distance(map.getCenter(),ll)>5000; if(cb) map.once('moveend',function(){ setTimeout(cb,80) }); if(far) map.setView(ll,z,{animate:false}); else map.flyTo(ll,z,{duration:.5}) };
-  startWatch();
+  // first run: wait until the rider has read why AwareBC uses location (onboard.js), then start GPS
+  var OB=window.__awOb&&window.__awOb.active()?window.__awOb:null;
+  if(OB) OB.onDone(function(ok){ if(ok){ startWatch(); locate(true) } }); else startWatch();
   // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
-  if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:'geolocation'}).then(function(r){
+  if(navigator.permissions&&navigator.permissions.query) (OB?new Promise(function(ok){ OB.onDone(ok) }):Promise.resolve()).then(function(){ return navigator.permissions.query({name:'geolocation'}) }).then(function(r){
     function chk(first){ if(r.state==='granted'){ if(!first){ startWatch(); say('<b>Location on ✅</b>Tap My spot to follow you.',4000) } return }
       if(told) return; told=true; setTimeout(function(){ if(r.state==='denied') say(why({code:1}),20000,true); else if(r.state==='prompt') say('<b>Turn on location</b>AwareBC needs your location for My spot, trail alerts and nearby planes.<button type="button" id="gpsgo">Allow location</button>',20000) },first?2500:0) }
     chk(true); r.onchange=function(){ told=r.state!=='denied'?told:false; chk(false) } }).catch(function(){});
@@ -1036,7 +1038,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     runTest(); clearTimeout(timer); busy=false; poll();
   };
   // Opening the app: start zoomed in close around you (town and road level), not the whole 100 nm plane area
-  var START_Z=13; applyUnits(); syncLabels(); recenter(true); map.setView([me.lat,me.lon],me.label==='none'?5:me.label==='last'?11:START_Z,{animate:false}); locate(true);
+  var START_Z=13; applyUnits(); syncLabels(); recenter(true); map.setView([me.lat,me.lon],me.label==='none'?5:me.label==='last'?11:START_Z,{animate:false}); if(!(window.__awOb&&window.__awOb.active())) locate(true);
   // ---- Space & night sky: ISS and bright satellites (CelesTrak orbits + satellite.js), aurora (NOAA SWPC), meteor showers ----
   var SATJS='https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js', SATSRI='sha384-e6V1JVpc+kVNTxT0gEOla7yL4c92Romsw7itPoipfzHbEjzUwPhTv6oeVDMHHzqT';
   var sats=[], satReady=null, spaceCfg={map:true,ar:true}, issMks={}, DEG=Math.PI/180, CMP=['N','NE','E','SE','S','SW','W','NW'];
