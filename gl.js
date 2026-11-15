@@ -152,7 +152,7 @@
     if(w.kind==='sat'&&!w.lab&&!w.hill){ off(); return }
     if(key===curKey){ after(w); return }
     (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
-      if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?24:60,refreshExpiredTiles:false},cam()));
+      if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?12:60,refreshExpiredTiles:false},cam()));
           gl.on('styleimagemissing',function(e){ if(/^bz-/.test(e.id)&&window.__biz&&!gl.hasImage(e.id)) try{ gl.addImage(e.id,window.__biz.image(e.id.slice(3)),{pixelRatio:2}) }catch(x){} });
           gl.on('load',function(){ loaded=true; after(want()) }); var idT=0; gl.on('idle',function(){ if(ovLyr&&window.__osmRedraw&&Date.now()-idT>4000){ idT=Date.now(); window.__osmRedraw() } }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });

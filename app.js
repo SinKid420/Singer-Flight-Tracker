@@ -38,7 +38,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; L.GridLayer.prototype.options.updateInterval=50; // map pictures keep loading while you drive, not only when you stop; fewer load mid-pinch (phones ran out of memory zooming fast)
   // load one extra row of map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
   // the screen loads first; the extra row only starts once everything on screen has arrived
-  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=(navigator.deviceMemory||4)<=4?128:256;
+  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=(navigator.deviceMemory||4)<=4?64:256;
     G._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||!this._awRdy||this.getTileSize().x>256||(this.options.opacity===0)) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) };
     G.onAdd=function(m){ var s=this; if(!s._awHk){ s._awHk=1; s.on('loading',function(){ if(!s._awPre) s._awRdy=false }); s.on('load',function(){ if(s._awRdy||!s._map) return; s._awRdy=true; s._awPre=1; try{ s._update() }catch(e){} s._awPre=0 }) } return oa.call(this,m) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
@@ -75,6 +75,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function esriBest(c){ if(c.z<=17) return Promise.resolve(c.z); var z=c.z;
     function tryZ(){ if(z<=17) return Promise.resolve(17); var f=Math.pow(2,c.z-z); return esriHas(z,Math.floor(c.y/f),Math.floor(c.x/f)).then(function(ok){ if(ok) return z; z--; return tryZ() }) }
     return tryZ() }
+  var LOWMEM=(navigator.deviceMemory||4)<=4;
   var RET=!!(L.Browser.retina&&!sharpOff()); // sharp picture on sharp screens: twice the detail, half-size pieces
   function sharpOff(){ try{ return localStorage.getItem('aw-sharp')==='0' }catch(e){ return false } }
   // two Esri servers share the work, so the phone downloads twice as many pictures at once
@@ -82,7 +83,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // warm up the satellite pictures around a spot before going there (search results), so it shows straight away
   var warmed={}; window.__warm=function(lat,lon,z){ var cz=Math.min(18,Math.round(z)+(RET?1:0)), k=cz+'/'+lat.toFixed(3)+'/'+lon.toFixed(3); if(warmed[k]||navigator.onLine===false) return; warmed[k]=1;
     var n=Math.pow(2,cz), x=Math.floor((lon+180)/360*n), r=lat*Math.PI/180, y=Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n);
-    [[cz,1],[cz-2,0]].forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
+    (LOWMEM?[[cz-2,0]]:[[cz,1],[cz-2,0]]).forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
   // map extras (places, pins) wait until the satellite pictures on screen have arrived (2.5 s at most)
   var tilePend=new Set(), afterQ=[], afterT=null;
   function afterFlush(){ clearTimeout(afterT); afterT=null; var q=afterQ; afterQ=[]; q.forEach(function(f){ try{ f() }catch(e){} }) }
@@ -92,7 +93,8 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     el.style.cssText='position:absolute;max-width:none;width:'+(px*f)+'px;height:'+(px*f)+'px;left:'+(-(c.x-ax*f)*px)+'px;top:'+(-(c.y-ay*f)*px)+'px';
     return eh(ax,ay)+'World_Imagery/MapServer/tile/'+z+'/'+ay+'/'+ax }
   var EsriSmart=L.TileLayer.extend({ createTile:function(c0,done){ var tile=document.createElement('div'), self=this, px=this.getTileSize().x, c={z:c0.z+(this.options.zoomOffset||0),x:c0.x,y:c0.y};
-    if(!self._awU){ self._awU=1; self.on('tileunload',function(e){ tileDone(e.tile) }) }
+    // free a picture's memory as soon as its piece leaves the screen (phones with 4 GB or less run out of graphics memory)
+    if(!self._awU){ self._awU=1; self.on('tileunload',function(e){ tileDone(e.tile); [].forEach.call(e.tile.querySelectorAll('img'),function(i){ i.onload=i.onerror=null; i.src='data:image/gif;base64,R0lGODlhAQABAAAAACw=' }) }) }
     var shown=false; function vis(err){ if(!shown){ shown=true; done(err,tile) } }
     // blurry first: a zoomed-out picture (one download covers 16 spots) fills in at once, the sharp one lands on top
     if(c.z>=8){ var lo=document.createElement('img'); lo.alt=''; lo.setAttribute('role','presentation'); lo.decoding='async'; lo.onload=function(){ vis(null) }; lo.src=pos(lo,c,c.z-2,px); tile.appendChild(lo) }
@@ -102,7 +104,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     var known=false; esriBest(c).then(function(z){ known=true; show(z); if(img.complete&&img.naturalWidth) end(null) });
     if(!known&&c.z>17) show(c.z); // start loading the sharpest picture right away while the coverage check runs (most towns have it)
     img.onload=function(){ if(known) end(null) }; img.onerror=function(e){ if(known) end(e) };
-    tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } });
+    if(!LOWMEM) tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } }); // clipping gives every piece its own graphics layer: skipped on 4 GB phones
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
@@ -825,7 +827,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=191, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=192, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
