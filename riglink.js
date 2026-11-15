@@ -167,7 +167,7 @@
       if(a==='ph') return fi.click();
       if(a==='b'){ var v=b.getAttribute('data-v'), i=sel.indexOf(v); if(i>=0){ sel.splice(i,1); b.classList.remove('on') } else if(sel.length<3){ sel.push(v); b.classList.add('on') } else toast('Up to 3 for now. You can pick more later.'); return }
       if(a==='sk') return done();
-      if(a==='sv'){ var n=Q.querySelector('[data-q=n]').value.trim(), rig=Q.querySelector('[data-q=r]').value.trim(); if(!n){ toast('Add your name, or tap Skip.'); return }
+      if(a==='sv'){ var n=Q.querySelector('[data-q=n]').value.trim(), rig=Q.querySelector('[data-q=r]').value.trim(); if(!n){ toast('Add your name, or tap Skip.'); return } if(window.__nameOk&&!window.__nameOk(n)) return;
         ls('sky-trname',n.slice(0,24)); if(navigator.onLine===false){ toast('Name saved. Add your photo and badges when you have signal.'); return done() }
         b.disabled=true; b.textContent='Saving…'; var o={op:'pf',rig:rig,sk:sel.indexOf('aid')>=0?['aid']:[]}; if(sel.indexOf('strap')>=0) o.sk.push('rec'); if(av) o.av=av;
         api(o).then(function(){ return sel.length?api({op:'pb',pb:sel}):null }).then(function(){ toast('Profile saved 👍'); done() },function(err){ b.disabled=false; b.textContent='Save'; toast(err.message) }) } } };

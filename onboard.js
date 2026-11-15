@@ -2,6 +2,10 @@
 // Only for brand-new users. People who already use the app never see it. Nothing here waits for signal.
 (function(){
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
+  // names only the app's creator and helpers may use (the server enforces this too)
+  var RES=/\b(admin|administrator|moderator|mod|awarebc|aware bc|support|staff|official|founder|creator|developer)\b|josh\W*singer/i;
+  window.__nameOk=function(n){ if(!RES.test(String(n||''))||ls('aw-admin')==='1') return true;
+    var d=document.createElement('div'); d.className='frtoast'; d.style.zIndex=6600; d.textContent='That name is reserved. Please choose another.'; document.body.appendChild(d); setTimeout(function(){ d.classList.add('go') },2800); setTimeout(function(){ d.remove() },3400); return false };
   var NEW=!ls('aw-ob')&&ls('sky-setup')!=='1'&&!ls('sky-lastpos');
   if(!NEW&&!ls('aw-ob')) ls('aw-ob','1'); // already using AwareBC: never shown
   var waiters=[], active=NEW, allowed=false;

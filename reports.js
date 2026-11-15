@@ -98,7 +98,7 @@
   function name(){ return ls('sky-trname')||'' }
   function askName(done){ var w=document.createElement('div'); w.className='trname'; w.innerHTML='<form><b>Your name to complete action</b><small>Shown on your reports and comments<span class="trmytag"></span></small><input maxlength="24" placeholder="e.g. Josh" aria-label="Your name to complete action"><button type="submit">Save</button></form>'; document.body.appendChild(w);
     myTag(function(t){ var e=w.querySelector('.trmytag'); if(e) e.textContent=' with your rider tag #'+t+' (only this phone can use it)' });
-    var i=w.querySelector('input'); i.focus(); w.querySelector('form').onsubmit=function(e){ e.preventDefault(); var v=i.value.trim().slice(0,24); if(!v) return; ls('sky-trname',v); w.remove(); var nf=document.getElementById('trnm'); if(nf) nf.value=v; done&&done() };
+    var i=w.querySelector('input'); i.focus(); w.querySelector('form').onsubmit=function(e){ e.preventDefault(); var v=i.value.trim().slice(0,24); if(!v) return; if(window.__nameOk&&!window.__nameOk(v)){ i.value=''; return } ls('sky-trname',v); w.remove(); var nf=document.getElementById('trnm'); if(nf) nf.value=v; done&&done() };
     w.onclick=function(e){ if(e.target===w) w.remove() } }
 
   // ---------- post form ----------
@@ -131,7 +131,7 @@
         pv.querySelector('button').onclick=function(){ F.img=F.th=null; pv.hidden=true; pv.innerHTML='' } })
       .catch(function(){ pv.innerHTML='<div class="trmsg">That photo could not be read. Try another.</div>'; F.img=F.th=null }) }
   function key(){ var a=new Uint8Array(16); crypto.getRandomValues(a); return [].map.call(a,function(b){ return ('0'+b.toString(16)).slice(-2) }).join('') }
-  function post(){ var nf=document.getElementById('trnm'); if(nf&&nf.value.trim()) ls('sky-trname',nf.value.trim().slice(0,24)); var nm=name(); if(!nm){ askName(post); return }
+  function post(){ var nf=document.getElementById('trnm'); if(nf&&nf.value.trim()){ if(window.__nameOk&&!window.__nameOk(nf.value.trim())){ nf.value=''; return } ls('sky-trname',nf.value.trim().slice(0,24)) } var nm=name(); if(!nm){ askName(post); return }
     var b=form.querySelector('.trpost'); b.disabled=true; b.textContent='Posting…';
     var k=key(), body={lat:F.pos.lat,lon:F.pos.lon,st:F.st,tg:F.tg,note:form.querySelector('textarea').value.trim().slice(0,200),by:nm,key:k,img:F.img,th:F.th};
     send(body).then(function(j){ form.hidden=true; toast('Report posted. Thanks!'); load(true); setTimeout(function(){ openCard(j.id) },900) })
