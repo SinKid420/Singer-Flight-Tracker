@@ -62,13 +62,17 @@
     MP.innerHTML=h }
   window.__rlMini=mini;
 
-  // ---------- Nearby riders (Off-road only, opt-in): see and be seen, rough spot (about 1 km) ----------
+  // ---------- Nearby riders (Off-road only, on unless turned off): see and be seen, rough spot (about 1 km) ----------
   (function(){ var NL=L.layerGroup().addTo(MAP), nT=null, NK='aw-near';
-    function on(){ return ls(NK)==='1' }
+    function on(){ return ls(NK)!=='0' }
+    // the first time, say so plainly and offer to turn it off
+    function told(){ if(ls(NK)!=null||ls('aw-nearnote')) return; ls('aw-nearnote','1'); var d=document.createElement('div'); d.className='nrnote'; d.setAttribute('role','status');
+      d.innerHTML='<b>🚙 Nearby riders is on</b><span>Riders within about 60 km see your rig as a rough spot (about 1 km), and you see theirs. Never your exact spot.</span><div><button type="button" data-v="0">Turn off</button><button type="button" data-v="1" class="ok">OK</button></div>';
+      d.onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-v]'); if(!b) return; window.__rlNear.set(b.getAttribute('data-v')==='1'); d.remove() }; document.body.appendChild(d) }
     function clear(){ NL.clearLayers() }
     // main map (Off-road): your convoy's rigs (exact spot when they share it) and nearby riders who chose to be seen (rough spot)
     function tick(){ clearTimeout(nT); nT=setTimeout(tick,60000); var ck=ls('aw-rlkey')||''; if((!on()&&!ck)||!offRoad()||document.hidden||navigator.onLine===false){ if(!offRoad()||(!on()&&!ck)) clear(); return }
-      var p=me(); if(!p.real) return; var rig=ls('aw-rlrig')||'';
+      var p=me(); if(!p.real) return; var rig=ls('aw-rlrig')||''; if(on()) told();
       Promise.all([ck?api({op:'crigs',key:ck,lat:p.lat,lon:p.lon,share:ls('aw-rlshare')==='1'?1:0,rig:rig}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]}),
         on()?api({op:'near',lat:p.lat,lon:p.lon,share:1,rig:rig}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]})]).then(function(J){ clear(); if(!offRoad()) return; var shown={};
         function put(r,cv){ if(shown[r.tg]||(window.__frApi&&window.__frApi.isFriend(r.tg))) return; shown[r.tg]=1; // friends already show with their exact spot
@@ -81,10 +85,10 @@
     setTimeout(tick,6000);
     // Settings ▸ Off-road ▸ Nearby riders
     var f=document.createElement('details'); f.className='folder'; f.id='nrfolder';
-    f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. Riders who also turn this on show as 🚙, and you show to them. You see each other within about 60 km, and only a rough spot is shared. Friends show anywhere: Friends ▸ Share my spot.</div>';
+    f.innerHTML='<summary>Nearby riders</summary><label class="setrow">See &amp; be seen<select id="s_near"><option value="0">Off</option><option value="1">On</option></select></label><div class="fhelp">Off-road only. On for everyone unless turned off. Nearby riders show as 🚙, and you show to them. You see each other within about 60 km, and only a rough spot is shared. Friends show anywhere: Friends ▸ Share my spot.</div>';
     var host=document.getElementById('mtfolder'); if(host&&host.parentNode) host.parentNode.insertBefore(f,host.nextSibling);
     var sel=f.querySelector('select'); sel.value=on()?'1':'0'; sel.onchange=function(){ ls(NK,sel.value); if(sel.value==='1'){ toast('Nearby riders on (Off-road)'); tick() } else stop() };
-    var st=document.createElement('style'); st.textContent='.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}.nrmk.cv small{background:#14532d;color:#bbf7d0}'; document.head.appendChild(st) })();
+    var st=document.createElement('style'); st.textContent='.nrnote{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);z-index:5600;background:#1c1c1e;color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.5);font:13.5px var(--font,system-ui);display:flex;flex-direction:column;gap:6px}.nrnote b{font-size:15px}.nrnote span{color:#c7c7cc;line-height:1.35}.nrnote div{display:flex;gap:8px;margin-top:4px}.nrnote button{flex:1;height:38px;border:0;border-radius:19px;background:#2c2c2e;color:#fff;font:700 14px var(--font,system-ui)}.nrnote button.ok{background:#30d158;color:#000}.nrmk{display:inline-flex;flex-direction:column;align-items:center;transform:translate(-50%,-50%);font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));cursor:pointer}.nrmk small{margin-top:2px;font:700 10px var(--font,system-ui);color:#fff;background:rgba(17,17,17,.85);padding:1px 5px;border-radius:7px;white-space:nowrap}.nrmk.fd small{color:#fcd34d}.nrmk.cv small{background:#14532d;color:#bbf7d0}'; document.head.appendChild(st) })();
   function minis(bd){ var a=BD.map(function(b){ return [b[0],(bd||{})[b[0]]||0] }).filter(function(x){ return tier(x[1]) }).sort(function(p,q){ return q[1]-p[1] }).slice(0,3);
     return a.length?'<span class="rlmini">'+a.map(function(x){ return shield(x[0],x[1],17) }).join('')+'</span>':'' }
   function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){
