@@ -38,7 +38,7 @@
   function inArea(b){ return Promise.all(cellsFor(b,CS).slice(0,60).map(function(c){ return get(cellU(c[0],c[1])) })).then(function(R){ var o=[]; R.forEach(function(x){ o=o.concat(pts(x)) }); return o }) }
 
   // ---------- map markers ----------
-  var IC={gate:'🚧',fuel:'⛽',help:'🆘',water:'🚰',peaks:'⛰'}, MINZ={gate:13,fuel:14,help:11,water:13,peaks:11}, lay=L.layerGroup().addTo(map), seen={};
+  var IC={gate:'🚧',fuel:'⛽',help:'🆘',water:'🚰',peaks:'⛰'}, MINZ={gate:13,fuel:14.5,help:11,water:13,peaks:11}, lay=L.layerGroup().addTo(map), seen={};
   function label(p){ var t=p.t, a=t.amenity;
     if(p.k==='gate') return cap(t.barrier==='lift_gate'?'Gate (lift)':t.barrier==='chain'?'Chain across road':t.barrier==='block'?'Road blocks':'Gate')+(t.locked==='yes'||/^(private|no)$/.test(t.access||'')?' · may be locked':'');
     if(a==='fuel') return t.name||t.brand||'Gas station'; if(a==='charging_station') return t.name||'EV charging';
