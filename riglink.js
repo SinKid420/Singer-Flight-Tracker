@@ -53,7 +53,12 @@
     ['ava','Avalanche gear','#e0f2fe','<path '+SK+' d="M3 20 10 8l3 5 2-3 6 10Z"/><path '+SK+' d="M17 3v6M15 5h4"/>'],
     ['bear','Bear spray','#d97706','<rect '+SK+' x="8" y="7" width="8" height="14" rx="2"/><path '+SK+' d="M10 7V4h4v3M14 4h4"/><circle cx="12" cy="14" r="2" fill="currentColor"/>'],
     ['h2o','Spare water & food','#60a5fa','<path '+SK+' d="M9 3h4v3l2 3v11a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V9l2-3Z"/><path '+SK+' d="M7 13h8"/><path '+SK+' d="M18 10v11M18 10c1.5 0 3 1 3 3s-1.5 2-3 2"/>'],
-    ['wfa','Wilderness first aid','#fb7185','<path '+SK+' d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path '+SK+' d="M12 9v6M9 12h6"/>']];
+    ['wfa','Wilderness first aid','#fb7185','<path '+SK+' d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path '+SK+' d="M12 9v6M9 12h6"/>'],
+    ['trac','Traction boards','#fb923c','<path '+SK+' d="M4 4l7 16M11 4l7 16"/><path '+SK+' d="M5.5 8h4M7 12h4M8.5 16h4M12.5 8h4M14 12h4M15.5 16h4"/>'],
+    ['chain','Tire chains','#cbd5e1','<rect '+SK+' x="3" y="9" width="7" height="6" rx="3"/><rect '+SK+' x="8.5" y="9" width="7" height="6" rx="3"/><rect '+SK+' x="14" y="9" width="7" height="6" rx="3"/>'],
+    ['satnet','Sat internet','#60a5fa','<path '+SK+' d="M5 19 19 5M7 7a9 9 0 0 0 10 10"/><path '+SK+' d="M4 20h7"/><circle cx="18" cy="6" r="1.6" fill="currentColor"/><path '+SK+' d="M14 3a7 7 0 0 1 7 7"/>'],
+    ['spare','Spare tire & parts','#a3a3a3','<circle '+SK+' cx="12" cy="12" r="8"/><circle '+SK+' cx="12" cy="12" r="3"/><path '+SK+' d="M12 4v5M12 15v5M4 12h5M15 12h5"/>'],
+    ['pbank','Power bank','#4ade80','<rect '+SK+' x="6" y="4" width="12" height="17" rx="2"/><path '+SK+' d="M10 2h4M13 9l-3 4h4l-3 4"/>']];
   function pbOf(id){ return PB.filter(function(x){ return x[0]===id })[0] }
   function pbIcon(id,px){ var p=pbOf(id); return p?'<span class="pbi" style="color:'+p[2]+';width:'+px+'px;height:'+px+'px"><svg viewBox="0 0 24 24" width="'+(px*0.62|0)+'" height="'+(px*0.62|0)+'" aria-hidden="true">'+p[3]+'</svg></span>':'' }
   function pbList(a){ return (a||[]).filter(pbOf).slice(0,10) }
