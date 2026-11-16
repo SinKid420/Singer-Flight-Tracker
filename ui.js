@@ -1,7 +1,7 @@
 // AwareBC tidy controls (by Josh Singer): the On-road and Off-road layer panels get tabs (Layers · Opacity · Map) with a neat
 // switch list, and every Show/Hide or On/Off choice in the app becomes the same slick on/off switch.
 (function(){
-  function ls(k,v){ try{ if(v===undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k,v) }catch(e){ return null } }
+  function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v) }catch(e){ return null } }
   var st=document.createElement('style'); st.textContent=
     // the switch
     '.awsw{position:relative;flex:none;width:40px;height:24px;border-radius:12px;border:0;padding:0;background:#3a3f47;transition:background .18s;cursor:pointer;margin-left:auto}'+
@@ -75,8 +75,26 @@
 
   // any Settings folder (including ones added later) opens full width, with the others tucked away
   document.addEventListener('toggle',function(e){ var d=e.target; if(!d||!d.matches||!d.matches('#fsheet details.folder')) return; var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) },true);
+  // ---------- pick up where you left off: On-road / Off-road and the map layers come back the way you left them ----------
+  var LY=['firebtn','roadbtn','ferrybtn','aptbtn','planebtn','ltbtn'], restoring=true;
+  function saved(){ try{ return JSON.parse(localStorage.getItem('aw-lyr')||'{}')||{} }catch(e){ return {} } }
+  function keep(){ if(restoring) return; var o=saved(); LY.forEach(function(id){ var b=document.getElementById(id); if(b) o[id]=b.getAttribute('aria-pressed')==='true' }); try{ localStorage.setItem('aw-lyr',JSON.stringify(o)) }catch(e){} }
+  function restore(){ var M=window.__AW&&__AW.map; if(!M) return done(); var c=M.getCenter(), z=M.getZoom(), o=saved(), moved=false;
+    // mode first (the Off-road panel that opens with it is closed again)
+    var mode=ls('aw-mode'), fb=document.querySelector('.seg button[data-b=fsr]'), sb=document.querySelector('.seg button[data-b=sat]'), isOff=document.body.classList.contains('fsron');
+    if(mode==='off'&&!isOff&&fb){ fb.click(); moved=true } else if(mode==='on'&&isOff&&sb){ sb.click(); moved=true }
+    if(moved) setTimeout(function(){ [].forEach.call(document.querySelectorAll('.lyrp:not([hidden]) .fpx:not(.fpkey)'),function(x){ x.click() }) },60);
+    LY.forEach(function(id){ if(!(id in o)) return; var b=document.getElementById(id); if(!b) return; var on=b.getAttribute('aria-pressed')==='true'; if(on!==!!o[id]){ b.click(); moved=true } });
+    // turning a layer back on must not move the map (airports and ferries like to jump)
+    if(moved) setTimeout(function(){ try{ M.setView(c,z,{animate:false}) }catch(e){} [].forEach.call(document.querySelectorAll('.sheet-bg:not([hidden])'),function(x){ if(x.id!=='fsheet') x.hidden=true }) },120);
+    setTimeout(done,400) }
+  function done(){ restoring=false; keep() }
+  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.seg button[data-b]'); if(b&&!restoring) setTimeout(function(){ ls('aw-mode',document.body.classList.contains('fsron')?'off':'on') },120) },true);
+  if(window.MutationObserver) setTimeout(function(){ LY.forEach(function(id){ var b=document.getElementById(id); if(b) new MutationObserver(keep).observe(b,{attributes:true,attributeFilter:['aria-pressed']}) }) },500);
+  function waitMap(){ var ob=window.__awOb; if(ob&&ob.active&&ob.active()) return setTimeout(waitMap,1000); setTimeout(restore,1800) }
+
   function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); scan(document) }
-  function start(){ all(); setTimeout(all,1500); setTimeout(all,5000);
+  function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
     if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
   if(document.readyState==='complete') setTimeout(start,200); else addEventListener('load',function(){ setTimeout(start,200) });
