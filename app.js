@@ -37,9 +37,9 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
 
   (function(){ var v='auto'; try{ v=localStorage.getItem('aw-perf')||'auto' }catch(e){} window.__awPerf=v; window.__awLow=v==='low'||(v==='auto'&&(navigator.deviceMemory||4)<=4) })();
   L.Popup.prototype.options.autoPanPaddingTopLeft=L.point(16,110); L.Popup.prototype.options.autoPanPaddingBottomRight=L.point(66,70); L.GridLayer.prototype.options.keepBuffer=1; L.GridLayer.prototype.options.updateWhenZooming=false; L.GridLayer.prototype.options.updateWhenIdle=false; L.GridLayer.prototype.options.updateInterval=50; // map pictures keep loading while you drive, not only when you stop; fewer load mid-pinch (phones ran out of memory zooming fast)
-  // load one extra row of map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
+  // load extra map pictures past the screen edge, so the map is already there when you pan (smaller on low-memory phones)
   // the screen loads first; the extra row only starts once everything on screen has arrived
-  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=window.__awLow?64:256;
+  (function(){ var G=L.GridLayer.prototype, o=G._getTiledPixelBounds, oa=G.onAdd, pd=window.__awLow?160:320;
     G._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||!this._awRdy||this.getTileSize().x>256||(this.options.opacity===0)) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) };
     G.onAdd=function(m){ var s=this; if(!s._awHk){ s._awHk=1; s.on('loading',function(){ if(!s._awPre) s._awRdy=false }); s.on('load',function(){ if(s._awRdy||!s._map) return; s._awRdy=true; s._awPre=1; try{ s._update() }catch(e){} s._awPre=0 }) } return oa.call(this,m) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
@@ -840,7 +840,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=219, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=220, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -864,6 +864,10 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       if(dm>8){ var y=Math.sin((nn-prevFix[1])*Math.PI/180)*Math.cos(nl*Math.PI/180), x=Math.cos(prevFix[0]*Math.PI/180)*Math.sin(nl*Math.PI/180)-Math.sin(prevFix[0]*Math.PI/180)*Math.cos(nl*Math.PI/180)*Math.cos((nn-prevFix[1])*Math.PI/180); if(hd<0||sp<3) hd=(Math.atan2(y,x)*180/Math.PI+360)%360 } }
     if(!prevFix||distNm(prevFix[0],prevFix[1],nl,nn)*1852>8||t-prevFix[2]>10000) prevFix=[nl,nn,t];
     moving=sp>1.5; if(moving){ stillT=0; if(hd>=0) lastHd=hd } else if(!stillT) stillT=t;
+    // driving: quietly fetch the map about one and two screens ahead in the direction you're going, so it's ready when you get there
+    if(sp>4&&hd>=0&&t-(window.__awAhead||0)>12000&&window.__warm&&navigator.onLine!==false){ window.__awAhead=t; var zz=map.getZoom(), mpp=156543.03*Math.cos(nl*Math.PI/180)/Math.pow(2,zz), scr=map.getSize().y*mpp;
+      [1,2].forEach(function(k){ var d=scr*k*0.9/6371000, br=hd*Math.PI/180, la1=nl*Math.PI/180, lo1=nn*Math.PI/180, la2=Math.asin(Math.sin(la1)*Math.cos(d)+Math.cos(la1)*Math.sin(d)*Math.cos(br)), lo2=lo1+Math.atan2(Math.sin(br)*Math.sin(d)*Math.cos(la1),Math.cos(d)-Math.sin(la1)*Math.sin(la2));
+        setTimeout(function(){ try{ window.__warm(la2*180/Math.PI,lo2*180/Math.PI,zz) }catch(e){} },k*1500) }) }
     var mvOn=moving||(stillT&&t-stillT<15000&&lastHd>=0&&!!el&&el.classList.contains('mv'));
     if(el){ el.classList.toggle('mv',mvOn&&lastHd>=0); arrow() }
     glideFix(nl,nn,moving&&ac<=60&&lastHd>=0?sp:0,lastHd,pos.timestamp);
