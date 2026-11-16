@@ -214,9 +214,9 @@
 
   function build(){
     X=document.createElement('div'); X.id='rlx'; X.hidden=true; X.setAttribute('role','dialog'); X.setAttribute('aria-label','Rig Link');
-    X.innerHTML='<div class="rlhd"><div class="rlt"><b id="rlreg">Off-road layer</b><small id="rlsub"></small></div><span class="rlrig" id="rlrig">● 0 rigs</span><button type="button" class="rlx" data-a="badges" aria-label="My badges">🛡️</button><button type="button" class="rlx rlfr" data-a="friends" aria-label="Friends and chat">👥<em id="rlun" hidden></em></button><button type="button" class="rlx" data-a="close" aria-label="Close Rig Link">✕</button></div>'+
+    X.innerHTML='<div class="rlhd"><div class="rlt"><b id="rlreg">Off-road layer</b><small id="rlsub"></small></div><span class="rlrig" id="rlrig">● 0 rigs</span><button type="button" class="rlx" data-a="badges" aria-label="My badges">🛡️</button><button type="button" class="rlx rlfr" data-a="friends" aria-label="Friends and chat">'+(window.__frIcon||'👥')+'<em id="rlun" hidden></em></button><button type="button" class="rlx" data-a="close" aria-label="Close Rig Link">✕</button></div>'+
       '<div class="rltog" role="tablist"><button type="button" data-a="pub" role="tab">🌍 Public Layer</button><button type="button" data-a="key" role="tab">🔒 Private Key Lobby</button></div>'+
-      '<div class="rlqk" id="rlqk"><button type="button" data-q="bb"><i>⏱️</i>Back by</button><button type="button" data-q="fr"><i>👥</i>Friends</button><button type="button" data-q="tl"><i>🧰</i>Tools</button><button type="button" data-q="lg"><i>🎨</i>Trail colour index</button></div>'+
+      '<div class="rlqk" id="rlqk"><button type="button" data-q="bb"><i>⏱️</i>Back by</button><button type="button" data-q="fr"><i>'+(window.__frIcon||'👥')+'</i>Friends</button><button type="button" data-q="tl"><i>🧰</i>Tools</button><button type="button" data-q="lg"><i>🎨</i>Trail colour index</button></div>'+
       '<div id="rllobby"></div>'+
       '<div class="rlmap" id="rlmap"><div class="rlmb"><button type="button" data-a="me" aria-label="Center on me">◎</button><button type="button" data-a="big" aria-label="Bigger map">⤢</button></div></div>'+
       '<div class="rlchips" id="rlchips"></div>'+
@@ -420,7 +420,7 @@
 
   window.__rlRelay=function(it){ return api({op:'relay',mid:it.mid,kind:it.kind,st:it.st,x:it.x,lat:it.lat,lon:it.lon,el:it.el,tc:it.tc,by:it.by,tg:it.tg,t:it.t}).then(function(j){ if(j&&j.relay) toast('📡 You relayed '+(it.by||'a rider')+'’s trail post: +1 Relay'); return true }) };
   window.__rlBadge=function(n){ var e=X&&X.querySelector('#rlun'); if(!e) return; e.hidden=!n; e.textContent=n>9?'9+':n };
-  var css='.rlqk{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 10px 12px}.rlqk button{border:1px solid #2c323a;background:#1f242b;border-radius:16px;min-height:66px;padding:8px 3px;color:#fff;font:700 12px/1.2 var(--font,system-ui);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}.rlqk i{font-style:normal;font-size:21px;line-height:1}'+
+  var css='.rlqk svg.awfri{width:27px;height:27px;display:block;margin:-2px auto -1px}.rlfr svg.awfri{width:24px;height:24px;display:block;margin:0 auto}.rlqk{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 10px 12px}.rlqk button{border:1px solid #2c323a;background:#1f242b;border-radius:16px;min-height:66px;padding:8px 3px;color:#fff;font:700 12px/1.2 var(--font,system-ui);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}.rlqk i{font-style:normal;font-size:21px;line-height:1}'+
     // Off-road map: Back by (unless a timer is running), Friends, Tools and the trail colours are reached from Rig Link
     'body.fsron #frbtn,body.fsron #bbbtn:not(.on),body.fsron:not(.toolon) #toolbtn,body.fsron #fsrleg{display:none!important}'+
     'body.fsron.awleg #fsrleg{display:grid!important;top:100px;bottom:auto;left:12px;z-index:1200;box-shadow:0 8px 24px rgba(0,0,0,.55)}'+
