@@ -87,7 +87,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // two Esri servers share the work, so the phone downloads twice as many pictures at once
   var ESRI2='https://services.arcgisonline.com/ArcGIS/rest/services/'; function eh(x,y){ return ((x+y)&1)?ESRI2:ESRI }
   // warm up the satellite pictures around a spot before going there (search results), so it shows straight away
-  var warmed={}; window.__warm=function(lat,lon,z){ var cz=Math.min(18,Math.round(z)+(RET?1:0)), k=cz+'/'+lat.toFixed(3)+'/'+lon.toFixed(3); if(warmed[k]||navigator.onLine===false) return; warmed[k]=1;
+  var warmed={}; window.__warm=function(lat,lon,z){ var cz=Math.min(RET?20:19,Math.round(z)+(RET?1:0)), k=cz+'/'+lat.toFixed(3)+'/'+lon.toFixed(3); if(warmed[k]||navigator.onLine===false) return; warmed[k]=1;
     var n=Math.pow(2,cz), x=Math.floor((lon+180)/360*n), r=lat*Math.PI/180, y=Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n);
     (LOWMEM?[[cz-1,0]]:[[cz,1],[cz-1,0]]).forEach(function(q){ var f=Math.pow(2,cz-q[0]), bx=Math.floor(x/f), by=Math.floor(y/f); for(var dx=-q[1];dx<=q[1];dx++) for(var dy=-q[1]-1;dy<=q[1]+1;dy++){ var im=new Image(); im.decoding='async'; im.src=eh(bx+dx,by+dy)+'World_Imagery/MapServer/tile/'+q[0]+'/'+(by+dy)+'/'+(bx+dx) } }) };
   // map extras (places, pins) wait until the satellite pictures on screen have arrived (2.5 s at most)
@@ -115,7 +115,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:RET?18:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
+      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:17})]}},
     fsr:{sat:true,layers:function(){ return BASES.sat.layers() }},
@@ -840,7 +840,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=218, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=219, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1734,7 +1734,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
     function loop(){ if(!box||box.hidden) return; tick(false); raf=requestAnimationFrame(loop) }
     function init(){ var p=plane()||{lat:me.lat,lon:me.lon};
       m3=new maplibregl.Map({container:'v3map',interactive:false,maxPitch:85,center:[p.lon,p.lat],zoom:11,pitch:75,attributionControl:{compact:true},
-        style:{version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},
+        style:{version:8,sources:{sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},
           dem:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:13,attribution:'Terrain: Mapzen, AWS Open Data'}},
           layers:[{id:'bg',type:'background',paint:{'background-color':'#a9c9e8'}},{id:'sat',type:'raster',source:'sat'}],terrain:{source:'dem',exaggeration:+cfg2.v3Ex||1}}});
       m3.on('load',function(){ ready=true; try{ m3.setSky({'sky-color':'#5b9be0','horizon-color':'#d6e7f6','fog-color':'#e3edf6','sky-horizon-blend':.5,'horizon-fog-blend':.6,'fog-ground-blend':.35}) }catch(e){} msg(''); tick(true) });
