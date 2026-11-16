@@ -7,7 +7,7 @@
     '.awsw{position:relative;flex:none;width:40px;height:24px;border-radius:12px;border:0;padding:0;background:#3a3f47;transition:background .18s;cursor:pointer;margin-left:auto}'+
     '.awsw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .18s}'+
     '.awsw[aria-checked=true]{background:#30d158}.awsw[aria-checked=true]::after{transform:translateX(16px)}.awsw:disabled{opacity:.4}'+
-    'select.awswsel{display:none!important}.setrow .awsw{margin-top:9px;margin-bottom:9px}'+
+    'select.awswsel{display:none!important}.awswrow{display:flex!important;align-items:center;justify-content:space-between;gap:10px}.awswrow>.awsw{margin-left:auto}.setrow .awsw{margin-top:9px;margin-bottom:9px}'+
     // layer panel tabs
     '.lyrp.tidy{max-height:calc(100vh - 112px);overflow-y:auto;overscroll-behavior:contain;padding:10px 10px 10px}'+
     '.lyrp .awtabs{display:flex;background:var(--chip,#22262c);border-radius:12px;padding:3px;margin:2px 0 8px}'+
@@ -39,7 +39,7 @@
   function wrap(sel){ if(sel.__awsw) return; var i=onIdx(sel); if(i<0) return;
     var b=document.createElement('button'); b.type='button'; b.className='awsw'; b.setAttribute('role','switch');
     var lab=sel.getAttribute('aria-label')||(sel.closest('label')&&sel.closest('label').textContent.replace(sel.textContent,'').trim())||''; if(lab) b.setAttribute('aria-label',lab);
-    sel.parentNode.insertBefore(b,sel.nextSibling); sel.classList.add('awswsel'); var o={s:sel,b:b,i:i}; sel.__awsw=o; SW.push(o); paint(o);
+    sel.parentNode.insertBefore(b,sel.nextSibling); sel.classList.add('awswsel'); var pr=sel.parentNode; if(pr&&pr.querySelectorAll('select').length===1&&!pr.classList.contains('fps2')) pr.classList.add('awswrow'); var o={s:sel,b:b,i:i}; sel.__awsw=o; SW.push(o); paint(o);
     b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); if(sel.disabled) return; sel.selectedIndex=sel.selectedIndex===i?1-i:i; sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); paint(o) });
     sel.addEventListener('change',function(){ paint(o) });
     var row=sel.closest('label'); if(row&&!row.__awsw){ row.__awsw=1; row.addEventListener('click',function(e){ if(e.target===b||e.target.closest('select,button,a,input')) return; var w=row.querySelector('.awsw'); if(w&&row.querySelectorAll('select').length===1){ e.preventDefault(); w.click() } }) } }
