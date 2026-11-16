@@ -6,13 +6,17 @@
   var RES=/\b(admin|administrator|moderator|mod|awarebc|aware bc|support|staff|official|founder|creator|developer)\b|josh\W*singer/i;
   window.__nameOk=function(n){ if(!RES.test(String(n||''))||ls('aw-admin')==='1') return true;
     var d=document.createElement('div'); d.className='frtoast'; d.style.zIndex=6600; d.textContent='That name is reserved. Please choose another.'; document.body.appendChild(d); setTimeout(function(){ d.classList.add('go') },2800); setTimeout(function(){ d.remove() },3400); return false };
+  // the "tap here for layers" hint shows until it's been used once, not on every open; tapping the shade also closes it
+  if(ls('aw-tut')==='1') document.body.classList.remove('tuton');
+  document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('#menubtn,#toolbtn,#tut')&&document.body.classList.contains('tuton')){ ls('aw-tut','1'); document.body.classList.remove('tuton') } },true);
   var NEW=!ls('aw-ob')&&ls('sky-setup')!=='1'&&!ls('sky-lastpos');
   if(!NEW&&!ls('aw-ob')) ls('aw-ob','1'); // already using AwareBC: never shown
   var waiters=[], active=NEW, allowed=false;
   window.__awOb={ isNew:NEW, active:function(){ return active }, onDone:function(f){ if(active) waiters.push(f); else f(allowed) } };
-  if(!NEW) return;
-  ls('sky-setup','1'); // the big map download is offered later, not forced at the start
-  document.body.classList.remove('tuton'); // the "tap here for layers" tip waits until the end
+  var LATER=!NEW&&ls('aw-obtip')==='1'; // the save-maps tip waits for a calm moment (or the next open)
+  if(!NEW&&!LATER) return;
+  if(NEW){ ls('sky-setup','1'); // the big map download is offered later, not forced at the start
+    document.body.classList.remove('tuton') } // the "tap here for layers" tip waits until the end
 
   var st=document.createElement('style'); st.textContent=
     '#awob{position:fixed;inset:0;z-index:6500;background:#0b0d10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 22px);box-sizing:border-box;overflow-y:auto}'+
@@ -30,11 +34,11 @@
     '.awobc .grab{width:40px;height:5px;border-radius:3px;background:#48484a;margin:0 auto 10px}.awobc b.t{font-size:17px}.awobc p{color:#aeb4bd;margin:4px 0 12px;line-height:1.4;font-size:14px}'+
     '.awobc .row{display:flex;gap:8px}.awobc .row button{height:48px;border-radius:24px;font:800 15px var(--font,system-ui)}.awobc .p{flex:1.4;border:0;background:#ff3b30;color:#fff}.awobc .s{flex:1;background:none;border:1.5px solid #3a3f47;color:#fff}'+
     '.awobc .n{color:#9aa4b2;font:600 13px var(--font,system-ui);text-align:center;margin-top:10px}'+
-    '.awobt{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:5200;background:#1c1c1e;color:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);font-family:var(--font,system-ui)}'+
-    '.awobt b{font-size:14px}.awobt small{display:block;color:#9aa4b2;font-size:12.5px;margin-top:2px}.awobt button{flex:none;border:0;border-radius:14px;padding:8px 11px;font:700 12.5px var(--font,system-ui);background:#2c2c2e;color:#fff}.awobt button.p{background:#ff3b30}';
+    '.awobt{position:fixed;left:62px;right:62px;bottom:calc(env(safe-area-inset-bottom,0px) + 30px);z-index:5200;background:#1c1c1e;color:#fff;border-radius:16px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);font-family:var(--font,system-ui)}'+
+    '.awobt>div{flex:1;min-width:0}.awobt b{font-size:14px}.awobt .bt{flex-basis:100%;display:flex;gap:8px}.awobt .bt button{flex:1}.awobt small{display:block;color:#9aa4b2;font-size:12.5px;margin-top:2px}.awobt button{flex:none;border:0;border-radius:14px;padding:8px 11px;font:700 12.5px var(--font,system-ui);background:#2c2c2e;color:#fff}.awobt button.p{background:#ff3b30}';
   document.head.appendChild(st);
 
-  var O=document.createElement('div'); O.id='awob'; O.setAttribute('role','dialog'); O.setAttribute('aria-label','Welcome to AwareBC'); document.body.appendChild(O);
+  var O=document.createElement('div'); O.id='awob'; O.setAttribute('role','dialog'); O.setAttribute('aria-label','Welcome to AwareBC'); if(NEW) document.body.appendChild(O);
   function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png" alt=""><h1>AwareBC</h1><div class="by">by Josh Singer</div><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="sp"></div>'+
       '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="lnk">Free · No account needed</div>';
     var G=window.__gsi; if(G&&G.client()&&window.__siButton) try{ window.__siButton(O.querySelector('.gb')) }catch(e){} } // Google sign-in, once it is set up
@@ -55,11 +59,18 @@
   function card(html){ var d=document.createElement('div'); d.className='awobc'; d.setAttribute('role','dialog'); d.innerHTML='<div class="grab"></div>'+html; document.body.appendChild(d); return d }
   function offer(){ var d=card('<b class="t">Welcome to AwareBC 👋</b><p>Make a rider profile so friends and riders nearby know who you are. Takes 30 seconds.</p><div class="row"><button type="button" class="p" data-a="mk">Make my profile</button><button type="button" class="s" data-a="sk">Skip</button></div><div class="n">You can do it later in Friends or Rig Link.</div>');
     d.onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-a]'); if(!b) return; d.remove();
-      if(b.getAttribute('data-a')==='mk'&&window.__rlQuick) window.__rlQuick(function(){ setTimeout(tip,1800) }); else tip() } }
+      if(b.getAttribute('data-a')==='mk'&&window.__rlQuick) window.__rlQuick(later); else later() } }
+  // one thing at a time: the layers hint first, the save-maps tip a few minutes later (or next open)
+  function later(){ ls('aw-obtip','1'); setTimeout(function(){ document.body.classList.add('tuton') },800); setTimeout(calm,180000) }
+  function calm(){ if(ls('aw-obtip')!=='1') return; var bc=document.body.classList;
+    if(document.querySelector('#awob,.awobc,.rlq,.pushask')||bc.contains('menuon')||bc.contains('toolon')||bc.contains('fsrp')||bc.contains('tuton')||document.hidden) return setTimeout(calm,20000);
+    ls('aw-obtip',null); tip() }
   function tip(){ var t=document.createElement('div'); t.className='awobt'; t.setAttribute('role','status');
-    t.innerHTML='<span style="font-size:24px">📥</span><div><b>Save maps for no signal</b><small>Download your area on Wi-Fi when you’re ready.</small></div><button type="button" class="p" data-a="sv">Save</button><button type="button" data-a="lt">Later</button>';
-    document.body.appendChild(t); var tm=setTimeout(end,20000);
-    function end(){ clearTimeout(tm); if(t.parentNode) t.remove(); document.body.classList.add('tuton') }
+    t.innerHTML='<span style="font-size:24px">📥</span><div><b>Save maps for no signal</b><small>Download your area on Wi-Fi when you’re ready.</small></div><div class="bt"><button type="button" class="p" data-a="sv">Save</button><button type="button" data-a="lt">Later</button></div>';
+    document.body.appendChild(t); var tm=setTimeout(end,15000);
+    function out(e){ if(!t.contains(e.target)) end() } // any tap elsewhere puts it away
+    document.addEventListener('pointerdown',out,true);
+    function end(){ clearTimeout(tm); document.removeEventListener('pointerdown',out,true); if(t.parentNode) t.remove() }
     t.onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-a]'); if(!b) return; end(); if(b.getAttribute('data-a')==='sv'&&window.__offSetup){ document.body.classList.remove('tuton'); window.__offSetup() } } }
-  welcome();
+  if(NEW) welcome(); else setTimeout(calm,8000);
 })();
