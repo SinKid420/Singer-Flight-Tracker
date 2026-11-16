@@ -54,7 +54,7 @@
   // ---------- welcome screen (option 1) ----------
   var css=document.createElement('style'); css.textContent='#awwel{position:fixed;inset:0;z-index:6000;background:#0e0e10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 48px) 26px calc(env(safe-area-inset-bottom,0px) + 22px);overflow:hidden}'+
     '#awwel[hidden]{display:none}#awwel .bg{position:absolute;inset:0;background:radial-gradient(120% 80% at 70% 20%,#2a1b1b,#0e0e10 60%);z-index:-1}#awwel .bg svg{position:absolute;inset:0;width:100%;height:100%;opacity:.22}'+
-    '#awwel img{width:84px;height:84px;border-radius:22px;box-shadow:0 8px 30px rgba(255,59,48,.35)}#awwel h1{font:800 30px var(--font,system-ui);margin:14px 0 0}#awwel .by{color:#ff3b30;font:600 13px var(--font,system-ui)}'+
+    '#awwel img{width:84px;height:84px;border-radius:22px;box-shadow:0 8px 30px rgba(255,59,48,.35)}#awwel h1{font:800 30px var(--font,system-ui);margin:14px 0 0}#awwel .by{color:#ff3b30;font:600 13px var(--font,system-ui)}.ft100{margin-top:6px;color:#ffb3ad;font:800 12.5px var(--font,system-ui)}'+
     '#awwel .tl{margin-top:12px;text-align:center;color:#c9c9cf;font-size:14px;line-height:1.4}#awwel .sp{flex:1;min-height:12px}#awwel .gb{width:100%;max-width:308px;min-height:44px;display:flex;justify-content:center}'+
     '#awwel .aw-gbtn,#awwel .aw-gfake{width:100%;height:46px;border-radius:23px;border:0;background:#fff;color:#1f1f1f;font:600 15px var(--font,system-ui)}#awwel .aw-gfake{opacity:.7;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}#awwel .aw-gfake small{font-size:10px;color:#666}'+
     '#awwel .aw-gwait{color:#9a9aa2;font-size:12px;align-self:center}#awwel .b2{width:100%;max-width:308px;height:44px;border-radius:22px;border:1.5px solid #3a3a3e;background:transparent;color:#fff;font:600 14px var(--font,system-ui);margin-top:10px}'+
@@ -63,7 +63,7 @@
   var W=null;
   function show(){ if(!W){ W=document.createElement('div'); W.id='awwel'; W.setAttribute('role','dialog'); W.setAttribute('aria-label','Welcome to AwareBC');
       W.innerHTML='<div class="bg"><svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="#ff3b30" stroke-width="1"><path d="M-20 120 C80 60 160 180 380 90"/><path d="M-20 160 C90 100 170 220 380 130"/><path d="M-20 200 C100 140 180 260 380 170"/><path d="M-20 420 C60 380 220 470 380 400"/><path d="M-20 460 C70 420 230 510 380 440"/><path d="M-20 500 C80 460 240 550 380 480"/><circle cx="250" cy="300" r="40"/><circle cx="250" cy="300" r="70"/><circle cx="250" cy="300" r="100"/></g></svg></div>'+
-        '<img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
+        '<img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Every alert. Everywhere.</div><div class="ft100">100+ features</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
         '<div class="gb"></div><button type="button" class="b2" data-a="skip">Skip for now</button><button type="button" class="b3" data-a="none">Use without an account</button>'+
         '<div class="nt">An account only saves your friends, reports and settings for a new phone.<br>Your location stays on your phone.</div>';
       document.body.appendChild(W);
