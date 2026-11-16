@@ -20,7 +20,7 @@
     document.body.classList.remove('tuton') } // the "tap here for layers" tip waits until the end
 
   var st=document.createElement('style'); st.textContent=
-    '#awob{position:fixed;inset:0;z-index:6500;background:#0b0d10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 22px);box-sizing:border-box;overflow-y:auto}'+
+    '#awob{position:fixed;inset:0;z-index:6500;background:#0b0d10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 34px);box-sizing:border-box;overflow-y:auto}'+
     '#awob .bg{position:fixed;inset:0;background:radial-gradient(120% 80% at 70% 15%,#2a1b1b,#0b0d10 60%);z-index:-1}'+
     '#awob img{width:156px;height:156px;border-radius:34px;margin-top:8vh;box-shadow:0 0 40px rgba(255,59,48,.35)}#awob h1{font:800 28px var(--font,system-ui);margin:16px 0 0}#awob .by{color:#ff453a;font:700 14px var(--font,system-ui);margin-top:10px}'+
     '#awob .tl{color:#c7cbd1;text-align:center;font-size:15.5px;line-height:1.4;margin-top:12px}#awob .sp{flex:1;min-height:14px}'+
@@ -31,6 +31,7 @@
     '#awob .pri{width:100%;max-width:340px;height:50px;border-radius:25px;border:0;background:#ff3b30;color:#fff;font:800 16px var(--font,system-ui)}'+
     '#awob .lnk{margin-top:12px;color:#9aa4b2;font:600 13.5px var(--font,system-ui);text-align:center}#awob .lnk button,#awob .lnk a{background:none;border:0;color:#9aa4b2;font:inherit;padding:6px 4px}#awob .lnk a{text-decoration:underline}'+
     '#awob.cmp .ic{font-size:32px;margin-top:1vh}#awob.cmp h2{margin:6px 0 2px}#awob.cmp .li{gap:7px;margin-top:12px}#awob.cmp .li>div{padding:8px 11px}#awob.cmp .li small{font-size:12px;line-height:1.3}#awob.cmp .dots{margin-bottom:10px}'+
+    '#awob .cpy{position:fixed;right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);color:#8a929c;font:500 10.5px var(--font,system-ui)}'+
     '#awob .gb{width:100%;max-width:340px;margin-top:10px;display:flex;justify-content:center}#awob .gb:empty{display:none}'+
     '.awobc{position:fixed;left:0;right:0;bottom:0;z-index:5200;background:#1c1c1e;color:#fff;border-radius:22px 22px 0 0;padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -10px 30px rgba(0,0,0,.5);font-family:var(--font,system-ui)}'+
     '.awobc .grab{width:40px;height:5px;border-radius:3px;background:#48484a;margin:0 auto 10px}.awobc b.t{font-size:17px}.awobc p{color:#aeb4bd;margin:4px 0 12px;line-height:1.4;font-size:14px}'+
@@ -42,7 +43,7 @@
 
   var O=document.createElement('div'); O.id='awob'; O.setAttribute('role','dialog'); O.setAttribute('aria-label','Welcome to AwareBC'); if(NEW) document.body.appendChild(O);
   function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
-      '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="lnk">© 2027 AwareBC. All rights reserved.</div>';
+      '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="cpy">© 2027 AwareBC. All rights reserved.</div>';
     var G=window.__gsi; if(G&&G.client()&&window.__siButton) try{ window.__siButton(O.querySelector('.gb')) }catch(e){} } // Google sign-in, once it is set up
   function consent(){ O.classList.toggle('cmp',MIC); O.innerHTML='<div class="bg"></div><div class="ic">📍</div><h2>Use your location?</h2><div class="sub">AwareBC needs your location to work. It stays on your phone unless you choose to share it.</div>'+
       '<div class="li"><div><span>🗺️</span><div><b>Show where you are</b><small>Centre the map, guide you home, and warn about trouble ahead.</small></div></div>'+
