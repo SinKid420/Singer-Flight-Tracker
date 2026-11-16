@@ -42,7 +42,7 @@
 
   var O=document.createElement('div'); O.id='awob'; O.setAttribute('role','dialog'); O.setAttribute('aria-label','Welcome to AwareBC'); if(NEW) document.body.appendChild(O);
   function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
-      '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="lnk">Free · No account needed</div>';
+      '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="lnk">© 2027 AwareBC. All rights reserved.</div>';
     var G=window.__gsi; if(G&&G.client()&&window.__siButton) try{ window.__siButton(O.querySelector('.gb')) }catch(e){} } // Google sign-in, once it is set up
   function consent(){ O.classList.toggle('cmp',MIC); O.innerHTML='<div class="bg"></div><div class="ic">📍</div><h2>Use your location?</h2><div class="sub">AwareBC needs your location to work. It stays on your phone unless you choose to share it.</div>'+
       '<div class="li"><div><span>🗺️</span><div><b>Show where you are</b><small>Centre the map, guide you home, and warn about trouble ahead.</small></div></div>'+
