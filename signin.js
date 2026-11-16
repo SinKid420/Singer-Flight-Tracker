@@ -63,7 +63,7 @@
   var W=null;
   function show(){ if(!W){ W=document.createElement('div'); W.id='awwel'; W.setAttribute('role','dialog'); W.setAttribute('aria-label','Welcome to AwareBC');
       W.innerHTML='<div class="bg"><svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g fill="none" stroke="#ff3b30" stroke-width="1"><path d="M-20 120 C80 60 160 180 380 90"/><path d="M-20 160 C90 100 170 220 380 130"/><path d="M-20 200 C100 140 180 260 380 170"/><path d="M-20 420 C60 380 220 470 380 400"/><path d="M-20 460 C70 420 230 510 380 440"/><path d="M-20 500 C80 460 240 550 380 480"/><circle cx="250" cy="300" r="40"/><circle cx="250" cy="300" r="70"/><circle cx="250" cy="300" r="100"/></g></svg></div>'+
-        '<img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="by">by Josh Singer</div><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="sp"></div>'+
+        '<img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
         '<div class="gb"></div><button type="button" class="b2" data-a="skip">Skip for now</button><button type="button" class="b3" data-a="none">Use without an account</button>'+
         '<div class="nt">An account only saves your friends, reports and settings for a new phone.<br>Your location stays on your phone.</div>';
       document.body.appendChild(W);
