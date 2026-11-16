@@ -12,6 +12,7 @@
   var NEW=!ls('aw-ob')&&ls('sky-setup')!=='1'&&!ls('sky-lastpos');
   if(!NEW&&!ls('aw-ob')) ls('aw-ob','1'); // already using AwareBC: never shown
   var waiters=[], active=NEW, allowed=false;
+  var MIC=!!((window.SpeechRecognition||window.webkitSpeechRecognition)&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()));
   window.__awOb={ isNew:NEW, active:function(){ return active }, onDone:function(f){ if(active) waiters.push(f); else f(allowed) } };
   var LATER=!NEW&&ls('aw-obtip')==='1'; // the save-maps tip waits for a calm moment (or the next open)
   if(!NEW&&!LATER) return;
@@ -29,6 +30,7 @@
     '#awob .dots{display:flex;gap:6px;justify-content:center;margin-bottom:12px}#awob .dots i{width:7px;height:7px;border-radius:4px;background:#3a3f47}#awob .dots i.on{width:20px;background:#ff3b30}'+
     '#awob .pri{width:100%;max-width:340px;height:50px;border-radius:25px;border:0;background:#ff3b30;color:#fff;font:800 16px var(--font,system-ui)}'+
     '#awob .lnk{margin-top:12px;color:#9aa4b2;font:600 13.5px var(--font,system-ui);text-align:center}#awob .lnk button,#awob .lnk a{background:none;border:0;color:#9aa4b2;font:inherit;padding:6px 4px}#awob .lnk a{text-decoration:underline}'+
+    '#awob.cmp .ic{font-size:32px;margin-top:1vh}#awob.cmp h2{margin:6px 0 2px}#awob.cmp .li{gap:7px;margin-top:12px}#awob.cmp .li>div{padding:8px 11px}#awob.cmp .li small{font-size:12px;line-height:1.3}#awob.cmp .dots{margin-bottom:10px}'+
     '#awob .gb{width:100%;max-width:340px;margin-top:10px;display:flex;justify-content:center}#awob .gb:empty{display:none}'+
     '.awobc{position:fixed;left:0;right:0;bottom:0;z-index:5200;background:#1c1c1e;color:#fff;border-radius:22px 22px 0 0;padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -10px 30px rgba(0,0,0,.5);font-family:var(--font,system-ui)}'+
     '.awobc .grab{width:40px;height:5px;border-radius:3px;background:#48484a;margin:0 auto 10px}.awobc b.t{font-size:17px}.awobc p{color:#aeb4bd;margin:4px 0 12px;line-height:1.4;font-size:14px}'+
@@ -42,17 +44,21 @@
   function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png" alt=""><h1>AwareBC</h1><div class="by">by Josh Singer</div><div class="tl">Get there and get home safely,<br>with or without signal.</div><div class="sp"></div>'+
       '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="lnk">Free · No account needed</div>';
     var G=window.__gsi; if(G&&G.client()&&window.__siButton) try{ window.__siButton(O.querySelector('.gb')) }catch(e){} } // Google sign-in, once it is set up
-  function consent(){ O.innerHTML='<div class="bg"></div><div class="ic">📍</div><h2>Use your location?</h2><div class="sub">AwareBC needs your location to work. It stays on your phone unless you choose to share it.</div>'+
+  function consent(){ O.classList.toggle('cmp',MIC); O.innerHTML='<div class="bg"></div><div class="ic">📍</div><h2>Use your location?</h2><div class="sub">AwareBC needs your location to work. It stays on your phone unless you choose to share it.</div>'+
       '<div class="li"><div><span>🗺️</span><div><b>Show where you are</b><small>Centre the map, guide you home, and warn about trouble ahead.</small></div></div>'+
-      '<div><span>🚙</span><div><b>Nearby riders (Off-road)</b><small>Riders within about 60 km see your rig at about 1 km, never your exact spot unless you pick Exact.</small></div></div>'+
-      '<div><span>🆘</span><div><b>Help when there’s no signal</b><small>Your spot goes in help calls only when you send one.</small></div></div></div><div class="sp"></div>'+
-      '<div class="dots"><i></i><i class="on"></i><i></i></div><button type="button" class="pri" data-a="allow">Allow location</button><div class="lnk"><button type="button" data-a="later">Not now</button> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>' }
+      '<div><span>🚙</span><div><b>Nearby riders (Off-road)</b><small>Riders within about 60 km see your rig at about 1 km, unless you pick Exact.</small></div></div>'+
+      '<div><span>🆘</span><div><b>Help when there’s no signal</b><small>Your spot goes in help calls only when you send one.</small></div></div>'+
+      (MIC?'<div><span>🎙️</span><div><b>Microphone for Aware (Off-road)</b><small>Ask out loud for gas, hospitals and more. Used only when you tap the mic.</small></div></div>':'')+'</div><div class="sp"></div>'+
+      '<div class="dots"><i></i><i class="on"></i><i></i></div><button type="button" class="pri" data-a="allow">'+(MIC?'Allow location &amp; mic':'Allow location')+'</button><div class="lnk"><button type="button" data-a="later">Not now</button> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></div>' }
   O.onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-a]'); if(!b) return; var a=b.getAttribute('data-a');
     if(a==='go') return consent();
     if(a==='later') return finish(false);
     if(a==='allow'){ b.disabled=true; b.textContent='Waiting for your phone…';
       if(!navigator.geolocation) return finish(false);
-      try{ navigator.geolocation.getCurrentPosition(function(){ finish(true) },function(er){ finish(!(er&&er.code===1)) },{enableHighAccuracy:false,timeout:20000,maximumAge:600000}) }catch(x){ finish(false) } } };
+      // location first, then the phone asks about the microphone (for Aware), then the map
+      var mic=function(ok){ if(!MIC) return finish(ok); var d=false, go=function(){ if(!d){ d=true; finish(ok) } }; setTimeout(go,25000);
+        try{ navigator.mediaDevices.getUserMedia({audio:true}).then(function(sm){ try{ sm.getTracks().forEach(function(t){ t.stop() }) }catch(e){} go() },go) }catch(e){ go() } };
+      try{ navigator.geolocation.getCurrentPosition(function(){ mic(true) },function(er){ mic(!(er&&er.code===1)) },{enableHighAccuracy:false,timeout:20000,maximumAge:600000}) }catch(x){ mic(false) } } };
   function finish(ok){ if(!active) return; active=false; allowed=ok; ls('aw-ob','1'); O.remove(); var w=waiters; waiters=[]; w.forEach(function(f){ try{ f(ok) }catch(e){} }); setTimeout(offer,1400) }
 
   // on the map: make a profile now, or skip

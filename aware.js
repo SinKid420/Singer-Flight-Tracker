@@ -30,7 +30,7 @@
     '.aws.lis .wv{opacity:1}.aws.lis .wv span{animation:awwv .9s ease-in-out infinite}.aws.lis .mic>button{background:#30d158;box-shadow:0 0 0 8px rgba(48,209,88,.2),0 0 0 16px rgba(48,209,88,.08)}'+
     '@keyframes awwv{0%,100%{height:6px}50%{height:26px}}'+
     '.aws .ft{color:#9aa4b2;font-size:12px;text-align:center;margin-top:14px}.aws .ft b{color:#fff}'+
-    '.aws .ty{display:flex;gap:8px;margin-top:14px}.aws .ty input{flex:1;min-width:0;height:42px;border-radius:21px;border:1px solid #333a43;background:#22272e;color:#fff;padding:0 14px;font:600 14px var(--font,system-ui)}.aws .ty button{height:42px;border-radius:21px;border:0;background:#ff3b30;color:#fff;font:700 14px var(--font,system-ui);padding:0 16px}';
+    '.aws .ty[hidden]{display:none}.aws .ty{display:flex;gap:8px;margin-top:14px}.aws .ty input{flex:1;min-width:0;height:42px;border-radius:21px;border:1px solid #333a43;background:#22272e;color:#fff;padding:0 14px;font:600 14px var(--font,system-ui)}.aws .ty button{height:42px;border-radius:21px;border:0;background:#ff3b30;color:#fff;font:700 14px var(--font,system-ui);padding:0 16px}';
   document.head.appendChild(st);
 
   var MIC='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3M9 20h6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
@@ -46,8 +46,8 @@
   function open(listen){ if(S) return; document.body.classList.add('awon'); S=document.createElement('div'); S.className='aws'; S.setAttribute('role','dialog'); S.setAttribute('aria-label','Aware co-pilot');
     S.innerHTML='<div class="g"></div><div class="h">'+BADGE+'<div><b>Aware</b><small class="s">Ready</small></div><button type="button" class="x" aria-label="Close">✕</button></div>'+
       '<div class="you"></div><div class="ans"></div><div class="try">Try saying</div><div class="ex"><button type="button" data-q="gas station">⛽ Gas station</button><button type="button" data-q="hospital">🏥 Hospital</button><button type="button" data-q="restaurant">🍔 Restaurant</button></div>'+
-      (SR?'<div class="mic">'+wv()+'<button type="button" class="m" aria-label="Tap to talk">'+MIC+'</button>'+wv()+'</div><div class="ft"><b>Tap to talk</b> · gas and hospitals work with no signal</div>'
-        :'<form class="ty"><input type="search" placeholder="Type what you need" enterkeyhint="search" aria-label="What do you need?"><button type="submit">Find</button></form><div class="ft">Voice isn’t available on this browser, so type instead.</div>');
+      (SR?'<div class="mic">'+wv()+'<button type="button" class="m" aria-label="Tap to talk">'+MIC+'</button>'+wv()+'</div><div class="ft"><b>Tap to talk</b> · gas and hospitals work with no signal</div>':'')+
+      '<form class="ty"'+(SR?' hidden':'')+'><input type="search" placeholder="Type what you need" enterkeyhint="search" aria-label="What do you need?"><button type="submit">Find</button></form>'+(SR?'':'<div class="ft">Voice isn’t available on this browser, so type instead.</div>');
     document.body.appendChild(S);
     S.querySelector('.x').onclick=close;
     S.querySelector('.ex').onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-q]'); if(b) ask(b.getAttribute('data-q')) };
@@ -60,12 +60,20 @@
   function ans(h){ if(S) S.querySelector('.ans').innerHTML=h }
 
   // ---- listening (only after a tap) ----
+  // the microphone question comes from the phone; if it was blocked before, say exactly how to allow it and offer typing
+  function typeBox(){ if(!S) return; var f=S.querySelector('.ty'); if(f){ f.hidden=false } }
+  function blocked(){ var t=NAT?'AwareBC needs the microphone. Open your phone’s Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Microphone ▸ Allow, or type below.'
+      :'The microphone is blocked for AwareBC. Tap the icon left of the web address ▸ Permissions ▸ Microphone ▸ Allow, then tap the mic again. Or type below.';
+    ans('<span>'+esc(t)+'</span>'); status('Mic blocked'); typeBox() }
+  var NAT=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   function listenNow(){ if(!SR||!S) return; try{ speechSynthesis.cancel() }catch(e){}
+    var md=navigator.mediaDevices; if(md&&md.getUserMedia&&!listenNow.ok){ status('Asking for the mic…');
+      return md.getUserMedia({audio:true}).then(function(sm){ try{ sm.getTracks().forEach(function(t){ t.stop() }) }catch(e){} listenNow.ok=1; listenNow() },function(er){ if(er&&(er.name==='NotAllowedError'||er.name==='SecurityError')) blocked(); else { listenNow.ok=1; listenNow() } }) }
     try{ rec=new SR() }catch(e){ return status('Voice isn’t available here') }
     rec.lang='en-CA'; rec.interimResults=true; rec.maxAlternatives=1; var said='';
     rec.onresult=function(e){ said=''; for(var i=0;i<e.results.length;i++) said+=e.results[i][0].transcript; you(said) };
-    rec.onerror=function(e){ var t=e.error==='not-allowed'||e.error==='service-not-allowed'?'Mic is blocked. Allow the microphone for this site, or tap an example.':e.error==='network'?'Voice needs some signal on this phone. Tap an example instead.':e.error==='no-speech'?'I didn’t hear anything. Tap the mic and try again.':'';
-      if(t){ ans('<span>'+esc(t)+'</span>') } };
+    rec.onerror=function(e){ if(e.error==='not-allowed'){ listenNow.ok=0; return blocked() } var t=e.error==='service-not-allowed'?'Voice typing is off on this phone. Turn on Google voice typing in your phone’s settings, or type below.':e.error==='audio-capture'?'I can’t reach the microphone. Another app may be using it. Try again, or type below.':e.error==='network'?'Voice needs some signal on this phone. Tap an example instead.':e.error==='no-speech'?'I didn’t hear anything. Tap the mic and try again.':'';
+      if(t){ ans('<span>'+esc(t)+'</span>'); if(e.error!=='no-speech') typeBox() } };
     rec.onend=function(){ on=false; if(S) S.classList.remove('lis'); status('Ready'); rec=null; if(said.trim()) ask(said.trim()) };
     try{ rec.start(); on=true; S.classList.add('lis'); status('● Listening…',true); you(''); }catch(e){ on=false } }
   function stopL(){ if(rec) try{ rec.stop() }catch(e){} on=false; if(S) S.classList.remove('lis') }
@@ -108,5 +116,18 @@
       if(b.getAttribute('data-a')==='nx'){ ri++; show() }
       else { var pt=R[ri]; close(); if(window.__nav) window.__nav.to({lat:pt.lat,lng:pt.lon},pt.n); else if(window.__goTo) window.__goTo([pt.lat,pt.lon],15) } } }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&S) close() });
+
+  // Settings ▸ Basics ▸ Microphone for Aware: shows Allowed / Blocked / Not asked, with a button to ask
+  (function(){ var md=navigator.mediaDevices; if(!SR||!md||!md.getUserMedia) return; var row=null;
+    function state(){ if(!navigator.permissions||!navigator.permissions.query) return Promise.resolve(listenNow.ok?'granted':'prompt'); return navigator.permissions.query({name:'microphone'}).then(function(p){ return p.state },function(){ return 'prompt' }) }
+    function paint(){ if(!row) return; state().then(function(s){ row.querySelector('b').textContent=s==='granted'?'Allowed':s==='denied'?'Blocked':'Not asked yet'; var bt=row.querySelector('button'); bt.hidden=s==='granted'; bt.textContent=s==='denied'?'How to allow':'Allow';
+      var h=row.nextSibling; if(h&&h.classList&&h.classList.contains('fhelp')) h.textContent=s==='denied'?(NAT?'Open your phone’s Settings ▸ Apps ▸ AwareBC ▸ Permissions ▸ Microphone ▸ Allow.':'Tap the icon left of the web address ▸ Permissions ▸ Microphone ▸ Allow.'):'Lets you ask Aware out loud on the Off-road map. Used only when you tap the mic.' }) }
+    function mount(){ var hb=document.getElementById('gfolder'); if(!hb||row) return; row=document.createElement('div'); row.className='setrow'; row.id='microw'; row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px';
+      row.innerHTML='<span>Microphone for Aware: <b></b></span><button type="button" class="setbtn" style="width:auto;padding:0 14px;margin:0">Allow</button>';
+      var help=document.createElement('div'); help.className='fhelp'; hb.appendChild(row); hb.appendChild(help);
+      row.querySelector('button').onclick=function(){ state().then(function(s){ if(s==='denied') return paint();
+        md.getUserMedia({audio:true}).then(function(sm){ try{ sm.getTracks().forEach(function(t){ t.stop() }) }catch(e){} listenNow.ok=1; paint() },function(){ paint() }) }) };
+      paint(); hb.addEventListener('toggle',paint) }
+    if(document.readyState==='complete') setTimeout(mount,700); else addEventListener('load',function(){ setTimeout(mount,700) }) })();
   window.__aware={open:open,ask:ask,close:close};
 })();
