@@ -73,6 +73,8 @@
     new MutationObserver(function(){ move(); scan(pn) }).observe(hd,{childList:true});
     new MutationObserver(function(){ move(); scan(pn) }).observe(pn,{childList:true}) }
 
+  // any Settings folder (including ones added later) opens full width, with the others tucked away
+  document.addEventListener('toggle',function(e){ var d=e.target; if(!d||!d.matches||!d.matches('#fsheet details.folder')) return; var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) },true);
   function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); scan(document) }
   function start(){ all(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
