@@ -185,9 +185,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     wxLayers[k]=L.tileLayer.wms(GEOMET,{layers:w.layer,format:'image/png',transparent:true,version:'1.3.0',tileSize:512,zoomOffset:-1,updateWhenIdle:true,opacity:k==='cloud'?cloudOp:wxOp(k),zIndex:w.z,className:w.blend?'cloudblend':'rainlyr',attribution:'Weather © Environment and Climate Change Canada'}).addTo(map);
   });
   (function(){ var sel=document.getElementById('cloudop'); function ap(){ var l=wxLayers.cloud; if(!l) return; if(cloudOp>0){ l.setOpacity(cloudOp); if(!map.hasLayer(l)) l.addTo(map) } else if(map.hasLayer(l)) map.removeLayer(l) } if(sel){ sel.value=String(cloudOp); sel.onchange=function(){ cloudOp=+sel.value||0; try{ localStorage.setItem('aw-cloudop',String(cloudOp)) }catch(e){} ap() } } ap() })();
-  // radar comes in 1 km squares: fill the gaps between squares into smooth shapes with a short fade at the edge (sharp, not blurry)
+  // radar comes in 1 km squares: fill the gaps between squares into smooth shapes with a short fade at the edge (sharp, not blurry), a little see-through so the map shows
   (function(){ var NS='http://www.w3.org/2000/svg', sv=document.createElementNS(NS,'svg'); sv.setAttribute('width','0'); sv.setAttribute('height','0'); sv.setAttribute('aria-hidden','true'); sv.style.position='absolute';
-    sv.innerHTML='<filter id="awrad" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="awradb" stdDeviation="0"/><feComponentTransfer><feFuncA type="linear" slope="3.2" intercept="-0.75"/></feComponentTransfer></filter>';
+    sv.innerHTML='<filter id="awrad" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="awradb" stdDeviation="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0 0.5 0.66 0.68 0.68"/></feComponentTransfer></filter>';
     document.body.appendChild(sv); var bl=sv.querySelector('#awradb'), st=document.createElement('style'); document.head.appendChild(st);
     function soft(){ var z=map.getZoom(), lat=map.getCenter().lat, px=1000/(156543.03*Math.cos(lat*Math.PI/180)/Math.pow(2,z)), b=Math.max(0,Math.min(16,px*0.5));
       if(b<0.8){ st.textContent=''; return } bl.setAttribute('stdDeviation',b.toFixed(1)); st.textContent='.leaflet-layer.rainlyr{filter:url(#awrad)}' }
@@ -840,7 +840,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=216, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=217, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
