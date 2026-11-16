@@ -285,4 +285,14 @@
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ sync(); loop() } });
   watch(); setTimeout(function(){ sync().then(loop) },3000);
   window.__friends={open:open,sync:sync};
+  // Settings ▸ App & account ▸ Account: Blocked riders, one tap to the list with Unblock buttons
+  (function(){ var row=null;
+    function paint(){ if(!row) return; var n=(S.blocked||[]).length; row.querySelector('b').textContent=n?String(n):'None' }
+    function mount(last){ if(row) return; var F=document.getElementById('acctfolder');
+      if(!F&&last){ var up=document.getElementById('updfolder'); if(!up) return; F=document.createElement('details'); F.className='folder'; F.id='blkfolder'; F.innerHTML='<summary>Blocked riders</summary><div class="fhelp">Blocked riders can’t add you, message you or see your spot.</div>'; up.parentNode.insertBefore(F,up) } // no Google account folder yet: its own folder in App & account
+      if(!F) return; row=document.createElement('div'); row.className='setrow'; row.id='blkrow'; row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px';
+      row.innerHTML='<span>⛔ Blocked riders: <b></b></span><button type="button" class="setbtn" style="width:auto;padding:0 14px;margin:0">Manage</button>';
+      F.appendChild(row); row.querySelector('button').onclick=function(){ var fs=document.getElementById('fsheet'); if(fs) fs.hidden=true; more=true; showKey=false; open('list') };
+      F.addEventListener('toggle',function(){ if(F.open){ paint(); sync().then(paint) } }); paint() }
+    var tries=0; (function wait(){ mount(tries>=8); if(!row&&tries++<20) setTimeout(wait,500) })() })();
 })();
