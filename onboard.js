@@ -21,7 +21,7 @@
 
   var st=document.createElement('style'); st.textContent=
     '#awob{position:fixed;inset:0;z-index:6500;background:#0b0d10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 34px);box-sizing:border-box;overflow-y:auto}'+
-    '#awob .bg{position:fixed;inset:0;background:radial-gradient(120% 80% at 70% 15%,#2a1b1b,#0b0d10 60%);z-index:-1}'+
+    '#awob .bg{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.1) 30%,rgba(0,0,0,.25) 55%,rgba(0,0,0,.7) 80%,rgba(0,0,0,.85)),url(welcome-bg.jpg?v=1) center/cover,#0b0d10;z-index:-1}'+
     '#awob img{width:156px;height:156px;border-radius:34px;margin-top:8vh;box-shadow:0 0 40px rgba(255,59,48,.35)}#awob h1{font:800 28px var(--font,system-ui);margin:16px 0 0}#awob .by{color:#ff453a;font:700 14px var(--font,system-ui);margin-top:10px}'+
     '#awob .tl{color:#c7cbd1;text-align:center;font-size:15.5px;line-height:1.4;margin-top:12px}#awob .sp{flex:1;min-height:14px}'+
     '#awob .ic{font-size:40px;margin-top:5vh}#awob h2{font:800 23px/1.2 var(--font,system-ui);margin:12px 0 4px;text-align:center}#awob .sub{color:#aeb4bd;text-align:center;line-height:1.4;font-size:14px;max-width:330px}'+
@@ -31,7 +31,6 @@
     '#awob .pri{width:100%;max-width:340px;height:50px;border-radius:25px;border:0;background:#ff3b30;color:#fff;font:800 16px var(--font,system-ui)}'+
     '#awob .lnk{margin-top:12px;color:#9aa4b2;font:600 13.5px var(--font,system-ui);text-align:center}#awob .lnk button,#awob .lnk a{background:none;border:0;color:#9aa4b2;font:inherit;padding:6px 4px}#awob .lnk a{text-decoration:underline}'+
     '#awob.cmp .ic{font-size:32px;margin-top:1vh}#awob.cmp h2{margin:6px 0 2px}#awob.cmp .li{gap:7px;margin-top:12px}#awob.cmp .li>div{padding:8px 11px}#awob.cmp .li small{font-size:12px;line-height:1.3}#awob.cmp .dots{margin-bottom:10px}'+
-    '#awob .tl{font-size:19px;font-weight:700;color:#f2f4f7}#awob .ft100{margin-top:6px;padding:4px 12px;border-radius:12px;background:rgba(255,59,48,.16);border:1px solid rgba(255,59,48,.45);color:#ffb3ad;font:800 12.5px var(--font,system-ui);letter-spacing:.4px}'+
     '#awob .cpy{position:fixed;right:calc(env(safe-area-inset-right,0px) + 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);color:#8a929c;font:500 10.5px var(--font,system-ui)}'+
     '#awob .gb{width:100%;max-width:340px;margin-top:10px;display:flex;justify-content:center}#awob .gb:empty{display:none}'+
     '.awobc{position:fixed;left:0;right:0;bottom:0;z-index:5200;background:#1c1c1e;color:#fff;border-radius:22px 22px 0 0;padding:14px 18px calc(env(safe-area-inset-bottom,0px) + 20px);box-shadow:0 -10px 30px rgba(0,0,0,.5);font-family:var(--font,system-ui)}'+
@@ -43,7 +42,7 @@
   document.head.appendChild(st);
 
   var O=document.createElement('div'); O.id='awob'; O.setAttribute('role','dialog'); O.setAttribute('aria-label','Welcome to AwareBC'); if(NEW) document.body.appendChild(O);
-  function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Every alert. Everywhere.</div><div class="ft100">100+ features</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
+  function welcome(){ O.innerHTML='<div class="bg"></div><img src="awarebc-512.png?v=2" alt=""><h1>AwareBC</h1><div class="tl">Every road. Every trail. Every alert.</div><div class="by">by Josh Singer</div><div class="sp"></div>'+
       '<div class="dots"><i class="on"></i><i></i><i></i></div><button type="button" class="pri" data-a="go">Get started</button><div class="gb"></div><div class="cpy">© 2027 AwareBC. All rights reserved.</div>';
     var G=window.__gsi; if(G&&G.client()&&window.__siButton) try{ window.__siButton(O.querySelector('.gb')) }catch(e){} } // Google sign-in, once it is set up
   function consent(){ O.classList.toggle('cmp',MIC); O.innerHTML='<div class="bg"></div><div class="ic">📍</div><h2>Use your location?</h2><div class="sub">AwareBC needs your location to work. It stays on your phone unless you choose to share it.</div>'+
