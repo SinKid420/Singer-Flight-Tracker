@@ -22,7 +22,7 @@
   var st=document.createElement('style'); st.textContent=
     '#awob{position:fixed;inset:0;z-index:6500;background:#0b0d10;color:#fff;font-family:var(--font,system-ui);display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 22px calc(env(safe-area-inset-bottom,0px) + 22px);box-sizing:border-box;overflow-y:auto}'+
     '#awob .bg{position:fixed;inset:0;background:radial-gradient(120% 80% at 70% 15%,#2a1b1b,#0b0d10 60%);z-index:-1}'+
-    '#awob img{width:104px;height:104px;border-radius:24px;margin-top:9vh;box-shadow:0 0 40px rgba(255,59,48,.35)}#awob h1{font:800 28px var(--font,system-ui);margin:16px 0 0}#awob .by{color:#ff453a;font:700 14px var(--font,system-ui);margin-top:10px}'+
+    '#awob img{width:156px;height:156px;border-radius:34px;margin-top:8vh;box-shadow:0 0 40px rgba(255,59,48,.35)}#awob h1{font:800 28px var(--font,system-ui);margin:16px 0 0}#awob .by{color:#ff453a;font:700 14px var(--font,system-ui);margin-top:10px}'+
     '#awob .tl{color:#c7cbd1;text-align:center;font-size:15.5px;line-height:1.4;margin-top:12px}#awob .sp{flex:1;min-height:14px}'+
     '#awob .ic{font-size:40px;margin-top:5vh}#awob h2{font:800 23px/1.2 var(--font,system-ui);margin:12px 0 4px;text-align:center}#awob .sub{color:#aeb4bd;text-align:center;line-height:1.4;font-size:14px;max-width:330px}'+
     '#awob .li{width:100%;max-width:340px;margin-top:16px;display:flex;flex-direction:column;gap:9px}#awob .li>div{display:flex;gap:11px;align-items:flex-start;background:#15191e;border-radius:14px;padding:10px 12px}'+
