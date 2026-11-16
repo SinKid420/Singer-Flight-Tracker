@@ -13,7 +13,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       Object.keys(memo).forEach(function(k){ if(now-memo[k].t>60000) delete memo[k] });
       var p=of.call(window,u,o); memo[u]={t:now,p:p}; p.then(function(r){ if(!r.ok) delete memo[u] },function(){ delete memo[u] }); return p.then(function(r){ return r.clone() }) } })();
   // ---- Parts of the app that load a moment after the map opens (tools, roads, winter mountains, AR) ----
-  var __mods={}, MODV=5;
+  var __mods={}, MODV=6;
   function __mod(n,ctx,ids){ __mods[n]={ctx:ctx,ids:ids,p:null,done:false} }
   function __load(n){ var m=__mods[n]; if(!m||m.done) return Promise.resolve(); if(m.p) return m.p;
     m.p=new Promise(function(res){ var s=document.createElement('script'); s.src=n+'.js?v='+MODV; s.onload=function(){ res() }; s.onerror=function(){ m.p=null; s.remove(); res() }; document.head.appendChild(s) }); return m.p }
