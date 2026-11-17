@@ -97,9 +97,19 @@
   function osmPts(kind,m){ var O=window.__osm; if(!O) return Promise.resolve([]);
     if(kind==='hosp') return O.nearest(m.lat,m.lon,80).then(function(P){ return (P||[]).filter(function(p){ return p.t.amenity==='hospital' }).map(function(p){ return {lat:p.lat,lon:p.lon,n:p.t.name||'Hospital',er:p.t.emergency==='yes'} }) }).catch(function(){ return [] });
     var d=.25, cl=Math.cos(m.lat*Math.PI/180); return O.inArea({s:m.lat-d,n:m.lat+d,w:m.lon-d/cl,e:m.lon+d/cl}).then(function(P){ return (P||[]).filter(function(p){ return p.t.amenity==='fuel' }).map(function(p){ return {lat:p.lat,lon:p.lon,n:p.t.name||p.t.brand||'Gas station'} }) }).catch(function(){ return [] }) }
+  // nearest places straight from OpenStreetMap around you (25 km, then 80 km): finds every gas station, not just ones with "gas" in the name
+  var OP='https://overpass-api.de/api/interpreter?data=', OQ={fuel:'nwr(around:R,LA,LO)[amenity=fuel];',hosp:'nwr(around:R,LA,LO)[amenity=hospital];',
+    food:'nwr(around:R,LA,LO)[amenity~"^(restaurant|fast_food|cafe|pub|food_court)$"];'};
+  function around(kind,m,km){ var q='[out:json][timeout:20];('+OQ[kind].replace('R',Math.round(km*1000)).replace('LA',m.lat.toFixed(4)).replace('LO',m.lon.toFixed(4))+');out tags center 60;';
+    return J(OP+encodeURIComponent(q)).then(function(j){ return (j.elements||[]).map(function(e){ var c=e.center||e, t=e.tags||{}; return {lat:c.lat,lon:c.lon,n:t.name||t.brand||(kind==='fuel'?'Gas station':kind==='hosp'?'Hospital':'Restaurant'),town:t['addr:city']||'',er:t.emergency==='yes'} }) }) }
+  function near(kind,m){ return around(kind,m,25).then(function(L){ return L.length?L:around(kind,m,80) }) }
+  function box(m,d){ var cl=Math.cos(m.lat*Math.PI/180); return [m.lon-d/cl,m.lat-d,m.lon+d/cl,m.lat+d].map(function(v){ return v.toFixed(3) }).join(',') }
+  function photonNear(s,tag,m){ return J('https://photon.komoot.io/api/?q='+encodeURIComponent(s)+'&limit=15&lang=en&lat='+m.lat.toFixed(3)+'&lon='+m.lon.toFixed(3)+'&bbox='+box(m,.7)+(tag?'&osm_tag='+encodeURIComponent(tag):''))
+      .then(function(j){ return (j.features||[]).map(function(f){ var p=f.properties||{}, c=f.geometry&&f.geometry.coordinates||[]; return {lat:c[1],lon:c[0],n:p.name||p.street||s,town:p.city||p.town||p.village||''} }) }) }
   function find(K,term,m){ var on2=navigator.onLine!==false, jobs=[];
-    if(K&&(K.k==='fuel'||K.k==='hosp')){ jobs.push(osmPts(K.k,m)); if(on2) jobs.push(photon(K.k==='fuel'?'gas station':'hospital',K.k==='fuel'?'amenity:fuel':'amenity:hospital',m).catch(function(){ return [] })) }
-    else if(on2) jobs.push(photon(K&&K.ph||term,K&&K.tag||'',m).then(function(L){ return L.length||!K?L:photon(term,'',m) }).catch(function(){ return [] }));
+    if(K&&(K.k==='fuel'||K.k==='hosp')){ jobs.push(osmPts(K.k,m)); if(on2) jobs.push(near(K.k,m).catch(function(){ return photonNear(K.k==='fuel'?'gas':'hospital',K.k==='fuel'?'amenity:fuel':'amenity:hospital',m).catch(function(){ return [] }) })) }
+    else if(on2&&K&&K.k==='food') jobs.push(near('food',m).catch(function(){ return photonNear('restaurant','amenity:restaurant',m).catch(function(){ return [] }) }));
+    else if(on2) jobs.push(photonNear(term,'',m).then(function(L){ return L.length?L:photon(term,'',m) }).catch(function(){ return [] }));
     return Promise.all(jobs).then(function(A){ var all=[].concat.apply([],A), seen={};
       return all.filter(function(p){ if(!isFinite(p.lat)||!isFinite(p.lon)) return false; p.d=hav(m.lat,m.lon,p.lat,p.lon); var k=Math.round(p.lat*500)+':'+Math.round(p.lon*500); if(seen[k]||p.d>250) return false; seen[k]=1; return true }).sort(function(a,b){ return a.d-b.d }).slice(0,8) }) }
   function km(d){ return d<1?Math.round(d*1000)+' m':d<10?d.toFixed(1)+' km':Math.round(d)+' km' }
