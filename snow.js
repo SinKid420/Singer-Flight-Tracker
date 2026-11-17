@@ -6,6 +6,9 @@
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   var LOW=!!window.__awLow, MAX=LOW?1500:8000, FPS=LOW?30:60, RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   var mode=ls('aw-snow')||'auto', wx={snow:false,rate:0,wind:0,dir:0,at:0,ll:null};
+  // last known weather is kept on the phone: with no signal the snow keeps falling as it was (up to 12 hours), then clears
+  try{ var sv=JSON.parse(ls('aw-snowwx')||'null'); if(sv&&Date.now()-sv.t<12*3600000){ wx.snow=!!sv.snow; wx.rate=+sv.rate||0; wx.wind=+sv.wind||0; wx.dir=+sv.dir||0; wx.ll=sv.ll||null } }catch(e){}
+  function keep(){ ls('aw-snowwx',JSON.stringify({t:Date.now(),snow:wx.snow,rate:wx.rate,wind:wx.wind,dir:wx.dir,ll:wx.ll})) }
 
   // ---- screen-fixed canvas in its own map pane: above the map pictures and labels (MapLibre), below lines and pins ----
   var pane=map.createPane('awsnow',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=380; pane.style.pointerEvents='none';
@@ -49,7 +52,7 @@
   function check(force){ if(mode!=='auto'&&!force) return; var m=me(); if(!m||navigator.onLine===false) return; var ll=[m.lat,m.lon];
     if(!force&&Date.now()-wx.at<15*60000&&!far(ll,wx.ll)) return; wx.at=Date.now(); wx.ll=ll;
     fetch('https://api.open-meteo.com/v1/forecast?latitude='+m.lat.toFixed(2)+'&longitude='+m.lon.toFixed(2)+'&current=weather_code,snowfall,wind_speed_10m,wind_direction_10m').then(function(r){ return r.json() }).then(function(j){
-      var c=j&&j.current||{}, code=+c.weather_code||0, sf=+c.snowfall||0; wx.snow=(code>=71&&code<=77)||code===85||code===86||sf>0; wx.rate=sf; wx.wind=+c.wind_speed_10m||0; wx.dir=+c.wind_direction_10m||0; apply() }).catch(function(){}) }
+      var c=j&&j.current||{}, code=+c.weather_code||0, sf=+c.snowfall||0; wx.snow=(code>=71&&code<=77)||code===85||code===86||sf>0; wx.rate=sf; wx.wind=+c.wind_speed_10m||0; wx.dir=+c.wind_direction_10m||0; keep(); apply() }).catch(function(){}) }
   setTimeout(function(){ check(true) },5000); setInterval(check,60000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) check() });
 
   map.on('move zoom rotate viewreset',moved); map.on('resize',function(){ if(run){ size(); place() } });
