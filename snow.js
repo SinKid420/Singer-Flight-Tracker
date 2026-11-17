@@ -1,14 +1,14 @@
 // AwareBC falling snow (by Josh Singer): soft 3D snowflakes drifting over the map pictures, under trails, FSR lines and pins.
 // Auto: only while it's actually snowing where you are (live weather), and heavier snow means more flakes.
-// Older phone mode: 1,500 flakes at 30 frames a second. Normal: 8,000 flakes. No downloads, works offline once the weather is known.
+// Realistic amount: the odd flake in flurries up to 1,000 in heavy snow (older phones up to 700, at 30 frames a second). No downloads, works offline once the weather is known.
 (function(){
   var A=window.__AW; if(!A||!A.map) return; var map=A.map;
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
-  var LOW=!!window.__awLow, MAX=LOW?1500:8000, FPS=LOW?30:60, RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var LOW=!!window.__awLow, MAX=LOW?700:1000, FPS=LOW?30:60, RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   var mode=ls('aw-snow')||'auto', wx={snow:false,rate:0,wind:0,dir:0,at:0,ll:null};
   // last known weather is kept on the phone: with no signal the snow keeps falling as it was (up to 12 hours), then clears
-  try{ var sv=JSON.parse(ls('aw-snowwx')||'null'); if(sv&&Date.now()-sv.t<12*3600000){ wx.snow=!!sv.snow; wx.rate=+sv.rate||0; wx.wind=+sv.wind||0; wx.dir=+sv.dir||0; wx.ll=sv.ll||null } }catch(e){}
-  function keep(){ ls('aw-snowwx',JSON.stringify({t:Date.now(),snow:wx.snow,rate:wx.rate,wind:wx.wind,dir:wx.dir,ll:wx.ll})) }
+  try{ var sv=JSON.parse(ls('aw-snowwx')||'null'); if(sv&&Date.now()-sv.t<12*3600000){ wx.snow=!!sv.snow; wx.rate=+sv.rate||0; wx.code=+sv.code||0; wx.wind=+sv.wind||0; wx.dir=+sv.dir||0; wx.ll=sv.ll||null } }catch(e){}
+  function keep(){ ls('aw-snowwx',JSON.stringify({t:Date.now(),snow:wx.snow,rate:wx.rate,code:wx.code,wind:wx.wind,dir:wx.dir,ll:wx.ll})) }
 
   // ---- screen-fixed canvas in its own map pane: above the map pictures and labels (MapLibre), below lines and pins ----
   var pane=map.createPane('awsnow',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=380; pane.style.pointerEvents='none';
@@ -27,7 +27,11 @@
     p.v=(18+70*z)*(.8+Math.random()*.4); p.s=Math.random()*6.28; p.sw=(.4+Math.random()*1.4)*(4+10*z); p.f=.5+Math.random()*1.2;
     var sz=1.2+z*3.4; p.i=sz<1.6?0:sz<2.6?1:sz<3.6?2:sz<4.6?3:4; p.k=sz/SP[p.i].r; p.a=.3+.5*z; return p }
   function fill(){ var want=Math.round(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want }
-  function amount(){ var a=mode==='on'&&!wx.snow?.2:Math.min(.3,.08+wx.rate*.24); return Math.max(.1,a) } // rate in cm/h
+  function amount(){ // realistic: the odd flake in flurries, up to the full 1,000 only in heavy snow
+    var c=wx.code||0, r=wx.rate||0, byCode=c===71?80:c===73?420:c===75?1000:c===77?70:c===85?180:c===86?800:0,
+      byRate=r<=0?0:r<.1?60:r<.3?60+(r-.1)/.2*190:r<1?250+(r-.3)/.7*450:r<1.5?700+(r-1)/.5*300:1000;
+    var n=Math.max(byCode,byRate); if(!wx.snow) n=mode==='on'?150:0; if(wx.snow&&n<40) n=40;
+    return Math.min(1000,n)/1000*(LOW?.7:1)*1000/MAX } // rate in cm/h
 
   // ---- map movement: near flakes shift more than far ones (depth) ----
   var last=null;
@@ -52,7 +56,7 @@
   function check(force){ if(mode!=='auto'&&!force) return; var m=me(); if(!m||navigator.onLine===false) return; var ll=[m.lat,m.lon];
     if(!force&&Date.now()-wx.at<15*60000&&!far(ll,wx.ll)) return; wx.at=Date.now(); wx.ll=ll;
     fetch('https://api.open-meteo.com/v1/forecast?latitude='+m.lat.toFixed(2)+'&longitude='+m.lon.toFixed(2)+'&current=weather_code,snowfall,wind_speed_10m,wind_direction_10m').then(function(r){ return r.json() }).then(function(j){
-      var c=j&&j.current||{}, code=+c.weather_code||0, sf=+c.snowfall||0; wx.snow=(code>=71&&code<=77)||code===85||code===86||sf>0; wx.rate=sf; wx.wind=+c.wind_speed_10m||0; wx.dir=+c.wind_direction_10m||0; keep(); apply() }).catch(function(){}) }
+      var c=j&&j.current||{}, code=+c.weather_code||0, sf=+c.snowfall||0; wx.snow=(code>=71&&code<=77)||code===85||code===86||sf>0; wx.rate=sf; wx.code=code; wx.wind=+c.wind_speed_10m||0; wx.dir=+c.wind_direction_10m||0; keep(); apply() }).catch(function(){}) }
   setTimeout(function(){ check(true) },5000); setInterval(check,60000); document.addEventListener('visibilitychange',function(){ if(!document.hidden) check() });
 
   map.on('move zoom rotate viewreset',moved); map.on('resize',function(){ if(run){ size(); place() } });
