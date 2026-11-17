@@ -25,7 +25,7 @@
     '.lyrp .awmap .gpxb{width:100%;height:40px;background:none;border-radius:0;padding:0;font:600 14px var(--font,system-ui);text-align:left}'+
     '.lyrp.tidy .fps{min-height:40px;margin:0;padding:0 10px;background:var(--chip,#22262c);border-radius:0;font:600 13.5px var(--font,system-ui);border-top:1px solid rgba(255,255,255,.07)}'+
     '.lyrp.tidy .fps select,.lyrp .awmap select{background:#3a3f47}'+
-    '.lyrp.tidy .fps2{display:flex;align-items:center;gap:8px}'+
+    '.lyrp.tidy .fps2{display:flex;align-items:center;gap:8px}.lyrp .awmap .fps{padding:0;background:none;border-radius:0;margin:0}'+
     '.lyrp.tL .fps,.lyrp.tL .awmap,.lyrp.tL .gpxv,.lyrp.tO .fpc,.lyrp.tO .awmore,.lyrp.tO .awmap,.lyrp.tO .gpxv,.lyrp.tO .fpm,.lyrp.tM .fpc,.lyrp.tM .awmore,.lyrp.tM .fps:not(.fpm){display:none!important}'+
     '.lyrp.tO .fps.f1{border-radius:14px 14px 0 0;border-top:0}.lyrp.tO .fps.fz{border-radius:0 0 14px 14px}.lyrp.tO .fps.f1.fz{border-radius:14px}'+
     '.lyrp.tM .fpm{border-radius:14px;margin-top:8px;border-top:0}.lyrp.tM .gpxv{margin-top:8px}';
