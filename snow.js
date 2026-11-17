@@ -19,15 +19,15 @@
 
   // ---- soft round flakes, drawn once at a few sizes ----
   var SP=[2,3,5,7,10].map(function(r){ var c=document.createElement('canvas'), d=r*2+2; c.width=c.height=d; var g=c.getContext('2d'), gr=g.createRadialGradient(d/2,d/2,0,d/2,d/2,r);
-    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.45,'rgba(255,255,255,.85)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.beginPath(); g.arc(d/2,d/2,r,0,7); g.fill(); return {c:c,r:r+1} });
+    gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.62,'rgba(255,255,255,.95)'); gr.addColorStop(.82,'rgba(255,255,255,.45)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.beginPath(); g.arc(d/2,d/2,r,0,7); g.fill(); return {c:c,r:r+1} });
 
   // ---- particles: depth z (0 far … 1 near) sets size, speed, brightness and how much they shift when the map moves ----
   var P=[], N=0;
-  function mk(p,top){ var z=Math.pow(Math.random(),2.4)*.85+.15; p.z=z; p.x=Math.random()*(W+80)-40; p.y=top?-12-Math.random()*40:Math.random()*H;
+  function mk(p,top){ var z=Math.pow(Math.random(),1.8)*.75+.25; p.z=z; p.x=Math.random()*(W+80)-40; p.y=top?-12-Math.random()*40:Math.random()*H;
     p.v=(18+70*z)*(.8+Math.random()*.4); p.s=Math.random()*6.28; p.sw=(.4+Math.random()*1.4)*(4+10*z); p.f=.5+Math.random()*1.2;
-    var sz=.8+z*3.6; p.i=sz<1.6?0:sz<2.6?1:sz<3.6?2:sz<4.6?3:4; p.k=sz/SP[p.i].r; p.a=.1+.55*Math.pow(z,1.4); return p }
+    var sz=1.2+z*3.4; p.i=sz<1.6?0:sz<2.6?1:sz<3.6?2:sz<4.6?3:4; p.k=sz/SP[p.i].r; p.a=.3+.5*z; return p }
   function fill(){ var want=Math.round(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want }
-  function amount(){ if(mode==='on') return wx.snow?Math.max(.45,Math.min(1,.35+wx.rate*.7)):.6; return Math.max(.3,Math.min(1,.3+wx.rate*.7)) } // rate in cm/h
+  function amount(){ var a=mode==='on'&&!wx.snow?.2:Math.min(.3,.08+wx.rate*.24); return Math.max(.1,a) } // rate in cm/h
 
   // ---- map movement: near flakes shift more than far ones (depth) ----
   var last=null;
