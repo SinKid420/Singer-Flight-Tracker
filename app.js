@@ -111,11 +111,16 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(!known&&c.z>17) show(c.z); // start loading the sharpest picture right away while the coverage check runs (most towns have it)
     img.onload=function(){ if(known) end(null) }; img.onerror=function(e){ if(known) end(e) };
     if(!LOWMEM) tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } }); // clipping gives every piece its own graphics layer: skipped on 4 GB phones
+  // TEST: Mapbox satellite photos (Layers ▸ Map ▸ Satellite photos). Off unless a URL-restricted Mapbox token is set below.
+  // Saved offline maps always use Esri (Mapbox's terms don't allow saving its pictures for offline use).
+  var MBT=''; function MBX(){ try{ return !!MBT&&localStorage.getItem('aw-satsrc')==='mapbox'&&navigator.onLine!==false }catch(e){ return false } }
+  window.__mbx={has:function(){ return !!MBT }, on:MBX, set:function(v){ try{ localStorage.setItem('aw-satsrc',v?'mapbox':'esri') }catch(e){} location.reload() }};
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}),
+      (MBX()?L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token='+MBT,{maxZoom:19,maxNativeZoom:18,tileSize:512,zoomOffset:-1,attribution:'Imagery © Mapbox © Maxar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}):
+      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:17})]}},
     fsr:{sat:true,layers:function(){ return BASES.sat.layers() }},
@@ -840,7 +845,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=222, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=223, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1274,8 +1279,11 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function opts(s,key){ return {renderer:R,smoothFactor:2,interactive:true,style:function(f){ var p=f.properties||{}; return isRoad(s,p)?fadeK(s.st(p),kOf(cfg2.fsrRdOp)):fade(s.st(p)) },pointToLayer:function(f,ll){ return s.icon?L.marker(ll,{icon:s.icon(f.properties||{}),opacity:op(),keyboard:false}):L.circleMarker(ll,Object.assign({renderer:R},fade(s.st(f.properties||{})))) },
       filter:function(f){ if(!shown(s,f.properties||{})) return false; if(s.ok&&!s.ok(f.properties||{})) return false; var id=s.id(f); if(id==null) return true; var m=seen[s.dk||s.k]||(seen[s.dk||s.k]={}); if(m[id]) return false; m[id]=key; return true },
       onEachFeature:function(f,l){ l.bindPopup(function(){ return s.pop(f.properties||{})+'<br><small style="opacity:.7">'+esc(s.src)+'</small><button type="button" class="trrep trrepb">Report trail here</button>' },{closeButton:false}) }} }
-    function draw(s,key){ if(drawn[key]||!data[key]) return; drawn[key]=L.geoJSON(data[key],opts(s,key)).addTo(map) }
-    function drop(key){ var l=drawn[key]; if(!l) return; map.removeLayer(l); delete drawn[key]; var k=key.split(':')[0], s1=SRC.filter(function(x){return x.k===k})[0], m=seen[(s1&&s1.dk)||k]; if(m) Object.keys(m).forEach(function(id){ if(m[id]===key) delete m[id] }) }
+    // dark outline under every road and trail line so it stays readable over snow, rock and dark forest (not on older phones: twice the drawing)
+    function casing(s,key){ if(LOWMEM||s.icon) return null; return L.geoJSON(data[key],{renderer:R,smoothFactor:2,interactive:false,filter:function(f){ var t=f.geometry&&f.geometry.type; return /LineString/.test(t||'') },
+        style:function(f){ var p=f.properties||{}, o=isRoad(s,p)?fadeK(s.st(p),kOf(cfg2.fsrRdOp)):fade(s.st(p)); if(!o||!o.weight||o.weight>=6) return {opacity:0,weight:0}; return {color:'#111827',weight:o.weight+2,opacity:Math.min(.85,(o.opacity||1)*.85),lineCap:'round',lineJoin:'round'} }}) }
+    function draw(s,key){ if(drawn[key]||!data[key]) return; var c=casing(s,key); if(c) c.addTo(map); drawn[key]=L.geoJSON(data[key],opts(s,key)).addTo(map); drawn[key]._case=c }
+    function drop(key){ var l=drawn[key]; if(!l) return; map.removeLayer(l); if(l._case) map.removeLayer(l._case); delete drawn[key]; var k=key.split(':')[0], s1=SRC.filter(function(x){return x.k===k})[0], m=seen[(s1&&s1.dk)||k]; if(m) Object.keys(m).forEach(function(id){ if(m[id]===key) delete m[id] }) }
     // thin out the line points (about 4 m accuracy) so redrawing on zoom stays quick
     function rdp(p,t){ if(p.length<3) return p; var keepI=new Uint8Array(p.length), st=[[0,p.length-1]]; keepI[0]=keepI[p.length-1]=1;
       while(st.length){ var r=st.pop(), a=p[r[0]], b=p[r[1]], dx=b[0]-a[0], dy=b[1]-a[1], d2=dx*dx+dy*dy, mx=0, mi=-1;
