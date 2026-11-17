@@ -98,7 +98,7 @@
   function font(f){ var s=JSON.stringify(f||''); return [/bold|black|heavy|semibold/i.test(s)?'Noto Sans Bold':/italic/i.test(s)?'Noto Sans Italic':'Noto Sans Regular'] }
   function ofmSrc(st){ var s=st.sources&&st.sources.openmaptiles; if(s){ delete s.url; s.tiles=['ofm://{z}/{x}/{y}']; s.minzoom=0; s.maxzoom=14; s.attribution='© OpenFreeMap © OpenMapTiles © OpenStreetMap' } return st }
   function hillL(){ return {id:'aw-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.6,'hillshade-shadow-color':'rgba(0,0,0,0.6)','hillshade-highlight-color':'rgba(255,255,255,0.22)','hillshade-accent-color':'rgba(0,0,0,0.35)','hillshade-illumination-anchor':'map'}} }
-  function addHill(st){ st.sources['aw-dem']={type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'};
+  function addHill(st){ st.sources['aw-dem']={type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'};
     var i=st.layers.findIndex(function(l){ return l.type==='symbol' }); st.layers.splice(i<0?st.layers.length:i,0,hillL()); return st }
   function esriLabels(){ return getJ(ESRIV+'resources/styles/root.json').then(function(r){ var out=[];
       (r.layers||[]).forEach(function(l){ if(l.type!=='symbol'||/^(Road|Railroad|Ferry|Trail|Exit|Building)/i.test(l['source-layer']||'')) return;
@@ -127,7 +127,7 @@
       {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:CLOSED,layout:L.extend({'icon-image':bizIcon(['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]])},BIZL),paint:{}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true,'text-padding':4},paint:WHITE}]} }
   function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
-      var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
+      var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
         layers:[{id:'nn-bg',type:'background',paint:{'background-color':'#15171a'}},
           {id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-highlight-color':'#5d626a','hillshade-accent-color':'#2a1016','hillshade-illumination-direction':315}},
           {id:'nn-water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0f1a22','fill-opacity':0.9}},
@@ -159,7 +159,7 @@
     if(w.kind==='sat'&&!w.lab&&!w.hill){ off(); return }
     if(key===curKey){ after(w); return }
     (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
-      if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,antialias:!LOW,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?12:60,refreshExpiredTiles:false},cam()));
+      if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,antialias:!LOW,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?8:60,refreshExpiredTiles:false},cam()));
           gl.on('styleimagemissing',function(e){ if(/^bz-/.test(e.id)&&window.__biz&&!gl.hasImage(e.id)) try{ gl.addImage(e.id,window.__biz.image(e.id.slice(3)),{pixelRatio:2}) }catch(x){} });
           gl.on('load',function(){ loaded=true; after(want()) }); var idT=0; gl.on('idle',function(){ if(ovLyr&&window.__osmRedraw&&Date.now()-idT>4000){ idT=Date.now(); window.__osmRedraw() } }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
           var nE=0; gl.on('error',function(e){ var m=e&&e.error&&e.error.message||''; if(window.console) console.warn('[gl]',m); if(!/tile|fetch|404|403|Failed to fetch|abort/i.test(m)&&++nE<=3&&window.__crash) window.__crash.add('Map graphics error',m) });

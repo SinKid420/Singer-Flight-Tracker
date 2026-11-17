@@ -13,6 +13,7 @@
     try{ var pm=performance.memory; if(pm) s.mem=Math.round(pm.usedJSHeapSize/1e6)+'/'+Math.round(pm.jsHeapSizeLimit/1e6)+' MB' }catch(e){}
     try{ s.tiles=document.querySelectorAll('.leaflet-tile').length }catch(e){}
     if(navigator.deviceMemory) s.ram=navigator.deviceMemory+' GB'; s.app=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+    try{ s.perf=(window.__awPerf||'auto')+(window.__awLow?'/low':'/fast'); s.sat=localStorage.getItem('aw-satsrc')||'esri'; var sn=window.__snow&&__snow.state(), rn=window.__rainfx&&__rainfx.state(); s.fx=(sn&&sn.running?'snow'+sn.flakes:'')+(rn&&rn.running?'rain'+rn.drops:'')||'none' }catch(e){}
     s.scr=screen.width+'x'+screen.height+'@'+(window.devicePixelRatio||1); return s }
   function add(kind,msg,extra){ var l=rd(K,[]); l.unshift({t:Date.now(),k:kind,m:String(msg||'').slice(0,600),s:extra||state()}); if(l.length>MAX) l.length=MAX; wr(K,l); badge() }
   window.__crash={add:function(k,m){ add(k,m) },list:function(){ return rd(K,[]) },clear:function(){ wr(K,[]); badge() }};
