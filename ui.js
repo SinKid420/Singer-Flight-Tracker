@@ -96,7 +96,7 @@
   // TEST row: Satellite photos source (only when a Mapbox token is set in app.js)
   function satRow(){ var M=window.__mbx, pn=document.querySelector('.lyrp[aria-label="On road layers"]'); if(!M||!M.has()||!pn||pn.querySelector('#aw_satsrc')) return; var mp=pn.querySelector('.awmap'); if(!mp) return;
     var l=document.createElement('label'); l.className='fps fpm'; l.innerHTML='<span class="awml">Satellite photos (test)</span><select id="aw_satsrc"><option value="esri">Esri</option><option value="mapbox">Mapbox</option></select>';
-    mp.appendChild(l); var sel=l.querySelector('select'); sel.value=M.on()?'mapbox':'esri'; sel.onchange=function(){ M.set(sel.value==='mapbox') } }
+    mp.appendChild(l); var sel=l.querySelector('select'); sel.value=M.on()?'mapbox':'esri'; try{ if(localStorage.getItem('aw-mbxoff')===new Date().toISOString().slice(0,7)){ var o=sel.querySelector('[value=mapbox]'); o.textContent='Mapbox (paused this month)'; o.disabled=true } }catch(e){} sel.onchange=function(){ M.set(sel.value==='mapbox') } }
   function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document) }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too

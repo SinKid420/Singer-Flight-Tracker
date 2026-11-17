@@ -113,13 +113,23 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(!LOWMEM) tile.style.clipPath='inset(0 -1px -1px 0)'; return tile } }); // clipping gives every piece its own graphics layer: skipped on 4 GB phones
   // TEST: Mapbox satellite photos (Layers ▸ Map ▸ Satellite photos). Off unless a URL-restricted Mapbox token is set below.
   // Saved offline maps always use Esri (Mapbox's terms don't allow saving its pictures for offline use).
-  var MBT='pk.eyJ1Ijoic2lua2lkNDIwIiwiYSI6ImNtd2s0OWlpZDA5Z3gzMG4wbHg2Zjg4YjAifQ.QJ-7zT5YF3rdqrEhZ29qZg'; /* public token, works only on https://sinkid420.github.io */ function MBX(){ try{ return !!MBT&&localStorage.getItem('aw-satsrc')==='mapbox'&&navigator.onLine!==false }catch(e){ return false } }
+  var MBT='pk.eyJ1Ijoic2lua2lkNDIwIiwiYSI6ImNtd2s0OWlpZDA5Z3gzMG4wbHg2Zjg4YjAifQ.QJ-7zT5YF3rdqrEhZ29qZg'; /* public token, works only on https://sinkid420.github.io */ function MBX(){ try{ return !!MBT&&localStorage.getItem('aw-satsrc')==='mapbox'&&localStorage.getItem('aw-mbxoff')!==new Date().toISOString().slice(0,7)&&navigator.onLine!==false }catch(e){ return false } }
+  // free-tier guard: every phone reports how many Mapbox pictures it loaded; the server adds them up for the month and says stop
+  // well before the free amount. Then (or if Mapbox stops answering) the map quietly goes back to Esri until next month.
+  var mbN=0, mbErr=[], mbOff=false;
+  function mbStop(why){ if(mbOff) return; mbOff=true; try{ localStorage.setItem('aw-mbxoff',new Date().toISOString().slice(0,7)) }catch(e){}
+    try{ var nt=document.createElement('div'); nt.className='frtoast'; nt.style.zIndex=6600; nt.textContent=why; document.body.appendChild(nt); setTimeout(function(){ nt.remove() },4500) }catch(e){} setTimeout(function(){ location.reload() },1500) }
+  function mbSync(){ if(!MBT||localStorage.getItem('aw-satsrc')!=='mapbox'||navigator.onLine===false) return; var n=Math.min(mbN,3000); mbN-=n;
+    fetch('https://awarebc.aware-bc.workers.dev/s/mbx',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:localStorage.getItem('sky-uid')||'',name:localStorage.getItem('sky-trname')||'',n:n})})
+      .then(function(r){ return r.json() }).then(function(j){ if(j&&j.on===false&&MBX()) mbStop('Mapbox free monthly limit reached · back to Esri photos') }).catch(function(){ mbN+=n }) }
+  window.__mbxTile=function(ok){ if(ok){ mbN++; return } var t=Date.now(); mbErr.push(t); mbErr=mbErr.filter(function(x){ return t-x<60000 }); if(mbErr.length>=3&&MBX()) mbStop('Mapbox photos not loading · back to Esri') };
+  if(MBT){ setTimeout(mbSync,4000); setInterval(mbSync,60000); document.addEventListener('visibilitychange',function(){ if(document.hidden) mbSync() }) }
   window.__mbx={has:function(){ return !!MBT }, on:MBX, set:function(v){ try{ localStorage.setItem('aw-satsrc',v?'mapbox':'esri') }catch(e){} location.reload() }};
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      (MBX()?L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token='+MBT,{maxZoom:19,maxNativeZoom:18,tileSize:512,zoomOffset:-1,attribution:'Imagery © Mapbox © Maxar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}):
+      (MBX()?L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token='+MBT,{maxZoom:19,maxNativeZoom:18,tileSize:512,zoomOffset:-1,attribution:'Imagery © Mapbox © Maxar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'}).on('tileload',function(){ window.__mbxTile(true) }).on('tileerror',function(){ window.__mbxTile(false) }):
       new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:17})]}},
@@ -845,7 +855,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=224, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=225, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
