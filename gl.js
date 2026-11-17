@@ -71,7 +71,7 @@
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
   var neon=ls('aw-neon')==='1'; // Off-road "Neon topo" theme: charcoal relief, white labels, glowing red trails
-  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:true,lab:true,poi:false}; var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill,lab:vec||labOn,poi:k==='sat'} } // businesses only on On road
+  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill&&!LOW,lab:vec||labOn,poi:k==='sat'&&!LOW} } // businesses only on On road
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
   var pane=map.createPane('glmap',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=250; pane.style.pointerEvents='none';
@@ -129,10 +129,11 @@
   function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
       var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
         layers:[{id:'nn-bg',type:'background',paint:{'background-color':'#15171a'}},
-          {id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-highlight-color':'#5d626a','hillshade-accent-color':'#2a1016','hillshade-illumination-direction':315}},
+
           {id:'nn-water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0f1a22','fill-opacity':0.9}},
           {id:'nn-river',type:'line',source:'openmaptiles','source-layer':'waterway',paint:{'line-color':'#2b4656','line-width':['interpolate',['linear'],['zoom'],8,0.4,14,1.6]}},
           {id:'nn-road',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in',['get','class'],['literal',['motorway','trunk','primary','secondary','tertiary','minor','service']]],paint:{'line-color':'#6b7078','line-opacity':0.55,'line-width':['interpolate',['linear'],['zoom'],8,0.4,15,1.8]}}]};
+      if(LOW) delete st.sources['aw-dem']; else st.layers.splice(1,0,{id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-highlight-color':'#5d626a','hillshade-accent-color':'#2a1016','hillshade-illumination-direction':315}});
       s.layers.forEach(function(l){ var sl=l['source-layer']; if(l.type!=='symbol'||!/^(place|water_name|mountain_peak|transportation_name)$/.test(sl||'')) return; var o=JSON.parse(JSON.stringify(l)), p=o.paint||{};
         p['text-color']=sl==='water_name'?'#7fa6bd':'#e6e8ec'; p['text-halo-color']='rgba(0,0,0,0.9)'; p['text-halo-width']=1.3; if(o.layout){ delete o.layout['icon-image'] } o.paint=p; st.layers.push(o) });
       if(s.sprite) st.sprite=s.sprite; return st }) }
