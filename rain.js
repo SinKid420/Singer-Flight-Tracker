@@ -26,7 +26,8 @@
       byCode={51:60,53:120,55:200,56:100,57:180,61:150,63:450,65:1000,66:300,67:800,80:180,81:500,82:1000,95:700,96:1000,99:1000}[c]||0,
       byRate=r<=0?0:r<.5?60+r/.5*90:r<2.5?150+(r-.5)/2*300:r<7.6?450+(r-2.5)/5.1*550:1000;
     var n=Math.max(byCode,byRate); if(!wx.rain) n=mode==='on'?200:0; if(wx.rain&&n<40) n=40;
-    return Math.min(1000,n)/1000*(LOW?.7:1)*1000/MAX }
+    n=Math.min(1000,n)*(LOW?.7:1); if(LOW){ var o=window.__snow&&__snow.state().running?__snow.state().flakes:0; if(n+o>700) n=Math.max(60,700-o) } /* older phones: snow and rain share one budget */
+    return n/MAX }
 
   var last=null;
   function moved(){ var w=map.project(map.getCenter()); if(last){ var dx=last.x-w.x, dy=last.y-w.y; if(Math.abs(dx)<400&&Math.abs(dy)<400) for(var i=0;i<N;i++){ var p=P[i]; p.x+=dx*p.z*.55; p.y+=dy*p.z*.55 } } last=w; place() }
@@ -34,7 +35,8 @@
   // ---- animation: streaks drawn in 3 depth groups (one stroke each, fast), splashes as quick fading rings ----
   var BK=[{w:.8,a:.22},{w:1.1,a:.34},{w:1.5,a:.48}];
   var run=false, raf=0, t0=0, acc=0;
-  function frame(t){ if(!run) return; raf=requestAnimationFrame(frame); var dt=t0?(t-t0)/1000:0; t0=t; acc+=dt; if(acc<1/FPS-.002) return; dt=Math.min(acc,.1); acc=0;
+  var rest=false, restT=null; if(LOW){ map.on('movestart zoomstart',function(){ rest=true; clearTimeout(restT) }); map.on('moveend zoomend',function(){ clearTimeout(restT); restT=setTimeout(function(){ rest=false; t0=0 },180) }) }
+  function frame(t){ if(!run) return; raf=requestAnimationFrame(frame); var dt=t0?(t-t0)/1000:0; t0=t; acc+=dt; if(rest){ acc=0; return } if(acc<1/FPS-.002) return; dt=Math.min(acc,.1); acc=0;
     if(document.hidden) return; cx.clearRect(0,0,W,H);
     var wind=(wx.wind||0)*Math.sin((wx.dir+180)*Math.PI/180)*9, sl=Math.max(-.45,Math.min(.45,wind/900));
     for(var i=0;i<N;i++){ var p=P[i]; p.y+=p.v*dt; p.x+=p.v*sl*dt;

@@ -31,7 +31,8 @@
     var c=wx.code||0, r=wx.rate||0, byCode=c===71?80:c===73?420:c===75?1000:c===77?70:c===85?180:c===86?800:0,
       byRate=r<=0?0:r<.1?60:r<.3?60+(r-.1)/.2*190:r<1?250+(r-.3)/.7*450:r<1.5?700+(r-1)/.5*300:1000;
     var n=Math.max(byCode,byRate); if(!wx.snow) n=mode==='on'?150:0; if(wx.snow&&n<40) n=40;
-    return Math.min(1000,n)/1000*(LOW?.7:1)*1000/MAX } // rate in cm/h
+    n=Math.min(1000,n)*(LOW?.7:1); if(LOW){ var o=window.__rainfx&&__rainfx.state().running?__rainfx.state().drops:0; if(n+o>700) n=Math.max(60,700-o) } /* older phones: snow and rain share one budget */
+    return n/MAX } // rate in cm/h
 
   // ---- map movement: near flakes shift more than far ones (depth) ----
   var last=null;
@@ -39,7 +40,8 @@
 
   // ---- animation ----
   var run=false, raf=0, t0=0, acc=0;
-  function frame(t){ if(!run) return; raf=requestAnimationFrame(frame); var dt=t0?(t-t0)/1000:0; t0=t; acc+=dt; if(acc<1/FPS-.002) return; dt=Math.min(acc,.1); acc=0;
+  var rest=false, restT=null; if(LOW){ map.on('movestart zoomstart',function(){ rest=true; clearTimeout(restT) }); map.on('moveend zoomend',function(){ clearTimeout(restT); restT=setTimeout(function(){ rest=false; t0=0 },180) }) }
+  function frame(t){ if(!run) return; raf=requestAnimationFrame(frame); var dt=t0?(t-t0)/1000:0; t0=t; acc+=dt; if(rest){ acc=0; return } if(acc<1/FPS-.002) return; dt=Math.min(acc,.1); acc=0;
     if(document.hidden) return; cx.clearRect(0,0,W,H); var wind=(wx.wind||0)*Math.sin((wx.dir+180)*Math.PI/180)*1.6, tt=t/1000;
     for(var i=0;i<N;i++){ var p=P[i]; p.y+=p.v*dt; p.x+=(wind*p.z+Math.sin(tt*p.f+p.s)*p.sw*.5)*dt;
       if(p.y>H+12||p.x<-50||p.x>W+50) mk(p,true);
