@@ -215,9 +215,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // ---- Wider radar: US (NEXRAD, Iowa Mesonet) + Canada/US/Mexico/world (RainViewer), animated, no keys
   var IEM='https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913';
   var RVHOST='https://tilecache.rainviewer.com', rvPaths=[], rvStamp=0;
-  var rcfg={src:'auto',loop:'1',op:'0.1',v:2};
-  try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop); if(rr.op&&rr.v===2) rcfg.op=String(rr.op)}catch(e){}
-  var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=(+rcfg.op>0&&+rcfg.op<=1)?+rcfg.op:.1, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
+  var rcfg={src:'auto',loop:'1',op:'0.05',v:3}; // rain radar stays on, very light by default (the falling rain shows rain where you are); adjust in Layers ▸ Opacity
+  try{var rr=JSON.parse(localStorage.getItem('sky-radar')||'{}'); if(rr.src) rcfg.src=rr.src; if(rr.loop!=null) rcfg.loop=String(rr.loop); if(rr.op&&rr.v===3) rcfg.op=String(rr.op)}catch(e){} // older saved strengths move to the new light default once
+  var RSTEPS=5, frames=[], cur=0, tmr=null, radOp=(+rcfg.op>0&&+rcfg.op<=1)?+rcfg.op:.05, wxTxt=document.getElementById('wxlegtxt'), baseTxt=wxTxt?wxTxt.textContent:'';
   function want(k){ var v=rcfg.src; if(k==='mx'&&v==='auto'){ var c=map.getCenter(); if(c.lat>24&&c.lat<58&&c.lng>-135&&c.lng<-52) return false } return v==='auto'||v===k }
   var lazyT=null;
   function mk(url,z,nat,attr){ return L.tileLayer(url,{opacity:0,zIndex:z,maxNativeZoom:nat,maxZoom:19,keepBuffer:1,updateWhenIdle:true,className:'rainlyr',attribution:attr}) }
@@ -253,7 +253,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function save(){ try{localStorage.setItem('sky-radar',JSON.stringify(rcfg))}catch(e){} }
     a.onchange=function(){ rcfg.src=a.value; save(); applyRadar() };
     b.onchange=function(){ rcfg.loop=b.value; save(); applyRadar() };
-    var c=document.getElementById('radop'); if(c){ c.value=rcfg.op; c.onchange=function(){ rcfg.op=c.value; radOp=+c.value||.1; save(); setFrame(cur); rainOp() } }
+    var c=document.getElementById('radop'); if(c){ c.value=rcfg.op; c.onchange=function(){ rcfg.op=c.value; radOp=+c.value||.05; save(); setFrame(cur); rainOp() } }
   })();
   function rainOp(){ ['rain','snow'].forEach(function(k){ if(wxLayers[k]) wxLayers[k].setOpacity(Math.min(1,radOp*(WX[k].boost||1))) }) }
   rainOp();
@@ -855,7 +855,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=225, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=226, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
