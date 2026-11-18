@@ -22,16 +22,16 @@
     gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.62,'rgba(255,255,255,.95)'); gr.addColorStop(.82,'rgba(255,255,255,.45)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.beginPath(); g.arc(d/2,d/2,r,0,7); g.fill(); return {c:c,r:r+1} });
 
   // ---- particles: depth z (0 far … 1 near) sets size, speed, brightness and how much they shift when the map moves ----
-  var P=[], N=0;
+  var RAW=0, P=[], N=0;
   function mk(p,top){ var z=Math.pow(Math.random(),1.8)*.75+.25; p.z=z; p.x=Math.random()*(W+80)-40; p.y=top?-12-Math.random()*40:Math.random()*H;
     p.v=(18+70*z)*(.8+Math.random()*.4); p.s=Math.random()*6.28; p.sw=(.4+Math.random()*1.4)*(4+10*z); p.f=.5+Math.random()*1.2;
     var sz=1.2+z*3.4; p.i=sz<1.6?0:sz<2.6?1:sz<3.6?2:sz<4.6?3:4; p.k=sz/SP[p.i].r; p.a=.3+.5*z; return p }
-  function fill(){ var want=Math.round(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want }
+  function fill(nb){ var want=Math.floor(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want; if(LOW&&!nb&&window.__rainfx&&__rainfx._refit) __rainfx._refit() }
   function amount(){ // realistic: the odd flake in flurries, up to the full 1,000 only in heavy snow
     var c=wx.code||0, r=wx.rate||0, byCode=c===71?80:c===73?420:c===75?1000:c===77?70:c===85?180:c===86?800:0,
       byRate=r<=0?0:r<.1?60:r<.3?60+(r-.1)/.2*190:r<1?250+(r-.3)/.7*450:r<1.5?700+(r-1)/.5*300:1000;
     var n=Math.max(byCode,byRate); if(!wx.snow) n=mode==='on'?150:0; if(wx.snow&&n<40) n=40;
-    n=Math.min(1000,n)*(LOW?.7:1); if(LOW){ var o=window.__rainfx&&__rainfx.state().running?__rainfx.state().drops:0; if(n+o>700) n=Math.max(60,700-o) } /* older phones: snow and rain share one budget */
+    n=Math.min(1000,n)*(LOW?.7:1); RAW=n; if(LOW){ var o=window.__rainfx&&__rainfx.state().running?__rainfx.state().raw:0; if(n+o>700) n=n*700/(n+o) } /* older phones: snow and rain share one budget of 700, split fairly */
     return n/MAX } // rate in cm/h
 
   // ---- map movement: near flakes shift more than far ones (depth) ----
@@ -47,8 +47,8 @@
       if(p.y>H+12||p.x<-50||p.x>W+50) mk(p,true);
       var S=SP[p.i], d=S.c.width*p.k; cx.globalAlpha=p.a; cx.drawImage(S.c,p.x-d/2,p.y-d/2,d,d) }
     cx.globalAlpha=1 }
-  function start(){ if(run) return; size(); place(); fill(); cv.style.display=''; run=true; t0=0; raf=requestAnimationFrame(frame) }
-  function stop(){ run=false; cancelAnimationFrame(raf); cv.style.display='none'; P.length=0; N=0 }
+  function start(){ if(run) return; run=true; size(); place(); fill(); cv.style.display=""; t0=0; raf=requestAnimationFrame(frame) }
+  function stop(){ run=false; RAW=0; setTimeout(function(){ if(LOW&&window.__rainfx&&__rainfx._refit) __rainfx._refit() },0); cancelAnimationFrame(raf); cv.style.display='none'; P.length=0; N=0 }
   function want(){ return mode==='on'||(mode==='auto'&&wx.snow&&!RM) }
   function apply(){ if(want()){ if(run) fill(); else start() } else if(run) stop(); paint() }
 
@@ -72,7 +72,7 @@
   function set(v){ mode=v==='on'||v==='off'?v:'auto'; ls('aw-snow',mode); if(mode==='auto') check(true); apply() }
   // call from app.js or anywhere: toggleSnowParticles(true) / toggleSnowParticles(false); no argument = back to Auto
   window.toggleSnowParticles=function(enabled){ set(enabled===true?'on':enabled===false?'off':'auto') };
-  window.__snow={set:set, state:function(){ return {mode:mode,running:run,flakes:N,max:MAX,snowing:wx.snow,rate:wx.rate} }, _wx:function(o){ for(var k in o) wx[k]=o[k]; apply() }};
+  window.__snow={set:set, _refit:function(){ if(run) fill(true) }, state:function(){ return {mode:mode,running:run,raw:RAW,flakes:N,max:MAX,snowing:wx.snow,rate:wx.rate} }, _wx:function(o){ for(var k in o) wx[k]=o[k]; apply() }};
   if(document.readyState==='complete') setTimeout(mount,700); else addEventListener('load',function(){ setTimeout(mount,700) });
   apply();
 })();

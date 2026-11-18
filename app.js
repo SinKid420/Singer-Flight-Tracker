@@ -858,7 +858,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=229, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=230, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1334,8 +1334,12 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     function areas(){ if(!on) return; var z=map.getZoom(); if(z<9||cfg2.fsrClose==='0'){ aG.clearLayers(); aLay={}; return }
       if(!aD){ if(!aP) aP=fetch('sled-zones.json').then(function(r){ return r.ok?r.json():null }).then(function(j){ if(j&&j.f){ aD=j.f.filter(function(f){ return !f.l&&f.w!=='Road Closure'&&(f.k==='mv'||(f.k==='c'&&/ATV/.test(f.t||''))) }); areas() } else aP=null }).catch(function(){ aP=null }); return }
       var b=map.getBounds().pad(.2), w=b.getWest(), e=b.getEast(), so=b.getSouth(), n=b.getNorth();
-      aD.forEach(function(f,i){ var vis=f.b[0]<e&&f.b[2]>w&&f.b[1]<n&&f.b[3]>so, l=aLay[i];
-        if(vis&&!l){ if(!f._ll) f._ll=f.g.map(function(p){ return p.map(aDec) }); var act=aToday(f.w); l=aLay[i]=L.polygon(f._ll,fade({renderer:R,interactive:false,color:act?'#e65100':'#90a4ae',weight:2,opacity:.9,dashArray:'6,4',fillColor:act?'#ff6d00':'#90a4ae',fillOpacity:act?.12:.04})); l._af=f; l._act=act; aG.addLayer(l) }
+      aD.forEach(function(f,i){ var vis=f.b[0]<e&&f.b[2]>w&&f.b[1]<n&&f.b[3]>so, l=aLay[i], k='';
+        /* big areas come in hundreds of pieces: draw only the pieces near the screen, so zooming stays smooth */
+        if(vis){ if(!f._ll){ f._ll=f.g.map(function(p){ return p.map(aDec) }); f._pb=f._ll.map(function(p){ var a=[999,999,-999,-999]; p[0].forEach(function(q){ if(q[1]<a[0]) a[0]=q[1]; if(q[0]<a[1]) a[1]=q[0]; if(q[1]>a[2]) a[2]=q[1]; if(q[0]>a[3]) a[3]=q[0] }); return a }) }
+          var sel=[]; f._pb.forEach(function(a,j){ if(a[0]<e&&a[2]>w&&a[1]<n&&a[3]>so) sel.push(j) }); k=sel.join(','); if(!sel.length) vis=false;
+          if(l&&l._k!==k){ aG.removeLayer(l); delete aLay[i]; l=null } }
+        if(vis&&!l){ var act=aToday(f.w); l=aLay[i]=L.polygon(sel.length===f._ll.length?f._ll:sel.map(function(j){ return f._ll[j] }),fade({renderer:R,interactive:false,color:act?'#e65100':'#90a4ae',weight:2,opacity:.9,dashArray:'6,4',fillColor:act?'#ff6d00':'#90a4ae',fillOpacity:act?.12:.04})); l._af=f; l._act=act; l._k=k; aG.addLayer(l) }
         else if(!vis&&l){ aG.removeLayer(l); delete aLay[i] } }) }
     map.on('popupopen',function(){ lastPop=Date.now() });
     map.on('click',function(e){ if(!on||!aD) return; setTimeout(function(){ if(Date.now()-lastPop<400) return; var la=e.latlng.lat, lo=e.latlng.lng, hit=null;

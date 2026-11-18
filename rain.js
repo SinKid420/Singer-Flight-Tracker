@@ -17,16 +17,16 @@
   function place(){ var p=map.containerPointToLayerPoint([0,0]), b=map.getBearing?map.getBearing():0; cv.style.transform='translate3d('+p.x+'px,'+p.y+'px,0) rotate('+(-b)+'deg)' }
 
   // ---- drops: depth z sets speed, streak length, thickness and brightness; each lands somewhere on screen with a small splash ----
-  var P=[], N=0, SPL=[];
+  var RAW=0, P=[], N=0, SPL=[];
   function mk(p,top){ var z=Math.pow(Math.random(),1.6)*.75+.25; p.z=z; p.x=Math.random()*(W+120)-60; p.y=top?-30-Math.random()*60:Math.random()*H;
     p.v=(620+780*z)*(.85+Math.random()*.3); p.l=p.v*(.018+.012*z); p.ly=H*(.25+Math.random()*.8); p.b=z<.5?0:z<.78?1:2; return p }
-  function fill(){ var want=Math.round(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want }
+  function fill(nb){ var want=Math.floor(MAX*amount()); while(P.length<want) P.push(mk({},false)); N=want; if(LOW&&!nb&&window.__snow&&__snow._refit) __snow._refit() }
   function amount(){ // realistic: a few drops in drizzle, the full 1,000 only in heavy rain (rate in mm/h)
     var c=wx.code||0, r=wx.rate||0,
       byCode={51:60,53:120,55:200,56:100,57:180,61:150,63:450,65:1000,66:300,67:800,80:180,81:500,82:1000,95:700,96:1000,99:1000}[c]||0,
       byRate=r<=0?0:r<.5?60+r/.5*90:r<2.5?150+(r-.5)/2*300:r<7.6?450+(r-2.5)/5.1*550:1000;
     var n=Math.max(byCode,byRate); if(!wx.rain) n=mode==='on'?200:0; if(wx.rain&&n<40) n=40;
-    n=Math.min(1000,n)*(LOW?.7:1); if(LOW){ var o=window.__snow&&__snow.state().running?__snow.state().flakes:0; if(n+o>700) n=Math.max(60,700-o) } /* older phones: snow and rain share one budget */
+    n=Math.min(1000,n)*(LOW?.7:1); RAW=n; if(LOW){ var o=window.__snow&&__snow.state().running?__snow.state().raw:0; if(n+o>700) n=n*700/(n+o) } /* older phones: snow and rain share one budget of 700, split fairly */
     return n/MAX }
 
   var last=null;
@@ -49,8 +49,8 @@
     for(i=SPL.length-1;i>=0;i--){ var s=SPL[i]; s.t+=dt; var k=s.t/.22; if(k>=1){ SPL.splice(i,1); continue }
       cx.globalAlpha=.42*(1-k); cx.beginPath(); cx.ellipse(s.x,s.y,s.r*(.4+k*1.2),s.r*(.2+k*.55),0,0,6.283); cx.stroke() }
     cx.globalAlpha=1 }
-  function start(){ if(run) return; size(); place(); fill(); cv.style.display=''; run=true; t0=0; raf=requestAnimationFrame(frame) }
-  function stop(){ run=false; cancelAnimationFrame(raf); cv.style.display='none'; P.length=0; N=0; SPL.length=0 }
+  function start(){ if(run) return; run=true; size(); place(); fill(); cv.style.display=""; t0=0; raf=requestAnimationFrame(frame) }
+  function stop(){ run=false; RAW=0; setTimeout(function(){ if(LOW&&window.__snow&&__snow._refit) __snow._refit() },0); cancelAnimationFrame(raf); cv.style.display='none'; P.length=0; N=0; SPL.length=0 }
   function want(){ return mode==='on'||(mode==='auto'&&wx.rain&&!RM) }
   function apply(){ if(want()){ if(run) fill(); else start() } else if(run) stop(); paint() }
 
@@ -73,7 +73,7 @@
     var h=document.createElement('div'); h.className='fhelp'; F.appendChild(l); F.appendChild(h); sel=l.querySelector('select'); sel.onchange=function(){ set(sel.value) }; paint() }
   function set(v){ mode=v==='on'||v==='off'?v:'auto'; ls('aw-rainfx',mode); if(mode==='auto') check(true); apply() }
   window.toggleRainParticles=function(enabled){ set(enabled===true?'on':enabled===false?'off':'auto') };
-  window.__rainfx={set:set, state:function(){ return {mode:mode,running:run,drops:N,max:MAX,raining:wx.rain,rate:wx.rate} }, _wx:function(o){ for(var k in o) wx[k]=o[k]; apply() }};
+  window.__rainfx={set:set, _refit:function(){ if(run) fill(true) }, state:function(){ return {mode:mode,running:run,raw:RAW,drops:N,max:MAX,raining:wx.rain,rate:wx.rate} }, _wx:function(o){ for(var k in o) wx[k]=o[k]; apply() }};
   if(document.readyState==='complete') setTimeout(mount,750); else addEventListener('load',function(){ setTimeout(mount,750) });
   apply();
 })();
