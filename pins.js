@@ -47,6 +47,7 @@
     '.awp-tri>.trdot.sel{--sz:42px}.awp-tri>.trdot{margin:0!important;--sz:30px}'+
     // people: round
     '.awp-rd>.awpi{width:32px!important;height:32px!important;border-radius:50%!important;background:radial-gradient(circle at 35% 30%,#3a4049,#14171b 70%)!important;border:2.5px solid var(--c,#30d158)!important;box-sizing:border-box;display:grid!important;place-items:center;font-size:16px!important;line-height:1!important;box-shadow:0 3px 8px rgba(0,0,0,.55)!important}'+
+    '.awp-rd>.awpi svg.awrig{width:27px;height:27px;display:block}'+
     // friends (already round): same depth and gloss
     '.frmk b{border-width:2.5px!important;box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 -6px 10px rgba(0,0,0,.18),inset 0 4px 8px rgba(255,255,255,.22)!important}'+
     '.frmk span{font:700 10.5px var(--font,system-ui);text-shadow:0 0 3px #000,0 0 2px #000}'+
