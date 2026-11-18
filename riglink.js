@@ -266,7 +266,7 @@
     var b={op:'feed',lat:p.lat,lon:p.lon,f:filt,here:1,rig:ls('aw-rlrig')||''}; if(curKey()){ b.key=curKey(); b.share=ls('aw-rlshare')==='1'&&p.real?1:0 }
     api(b).then(function(j){ posts=j.p||[]; rigs=j.rigs||[]; nRigs=j.n||0; try{ ls('aw-rlc-'+(curKey()||'pub'),JSON.stringify(posts.slice(0,30))) }catch(e){} draw() })
       .catch(function(e){ if(e.message==='No convoy with that key.'){ key=''; ls('aw-rlkey',null); pub=true; toast('That convoy key no longer works.') }
-        posts=lj('aw-rlc-'+(curKey()||'pub'),[]); if(filt) posts=posts.filter(function(x){ return x.kind===filt }); draw(navigator.onLine===false?'📵 No signal: showing the last saved feed. Your posts wait on this phone and go out by themselves.':'Could not load the feed: '+e.message) })
+        posts=lj('aw-rlc-'+(curKey()||'pub'),[]); if(filt) posts=posts.filter(function(x){ return x.kind===filt }); draw(navigator.onLine===false?'📵 No signal: showing the last saved feed. Your posts wait on this phone and go out by themselves.':'📶 Weak signal: showing the last saved feed. It refreshes by itself when the signal comes back.') })
       .then(function(){ busy=false; paintTop() }) }
   function draw(note){ var fe=X.querySelector('#rlfeed'), q=lj('aw-rlq',[]).filter(function(x){ return (x.key||'')===curKey() });
     var h=note?'<div class="rlnote">'+esc(note)+'</div>':'';
