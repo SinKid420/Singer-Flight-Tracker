@@ -103,7 +103,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(!self._awU){ self._awU=1; self.on('tileunload',function(e){ tileDone(e.tile); [].forEach.call(e.tile.querySelectorAll('img'),function(i){ i.onload=i.onerror=null; i.src='data:image/gif;base64,R0lGODlhAQABAAAAACw=' }) }) }
     var shown=false; function vis(err){ if(!shown){ shown=true; done(err,tile) } }
     // blurry first: a zoomed-out picture (one download covers 4 spots) fills in at once, the sharp one lands on top
-    if(c.z>=8){ var lo=document.createElement('img'); lo.alt=''; lo.setAttribute('role','presentation'); lo.decoding='async'; lo.onload=function(){ vis(null) }; lo.src=pos(lo,c,c.z-1,px); tile.appendChild(lo) } // stand-in one level softer (less blotchy)
+    if(c.z>=8&&!LOWMEM){ var lo=document.createElement('img'); lo.alt=''; lo.setAttribute('role','presentation'); lo.decoding='async'; lo.onload=function(){ vis(null) }; lo.src=pos(lo,c,c.z-1,px); tile.appendChild(lo) } // stand-in one level softer (less blotchy)
     var img=document.createElement('img'), cur=-1, fin=false; img.alt=''; img.setAttribute('role','presentation'); img.decoding='async'; tile.appendChild(img); tilePend.add(tile);
     function end(err){ if(fin) return; fin=true; tileDone(tile); if(lo&&!err) setTimeout(function(){ if(lo.parentNode) lo.parentNode.removeChild(lo) },400); vis(err&&!shown?err:null) }
     function show(z){ if(z===cur) return; cur=z; img.src=pos(img,c,z,px) }
@@ -137,12 +137,15 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
       {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
+  // instant first picture: one very zoomed-out satellite layer (about 2 downloads for the whole screen) sits under the sharp map,
+  // so there is never a blank screen while the detail loads on weak signal. Older phones use it instead of a stand-in per piece.
+  var PREV=L.tileLayer(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{tileSize:1024,zoomOffset:-2,minZoom:4,maxZoom:19,maxNativeZoom:17,zIndex:0,keepBuffer:0,updateWhenZooming:false,className:'awpre',attribution:''});
   var baseLayers=[], baseKey='sat';
   function setBase(key){
     if(key!=='sat'&&key!=='fsr') key='sat'; // only Satellite and FSR are offered
     baseLayers.forEach(function(l){map.removeLayer(l)});
-    baseLayers=BASES[key].layers();
-    baseLayers.forEach(function(l){l.addTo(map)});
+    baseLayers=BASES[key].layers(); if(BASES[key].sat) baseLayers.push(PREV); // last in the list (labels stay at 1 and 2), but added first so it loads first
+    if(BASES[key].sat) PREV.addTo(map); baseLayers.forEach(function(l){ if(l!==PREV) l.addTo(map) });
     baseKey=key; if(window.__fsr){ window.__fsr.set(true); window.__fsr.mode(key==='fsr') } if(baseLayers[0]&&baseLayers[0].getContainer) baseLayers[0].getContainer().classList.add('basel');
     document.getElementById('map').classList.toggle('sat',BASES[key].sat);
     Array.prototype.forEach.call(document.querySelectorAll('.seg button'),function(b){
@@ -325,7 +328,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       n=0;
       if(zz<map.getMinZoom()||zz>map.getMaxZoom()) return;
       baseLayers.forEach(function(lay){
-        if(!lay.getTileUrl||!map.hasLayer(lay)) return;
+        if(!lay.getTileUrl||!map.hasLayer(lay)||lay===PREV) return;
         var nz=Math.min(zz,lay.options.maxNativeZoom||zz), sz=1<<nz;
         var nw=map.project(bb.getNorthWest(),nz).divideBy(256).floor(), se=map.project(bb.getSouthEast(),nz).divideBy(256).floor();
         for(var x=nw.x;x<=se.x&&n<48;x++) for(var y=nw.y;y<=se.y&&n<48;y++){
@@ -855,7 +858,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=227, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=228, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
