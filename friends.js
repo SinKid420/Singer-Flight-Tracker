@@ -96,6 +96,7 @@
     if(view==='chat'&&chat) return renderChat();
     if(view==='group') return renderNewGroup();
     if(view==='mod') return renderMod();
+    if(view==='blk') return renderBlk();
     if(view==='mem'&&chat) return renderMembers();
     var me=S.me, h=head('Friends',me?'Your tag: '+esc(me.n)+' <span>#'+esc(me.t)+'</span>':'');
     h+='<div class="frbody">';
@@ -134,6 +135,11 @@
       if(S.admin) h+='<button type="button" class="frbt r" data-a="mod">Moderator: reports</button>';
     }
     h+='</div>'; sh.innerHTML=h; sh.className='list' }
+  /* Blocked riders on their own page (from Settings), with a back button to Settings */
+  var blkFromSet=false;
+  function renderBlk(){ var bl=S.blocked||[], h=head('Blocked riders','',true)+'<div class="frbody"><div class="frsmall">Blocked riders can\'t add you, message you or see your spot. Unblock anyone here.</div>';
+    h+=bl.length?bl.map(function(r){ return '<div class="frrow"><span class="frav" style="background:#3a3a3c">⛔</span><div><b>'+esc(r.n)+'<small>#'+esc(r.t)+'</small></b></div><button type="button" class="frbt" data-a="unblock" data-id="'+esc(r.id)+'">Unblock</button></div>' }).join(''):'<div class="frnone">No blocked riders.</div>';
+    sh.innerHTML=h+'</div>' }
   function renderMod(){ var h=head('Reports','',true)+'<div class="frbody">';
     if(!mod) h+='<div class="frnone">Loading…</div>';
     else { h+='<div class="frsmall">'+mod.st.riders+' riders · '+mod.st.week+' this week · '+mod.st.msgs+' messages today</div>';
@@ -244,7 +250,7 @@
     if(a==='mem'){ view='mem'; return render() }
     if(a==='kick'){ if(!sure(b,'Tap again')) return; return api('gkick',{g:chat.id,id:id}).then(function(){ toast('Removed from the group'); chat.mem=(chat.mem||[]).filter(function(m){ return m.id!==id }); render() }).catch(function(x){ toast(x.message) }) }
     if(a==='ublock'){ if(!sure(b,'Tap again')) return; return api('block',{id:id}).then(function(){ toast('Blocked. You won\'t see their messages.'); msgs=msgs.filter(function(m){ return m.a!==id }); render() }).catch(function(x){ toast(x.message) }) }
-    if(a==='back'){ if(view==='mem'){ view='chat'; return renderChat() } chat=null; clearTimeout(chatT); view='list'; render(); return sync() }
+    if(a==='back'){ if(view==='mem'){ view='chat'; return renderChat() } if(view==='blk'&&blkFromSet){ blkFromSet=false; sh.hidden=true; document.body.classList.remove('fron'); var fs=document.getElementById('fsheet'); if(fs) fs.hidden=false; return } chat=null; clearTimeout(chatT); view='list'; render(); return sync() }
     if(a==='sound'){ if(needName()) return; var SN=window.__mesh.sound; SN.set(!SN.on()).then(function(v){ toast(v?'Call others for help: on':'Call others for help: off'); render() }); return }
     if(a==='mesh'){ if(needName()) return; window.__mesh.set(!window.__mesh.on()).then(function(v){ toast(v?'Nearby mesh on':'Nearby mesh off'); render() }); return }
     if(a==='share'){ if(needName()) return; if(share){ shareOff(); pickHrs=false; render(); setBadge(); sync(); toast('Your spot is hidden from friends.') } else { pickHrs=!pickHrs; render() } return }
@@ -292,7 +298,7 @@
       if(!F&&last){ var up=document.getElementById('updfolder'); if(!up) return; F=document.createElement('details'); F.className='folder'; F.id='blkfolder'; F.innerHTML='<summary>Blocked riders</summary><div class="fhelp">Blocked riders can’t add you, message you or see your spot.</div>'; up.parentNode.insertBefore(F,up) } // no Google account folder yet: its own folder in App & account
       if(!F) return; row=document.createElement('div'); row.className='setrow'; row.id='blkrow'; row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px';
       row.innerHTML='<span>⛔ Blocked riders: <b></b></span><button type="button" class="setbtn" style="width:auto;padding:0 14px;margin:0">Manage</button>';
-      F.appendChild(row); row.querySelector('button').onclick=function(){ var fs=document.getElementById('fsheet'); if(fs) fs.hidden=true; more=true; showKey=false; open('list') };
+      F.appendChild(row); row.querySelector('button').onclick=function(){ var fs=document.getElementById('fsheet'); if(fs) fs.hidden=true; blkFromSet=true; open('blk') };
       F.addEventListener('toggle',function(){ if(F.open){ paint(); sync().then(paint) } }); paint() }
     var tries=0; (function wait(){ mount(tries>=8); if(!row&&tries++<20) setTimeout(wait,500) })() })();
 })();
