@@ -13,6 +13,9 @@
   function col(s){ var h=0; s=String(s||''); for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return 'hsl('+(Math.abs(h)%360)+',55%,32%)' }
   function km(a,b,c,d){ var r=Math.PI/180, x=Math.sin((c-a)*r/2), y=Math.sin((d-b)*r/2); return 12742*Math.asin(Math.sqrt(x*x+Math.cos(a*r)*Math.cos(c*r)*y*y)) }
   function me(){ var m=A.me&&A.me(); if(m&&m.label!=='none'&&isFinite(m.lat)) return {lat:m.lat,lon:m.lon,alt:m.alt,real:true}; var c=MAP.getCenter(); return {lat:c.lat,lon:c.lng,real:false} }
+  /* never show yourself as a rider: same tag, or you on another phone / the website (same name close by, or the owner account) */
+  function isMe(r){ var t=window.__frApi&&window.__frApi.tag&&window.__frApi.tag(); if(t&&r.tg===t) return true; if(r.fd&&ls('aw-admin')==='1') return true;
+      var n=(ls('sky-trname')||'').trim().toLowerCase(); if(!n||String(r.by||'').trim().toLowerCase()!==n) return false; var p=me(); return Math.abs(r.lat-p.lat)<.05&&Math.abs(r.lon-p.lon)<.07 }
   function offRoad(){ return document.body.classList.contains('fsron') }
   var KIND={c:['TRAIL','#ef4444','#3b1515','#fca5a5'],r:['RIG','#3b82f6','#132341','#93c5fd'],h:['HELP','#f59e0b','#3a2a0d','#fcd34d']};
   var ST={hazard:'⚠️ Hazard',snow:'❄️ Snow',recovery:'🪝 Recovery needed',mud:'🟫 Mud',tree:'🌲 Tree down',ok:'✅ All clear','wl-bear':'🐻 Bear seen','wl-moose':'🫎 Moose seen','wl-elk':'🦌 Elk seen','wl-deer':'🦌 Deer seen','wl-cougar':'🐆 Cougar seen','wl-wolf':'🐺 Wolf seen','wl-other':'🐾 Wildlife seen'};
@@ -122,7 +125,7 @@
       var p=me(); if(!p.real) return; var rig=ls('aw-rlrig')||''; if(on()) told();
       Promise.all([ck?api({op:'crigs',key:ck,lat:p.lat,lon:p.lon,share:ls('aw-rlshare')==='1'?1:0,rig:rig,role:ls('aw-cvrole')||''}).catch(function(){ return {r:[]} }):Promise.resolve({r:[]}),
         api({op:'near',lat:p.lat,lon:p.lon,share:1,ex:exact()?1:0,rig:rig,see:see()?1:0}).catch(function(){ return {r:[]} })]).then(function(J){ clear(); if(!offRoad()) return; var shown={};
-        function put(r,cv){ if(shown[r.tg]||(window.__frApi&&window.__frApi.isFriend(r.tg))) return; shown[r.tg]=1; // friends already show with their exact spot
+        function put(r,cv){ if(shown[r.tg]||(window.__frApi&&window.__frApi.isFriend(r.tg))||isMe(r)) return; shown[r.tg]=1; // friends already show with their exact spot
           L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="nrmk'+(r.fd?' fd':'')+(cv?' cv':'')+'" role="button" aria-label="'+esc(r.by)+'">'+(window.__rigs?__rigs.svg(r.rt,26):'🚙')+'<small>'+esc(r.by)+(r.cv?' 🤝':'')+'</small></span>',iconSize:[0,0]}),zIndexOffset:850})
             .on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:(cv?'Convoy '+ck+' · ':r.ex?'Nearby rider · ':'Nearby rider · about 1 km · ')+ago(r.at)}) }).addTo(NL) }
         window.__cvRigs={t:Date.now(),r:J[0].r||[]}; (J[0].r||[]).forEach(function(r){ put(r,true) }); (J[1].r||[]).forEach(function(r){ put(r,false) }) }) }
@@ -290,7 +293,7 @@
     return h }
   function pins(){ pinL.clearLayers(); rigL.clearLayers();
     posts.forEach(function(p,i){ var k=KIND[p.kind]||KIND.h; L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:'<span class="rlpin" style="background:'+k[1]+'">'+(p.kind==='c'?'⚠':p.kind==='r'?'🚙':p.au?'🎙':'💬')+'</span>',iconSize:[0,0]})}).on('click',function(){ focusCard(i) }).addTo(pinL) });
-    rigs.forEach(function(r){ L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="rlpin rig" role="button" aria-label="'+esc(r.by)+'">🚙</span>',iconSize:[0,0]})}).on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) }).addTo(rigL) });
+    rigs.forEach(function(r){ if(isMe(r)) return; L.marker([r.lat,r.lon],{icon:L.divIcon({className:'',html:'<span class="rlpin rig" role="button" aria-label="'+esc(r.by)+'">'+(window.__rigs?__rigs.svg(r.rt,24):'🚙')+'</span>',iconSize:[0,0]})}).on('click',function(){ mini(r.tg,{n:r.by,rig:r.rig,lat:r.lat,lon:r.lon,sub:'spot '+ago(r.at)}) }).addTo(rigL) });
     var p=me(); L.circleMarker([p.lat,p.lon],{radius:7,color:'#fff',weight:2,fillColor:'#ff3b30',fillOpacity:1}).addTo(rigL) }
   function focusCard(i){ var c=X.querySelector('.rlcd[data-i="'+i+'"]'); if(!c) return; c.scrollIntoView({behavior:'smooth',block:'start'}); c.classList.add('hi'); setTimeout(function(){ c.classList.remove('hi') },1500) }
 
