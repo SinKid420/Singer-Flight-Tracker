@@ -64,6 +64,7 @@
     return net() }) }catch(e){ return }
 
   // ---------- settings ----------
+  var NEWL=ls('aw-look')==='new'; /* New map look (preview): cleaner labels, soft 3D hills on satellite */
   var style=ls('aw-style')||'sat', hill=ls('aw-hill')==='1', labOn=ls('aw-gllab')!=='0', dead=false;
   // phones with 4 GB or less: lighter drawing (fewer helpers, sharp-enough canvas, smaller tile memory)
   var LOW=window.__awLow!=null?!!window.__awLow:(navigator.deviceMemory||4)<=4; try{ if(LOW){ if(ML.setWorkerCount) ML.setWorkerCount(2); else ML.workerCount=2 } }catch(e){}
@@ -71,7 +72,7 @@
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
   var neon=ls('aw-neon')==='1'; // Off-road "Neon topo" theme: charcoal relief, white labels, glowing red trails
-  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:k==='fsr'&&hill&&!LOW,lab:vec||labOn,poi:k==='sat'&&!LOW} } // businesses only on On road
+  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:(k==='fsr'&&hill||NEWL)&&!LOW,lab:vec||labOn,poi:k==='sat'&&!LOW} } // businesses only on On road
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
   var pane=map.createPane('glmap',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=250; pane.style.pointerEvents='none';
@@ -97,7 +98,7 @@
   var WHITE={'text-color':'#ffffff','text-halo-color':'rgba(0,0,0,0.85)','text-halo-width':1.5,'text-halo-blur':0};
   function font(f){ var s=JSON.stringify(f||''); return [/bold|black|heavy|semibold/i.test(s)?'Noto Sans Bold':/italic/i.test(s)?'Noto Sans Italic':'Noto Sans Regular'] }
   function ofmSrc(st){ var s=st.sources&&st.sources.openmaptiles; if(s){ delete s.url; s.tiles=['ofm://{z}/{x}/{y}']; s.minzoom=0; s.maxzoom=14; s.attribution='© OpenFreeMap © OpenMapTiles © OpenStreetMap' } return st }
-  function hillL(){ return {id:'aw-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.6,'hillshade-shadow-color':'rgba(0,0,0,0.6)','hillshade-highlight-color':'rgba(255,255,255,0.22)','hillshade-accent-color':'rgba(0,0,0,0.35)','hillshade-illumination-anchor':'map'}} }
+  function hillL(){ if(NEWL) return {id:'aw-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.38,'hillshade-shadow-color':'rgba(10,14,24,0.5)','hillshade-highlight-color':'rgba(255,248,235,0.16)','hillshade-accent-color':'rgba(0,0,0,0.25)','hillshade-illumination-anchor':'map'}}; return {id:'aw-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.6,'hillshade-shadow-color':'rgba(0,0,0,0.6)','hillshade-highlight-color':'rgba(255,255,255,0.22)','hillshade-accent-color':'rgba(0,0,0,0.35)','hillshade-illumination-anchor':'map'}} }
   function addHill(st){ st.sources['aw-dem']={type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'};
     var i=st.layers.findIndex(function(l){ return l.type==='symbol' }); st.layers.splice(i<0?st.layers.length:i,0,hillL()); return st }
   function esriLabels(){ return getJ(ESRIV+'resources/styles/root.json').then(function(r){ var out=[];
@@ -146,7 +147,14 @@
       s.layers.forEach(function(l){ var sl=l['source-layer']; if(l.type!=='symbol'||!/^(place|water_name|mountain_peak|transportation_name)$/.test(sl||'')) return; var o=JSON.parse(JSON.stringify(l)), p=o.paint||{};
         p['text-color']=sl==='water_name'?'#7fa6bd':'#e6e8ec'; p['text-halo-color']='rgba(0,0,0,0.9)'; p['text-halo-width']=1.3; if(o.layout){ delete o.layout['icon-image'] } o.paint=p; st.layers.push(o) });
       if(s.sprite) st.sprite=s.sprite; return st }) }
-  function build(w){
+  /* New look labels: one clean style, soft dark halo, colour by kind (places white, roads light grey, water blue, peaks warm), nothing under 11 px */
+  function polish(st){ if(!st||!st.layers) return st; var CO={place:'#ffffff',transportation_name:'#e6eaef',water_name:'#bfe3ff',waterway:'#bfe3ff',mountain_peak:'#f3e7d3',poi:'#ffffff',park:'#d8f0d0'};
+    st.layers.forEach(function(l){ if(l.type!=='symbol'||!l.layout||!l.layout['text-field']) return; var sl=l['source-layer']||'', p=l.paint=l.paint||{}, k=/water|marine|ocean|lake|river|bay/i.test(sl)?'water_name':sl;
+      p['text-color']=CO[k]||p['text-color']||'#ffffff'; p['text-halo-color']='rgba(12,14,18,0.88)'; p['text-halo-width']=1.6; p['text-halo-blur']=0.6;
+      var ts=l.layout['text-size']; if(typeof ts==='number'&&ts<11) l.layout['text-size']=11;
+      if(sl==='place'&&!l.layout['text-letter-spacing']) l.layout['text-letter-spacing']=0.03 }); return st }
+  function build(w){ var P=build0(w); return NEWL?P.then(polish):P }
+  function build0(w){
     if(w.kind==='neon') return neonStyle();
     if(w.kind!=='sat') return getJ(OFM+'styles/'+w.kind).then(function(s){ var st=ofmSrc(JSON.parse(JSON.stringify(s))); return w.hill?addHill(st):st });
     // over the satellite picture: transparent map, upright labels (OpenFreeMap roads + Esri places), optional hillshade

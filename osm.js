@@ -38,6 +38,7 @@
   function inArea(b){ return Promise.all(cellsFor(b,CS).slice(0,60).map(function(c){ return get(cellU(c[0],c[1])) })).then(function(R){ var o=[]; R.forEach(function(x){ o=o.concat(pts(x)) }); return o }) }
 
   // ---------- map markers ----------
+  var NEWL=false; try{ NEWL=localStorage.getItem('aw-look')==='new' }catch(e){} var OSMC2={gate:'#ff9f0a',fuel:'#e3001b',help:'#ff3b30',water:'#32ade6',peaks:'#a2845e'};
   var IC={gate:'🚧',fuel:'⛽',help:'🆘',water:'🚰',peaks:'⛰'}, MINZ={gate:13,fuel:14.5,help:11,water:18,peaks:11}, lay=L.layerGroup().addTo(map), seen={};
   function label(p){ var t=p.t, a=t.amenity;
     if(p.k==='gate') return cap(t.barrier==='lift_gate'?'Gate (lift)':t.barrier==='chain'?'Chain across road':t.barrier==='block'?'Road blocks':'Gate')+(t.locked==='yes'||/^(private|no)$/.test(t.access||'')?' · may be locked':'');
@@ -53,17 +54,25 @@
     var ele=p.k==='peaks'&&t.ele&&map.getZoom()>=12?'<small>'+Math.round(+t.ele).toLocaleString()+' m</small>':'';
     if(t.amenity==='fuel'&&window.__biz) return L.divIcon({className:'',html:'<span class="osmk osm-fuel" style="transform:translate(-50%,-50%)" role="button" aria-label="'+esc(label(p))+'">'+window.__biz.svg('gas')+'</span>',iconSize:[0,0]}); // gas stations get the business pin
     return L.divIcon({className:'',html:'<span class="osmk osm-'+p.k+'" role="button" aria-label="'+esc(label(p))+'">'+ic+ele+'</span>',iconSize:[0,0]}) }
-  var css=document.createElement('style'); css.textContent='.osmk{display:inline-flex;align-items:center;gap:2px;transform:translate(-50%,-50%);font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));white-space:nowrap}.osmk small{font:700 10px system-ui;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000}.osm-gate{font-size:14px}.osm-help{font-size:16px}'+
+  var css=document.createElement('style'); css.textContent='.awgrp{position:absolute;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:3px;padding:3px 8px 3px 4px;border-radius:16px;background:linear-gradient(180deg,#2c3138,#111317);border:2.5px solid var(--c);color:#fff;font:800 12px system-ui;box-shadow:0 3px 8px rgba(0,0,0,.55);white-space:nowrap;cursor:pointer}.awgrp i{font-style:normal;font-size:14px;line-height:1;display:flex}.awgrp i svg{display:block}'+'.osmk{display:inline-flex;align-items:center;gap:2px;transform:translate(-50%,-50%);font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));white-space:nowrap}.osmk small{font:700 10px system-ui;color:#fff;text-shadow:0 0 3px #000,0 0 2px #000}.osm-gate{font-size:14px}.osm-help{font-size:16px}'+
     '#spdlim{position:fixed;z-index:1150;right:calc(max(16px,env(safe-area-inset-right,0px)) + 2px);bottom:calc(env(safe-area-inset-bottom,0px) + 150px);width:44px;height:44px;border-radius:50%;background:#fff;border:4px solid #d50000;color:#111;display:grid;place-items:center;font:800 16px/1 system-ui;box-shadow:0 2px 8px rgba(0,0,0,.6)}#spdlim[hidden]{display:none}#spdlim small{position:absolute;bottom:-14px;font:700 9px system-ui;color:#fff;text-shadow:0 0 3px #000}#spdlim.mph{border-radius:6px;border:3px solid #111}';
   document.head.appendChild(css);
   var drawT=null, gen=0;
   function draw(){ clearTimeout(drawT); drawT=null; var z=map.getZoom(), my=++gen; if(z<11||navigator.onLine===false&&!Object.keys(CC).length){ lay.clearLayers(); seen={}; return }
     var bd=map.getBounds(), b={s:bd.getSouth(),n:bd.getNorth(),w:bd.getWest(),e:bd.getEast()}; if(cellsFor(b,CS).length>16){ return }
-    inArea(b).then(function(P){ if(my!==gen) return; var keep={}, n=0;
+    inArea(b).then(function(P){ if(my!==gen) return; var keep={}, n=0, vis=[], vis2=[];
       var AW=window.__awp, OV=window.__ovt; P.forEach(function(p){ if(AW&&AW.isGone&&AW.isGone(p.lat,p.lon,p.t.name||p.t.brand||'')) return;
         if(OV&&OV.near&&(p.t.name||p.t.brand)){ var o=OV.near(p.lat,p.lon,p.t.name||p.t.brand); if(o&&/closed/.test(o.status)) return } /* newer data says it closed */
-        if(p.k==='tower'||!GT[p.k==='gate'?'gates':p.k]||z<MINZ[p.k]||n>400) return; if(!bd.pad(0.1).contains([p.lat,p.lon])) return; n++; keep[p.id]=1; if(seen[p.id]) return;
+        if(p.k==='tower'||!GT[p.k==='gate'?'gates':p.k]||z<MINZ[p.k]||n>400) return; if(!bd.pad(0.1).contains([p.lat,p.lon])) return; n++; vis.push(p) });
+      /* New map look: pins that sit on top of each other become one bubble with a count; tap it to zoom in */
+      var groups=[]; if(NEWL&&z<17){ var cells={}; vis.forEach(function(p){ var q=map.latLngToLayerPoint([p.lat,p.lon]), ck=Math.floor(q.x/52)+':'+Math.floor(q.y/52); (cells[ck]=cells[ck]||[]).push(p) });
+          Object.keys(cells).forEach(function(ck){ var g=cells[ck]; if(g.length>1) groups.push(g); else vis2.push(g[0]) }) } else vis2=vis;
+      vis2.forEach(function(p){ keep[p.id]=1; if(seen[p.id]) return;
         seen[p.id]=L.marker([p.lat,p.lon],{icon:icon(p),keyboard:false,zIndexOffset:p.k==='help'?-100:-450,title:label(p)}).on('click',function(){ if(window.__pin) window.__pin(L.latLng(p.lat,p.lon),label(p)) }).addTo(lay) });
+      groups.forEach(function(g){ var id='g:'+g.map(function(p){ return p.id }).sort().join(','), la=0, lo=0, cnt={}; g.forEach(function(p){ la+=p.lat; lo+=p.lon; cnt[p.k]=(cnt[p.k]||0)+1 }); keep[id]=1; if(seen[id]) return;
+        var top=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] })[0], c=OSMC2[top]||'#8e8e93', ll=L.latLng(la/g.length,lo/g.length);
+        seen[id]=L.marker(ll,{icon:L.divIcon({className:'',html:'<span class="awgrp" style="--c:'+c+'" role="button" aria-label="'+g.length+' places here, tap to zoom in"><i>'+(top==='fuel'&&window.__biz?window.__biz.svg('gas').replace('width="32" height="34"','width="20" height="21"'):(IC[top]||'📍'))+'</i><b>'+g.length+'</b></span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-300})
+          .on('click',function(){ map.setView(ll,Math.min(19,map.getZoom()+2)) }).addTo(lay) });
       Object.keys(seen).forEach(function(id){ if(!keep[id]){ lay.removeLayer(seen[id]); delete seen[id] } }) }) }
   map.on('moveend zoomend',function(){ clearTimeout(drawT); drawT=setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },700) }); setTimeout(function(){ (window.__afterTiles||function(f){f()})(draw) },2500); window.__osmRedraw=function(){ lay.clearLayers(); seen={}; draw() };
 
