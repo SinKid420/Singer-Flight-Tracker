@@ -119,7 +119,7 @@
   var OPEN=['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]];
   var CATS=['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]];
   function NAMEX(o){ return o.nf==='names'?'':['downcase',['to-string',['coalesce',['get',o.nf],'']]] }
-  var FUELB=['canco','petro-canada','petro canada','co-op gas','super save gas','petro-pass','fas gas','gas bar',' esso ',' shell ','chevron',' husky ','centex','pioneer gas','domo gas',' mobil ','cardlock','card lock','truck stop','gas station'];
+  var FUELB=['canco','petro-can','petro can','petrocan','co-op gas','super save gas','petro-pass','fas gas','gas bar',' esso ',' shell ','chevron',' husky ','centex','pioneer gas','domo gas',' mobil ','cardlock','card lock','truck stop','gas station'];
   function GAS(o){ var n=NAMEX(o), a=['any',['in','fuel',CATS],['in','gas_station',CATS]]; if(n){ FUELB.forEach(function(b){ a.push(['in',b,['concat',' ',n,' ']]) }) } return a }
   function HOSP(o){ var n=NAMEX(o), a=['any',['in','hospital',CATS]]; if(n) a.push(['in','hospital',n]); var NOT=['!',['any',['in','animal',CATS],['in','veterin',CATS]].concat(n?[['in','animal',n],['in','veterin',n],['in','pet ',n]]:[])]; return ['all',a,NOT] }
   function KEYP(o){ return ['any',GAS(o),HOSP(o)] }
