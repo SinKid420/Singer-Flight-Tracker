@@ -75,7 +75,7 @@
   function skel(){ var o=''; for(var i=0;i<3;i++) o+='<div class="srsk"><div style="display:flex;gap:9px;align-items:center;margin-bottom:8px"><div class="b" style="width:34px;height:34px;border-radius:50%"></div><div><div class="b" style="width:110px;height:11px;margin-bottom:6px"></div><div class="b" style="width:60px;height:9px"></div></div></div><div class="b" style="height:230px;border-radius:16px"></div><div style="display:flex;gap:8px;margin-top:12px"><div class="b" style="width:70px;height:36px;border-radius:14px"></div><div class="b" style="width:130px;height:36px;border-radius:14px;margin-left:auto"></div></div></div>'; return o }
   var posts=[];
   function where(){ var m=R().me(); return m }
-  function show(){ list.innerHTML=posts.length?posts.map(card).join(''):'<div class="srmsg">🏁 No machines posted near you yet.<br>Be the first: tap <b>Post my machine</b>.</div>'; fit(list) }
+  function show(){ list.innerHTML=posts.length?posts.map(card).join(''):'<div class="srmsg">🏁 No machines posted near you yet.<br>Be the first: tap <b>Post My Rig</b>.</div>'; fit(list) }
   function load(){ if(busy) return; busy=true; list.innerHTML=skel(); newPill(false); ptr('spin','Loading…',84); var m=where();
     R().api({op:'feed',f:'s',sort:sort,lat:m.lat,lon:m.lon}).then(function(j){ busy=false; ptr('','',0); posts=j.p||[]; try{ localStorage.setItem('aw-sr-c',JSON.stringify(posts.slice(0,20))) }catch(e){} show(); list.scrollTop=0 })
       .catch(function(){ busy=false; ptr('','',0); try{ posts=JSON.parse(localStorage.getItem('aw-sr-c')||'[]') }catch(e){ posts=[] }
@@ -119,12 +119,12 @@
       fi.onchange=function(){ var fs=[].slice.call(fi.files||[]); fi.value=''; if(!fs.length) return; var have=pend?pend.length:0, room=MAXP-have; if(fs.length>room) R().toast('Up to '+MAXP+' photos. The first '+room+' were added.'); fs=fs.slice(0,room);
         var out=pend||[], i=0; (function nx(){ if(i>=fs.length){ pend=out; if(pend.length) sheet(); return } R().shrink(fs[i++]).then(function(o){ out.push(o); nx() }).catch(function(){ R().toast('A photo could not be opened and was skipped.'); nx() }) })() } }
     fi.click() }
-  function sheet(){ if(!P){ P=document.createElement('div'); P.id='srpost'; P.setAttribute('role','dialog'); P.setAttribute('aria-label','Post my machine'); document.body.appendChild(P);
+  function sheet(){ if(!P){ P=document.createElement('div'); P.id='srpost'; P.setAttribute('role','dialog'); P.setAttribute('aria-label','Post My Rig'); document.body.appendChild(P);
       P.addEventListener('click',function(e){ if(e.target===P||e.target.closest('[data-a=pc]')){ P.hidden=true; pend=null; return } if(e.target.closest('.go')){ send(); return }
         var rm=e.target.closest('[data-rm]'); if(rm){ P.__x=P.querySelector('textarea').value; pend.splice(+rm.getAttribute('data-rm'),1); if(!pend.length){ P.hidden=true; pend=null } else sheet(); return }
         if(e.target.closest('.pva')){ P.__x=P.querySelector('textarea').value; pick() } }) }
     var rig=''; try{ rig=localStorage.getItem('aw-rlrig')||'' }catch(e){}
-    P.innerHTML='<div class="in"><h3>📸 Post my machine<button type="button" data-a="pc" aria-label="Close">✕</button></h3><div class="pvs">'+pend.map(function(o,k){ return '<div class="pvi"><img alt="Photo '+(k+1)+'" src="'+o.img+'"><button type="button" data-rm="'+k+'" aria-label="Remove photo '+(k+1)+'">✕</button></div>' }).join('')+
+    P.innerHTML='<div class="in"><h3>📸 Post My Rig<button type="button" data-a="pc" aria-label="Close">✕</button></h3><div class="pvs">'+pend.map(function(o,k){ return '<div class="pvi"><img alt="Photo '+(k+1)+'" src="'+o.img+'"><button type="button" data-rm="'+k+'" aria-label="Remove photo '+(k+1)+'">✕</button></div>' }).join('')+
       (pend.length<MAXP?'<button type="button" class="pva">＋ Add<br>photo</button>':'')+'</div><div class="cnt">'+pend.length+' of '+MAXP+' photos · swipe to see them all</div>'+
       '<textarea maxlength="500" placeholder="Say something about your machine (optional)" aria-label="Words with your photos"></textarea><button type="button" class="go">Post to the Showroom</button><div class="note">Everyone within about 60 km can see it. Your spot is only shown to about 1 km.</div></div>';
     P.querySelector('textarea').value=P.__x||''; P.hidden=false; P.__rig=rig }
@@ -153,7 +153,7 @@
   function build(){ X=document.createElement('div'); X.id='srx'; X.hidden=true; X.setAttribute('role','dialog'); X.setAttribute('aria-label','Showroom');
     X.innerHTML='<div class="srhd"><div style="font-size:26px">🏁</div><div><b>Showroom</b><small>📍 Riders’ machines within about 60 km</small></div><button type="button" class="srx" data-a="close" aria-label="Close">✕</button></div>'+
       '<div class="srtb"><button type="button" class="on" data-a="hot">🔥 Hot</button><button type="button" data-a="new">New</button><button type="button" class="srrf" data-a="rf" aria-label="Back to top and refresh">'+TIRE+'</button></div><div class="srptr" aria-live="polite"><div class="tw">'+TIRE+'</div><b>Loading…</b></div><div class="srl"></div>'+
-      '<button type="button" class="srnew" data-a="fresh" hidden>↑ New posts</button><button type="button" class="srfab" data-a="post"><span>📸</span>Post my machine</button>';
+      '<button type="button" class="srnew" data-a="fresh" hidden>↑ New posts</button><button type="button" class="srfab" data-a="post"><span>📸</span>Post My Rig</button>';
     document.body.appendChild(X); list=X.querySelector('.srl'); X.addEventListener('click',click); X.addEventListener('submit',submit); pull() }
   function ptr(st,txt,h){ var e=X.querySelector('.srptr'); e.classList.toggle('spin',st==='spin'); e.classList.toggle('drag',st==='drag'); if(txt) e.querySelector('b').textContent=txt; e.style.height=(h||0)+'px' }
   function pull(){ var y0=null, h=0, tw=X.querySelector('.srptr .tw');
