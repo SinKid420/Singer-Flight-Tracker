@@ -116,6 +116,13 @@
   var ovLyr=null;
   try{ if(PM&&PM.Protocol){ var pmp=new PM.Protocol(); ML.addProtocol('pmtiles',pmp.tile) } }catch(e){}
   // only places Overture is fairly sure about (its confidence score), and not closed
+  var OPEN=['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]];
+  var CATS=['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]];
+  function NAMEX(o){ return o.nf==='names'?'':['downcase',['to-string',['coalesce',['get',o.nf],'']]] }
+  var FUELB=['canco','petro-canada','petro canada','co-op gas','super save gas','petro-pass','fas gas','gas bar',' esso ',' shell ','chevron',' husky ','centex','pioneer gas','domo gas',' mobil '];
+  function GAS(o){ var n=NAMEX(o), a=['any',['in','fuel',CATS],['in','gas_station',CATS]]; if(n){ FUELB.forEach(function(b){ a.push(['in',b,['concat',' ',n,' ']]) }) } return a }
+  function HOSP(o){ var n=NAMEX(o), a=['any',['in','hospital',CATS]]; if(n) a.push(['in','hospital',n]); var NOT=['!',['any',['in','animal',CATS],['in','veterin',CATS]].concat(n?[['in','animal',n],['in','veterin',n],['in','pet ',n]]:[])]; return ['all',a,NOT] }
+  function KEYP(o){ return ['any',GAS(o),HOSP(o)] }
   var CLOSED=['all',['!',['in',['coalesce',['get','operating_status'],'open'],['literal',['permanently_closed','temporarily_closed','closed']]]],['>=',['to-number',['coalesce',['get','confidence'],1],1],0.75]];
   // 3D business pins by kind (bizpins.js draws them when the map first needs one)
   var BK=[['fast',['fast_food','burger','pizza']],['cafe',['cafe','coffee','bakery','donut']],['tire',['tyre','tire']],['auto',['car_parts','car_repair','auto']],['gas',['fuel','gas_station']],
@@ -124,7 +131,9 @@
   function bizIcon(str){ var c=['case']; BK.forEach(function(k){ c.push(['any'].concat(k[1].map(function(w){ return ['in',w,str] }))); c.push('bz-'+k[0]) }); c.push('bz-shop'); return c }
   var BIZL={'icon-anchor':'center','icon-size':.85,'icon-allow-overlap':false,'text-font':['Noto Sans Regular'],'text-size':11,'text-anchor':'top','text-offset':[0,0.15],'text-max-width':8,'text-optional':true,'text-padding':4};
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
-      {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:CLOSED,layout:L.extend({'icon-image':bizIcon(['downcase',['to-string',['coalesce',['get','basic_category'],['get','categories.primary'],['get','categories'],['get','@category'],'']]])},BIZL),paint:{}},
+      {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:['all',CLOSED,['!',KEYP(o)]],layout:L.extend({'icon-image':bizIcon(CATS)},BIZL),paint:{}},
+      /* gas stations and hospitals: always shown (never hidden behind other pins), found by type or by fuel brand name, a little less strict on Overture's score */
+      {id:'aw-ovt-key',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:['all',OPEN,['>=',['to-number',['coalesce',['get','confidence'],1],1],0.35],KEYP(o)],layout:L.extend({},BIZL,{'icon-image':['case',HOSP(o),'bz-doc','bz-gas'],'icon-allow-overlap':true,'symbol-sort-key':0}),paint:{}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true,'text-padding':4},paint:WHITE}]} }
   function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
       var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
