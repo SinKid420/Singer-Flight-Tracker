@@ -867,7 +867,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=251, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=252, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1448,8 +1448,8 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       lg.setAttribute('role','button'); lg.addEventListener('click',function(e){ e.stopPropagation(); var m=lg.classList.toggle('min'); try{ localStorage.setItem('aw-legmin',m?'1':'0') }catch(x){} }) })();
     function setMenu(v){ if(v){ var n=0, ORD=['roadbtn','firebtn','ltbtn','planebtn','spacebtn','aptbtn','mtbtn','ferrybtn','arbtn','hubbtn'], all=[].slice.call(document.querySelectorAll('.sidebtn.mi')); all.sort(function(a,b){ var i=ORD.indexOf(a.id), j=ORD.indexOf(b.id); return (i<0?50:i)-(j<0?50:j) }); var OFF=document.body.classList.contains('fsron')?['roadbtn','ferrybtn','aptbtn']:[]; var vis=all.filter(function(b){ var hide=OFF.indexOf(b.id)>=0; b.classList.toggle('offmode',hide); return !hide&&!b.classList.contains('off') });
       // fit the whole list on short phone screens (stops above the credits line)
-      var pit=vis.length>1?Math.max(36,Math.min(41,Math.floor((innerHeight-30-226-40)/(vis.length-1)))):41, sz=pit<41?Math.min(40,pit-2)+'px':'';
-      vis.forEach(function(b){ b.style.top=(226+n*pit)+'px'; b.style.width=b.style.height=sz; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
+      var SH=document.body.classList.contains('awshell'), T0=SH?186:226, pit=vis.length>1?Math.max(34,Math.min(41,Math.floor((innerHeight-(SH?84:30)-T0-40)/(vis.length-1)))):41, sz=pit<41?Math.min(40,pit-2)+'px':''; /* new layout: list starts under Layers and stops above the tab bar */
+      vis.forEach(function(b){ b.style.top=(T0+n*pit)+'px'; b.style.width=b.style.height=sz; n++ }) } document.body.classList.toggle('menuon',v); mb.setAttribute('aria-expanded',v?'true':'false') }
     function setKey(v){ document.body.classList.toggle('keyon',v); kb.setAttribute('aria-expanded',v?'true':'false'); if(v){ var any=[].some.call(document.querySelectorAll('.legends .legend'),function(e){return e.offsetParent!==null}); document.getElementById('knone').hidden=any } }
     mb.onclick=function(){ document.body.classList.remove('tuton'); setKey(false); setMenu(!document.body.classList.contains('menuon')) };
     kb.onclick=function(){ setMenu(false); setKey(!document.body.classList.contains('keyon')) };
@@ -1737,7 +1737,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
     sheetEl.onclick=function(e){ if(e.target===sheetEl) sheetEl.hidden=true };
     setTimeout(function(){ if(cfg2.hubAuto==='1') gather() },8000);
     setInterval(function(){ if(!document.hidden&&cfg2.hubAuto==='1') gather() },600000);
-    window.__hub={refresh:function(){ H.t=0; gather() },paint:paint,clear:function(){ hubLayer.clearLayers() }};
+    window.__hub={refresh:function(){ H.t=0; gather() },paint:function(){ paint(); try{ window.dispatchEvent(new Event('aw-hub')) }catch(e){} },level:function(){ return H.t?level():null },clear:function(){ hubLayer.clearLayers() }};
   })();
   // ---- 3D ride-along: real terrain and satellite imagery seen from the plane (MapLibre, loaded only when opened) ----
   var V3D=(function(){
