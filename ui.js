@@ -98,7 +98,11 @@
   function satRow(){ var M=window.__mbx, pn=document.querySelector('.lyrp[aria-label="On road layers"]'); if(!M||!M.has()||!pn||pn.querySelector('#aw_satsrc')) return; var mp=pn.querySelector('.awmap'); if(!mp) return;
     var l=document.createElement('label'); l.className='fps fpm'; l.innerHTML='<span class="awml">Satellite photos (test)</span><select id="aw_satsrc"><option value="esri">Esri</option><option value="mapbox">Mapbox</option></select>';
     mp.appendChild(l); var sel=l.querySelector('select'); sel.value=M.on()?'mapbox':'esri'; try{ if(localStorage.getItem('aw-mbxoff')===new Date().toISOString().slice(0,7)){ var o=sel.querySelector('[value=mapbox]'); o.textContent='Mapbox (paused this month)'; o.disabled=true } }catch(e){} sel.onchange=function(){ M.set(sel.value==='mapbox') } }
-  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document) }
+  /* back and close buttons on every page and sheet: one text size bigger (+2 px), once each */
+  function bigX(){ [].forEach.call(document.querySelectorAll('button[aria-label^="Close"],button[aria-label="Back"],#mtback,button.close'),function(b){ if(b.__bx) return; b.__bx=1;
+      var fs=parseFloat(getComputedStyle(b).fontSize)||13; b.style.fontSize=(fs+2)+'px';
+      [].forEach.call(b.querySelectorAll('svg'),function(g){ var w=parseFloat(g.getAttribute('width')), h=parseFloat(g.getAttribute('height')); if(w) g.setAttribute('width',w+2); if(h) g.setAttribute('height',h+2) }) }) }
+  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document); bigX() }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
     if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
