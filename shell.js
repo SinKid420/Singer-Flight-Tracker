@@ -79,6 +79,7 @@
   var M=null;
   function me(show){ if(!M){ M=document.createElement('div'); M.id='awme'; M.setAttribute('role','dialog'); M.setAttribute('aria-label','Me'); document.body.appendChild(M);
       M.addEventListener('click',function(e){ if(e.target===M||e.target.closest('[data-a=x]')){ M.hidden=true; return } var b=e.target.closest('[data-g]'); if(!b) return; var g=b.getAttribute('data-g');
+        if(g==='look'){ var nv=''; try{ nv=localStorage.getItem('aw-look')==='new'?'classic':'new'; localStorage.setItem('aw-look',nv) }catch(x){} b.querySelector('em').textContent=nv==='new'?'New':'Classic'; setTimeout(function(){ location.reload() },350); return }
         if(g==='rot'||g==='key'||g==='rep'){ if(g==='rot') click('rotbtn'); if(g==='key'){ var k=document.body.classList.toggle('awkey'); if(document.body.classList.contains('keyon')!==k) click('keybtn') } if(g==='rep') click('trbtn'); setTimeout(fill,120); return }
         M.hidden=true; setTimeout(function(){ click(g) },60) }) }
     fill(); M.hidden=!show }
@@ -88,6 +89,7 @@
     if(off()) rows.push(['bbbtn','clock','Back by','']);
     rows.push(['rot','rot','Turn map with me',rot&&rot.getAttribute('aria-pressed')==='true'?'On':'Off']);
     rows.push(['key','key','Map key',document.body.classList.contains('awkey')?'Shown':'Hidden']);
+    var lk=''; try{ lk=localStorage.getItem('aw-look')||'' }catch(e){} rows.unshift(['look','map','Map look',lk==='new'?'New':'Classic']);
     if(off()&&rp) rows.push(['rep','flag','Trail reports on the map',rp.classList.contains('off')?'Hidden':'Shown']);
     M.innerHTML='<div class="in"><div class="gr"></div><h3>'+(name?esc(name):'Me')+'<button type="button" data-a="x" aria-label="Close">'+ic('x',18)+'</button></h3><div class="ls">'+
       rows.map(function(r){ return '<button type="button" data-g="'+r[0]+'">'+ic(r[1],22)+'<span>'+r[2]+'</span>'+(r[3]?'<em>'+r[3]+'</em>':ic('chev',18))+'</button>' }).join('')+
