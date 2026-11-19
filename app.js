@@ -867,7 +867,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=254, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=255, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1724,7 +1724,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       var rd=H.roads||[];
       h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
         rd.length?rd.slice(0,5).map(function(x){ return '<div class="row2"><span><b>'+esc(x.road||'Road')+'</b><br><small>'+esc(String(x.text||'').slice(0,120))+'</small></span><span>'+esc(where(x.lat,x.lon))+'</span></div>' }).join(''):'No full road closures within '+km()+' km.');
-      h+='<div class="abtns" style="margin-top:6px"><a href="#" id="hubmap" class="pri" role="button">🗺 Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer">EmergencyInfoBC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer">DriveBC</a></div>';
+      h+='<div class="abtns hubbt" style="margin-top:6px"><a href="#" id="hubmap" class="pri" role="button"><i>🗺️</i>Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer"><i>🆘</i>SOS info BC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer"><i>🚗</i>DriveBC</a></div>';
       h+='<div class="skynote">In danger? Call 911. Always follow official orders. Checked '+esc(new Date(H.t).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}))+' · '+km()+' km around you</div>';
       body.innerHTML=h;
       [].forEach.call(body.querySelectorAll('.hubhd'),function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); open=open===i?-1:i; render() } });

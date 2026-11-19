@@ -185,16 +185,19 @@
   var HY='https://api.weather.gc.ca/collections/hydrometric-realtime/items?f=json', gLay=L.layerGroup(), gKey='', gT=null, flood=null, floodT=0;
   function creeksOn(){ var s=document.getElementById('s_water'); return !s||s.value!=='0' }
   function iso(ms){ return new Date(ms).toISOString().replace(/\.\d+Z$/,'Z') }
-  function floods(){ if(flood&&Date.now()-floodT<900000) return Promise.resolve(flood); return fetch(RELAY+'?flood=bc').then(function(r){ return r.ok?r.json():null }).then(function(j){ flood=j&&j.items||[]; floodT=Date.now(); window.__floods=flood; return flood }).catch(function(){ return flood||[] }) }
+  /* bulletins that only say a warning ENDED are dropped; mixed ones ("UPDATE … ; ENDED …") are rated only on the parts still active */
+  function live(items){ return (items||[]).map(function(it){ var t=String(it.title||''), parts=t.split(/;\s*/).filter(function(p){ return !/^\s*ENDED\b/i.test(p) }); if(!parts.length) return null;
+      var act=parts.join('; '), lv=/flood warning/i.test(act)?3:/flood watch/i.test(act)?2:1, o={}; for(var k in it) o[k]=it[k]; o.level=Math.min(it.level||lv,lv); return o }).filter(Boolean) }
+  function floods(){ if(flood&&Date.now()-floodT<900000) return Promise.resolve(flood); return fetch(RELAY+'?flood=bc').then(function(r){ return r.ok?r.json():null }).then(function(j){ flood=live(j&&j.items||[]); floodT=Date.now(); window.__floods=flood; return flood }).catch(function(){ return flood||[] }) }
   window.__floodsGet=floods;
   // which flood bulletins are for your area: their place names matched against BC place names within ~55 km of you
-  var GEN={lake:1,lakes:1,river:1,rivers:1,creek:1,creeks:1,mountain:1,mount:1,park:1,provincial:1,regional:1,district:1,valley:1,north:1,south:1,east:1,west:1,upper:1,lower:1,little:1,island:1,islands:1,coast:1,central:1,inlet:1,sound:1,flood:1,warning:1,watch:1,advisory:1,streamflow:1,high:1,area:1,road:1,forest:1,service:1,canyon:1,plateau:1,range:1,ranges:1,basin:1,the:1,and:1,including:1,tributaries:1,region:1,regions:1,peak:1,ridge:1,brook:1,pond:1,point:1,bay:1,harbour:1};
+  var GEN={lake:1,lakes:1,river:1,rivers:1,creek:1,creeks:1,mountain:1,mount:1,park:1,provincial:1,regional:1,district:1,valley:1,north:1,south:1,east:1,west:1,upper:1,lower:1,little:1,island:1,islands:1,coast:1,central:1,inlet:1,sound:1,flood:1,warning:1,watch:1,advisory:1,streamflow:1,high:1,area:1,road:1,forest:1,service:1,canyon:1,plateau:1,range:1,ranges:1,basin:1,the:1,and:1,including:1,tributaries:1,region:1,regions:1,peak:1,ridge:1,brook:1,pond:1,point:1,bay:1,harbour:1,shore:1,shores:1,sea:1,sky:1,howe:1,coast:1,beach:1,city:1,town:1,highway:1,lakeshore:1};
   var nearW={}; function nearWords(lat,lon){ var k=Math.round(lat*4)+':'+Math.round(lon*4); if(nearW[k]) return nearW[k];
     var f="BBOX(GEOMETRY,"+[lon-0.75,lat-0.5,lon+0.75,lat+0.5].map(function(v){ return v.toFixed(2) }).join(',')+",'EPSG:4326')";
     nearW[k]=fetch(GNSQ.replace('count=3000','count=5000')+encodeURIComponent(f)).then(function(r){ if(!r.ok) throw 0; return r.json() }).then(function(j){ var w={};
       (j.features||[]).forEach(function(x){ String((x.properties||{}).GEOGRAPHICAL_NAME||'').split(/[^A-Za-z'-]+/).forEach(function(t){ t=t.toLowerCase(); if(t.length>=4&&!GEN[t]) w[t]=1 }) }); return w }).catch(function(){ delete nearW[k]; return {} }); return nearW[k] }
   window.__floodsLocal=function(lat,lon){ return Promise.all([floods(),nearWords(lat,lon)]).then(function(R){ var W=R[1]; return (R[0]||[]).map(function(x){ var t=String(x.title||'').replace(/^(flood warning|flood watch|high streamflow advisory)/i,''), hit=null;
-      t.split(/[^A-Za-z'-]+/).some(function(w){ var lw=w.toLowerCase(); if(lw.length>=4&&!GEN[lw]&&W[lw]){ hit=w; return true } return false });
+      t.split(/[^A-Za-z'-]+/).some(function(w){ var lw=w.toLowerCase(); if(lw.length>=5&&!GEN[lw]&&W[lw]){ hit=w; return true } return false });
       var o={}; for(var k in x) o[k]=x[k]; o.local=!!hit; o.match=hit; return o }) }) };
   function gauges(){ clearTimeout(gT); gT=null; var on=creeksOn()&&ls('aw-gauges')!=='0'&&map.getZoom()>=9; if(!on){ if(map.hasLayer(gLay)) map.removeLayer(gLay); gKey=''; return } if(!map.hasLayer(gLay)) gLay.addTo(map);
     var b=map.getBounds().pad(0.1), k=[b.getWest(),b.getSouth(),b.getEast(),b.getNorth()].map(function(v){ return (Math.round(v*10)/10).toFixed(1) }).join(','); if(k===gKey) return; gKey=k;
