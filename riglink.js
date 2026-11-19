@@ -148,7 +148,7 @@
   var COVER='<svg viewBox="0 0 360 130" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="pfsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4b63"/><stop offset="1" stop-color="#171d26"/></linearGradient></defs><rect width="360" height="130" fill="url(#pfsky)"/><path d="M0 92 60 54 110 82 170 38 240 80 300 52 360 74V130H0Z" fill="#283241"/><path d="M0 112 80 90 150 106 230 86 360 104V130H0Z" fill="#1d2530"/></svg>';
   var pj=null, ptab='rig';
   function avHtml(j,cls){ return j.fd&&!(j.pf&&j.pf.av)?founder(cls==='big'?56:40):(j.pf&&j.pf.av?'<img class="pfav '+cls+'" alt="" src="'+RS+'/rlm/'+esc(j.pf.av)+'">':'<span class="rlav '+cls+'" style="background:'+col(j.n+j.t)+'">'+ini(j.n)+'</span>') }
-  function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){ pj=j; ptab='rig'; if(j.me){ checkNew(j.bd); myPb=pbList(j.pb); myPf=j.pf||{} } paintProf() }).catch(function(e){ sheet('<div class="rlsm">'+esc(e.message)+'</div>'+closeBt()) }) }
+  function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){ pj=j; ptab='rig'; if(j.me){ checkNew(j.bd); myPb=pbList(j.pb); myPf=j.pf||{}; myRt() } paintProf() }).catch(function(e){ sheet('<div class="rlsm">'+esc(e.message)+'</div>'+closeBt()) }) }
   function paintProf(){ var j=pj, f=j.pf||{}, earned=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) }), pk=pbList(j.pb), sk=(f.sk||[]).filter(function(k){ return SKN[k] });
     var h='<div class="pfcv">'+(f.cov?'<img alt="" src="'+RS+'/rlm/'+esc(f.cov)+'">':COVER)+'<button type="button" class="pfx" data-a="sx" aria-label="Close">✕</button><div class="pfava">'+avHtml(j,'big')+'</div>'+(f.cv?'<span class="pfcvx">🤝 Open to convoy</span>':'')+'</div>';
     h+='<div class="pfnm"><h3>'+esc(j.n)+' <small>#'+esc(j.t)+'</small></h3>'+(j.fd?'<div class="rlfdt">FOUNDER OF AWAREBC</div>':'')+'<div class="rlsm">'+[f.home?'📍 '+esc(f.home):'',f.radio?'📻 '+esc(f.radio):''].filter(Boolean).join(' · ')+'</div></div>';
@@ -320,7 +320,7 @@
       [].forEach.call(sh2.querySelectorAll('input[data-s]'),function(i){ if(i.checked) o.sk.push(i.getAttribute('data-s')) }); var cvi=sh2.querySelector('input[data-cv]'); o.cv=!!(cvi&&cvi.checked);
       var rtb=sh2.querySelector('.rtpk .on'); if(rtb) o.rt=rtb.getAttribute('data-v');
       Object.keys(pfNew).forEach(function(k){ o[k]=pfNew[k] }); b.disabled=true; b.textContent='Saving…';
-      api(o).then(function(j){ myPf=j.pf||{}; toast('Profile saved'); profile('') }).catch(function(e){ b.disabled=false; b.textContent='Save'; toast(e.message) }); return }
+      api(o).then(function(j){ myPf=j.pf||{}; myRt(); toast('Profile saved'); profile('') }).catch(function(e){ b.disabled=false; b.textContent='Save'; toast(e.message) }); return }
     if(a==='pbt'){ var v=b.getAttribute('data-v'), ix=pbSel.indexOf(v); if(ix>=0) pbSel.splice(ix,1); else if(pbSel.length<10) pbSel.push(v); else { toast('Up to 10 badges. Tap one to remove it first.'); return } pbPaint(); return }
     if(a==='pbsave'){ if(navigator.onLine===false){ toast('No signal. Try again when you have service.'); return } b.disabled=true; api({op:'pb',pb:pbSel}).then(function(j){ myPb=j.pb||[]; toast('Badges saved'); profile('') }).catch(function(e){ b.disabled=false; toast(e.message) }); return }
     if(a==='friends'){ if(window.__frApi) window.__frApi.send('',''); return }
@@ -464,4 +464,7 @@
   '.rlparts div{padding:4px 0;border-bottom:1px solid #222932;font-size:14px}.rlcl{max-height:42vh;overflow-y:auto}.rlcl .rlcm{margin:6px 0}.rlqt{border:0;background:#1b2027;color:#d5dbe3;border-radius:10px;padding:9px 10px;font:700 12.5px var(--font,system-ui);width:100%;text-align:left}.rlqt.on{background:#2a2410;color:#fde68a}'+
   '.rlrec{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:1001;background:rgba(220,38,38,.95);color:#fff;border-radius:18px;padding:18px 22px;text-align:center;display:flex;flex-direction:column;gap:4px;box-shadow:0 6px 24px #000}.rlrec[hidden]{display:none}.rlrec span{font:800 30px var(--font,system-ui)}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+  /* your rig drawing for the My spot icon: kept on the phone, fetched once if this phone doesn't have it yet */
+  function myRt(){ ls('aw-myrt',myPf&&myPf.rt||''); if(window.__meRedraw) window.__meRedraw() }
+  setTimeout(function(){ if(ls('aw-myrt')!==null||navigator.onLine===false) return; api({op:'prof',tg:''}).then(function(j){ if(j&&j.me){ myPf=j.pf||{}; myRt() } }).catch(function(){}) },8000);
 })();
