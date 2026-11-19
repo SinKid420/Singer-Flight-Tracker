@@ -104,6 +104,10 @@
   function satRow(){ var M=window.__mbx, pn=document.querySelector('.lyrp[aria-label="On road layers"]'); if(!M||!M.has()||!pn||pn.querySelector('#aw_satsrc')) return; var mp=pn.querySelector('.awmap'); if(!mp) return;
     var l=document.createElement('label'); l.className='fps fpm'; l.innerHTML='<span class="awml">Satellite photos (test)</span><select id="aw_satsrc"><option value="esri">Esri</option><option value="mapbox">Mapbox</option></select>';
     mp.appendChild(l); var sel=l.querySelector('select'); sel.value=M.on()?'mapbox':'esri'; try{ if(localStorage.getItem('aw-mbxoff')===new Date().toISOString().slice(0,7)){ var o=sel.querySelector('[value=mapbox]'); o.textContent='Mapbox (paused this month)'; o.disabled=true } }catch(e){} sel.onchange=function(){ M.set(sel.value==='mapbox') } }
+  /* Off-road layers ▸ Map: the trail colour index (moved here from Rig Link) */
+  function legRow(){ var pn=document.querySelector('.lyrp[aria-label="Off road layers"]'); if(!pn||pn.querySelector('#aw_legrow')) return; var mp=pn.querySelector('.awmap'); if(!mp) return;
+    var l=document.createElement('div'); l.className='fps fpm'; l.id='aw_legrow'; l.innerHTML='<span class="awml">🎨 Trail colour index</span><button type="button" class="awlegb" style="background:#3a3f47;border:0;border-radius:14px;padding:7px 14px;color:#fff;font:700 13px var(--font,system-ui)">Show</button>';
+    mp.appendChild(l); l.querySelector('button').onclick=function(){ if(window.__showLeg) window.__showLeg() } }
   /* back and close buttons on every page and sheet: one text size bigger (+2 px), once each */
   function bigX(){ [].forEach.call(document.querySelectorAll('button[aria-label^="Close"],button[aria-label="Back"],#mtback,button.close'),function(b){ if(b.__bx) return; b.__bx=1;
       var fs=parseFloat(getComputedStyle(b).fontSize)||13; b.style.fontSize=(fs+2)+'px';
@@ -112,7 +116,7 @@
   function bigArr(){ [].forEach.call(document.querySelectorAll('button,.awmore,.seg button'),function(b){ if(b.querySelector('.awar')) return;
       for(var n=b.firstChild;n;n=n.nextSibling){ if(n.nodeType!==3) continue; var m=/^(.*?)\s*([▾▴▸])\s*$/.exec(n.nodeValue); if(!m) continue;
         n.nodeValue=m[1]; var sp=document.createElement('span'); sp.className='awar'; sp.textContent=m[2]; b.insertBefore(sp,n.nextSibling); break } }) }
-  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document); bigX(); bigArr() }
+  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); legRow(); scan(document); bigX(); bigArr() }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
     if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }

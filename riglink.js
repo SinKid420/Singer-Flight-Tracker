@@ -221,7 +221,7 @@
     X=document.createElement('div'); X.id='rlx'; X.hidden=true; X.setAttribute('role','dialog'); X.setAttribute('aria-label','Rig Link');
     X.innerHTML='<div class="rlhd"><div class="rlt"><b id="rlreg">Off-road layer</b><small id="rlsub"></small></div><span class="rlrig" id="rlrig">● 0 rigs</span><button type="button" class="rlx" data-a="badges" aria-label="My badges">🛡️</button><button type="button" class="rlx rlfr" data-a="friends" aria-label="Friends and chat">'+(window.__frIcon||'👥')+'<em id="rlun" hidden></em></button><button type="button" class="rlx" data-a="close" aria-label="Close Rig Link">✕</button></div>'+
       '<div class="rltog" role="tablist"><button type="button" data-a="pub" role="tab">🌍 Public Layer</button><button type="button" data-a="key" role="tab">🔒 Private Key Lobby</button></div>'+
-      '<div class="rlqk" id="rlqk"><button type="button" data-q="bb"><i>⏱️</i>Back by</button><button type="button" data-q="fr"><i>'+(window.__frIcon||'👥')+'</i>Friends</button><button type="button" data-q="tl"><i>🧰</i>Tools</button><button type="button" data-q="lg"><i>🎨</i>Trail colour index</button></div>'+
+      '<div class="rlqk" id="rlqk"><button type="button" data-q="bb"><i>⏱️</i>Back by</button><button type="button" data-q="fr"><i>'+(window.__frIcon||'👥')+'</i>Friends</button><button type="button" data-q="tl"><i>🧰</i>Tools</button><button type="button" data-q="sr"><i>🏁</i>Showroom</button></div>'+
       '<div id="rllobby"></div>'+
       '<div class="rlmap" id="rlmap"><div class="rlmb"><button type="button" data-a="me" aria-label="Center on me">◎</button><button type="button" data-a="big" aria-label="Bigger map">⤢</button></div></div>'+
       '<div class="rlchips" id="rlchips"></div>'+
@@ -236,12 +236,13 @@
     X.addEventListener('click',click); X.addEventListener('submit',submit);
     X.addEventListener('change',function(e){ var t=e.target; if(t.getAttribute&&t.getAttribute('data-a')==='nrsee'&&window.__rlNear){ var v=t.value!=='0'; if(v!==window.__rlNear.see()){ window.__rlNear.setSee(v); toast(v?'Other riders show on your map':'Other riders are hidden from your map. They still see you.') } } });
     // quick buttons: these live here so the Off-road map stays clear
-    X.querySelector('#rlqk').addEventListener('click',function(e){ var q=e.target.closest&&e.target.closest('[data-q]'); if(!q) return; e.stopPropagation(); q=q.getAttribute('data-q'); close();
+    X.querySelector('#rlqk').addEventListener('click',function(e){ var q=e.target.closest&&e.target.closest('[data-q]'); if(!q) return; e.stopPropagation(); q=q.getAttribute('data-q'); if(q==='sr'){ if(window.__showroom) window.__showroom.open(); return } close();
       setTimeout(function(){ var bc=document.body.classList;
         if(q==='bb'){ var b=document.getElementById('bbbtn'); if(b) b.click() }
         else if(q==='fr'){ var f=document.getElementById('frbtn'); if(f) f.click() }
         else if(q==='tl'){ var t=document.getElementById('toolbtn'); if(t) t.click() }
-        else if(q==='lg'){ var lg=document.getElementById('fsrleg'); if(lg){ lg.classList.remove('min'); bc.add('awleg') } } },80) });
+        else if(q==='lg') window.__showLeg() },80) });
+    window.__showLeg=function(){ var lg=document.getElementById('fsrleg'); if(lg){ document.querySelectorAll('.lyrp:not([hidden]) .fpx').forEach(function(x){ x.click() }); lg.classList.remove('min'); document.body.classList.add('awleg') } };
     (function(){ var lg=document.getElementById('fsrleg'), off=function(){ if(!document.body.classList.contains('awleg')) return; document.body.classList.remove('awleg'); if(lg) lg.classList.add('min') };
       if(lg) lg.addEventListener('click',function(e){ if(document.body.classList.contains('awleg')){ e.stopPropagation(); off() } },true);
       if(window.__AW&&__AW.map) __AW.map.on('click dragstart',off); document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.seg button,#rlbtn,#menubtn,#gear')) off() },true) })();
@@ -467,4 +468,5 @@
   /* your rig drawing for the My spot icon: kept on the phone, fetched once if this phone doesn't have it yet */
   function myRt(){ ls('aw-myrt',myPf&&myPf.rt||''); if(window.__meRedraw) window.__meRedraw() }
   setTimeout(function(){ if(ls('aw-myrt')!==null||navigator.onLine===false) return; api({op:'prof',tg:''}).then(function(j){ if(j&&j.me){ myPf=j.pf||{}; myRt() } }).catch(function(){}) },8000);
+  window.__rl={api:api,shrink:shrink,toast:toast,ago:ago,ini:ini,col:col,me:me,esc:esc,RS:RS,ls:ls};
 })();
