@@ -3,6 +3,12 @@
 (function(){
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v) }catch(e){ return null } }
   var st=document.createElement('style'); st.textContent=
+    /* every drop-down arrow one size bigger, same look and spacing everywhere */
+    'select:is(#aw_a#aw_b#aw_c,select){-webkit-appearance:none!important;appearance:none!important;background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 8%22%3E%3Cpath d=%22M1.5 1.5 6 6l4.5-4.5%22 fill=%22none%22 stroke=%22%23c7ccd3%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 11px center!important;background-size:13px 9px!important;padding-right:32px!important}'+
+    'select::-ms-expand{display:none}'+
+    '.folder summary::after{content:""!important;width:13px;height:9px;flex:none;margin-right:4px;background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 12 8%22%3E%3Cpath d=%22M1.5 1.5 6 6l4.5-4.5%22 fill=%22none%22 stroke=%22%23c7ccd3%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") center/13px 9px no-repeat;transform:none!important;transition:transform .2s}.folder[open]>summary::after{transform:rotate(180deg)!important}'+
+    '.awar{display:inline-block;font-size:1.17em;line-height:1;margin-left:5px;vertical-align:-.04em}'+
+
     // the switch
     '.awsw{position:relative;flex:none;width:40px;height:24px;border-radius:12px;border:0;padding:0;background:#4a505a;transition:background .18s;cursor:pointer;margin-left:auto}'+
     '.awsw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .18s}'+
@@ -102,7 +108,11 @@
   function bigX(){ [].forEach.call(document.querySelectorAll('button[aria-label^="Close"],button[aria-label="Back"],#mtback,button.close'),function(b){ if(b.__bx) return; b.__bx=1;
       var fs=parseFloat(getComputedStyle(b).fontSize)||13; b.style.fontSize=(fs+2)+'px';
       [].forEach.call(b.querySelectorAll('svg'),function(g){ var w=parseFloat(g.getAttribute('width')), h=parseFloat(g.getAttribute('height')); if(w) g.setAttribute('width',w+2); if(h) g.setAttribute('height',h+2) }) }) }
-  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document); bigX() }
+  /* ▾ ▴ arrows inside button text get their own slightly bigger span (re-done when the text changes) */
+  function bigArr(){ [].forEach.call(document.querySelectorAll('button,.awmore,.seg button'),function(b){ if(b.querySelector('.awar')) return;
+      for(var n=b.firstChild;n;n=n.nextSibling){ if(n.nodeType!==3) continue; var m=/^(.*?)\s*([▾▴▸])\s*$/.exec(n.nodeValue); if(!m) continue;
+        n.nodeValue=m[1]; var sp=document.createElement('span'); sp.className='awar'; sp.textContent=m[2]; b.insertBefore(sp,n.nextSibling); break } }) }
+  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); scan(document); bigX(); bigArr() }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
     if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
