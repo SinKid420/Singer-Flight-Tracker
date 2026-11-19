@@ -12,7 +12,7 @@
   var NEW=!ls('aw-ob')&&ls('sky-setup')!=='1'&&!ls('sky-lastpos');
   if(!NEW&&!ls('aw-ob')) ls('aw-ob','1'); // already using AwareBC: never shown
   var waiters=[], active=NEW, allowed=false;
-  var MIC=!!((window.SpeechRecognition||window.webkitSpeechRecognition)&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()));
+  var MIC=false&&!!((window.SpeechRecognition||window.webkitSpeechRecognition)&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()));
   window.__awOb={ isNew:NEW, active:function(){ return active }, onDone:function(f){ if(active) waiters.push(f); else f(allowed) } };
   var LATER=!NEW&&ls('aw-obtip')==='1'; // the save-maps tip waits for a calm moment (or the next open)
   if(!NEW&&!LATER) return;

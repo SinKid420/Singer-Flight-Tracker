@@ -116,7 +116,17 @@
   function bigArr(){ [].forEach.call(document.querySelectorAll('button,.awmore,.seg button'),function(b){ if(b.querySelector('.awar')) return;
       for(var n=b.firstChild;n;n=n.nextSibling){ if(n.nodeType!==3) continue; var m=/^(.*?)\s*([▾▴▸])\s*$/.exec(n.nodeValue); if(!m) continue;
         n.nodeValue=m[1]; var sp=document.createElement('span'); sp.className='awar'; sp.textContent=m[2]; b.insertBefore(sp,n.nextSibling); break } }) }
-  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); legRow(); scan(document); bigX(); bigArr() }
+  /* behind-the-scenes settings (flight-feed key, test buttons, crash reports, phone speed, Mapbox test) are only for Josh:
+     tap the "AwareBC · Created by Josh Singer" line at the bottom of Settings 7 times to show or hide them */
+  var DEV=false; try{ DEV=localStorage.getItem('aw-dev')==='1' }catch(e){} document.body.classList.toggle('awdev',DEV);
+  var dst=document.createElement('style'); dst.textContent='body:not(.awdev) .awdevonly{display:none!important}'; document.head.appendChild(dst);
+  function devMark(){ function m(e){ if(e) e.classList.add('awdevonly') }
+    m(document.getElementById('crashfolder')); var sp=document.getElementById('s_perf'); if(sp){ m(sp.closest('label')); m(document.getElementById('s_perfh')) }
+    var ss=document.getElementById('aw_satsrc'); if(ss) m(ss.closest('label'));
+    [].forEach.call(document.querySelectorAll('#fsheet .subh'),function(h){ if(/Flight feeds/.test(h.textContent)&&!h.classList.contains('awdevonly')){ for(var n=h;n;n=n.nextElementSibling) m(n) } });
+    var ab=document.querySelector('#fsheet .about'); if(ab&&!ab.__dev){ ab.__dev=1; var c=0,t=0; ab.addEventListener('click',function(){ var now=Date.now(); c=now-t<900?c+1:1; t=now; if(c>=7){ c=0; DEV=!DEV; try{ localStorage.setItem('aw-dev',DEV?'1':'0') }catch(e){} document.body.classList.toggle('awdev',DEV);
+        var d=document.createElement('div'); d.className='frtoast'; d.style.zIndex=6400; d.textContent=DEV?'Developer settings shown':'Developer settings hidden'; document.body.appendChild(d); setTimeout(function(){ d.remove() },2200) } }) } }
+  function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); legRow(); scan(document); bigX(); bigArr(); devMark() }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
     if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
