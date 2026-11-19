@@ -4,7 +4,7 @@
 (function(){
   if(!window.L||!L.divIcon) return;
   var CAUTION=/[🔥⚠⛔🚧🌊🌲🪨❄🦌🐻🐺🦬🫎🐗🐾⚡]/u, SOS=/🆘/u;
-  var OSMC={gate:'#ff9f0a',fuel:'#ff9f0a',help:'#ff3b30',water:'#32ade6',peaks:'#a2845e',tower:'#8e8e93'};
+  var OSMC={gate:'#ff9f0a',fuel:'#e3001b',help:'#ff3b30',water:'#32ade6',peaks:'#a2845e',tower:'#8e8e93'};
   function first(el){ for(var n=el.firstChild;n;n=n.nextSibling) if(n.nodeType===1) return n; return null }
   function textOf(el){ var t=''; for(var n=el.firstChild;n;n=n.nextSibling) if(n.nodeType===3) t+=n.nodeValue; return t.trim() }
   // the icon part and the label part of a pin, so only the icon gets the shape and the label sits underneath
