@@ -16,6 +16,21 @@
     if(c==='A1') return 'light';
     return mil?'milmid':'mid';
   }
+  // plane type colours (used on the map and on the plane card)
+  var PTC={pax:'#64d2ff',cargo:'#ffb340',small:'#32d74b',heli:'#bf8bff',med:'#ff453a',mil:'#40e0c8',oth:'#c7ccd3'};
+  var PTN={pax:'Passenger jet',cargo:'Cargo',small:'Small plane',heli:'Helicopter',med:'Medical and rescue',mil:'Military and government',oth:'Glider, balloon or drone'};
+  var CARGO=/^(FDX|UPS|GTI|ABX|ATN|CKS|CJT|DHK|DHL|BOX|CLX|NCA|PAC|SOO|AJT|KFA|MRA|CAO|LCO|ABW|TAY|BCS|MPH|GEC|CKK|ICV|AHK|QTR?C|FCX)\d/;
+  var MILC=/^(CFC|CANFORCE|RCH|CNV|PAT|NAVY|CTM|ASCOT|RRR|SPAR|BOLT|KING|DUKE|TOPCT|RFR|RCMP)\d*/;
+  var MEDC=/^(MEDIC|MEDEVAC|EVAC|LIFE|AMB|ORNGE|STARS|BCEHS|HELIMED|SAR|RESCUE|CGG|GUARD|CHC|TRB)\d*/;
+  function ptype(p){ var t=String(p.t||'').toUpperCase(), c=String(p.category||'').toUpperCase(), f=String(p.flight||'').trim().toUpperCase(), sq=String(p.squawk||''), k;
+    if((p.emergency&&p.emergency!=='none')||/^7(500|600|700)$/.test(sq)||FIRE[t]||MEDC.test(f)) k='med';
+    else if((p.dbFlags&1)||MILC.test(f)||c==='A6') k='mil';
+    else if(c==='A7'||HELI.test(t)) k='heli';
+    else if(/^B[1-7]$/.test(c)) k='oth';
+    else if(CARGO.test(f)) k='cargo';
+    else if(c==='A1'||c==='A2') k='small';
+    else k='pax';
+    return {k:k,c:PTC[k],n:PTN[k]} }
   var BODY={big:'#f4f6f8',mid:'#f4f6f8',light:'#f4f6f8',glider:'#f4f6f8',fire:'#ffb300',milbig:'#9aa3ad',milmid:'#9aa3ad',fighter:'#8e98a3',heli:'#f4f6f8',milheli:'#8e98a3',drone:'#3c4450'};
   var SH={big:'#bcc5d0',mid:'#bcc5d0',light:'#bcc5d0',glider:'#bcc5d0',fire:'#d97800',milbig:'#69727d',milmid:'#69727d',fighter:'#5f6973',heli:'#bcc5d0',milheli:'#5f6973',drone:'#1f252d'};
   var P={
@@ -38,8 +53,8 @@
     if(k==='glider') return '<path d="M11.2 4V18" stroke="#fff" stroke-opacity=".6" stroke-width="1" fill="none"/>';
     return '';
   }
-  function heli(k,c){
-    var b=BODY[k], tail=k==='milheli'?'#5f6973':'#d32f2f', st=' stroke="'+c+'" stroke-width="1.8" paint-order="stroke"';
+  function heli(k,c,fc){
+    var b=fc||BODY[k], tail=k==='milheli'?'#5f6973':'#d32f2f', st=' stroke="'+c+'" stroke-width="1.8" paint-order="stroke"';
     return '<rect x="11.1" y="14" width="1.8" height="8" rx=".9" fill="'+tail+'"'+st+'/><rect x="9.2" y="20.4" width="5.6" height="1.5" rx=".6" fill="'+tail+'"/>'
       +'<ellipse cx="12" cy="10.6" rx="3.3" ry="5.4" fill="'+b+'"'+st+'/><ellipse cx="12" cy="7.6" rx="1.9" ry="2.2" fill="#243447"/><path d="M13.6 8.5C14.2 11 14.2 13 13.4 15" stroke="#000" stroke-opacity=".18" stroke-width="1.2" fill="none"/>'
       +'<path d="M3.5 3.5L20.5 17.5M20.5 3.5L3.5 17.5" stroke="#4a5360" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/><circle cx="12" cy="10.6" r="1.4" fill="#4a5360"/>';
@@ -51,10 +66,10 @@
   }
   // inner markup for a 24x24 aircraft icon, nose up. c = altitude colour (outline), sel = selected size
   function plane(p,c,sel){
-    var k=kind(p), g;
-    if(k==='heli'||k==='milheli') g=heli(k,c);
-    else if(k==='drone') g=drone(c);
-    else g='<path d="'+P[k]+'" fill="'+BODY[k]+'" stroke="'+c+'" stroke-width="1.8" stroke-linejoin="round" paint-order="stroke"/>'+extras(k);
+    var k=kind(p), g, ty=window.__awPT!==false, fc=ty?ptype(p).c:null, oc=ty?'#0b0e12':c; /* type colours: the plane is filled with its type colour, with a dark outline */
+    if(k==='heli'||k==='milheli') g=heli(k,oc,fc);
+    else if(k==='drone') g=drone(oc);
+    else g='<path d="'+P[k]+'" fill="'+(fc||BODY[k])+'" stroke="'+oc+'" stroke-width="'+(ty?1.5:1.8)+'" stroke-linejoin="round" paint-order="stroke"/>'+extras(k);
     return '<g'+(sel?' transform="translate(3.6 3.6) scale(.7)"':'')+'>'+g+'</g>';
   }
 
@@ -68,5 +83,8 @@
     tow:function(){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,1)">'+w(5,26)+'<rect y="14" width="20" height="24" rx="3" fill="#4b5563"'+W+'/><path d="M3 18H17M3 23H17M3 28H17M3 33H17" stroke="rgba(255,255,255,.3)" stroke-width="1"/><rect width="20" height="15" rx="5" fill="#f5c400"'+W+'/><path d="M3 4Q10 1.5 17 4L16 8Q10 6.5 4 8Z" fill="'+G+'"/><rect x="7" y="9.5" width="6" height="2.4" rx="1" fill="#ff7a00"/><path d="M10 36V40" stroke="#ff7a00" stroke-width="2"/></g></svg>' },
     sled:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,3)"><rect x="1" y="1" width="4" height="12" rx="2" fill="#222"/><rect x="15" y="1" width="4" height="12" rx="2" fill="#222"/><rect x="6" y="22" width="8" height="15" rx="2" fill="#2b2b2b"'+W+'/><path d="M6 25H14M6 28.5H14M6 32H14" stroke="#777" stroke-width="1"/><path d="M5.5 6H14.5L13.5 15 12 19V28H8V19L6.5 15Z" fill="'+c+'"'+W+' stroke-linejoin="round"/><rect x="1.5" y="14" width="17" height="2.4" rx="1.2" fill="#222"/><path d="M7 8.5Q10 6.5 13 8.5L12.5 11Q10 10 7.5 11Z" fill="'+G+'"/><rect x="7.6" y="20" width="4.8" height="7" rx="2" fill="#222"/></g></svg>' }
   };
-  window.AWI={plane:plane,kind:kind,veh:veh,vehKinds:[['plow','Snowplow'],['ambo','Ambulance'],['rcmp','Police'],['tow','Tow truck'],['sled','Snowmobile']]};
+    function ptKey(){ var el=document.getElementById('altlegend'); if(!el||el.querySelector('.ptk')) return; el.setAttribute('aria-label','Plane colours');
+    el.innerHTML='<span id="lgtitle" hidden></span><span id="lgmax" hidden></span><div class="ptk">'+['pax','cargo','small','heli','med','mil'].map(function(k){ return '<span><i style="background:'+PTC[k]+';color:'+PTC[k]+'"></i>'+({pax:'Passenger',cargo:'Cargo',small:'Small plane',heli:'Helicopter',med:'Medical, rescue',mil:'Military, gov'})[k]+'</span>' }).join('')+'</div>' }
+  if(document.readyState!=='loading') ptKey(); else document.addEventListener('DOMContentLoaded',ptKey);
+  window.AWI={plane:plane,kind:kind,ptype:ptype,PTC:PTC,PTN:PTN,veh:veh,vehKinds:[['plow','Snowplow'],['ambo','Ambulance'],['rcmp','Police'],['tow','Tow truck'],['sled','Snowmobile']]};
 })();

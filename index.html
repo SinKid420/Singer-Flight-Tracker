@@ -149,6 +149,25 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* plane card: glow theme, colour follows the plane type */
+body.awshell .dock:has(.card.pk){bottom:calc(64px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0;max-height:calc(100dvh - 190px);overflow-y:auto}.card.pk .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.card.pk .grid div{padding:6px 7px!important}.card.pk .grid span{font-size:14px!important}.card.pk .grid small{font-size:9.5px}
+.dock:has(.card.pk){background:radial-gradient(80% 50% at 15% 0%,color-mix(in srgb,var(--pkc,#64d2ff) 18%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
+.card.pk{--fg:#eef1f5;--dim:#9aa3ad;--chip:rgba(255,255,255,.06)}
+.card.pk .cs{display:flex;align-items:center;gap:10px;font:inherit;white-space:normal}
+.card.pk .pkb{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,var(--pc),color-mix(in srgb,var(--pc) 65%,#000));box-shadow:0 4px 14px color-mix(in srgb,var(--pc) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.45)}
+.card.pk .pkb svg{width:23px;height:23px;fill:#0a0d10;fill-opacity:.85;stroke:#0a0d10;stroke-width:1.2;stroke-linejoin:round}
+.card.pk .pkn{min-width:0;display:flex;flex-direction:column}.card.pk .pkn b{font:800 19px/1.15 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card.pk .pkn small{font:500 11.5px var(--font);color:#9aa3ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.pk .cbtns .close{background:rgba(255,255,255,.08)!important;color:#eef1f5!important}
+.card.pk .ph{grid-column:1/-1;grid-row:auto;width:auto;height:92px;border-radius:16px;margin-top:6px;background:#1a2230}
+.card.pk .ph i{font-size:9.5px;left:auto;right:8px;bottom:6px;padding:2px 7px;border-radius:7px;background:rgba(0,0,0,.5);width:auto;max-width:70%}
+.card.pk .pklive{position:absolute;left:8px;top:8px;padding:3px 8px;border-radius:8px;background:var(--pc);color:#06131a;font:800 10.5px var(--font);font-style:normal}
+.card.pk .pkr{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:8px}.card.pk .pkr b{display:block;font:800 22px/1 var(--font)}.card.pk .pkr small{display:block;font:500 10.5px var(--font);color:#9aa3ad;margin-top:3px;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card.pk .pkd{text-align:right}.card.pk .pkd small{margin-left:auto}
+.card.pk .pkp{flex:1;position:relative;height:30px}.card.pk .pkp::before{content:"";position:absolute;left:0;right:0;top:9px;height:3px;border-radius:2px;background:rgba(255,255,255,.1)}
+.card.pk .pkp i{position:absolute;left:0;top:9px;height:3px;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--pc) 60%,#000),var(--pc));box-shadow:0 0 8px var(--pc)}
+.card.pk .pkp span{position:absolute;top:0;transform:translateX(-50%) rotate(90deg);width:20px;height:20px}.card.pk .pkp span svg{width:20px;height:20px;fill:var(--pc)}.card.pk .pkp small{position:absolute;left:0;right:0;top:17px;text-align:center;max-width:none;font-weight:600}
+.card.pk .grid div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:7px 9px}.card.pk .grid span{font:800 15px var(--font)}
+.card.pk .dtabs{background:rgba(255,255,255,.06);border-radius:12px}.card.pk .dtabs button.on{background:color-mix(in srgb,var(--pc) 28%,transparent);color:#fff}
+.card.pk .meta{color:#9aa3ad}.card.pk .meta[style*="--fg"]{color:#dfe5eb!important}
 /* AwareBC premium theme (glow). Emergency hub first; add class awth to other sheets to reuse */
 .awth .sheet{--c:#32d74b;height:100%;border-radius:0!important;background:radial-gradient(70% 38% at 22% 14%,color-mix(in srgb,var(--awglow,#32d74b) 26%,transparent),transparent 72%),radial-gradient(60% 36% at 92% 0%,rgba(100,210,255,.16),transparent 70%),#07090c!important;color:#eef1f5;display:flex;flex-direction:column;padding-top:calc(12px + env(safe-area-inset-top,0px))}
 .awth .sheet-head{margin:0;font:800 21px var(--font);letter-spacing:-.01em}.awth .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5;width:38px;height:38px}
@@ -334,7 +353,7 @@ body.fsrp #rotbtn{visibility:hidden}#rotbtn{top:auto;right:auto;left:max(10px,en
 .sidebtn.mi::before{content:attr(data-l);position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--bg);color:var(--fg);font:500 12px/1 var(--font);padding:7px 10px;border-radius:12px;white-space:nowrap;box-shadow:var(--shadow);pointer-events:none}
 #keybtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:58px;font-size:10px;letter-spacing:.3px}body.keyon #keybtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent);color:var(--accent)}
 .legends{display:none}body.keyon .legends{display:flex;flex-direction:column;align-items:flex-start;left:max(10px,env(safe-area-inset-left,0px));right:auto;bottom:98px;max-width:calc(100% - 20px);padding:8px;gap:8px;background:var(--bg);border-radius:12px;box-shadow:var(--shadow);pointer-events:auto}
-.legends .kttl{font:600 13px/1 var(--font);color:var(--fg);order:-2}#knone{order:-2}body.keyon .legend{background:none;box-shadow:none;padding:2px 2px 0}#knone{font-size:12px;color:var(--dim);max-width:200px}#knone[hidden]{display:none}
+.legends .kttl{font:600 13px/1 var(--font);color:var(--fg);order:-2}#knone{order:-2}body.keyon .legend{background:none;box-shadow:none;padding:2px 2px 0}#altlegend .ptk{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;padding:2px 0}#altlegend .ptk span{display:flex;align-items:center;gap:5px;font:600 10.5px var(--font);color:var(--fg,#eef1f5);white-space:nowrap}#altlegend .ptk i{width:9px;height:9px;border-radius:3px;flex:none;box-shadow:0 0 6px currentColor}#knone{font-size:12px;color:var(--dim);max-width:200px}#knone[hidden]{display:none}
 .leaflet-bottom.leaflet-right{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:flex-end;width:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-attribution{order:9;flex-basis:100%}
 .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-right:8px!important;margin-bottom:10px!important}
@@ -594,7 +613,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
     <label class="setrow" for="rate">Refresh rate<select id="rate" aria-label="Refresh rate"><option value="2000">2 sec</option><option value="3000">3 sec</option><option value="5000">5 sec</option><option value="10000">10 sec</option><option value="30000">30 sec</option></select></label>
     <label class="setrow" for="units">Units<select id="units" aria-label="Units"><option value="av">ft · kt · nm</option><option value="metric">m · km/h · km</option></select></label>
     <label class="setrow" for="lgwx">Rain key<select id="lgwx" aria-label="Rain key"><option value="1">Show</option><option value="0">Hide</option></select></label>
-    <label class="setrow" for="lgalt">Altitude key<select id="lgalt" aria-label="Altitude key"><option value="1">Show</option><option value="0">Hide</option></select></label>
+    <label class="setrow" for="lgalt">Plane colour key<select id="lgalt" aria-label="Plane colour key"><option value="1">Show</option><option value="0">Hide</option></select></label>
     <label class="setrow" for="ctemp">Temperature<select id="ctemp" aria-label="Temperature widget"><option value="C">°C</option><option value="F">°F</option><option value="off">Hide</option></select></label>
     <label class="setrow" for="s_declutter">Zoomed out<select id="s_declutter"><option value="1">Show only key items</option><option value="0">Show everything</option></select></label>
     <label class="setrow" for="s_nearRef">Nearest to<select id="s_nearRef"><option value="me">Me</option><option value="map">Map centre</option></select></label>
@@ -720,11 +739,11 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js" integrity="sha384-MtIdllebpZyms2pw9K3YJl8BEqrKNQCdSFAySjeglab6z2PkeFdF4Lb9cDsnxQuG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="icons3d.js?v=1"></script>
+<script src="icons3d.js?v=2"></script>
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=146"></script>
+<script src="app.js?v=147"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>
