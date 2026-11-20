@@ -343,8 +343,8 @@ body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bo
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
 #gear{top:120px;bottom:auto;left:auto;right:max(16px,env(safe-area-inset-right,0px))}#menubtn{top:180px}
 #fsrleg{position:absolute;z-index:700;left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:58px;display:grid;grid-template-columns:auto auto;gap:3px 10px;background:var(--bg);color:var(--fg);border-radius:10px;padding:6px 9px;box-shadow:var(--shadow);font:600 11px/1.3 var(--font);pointer-events:none}#fsrleg[hidden],body.keyon #fsrleg{display:none}
-#fsrleg span{white-space:nowrap}#fsrleg i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px}#fsrleg .lw{border-top:3px dashed #3ddc5a}#fsrleg .lb{border-top:3px solid #40a9ff}#fsrleg .lm{border-top:2px solid #ff3b30}#fsrleg .lf{border-top:5px solid #ff1744}
-#fsrleg .lp{border-top:3px dashed #ff9800}#fsrleg .lc{border-top:4px dotted #fff}@media (max-width:480px){.leaflet-popup-content{max-width:calc(100vw - 130px)!important}}#fsrleg .lk{border-top:2px solid #4dd0e1}#fsrleg .lr{width:10px;height:10px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-sizing:border-box;margin:0 8px 0 3px}.ptc{width:26px;height:26px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:grid;place-items:center;box-sizing:border-box}.ptc svg{width:16px;height:16px;fill:#3e2723}.ptc.ptx{background:#9e9e9e}.ptc.ptu{border-style:dashed}#fsrleg .lf,#fsrleg .lm{opacity:.75}
+#fsrleg span{white-space:nowrap}#fsrleg i{display:inline-block;width:16px;height:0;vertical-align:middle;margin-right:5px}#fsrleg .lw{border-top:3px dashed #3ddc5a}#fsrleg .lb{border-top:3px solid #40a9ff}#fsrleg .lm{border-top:2px solid #ff3b30}#fsrleg .lrd{border-top:1.5px solid #ff1744}#fsrleg .lf{border-top:5px solid #ff1744}
+#fsrleg .lp{border-top:3px dashed #ff9800}#fsrleg .lc{border-top:3px dashed #ffd60a}@media (max-width:480px){.leaflet-popup-content{max-width:calc(100vw - 130px)!important}}#fsrleg .lk{border-top:2px solid #4dd0e1}#fsrleg .lr{width:10px;height:10px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-sizing:border-box;margin:0 8px 0 3px}.ptc{width:26px;height:26px;border-radius:50%;background:#ffb300;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);display:grid;place-items:center;box-sizing:border-box}.ptc svg{width:16px;height:16px;fill:#3e2723}.ptc.ptx{background:#9e9e9e}.ptc.ptu{border-style:dashed}#fsrleg .lf,#fsrleg .lm{opacity:.75}
 #fsrleg small{grid-column:1/-1;color:var(--dim);font-weight:500}#fsrleg small[hidden]{display:none}
 #toolbtn{top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px));bottom:178px}body.toolon #toolbtn{box-shadow:var(--shadow),inset 0 0 0 2px var(--accent)}
 .sidebtn.ti{display:none;top:auto;right:auto;left:max(10px,env(safe-area-inset-left,0px))}body.toolon .sidebtn.ti{display:grid}#t_sled{bottom:230px}#t_supply{bottom:278px}#t_planet{bottom:326px}#t_comms{bottom:374px}#t_rescue{bottom:422px}#t_saved{bottom:470px}
@@ -527,7 +527,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
   <div id="nextov" role="button" tabindex="0" aria-label="Next plane passing over you" hidden><span id="nxtxt"></span><button id="nxbell" aria-label="Buzz when a plane is about to pass overhead" aria-pressed="false">🔕</button></div>
   <div id="emerg" role="alert" hidden><span id="emtxt"></span><button id="emx" aria-label="Dismiss alert">✕</button></div>
   <div id="ltal" role="alert" hidden><span id="lttxt"></span><button id="ltx" aria-label="Dismiss lightning alert">✕</button></div>
-  <div id="fsrleg" hidden aria-label="FSR map colours"><span><i class="lw"></i>Walking</span><span><i class="lb"></i>Biking</span><span><i class="lm"></i>Motor</span><span><i class="lf"></i>FSR</span><span><i class="lp"></i>Planned</span><span><i class="lc"></i>Closed</span><span><i class="lr"></i>Camping</span><span id="fsrlk"><i class="lk"></i>Creeks</span><small id="fsrhint">Zoom in to see trails</small></div>
+  <div id="fsrleg" hidden aria-label="FSR map colours"><span><i class="lw"></i>Walking</span><span><i class="lb"></i>Biking</span><span><i class="lm"></i>Motor</span><span><i class="lf"></i>FSR</span><span><i class="lrd"></i>Back road</span><span><i class="lp"></i>Planned</span><span><i class="lc"></i>Closed</span><span><i class="lr"></i>Camping</span><span id="fsrlk"><i class="lk"></i>Creeks</span><small id="fsrhint">Zoom in to see trails</small></div>
   <div id="ltnote" role="status" hidden>⚡ No lightning in view right now</div>
   <div class="dock" id="dock" hidden>
     <div id="dbody"></div>
@@ -724,7 +724,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=144"></script>
+<script src="app.js?v=145"></script>
 <script src="app2.js?v=8"></script>
 <script src="reports.js?v=9"></script>
 <script src="e2e.js?v=1"></script>
@@ -739,7 +739,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="shell.js?v=8" defer></script>
 <script src="menutheme.js?v=1" defer></script>
 <script src="toolsheet.js?v=1" defer></script>
-<script src="look.js?v=1" defer></script>
+<script src="look.js?v=2" defer></script>
 <script src="offsafe.js?v=3" defer></script>
 <script src="offmore.js?v=1" defer></script>
 <script src="aware.js?v=3" defer></script>
@@ -747,6 +747,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="rain.js?v=3" defer></script>
 <script src="ui.js?v=17" defer></script>
 <script src="settheme.js?v=1" defer></script>
+<script src="lyrtheme.js?v=1" defer></script>
 <script src="push.js?v=1" defer></script>
 <script src="offline.js?v=12"></script>
 <script src="nav.js?v=9" defer></script>

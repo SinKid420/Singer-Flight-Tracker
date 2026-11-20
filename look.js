@@ -34,7 +34,7 @@
   'body.awnew.awtload #map{background-image:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.05) 50%,rgba(255,255,255,0) 70%);background-size:200% 100%;animation:awshim 1.6s linear infinite}'+
   '@media (prefers-reduced-motion:reduce){body.awnew.awtload #map{animation:none}}'+
   /* legend colours follow the new road colours */
-  'body.awnew #fsrleg .lm{border-top-color:#c86bff!important;opacity:1!important}body.awnew #fsrleg .lf{border-top-color:#ff2d2d!important}';
+  'body.awnew #fsrleg .lm{border-top-color:#c86bff!important;opacity:1!important}body.awnew #fsrleg .lf,body.awnew #fsrleg .lrd{border-top-color:#ff2d2d!important}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
   // ---- moonlit night by the sun at your spot ----
