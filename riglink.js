@@ -148,7 +148,7 @@
   var COVER='<svg viewBox="0 0 360 130" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="pfsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4b63"/><stop offset="1" stop-color="#171d26"/></linearGradient></defs><rect width="360" height="130" fill="url(#pfsky)"/><path d="M0 92 60 54 110 82 170 38 240 80 300 52 360 74V130H0Z" fill="#283241"/><path d="M0 112 80 90 150 106 230 86 360 104V130H0Z" fill="#1d2530"/></svg>';
   var pj=null, ptab='rig';
   function avHtml(j,cls){ return j.fd&&!(j.pf&&j.pf.av)?founder(cls==='big'?56:40):(j.pf&&j.pf.av?'<img class="pfav '+cls+'" alt="" src="'+RS+'/rlm/'+esc(j.pf.av)+'">':'<span class="rlav '+cls+'" style="background:'+col(j.n+j.t)+'">'+ini(j.n)+'</span>') }
-  function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){ pj=j; ptab='rig'; if(j.me){ checkNew(j.bd); myPb=pbList(j.pb); myPf=j.pf||{}; myRt() } paintProf() }).catch(function(e){ sheet('<div class="rlsm">'+esc(e.message)+'</div>'+closeBt()) }) }
+  function profile(tg){ sheet('<div class="rlsm">Loading rider…</div>'+closeBt()); api({op:'prof',tg:tg||''}).then(function(j){ pj=j; ptab='rig'; cachePf(j); if(j.me){ checkNew(j.bd); myPb=pbList(j.pb); myPf=j.pf||{}; myRt() } paintProf() }).catch(function(e){ sheet('<div class="rlsm">'+(navigator.onLine===false||/fetch|network/i.test(e.message||'')?'📶 Weak signal. Your profile will load when you have service.':esc(e.message))+'</div>'+closeBt()) }) }
   function paintProf(){ var j=pj, f=j.pf||{}, earned=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) }), pk=pbList(j.pb), sk=(f.sk||[]).filter(function(k){ return SKN[k] });
     var h='<div class="pfcv">'+(f.cov?'<img alt="" src="'+RS+'/rlm/'+esc(f.cov)+'">':COVER)+'<button type="button" class="pfx" data-a="sx" aria-label="Close">✕</button><div class="pfava">'+avHtml(j,'big')+'</div>'+(f.cv?'<span class="pfcvx">🤝 Open to convoy</span>':'')+'</div>';
     h+='<div class="pfnm"><h3>'+esc(j.n)+' <small>#'+esc(j.t)+'</small></h3>'+(j.fd?'<div class="rlfdt">FOUNDER OF AWAREBC</div>':'')+'<div class="rlsm">'+[f.home?'📍 '+esc(f.home):'',f.radio?'📻 '+esc(f.radio):''].filter(Boolean).join(' · ')+'</div></div>';
@@ -357,7 +357,7 @@
   // ---------- sheets: compose, alert, note, comments ----------
   function closeBt(){ return '<button type="button" class="rlbt wide" data-a="sx">Close</button>' }
   function sheet(h){ var s=X.querySelector('#rlsh'); s.innerHTML='<div class="rlsin">'+h+'</div>'; s.hidden=false }
-  function closeSheet(){ var s=X.querySelector('#rlsh'); s.hidden=true; s.innerHTML=''; cmFor=null }
+  function closeSheet(){ var s=X.querySelector('#rlsh'); s.hidden=true; s.innerHTML=''; cmFor=null; if(X._fromProf){ X._fromProf=0; X.hidden=true } }
   var shot=null;
   function privacy(){ return '<div class="rlpriv"><button type="button" data-a="pv" data-v="pub" class="'+(curKey()?'':'on')+'">🌍 Public</button><button type="button" data-a="pv" data-v="key" class="'+(curKey()?'on':'')+'"'+(key?'':' disabled')+'>🔒 Key-Only'+(key?'':' (join a convoy)')+'</button></div><label class="rlchk"><input type="checkbox" id="rlhide"> Hide my exact GPS spot (rounds to about 1 km)</label>' }
   function compose(kind){ shot=null; sheet('<h3>📷 Post Photo</h3><div class="rlpriv"><button type="button" data-a="ck" data-v="c" class="'+(kind==='c'?'on':'')+'">Trail condition</button><button type="button" data-a="ck" data-v="r" class="'+(kind==='r'?'on':'')+'">Rig showcase</button></div>'+
@@ -468,5 +468,8 @@
   /* your rig drawing for the My spot icon: kept on the phone, fetched once if this phone doesn't have it yet */
   function myRt(){ ls('aw-myrt',myPf&&myPf.rt||''); if(window.__meRedraw) window.__meRedraw() }
   setTimeout(function(){ if(ls('aw-myrt')!==null||navigator.onLine===false) return; api({op:'prof',tg:''}).then(function(j){ if(j&&j.me){ myPf=j.pf||{}; myRt() } }).catch(function(){}) },8000);
+  function cachePf(j){ if(!j||!j.me) return; var f=j.pf||{}, nb=BD.filter(function(b){ return tier((j.bd||{})[b[0]]||0) }).length; ls('aw-mypf',JSON.stringify({n:j.n||'',t:j.t||'',av:f.av||'',cov:f.cov||'',rig:f.rig||j.rig||'',rt:f.rt||'',nb:nb})); if(window.__meRedraw2) window.__meRedraw2() }
+  window.__rlProfile=function(){ if(!X) build(); if(!X._pfo){ X._pfo=new MutationObserver(function(){ if(X.hidden&&X._fromProf){ X._fromProf=0; closeSheet() } }); X._pfo.observe(X,{attributes:true,attributeFilter:['hidden']}) } X.hidden=false; X._fromProf=1; profile('') };
+  window.__rlProfData=function(){ return api({op:'prof',tg:''}).then(function(j){ cachePf(j); return j }) };
   window.__rl={api:api,shrink:shrink,toast:toast,ago:ago,ini:ini,col:col,me:me,esc:esc,RS:RS,ls:ls};
 })();

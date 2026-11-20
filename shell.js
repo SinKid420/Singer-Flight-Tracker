@@ -49,6 +49,21 @@
   '#awme h3 button{margin-left:auto;width:40px;height:40px;border-radius:50%;border:0;background:#2c2c2e;color:#fff;display:grid;place-items:center}'+
   '#awme .ls{background:#1e2227;border-radius:16px;overflow:hidden}#awme .ls button{width:100%;display:flex;align-items:center;gap:12px;padding:0 14px;height:54px;border:0;background:none;color:#eef0f3;font:600 15px var(--font,system-ui);text-align:left;border-top:1px solid #2a2f36}'+
   '#awme .ls button:first-child{border-top:0}#awme .ls button span{flex:1}#awme .ls button em{font-style:normal;color:#8b929c;font:500 13px var(--font,system-ui)}#awme .ls button>svg:last-child{color:#5b626c}'+
+  '#awme .in{background:radial-gradient(80% 30% at 20% 0%,rgba(100,210,255,.18),transparent 70%),radial-gradient(60% 24% at 100% 0%,rgba(191,139,255,.14),transparent 70%),#0b0e12!important;max-height:92vh!important}'+
+  '#awme .awpi{display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}#awme .awpi .f{fill:currentColor;fill-opacity:.28;stroke:none}#awme .awpi .s{fill:currentColor}'+
+  '#awme h3 button{background:rgba(255,255,255,.08)!important}'+
+  '#awme .pcard{display:block;width:100%;padding:0;border-radius:18px;overflow:hidden;background:#11161c;border:1px solid rgba(100,210,255,.28);color:#eef1f5;text-align:left}'+
+  '#awme .pcv{position:relative;display:block;height:84px;overflow:hidden}#awme .pcv svg,#awme .pcv img{display:block;width:100%;height:100%;object-fit:cover}'+
+  '#awme .pcv em{position:absolute;right:8px;top:8px;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:9px;background:rgba(0,0,0,.5);font:650 10.5px var(--font,system-ui);font-style:normal;color:#fff}'+
+  '#awme .prow{display:flex;align-items:flex-end;gap:10px;padding:0 12px 10px;margin-top:-26px;position:relative}#awme .prow>svg{margin-bottom:12px;color:#5b636e}'+
+  '#awme .pav{width:60px;height:60px;border-radius:50%;flex:none;overflow:hidden;border:3px solid #11161c;box-shadow:0 0 0 2px rgba(100,210,255,.45),0 6px 16px rgba(100,210,255,.35);background:linear-gradient(145deg,#64d2ff,#2a8fc0);display:grid;place-items:center;font:800 19px var(--font,system-ui);color:#06131a}#awme .pav img{width:100%;height:100%;object-fit:cover}'+
+  '#awme .pnm{flex:1;min-width:0;padding-bottom:2px}#awme .pnm b{display:block;font:800 15.5px var(--font,system-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#awme .pnm b small{font:600 12px var(--font,system-ui);color:#9aa3ad}#awme .pnm>small{display:block;font:500 12px var(--font,system-ui);color:#9aa3ad;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+  '#awme .ptl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}#awme .ptl button{--c:#64d2ff;text-align:left;border-radius:16px;padding:11px 12px;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 14%,transparent),rgba(255,255,255,.03) 62%);border:1px solid color-mix(in srgb,var(--c) 24%,transparent);color:#eef1f5;min-width:0}'+
+  '#awme .ptl button:active{transform:scale(.97)}#awme .ptl b{display:block;font:700 13.5px var(--font,system-ui);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#awme .ptl small{display:block;font:650 11.5px var(--font,system-ui);color:var(--c);margin-top:2px}'+
+  '#awme .ptl.six{grid-template-columns:repeat(3,1fr);gap:7px}#awme .ptl.six button{padding:9px 8px;text-align:center}#awme .ptl.six .pib{margin:0 auto;width:34px;height:34px;border-radius:11px}#awme .ptl.six b{margin-top:6px;font-size:12px}#awme .ptl.six small{font-size:11px}'+
+  '#awme .pib{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 72%,#000));display:grid;place-items:center;box-shadow:0 4px 12px color-mix(in srgb,var(--c) 38%,transparent),inset 0 1px 0 rgba(255,255,255,.45)}'+
+  '#awme .plook{display:flex;align-items:center;gap:10px;margin-top:10px;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#eef1f5}#awme .plook b{font:700 13px var(--font,system-ui)}'+
+  '#awme .pseg{margin-left:auto;display:flex;background:rgba(255,255,255,.07);border-radius:10px;padding:2px}#awme .pseg button{border:0;background:none;padding:6px 11px;border-radius:8px;font:700 12px var(--font,system-ui);color:#9aa3ad}#awme .pseg button.on{background:#eef1f5;color:#0a0d10}'+
   '#awme .ft{text-align:center;color:#8b929c;font:500 12px var(--font,system-ui);margin-top:12px}#awme .ft b{color:#fff}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
@@ -67,7 +82,7 @@
 
   // ---- tab bar ----
   var tabs=document.createElement('nav'); tabs.id='awtabs'; tabs.setAttribute('aria-label','Main');
-  tabs.innerHTML='<button type="button" class="on" data-t="map">'+ic('map',23)+'Map</button><button type="button" data-t="alerts">'+ic('bell',23)+'Alerts<i class="bd" hidden></i></button><button type="button" data-t="mid"></button><button type="button" data-t="me">'+ic('me',23)+'Me</button>';
+  tabs.innerHTML='<button type="button" class="on" data-t="map">'+ic('map',23)+'Map</button><button type="button" data-t="alerts">'+ic('bell',23)+'Alerts<i class="bd" hidden></i></button><button type="button" data-t="mid"></button><button type="button" data-t="me">'+ic('me',23)+'Profile</button>';
   document.body.appendChild(tabs);
   tabs.onclick=function(e){ var b=e.target.closest('button'); if(!b) return; var t=b.getAttribute('data-t');
     if(t==='map'){ if(M) M.hidden=true; return }
@@ -77,23 +92,44 @@
 
   // ---- Me: settings, friends and the rest of the old buttons ----
   var M=null;
-  function me(show){ if(!M){ M=document.createElement('div'); M.id='awme'; M.setAttribute('role','dialog'); M.setAttribute('aria-label','Me'); document.body.appendChild(M);
+  function me(show){ if(!M){ M=document.createElement('div'); M.id='awme'; M.setAttribute('role','dialog'); M.setAttribute('aria-label','Profile'); document.body.appendChild(M);
       M.addEventListener('click',function(e){ if(e.target===M||e.target.closest('[data-a=x]')){ M.hidden=true; return } var b=e.target.closest('[data-g]'); if(!b) return; var g=b.getAttribute('data-g');
-        if(g==='look'){ var nv=''; try{ nv=localStorage.getItem('aw-look')==='new'?'classic':'new'; localStorage.setItem('aw-look',nv) }catch(x){} b.querySelector('em').textContent=nv==='new'?'New':'Classic'; setTimeout(function(){ location.reload() },350); return }
+        if(g==='look'){ var nv=b.getAttribute('data-v')||'classic', cur=''; try{ cur=localStorage.getItem('aw-look')==='new'?'new':'classic'; if(nv===cur) return; localStorage.setItem('aw-look',nv) }catch(x){} [].forEach.call(M.querySelectorAll('.pseg button'),function(x){ x.classList.toggle('on',x===b) }); setTimeout(function(){ location.reload() },350); return }
+        if(g==='prof'){ if(window.__rlProfile){ M.hidden=true; window.__rlProfile() } return }
         if(g==='rot'||g==='key'||g==='rep'){ if(g==='rot') click('rotbtn'); if(g==='key'){ var k=document.body.classList.toggle('awkey'); if(document.body.classList.contains('keyon')!==k) click('keybtn') } if(g==='rep') click('trbtn'); setTimeout(fill,120); return }
         M.hidden=true; setTimeout(function(){ click(g) },60) }) }
     fill(); M.hidden=!show }
+  var PI={gear:'<path class="f" d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><path d="M12 3.5l1.6 2.2 2.7-.5.6 2.7 2.4 1.3-1.1 2.5 1.1 2.5-2.4 1.3-.6 2.7-2.7-.5L12 20.5l-1.6-2.2-2.7.5-.6-2.7-2.4-1.3L5.8 12 4.7 9.5l2.4-1.3.6-2.7 2.7.5z"/><circle cx="12" cy="12" r="3.2"/>',
+    riders:'<circle class="f" cx="9" cy="8.5" r="3.3"/><circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.8-3.3 3.2-5 6-5s5.2 1.7 6 5"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.8c1.8.6 3 2.2 3.5 4.7"/>',
+    key:'<rect class="f" x="4" y="5" width="16" height="14" rx="2.5"/><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 9.5h2M8 13h2M12.5 9.5h3.5M12.5 13h3.5M8 16.5h8"/>',
+    nav:'<path class="f" d="M12 3l7 17-7-4-7 4z"/><path d="M12 3l7 17-7-4-7 4z"/>',
+    clock:'<circle class="f" cx="12" cy="13" r="8"/><circle cx="12" cy="13" r="8"/><path d="M12 9v4.5l3 1.8M9.5 2.5h5"/>',
+    flag:'<path class="f" d="M5 4h14l-3 4.5 3 4.5H5z"/><path d="M5 21V4h14l-3 4.5 3 4.5H5"/>',
+    look:'<circle class="f" cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="8.5"/><path class="s" d="M12 3.5a8.5 8.5 0 0 0 0 17z"/>',
+    chev:'<path d="M9 6l6 6-6 6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',cam:'<rect x="3" y="7" width="18" height="12.5" rx="2.5"/><path d="M8.5 7l1.5-2.5h4L15.5 7"/><circle cx="12" cy="13" r="3.2"/>'};
+  function pic(n,s,c){ return '<svg class="awpi" viewBox="0 0 24 24" aria-hidden="true" style="width:'+s+'px;height:'+s+'px'+(c?';color:'+c:'')+'">'+PI[n]+'</svg>' }
+  var PCOV='<svg viewBox="0 0 328 92" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="awpsk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6a35c"/><stop offset=".55" stop-color="#c8607a"/><stop offset="1" stop-color="#4a3a6a"/></linearGradient></defs><rect width="328" height="92" fill="url(#awpsk)"/><circle cx="250" cy="40" r="16" fill="#ffd9a0" opacity=".9"/><path d="M0 92 L0 60 L50 34 L92 58 L140 26 L196 62 L240 44 L290 66 L328 50 L328 92Z" fill="#2c2440"/><path d="M0 92 L0 76 L70 58 L130 78 L200 60 L270 80 L328 70 L328 92Z" fill="#1a1528"/></svg>';
+  function pf(){ try{ return JSON.parse(localStorage.getItem('aw-mypf')||'null')||{} }catch(e){ return {} } }
+  var pfAsked=0; window.__meRedraw2=function(){ if(M&&!M.hidden) fill() };
   function fill(){ if(!M) return; var name=''; try{ name=localStorage.getItem('sky-trname')||'' }catch(e){}
-    var rot=$('rotbtn'), rp=$('trbtn');
-    var rows=[['gear','gear','Settings',''],['frbtn','friends','Friends','']];
-    if(off()) rows.push(['bbbtn','clock','Back by','']);
-    rows.push(['rot','rot','Turn map with me',rot&&rot.getAttribute('aria-pressed')==='true'?'On':'Off']);
-    rows.push(['key','key','Map key',document.body.classList.contains('awkey')?'Shown':'Hidden']);
-    var lk=''; try{ lk=localStorage.getItem('aw-look')||'' }catch(e){} rows.unshift(['look','map','Map look',lk==='new'?'New':'Classic']);
-    if(off()&&rp) rows.push(['rep','flag','Trail reports on the map',rp.classList.contains('off')?'Hidden':'Shown']);
-    M.innerHTML='<div class="in"><div class="gr"></div><h3>'+(name?esc(name):'Me')+'<button type="button" data-a="x" aria-label="Close">'+ic('x',18)+'</button></h3><div class="ls">'+
-      rows.map(function(r){ return '<button type="button" data-g="'+r[0]+'">'+ic(r[1],22)+'<span>'+r[2]+'</span>'+(r[3]?'<em>'+r[3]+'</em>':ic('chev',18))+'</button>' }).join('')+
-      '</div><div class="ft"><b>AwareBC</b> · created by Josh Singer</div></div>' }
+    var P=pf(), RS=window.__rl&&window.__rl.RS, rot=$('rotbtn'), rp=$('trbtn'), fr=document.querySelector('#frbtn .frbd,#frbtn em'), frn=fr&&!fr.hidden?fr.textContent.trim():'';
+    if(!pfAsked&&window.__rlProfData&&navigator.onLine!==false){ pfAsked=1; window.__rlProfData().catch(function(){}) }
+    var B='#64d2ff',G='#32d74b',A='#ffb340',V='#bf8bff',R='#ff453a';
+    var T=[['gear','gear','Settings','All options',B],['frbtn','riders','Friends',frn?frn+' new':'Chat and share',G]];
+    if(off()) T.push(['bbbtn','clock','Back by','Check-in timer',R]);
+    T.push(['key','key','Map key',document.body.classList.contains('awkey')?'Shown':'Hidden',A]);
+    T.push(['rot','nav','Turn map with me',rot&&rot.getAttribute('aria-pressed')==='true'?'On':'Off',V]);
+    if(off()&&rp) T.push(['rep','flag','Trail reports',rp.classList.contains('off')?'Hidden':'Shown',A]);
+    var lk=''; try{ lk=localStorage.getItem('aw-look')||'' }catch(e){}
+    var nm=P.n||name||'Rider', ini=nm.split(/\s+/).map(function(w){ return w[0]||'' }).join('').slice(0,2).toUpperCase(), rtn='';
+    if(P.rt&&window.__rigs){ window.__rigs.list.forEach(function(r){ if(r[0]===P.rt) rtn=r[1] }) }
+    var sub=[P.rig||rtn,P.nb?P.nb+' badge'+(P.nb>1?'s':''):''].filter(Boolean).join(' · ')||'Tap to set up your rider profile';
+    var cov=P.cov&&RS?'<img alt="" src="'+RS+'/rlm/'+esc(P.cov)+'">':PCOV, av=P.av&&RS?'<img alt="" src="'+RS+'/rlm/'+esc(P.av)+'">':'<span>'+esc(ini||'?')+'</span>';
+    M.innerHTML='<div class="in"><div class="gr"></div><h3>Profile<button type="button" data-a="x" aria-label="Close">'+ic('x',18)+'</button></h3>'+
+      '<button type="button" class="pcard" data-g="prof" aria-label="My rider profile"><span class="pcv">'+cov+'<em>'+pic('cam',13)+(P.cov?'Edit cover':'Add cover')+'</em></span><span class="prow"><span class="pav">'+av+'</span><span class="pnm"><b>'+esc(nm)+(P.t?' <small>#'+esc(P.t)+'</small>':'')+'</b><small>'+esc(sub)+'</small></span>'+pic('chev',16)+'</span></button>'+
+      '<div class="ptl'+(T.length>4?' six':'')+'">'+T.map(function(t){ return '<button type="button" data-g="'+t[0]+'" style="--c:'+t[4]+'"><span class="pib">'+pic(t[1],21,'#0a0d10')+'</span><b>'+(T.length>4&&t[0]==='rot'?'Turn map':t[2])+'</b><small>'+t[3]+'</small></button>' }).join('')+'</div>'+
+      '<div class="plook">'+pic('look',20,'#bf8bff')+'<b>Map look</b><span class="pseg" role="group" aria-label="Map look"><button type="button" data-g="look" data-v="classic"'+(lk==='new'?'':' class="on"')+'>Classic</button><button type="button" data-g="look" data-v="new"'+(lk==='new'?' class="on"':'')+'>New</button></span></div>'+
+      '<div class="ft"><b>AwareBC</b> · created by Josh Singer</div></div>' }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) }
 
   // ---- keep everything in step with the app ----
