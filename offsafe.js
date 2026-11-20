@@ -42,25 +42,87 @@
   setInterval(function(){ paint(); if(C&&C.due<Date.now()&&!C.warned){ C.warned=1; sj('aw-chk',C); buzz(); if(window.__native&&window.__native.notify) window.__native.notify('AwareBC','You’re past your back-by time. Check in so your friends aren’t worried.') } },15000);
   document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.seg button')) setTimeout(function(){ paint(); radio() },120) },true);
   function manage(){ openSet() }
-  function openSet(){ var F=window.__frApi&&window.__frApi.list?window.__frApi.list():[], sel=C&&C.ids?C.ids.slice():F.slice(0,3).map(function(f){ return f.id }), pick=C?C.due:Date.now()+4*3600000;
+  var BBCSS=false;
+  function bbCss(){ if(BBCSS) return; BBCSS=true; var st=document.createElement('style'); st.textContent=
+    '.ossh.bb2{background:radial-gradient(90% 34% at 50% 14%,rgba(255,179,64,.16),transparent 70%),#0b0e12;border-top:1px solid rgba(255,255,255,.08);padding-top:14px}.ossh.bb2 .grab{display:none}'+
+    '.bb2 .hd{display:flex;align-items:center}.bb2 .hd h3{font:800 21px var(--font,system-ui)}.bb2 .hd button{margin-left:auto;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.08);color:#fff;font:700 16px var(--font,system-ui)}'+
+    '.bb2 .dial{display:block;width:100%;max-width:300px;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}.bb2 .dh{text-align:center;font:600 11px var(--font,system-ui);color:#7d8692;margin-top:-6px}'+
+    '.bb2 .tc{display:flex;gap:6px;margin-top:10px}.bb2 .tc>*{flex:1;text-align:center;padding:9px 4px;border-radius:12px;font:700 12px var(--font,system-ui);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#fff;position:relative;white-space:nowrap}'+
+    '.bb2 .tc>.w{flex:1.5}.bb2 .tc .on{background:rgba(255,179,64,.2);color:#ffc35a;border-color:rgba(255,179,64,.45)}.bb2 .tc input{position:absolute;inset:0;opacity:0;width:100%}'+
+    '.bb2 .card{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font:600 12px var(--font,system-ui);color:#c7ccd3}'+
+    '.bb2 .card .k{font-weight:700;color:#9aa3ad}.bb2 .card .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bb2 .card button{margin-left:auto;border:0;background:none;color:#64d2ff;font:700 12px var(--font,system-ui);flex:none}'+
+    '.bb2 .av{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 10.5px var(--font,system-ui);color:#0a0d10;box-shadow:0 0 0 2px #0b0e12,0 0 0 3.5px #32d74b}'+
+    '.bb2 .frs{margin-top:6px}.bb2 .frs[hidden]{display:none}.bb2 .fr{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.07)}'+
+    '.bb2 .note{margin-top:8px;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;height:42px!important;font-size:14px!important}'+
+    '.bb2 .ft{text-align:center;font:500 10.5px var(--font,system-ui);color:#7d8692;margin:12px 0 8px}'+
+    '.bb2 .sl{position:relative;height:58px;border-radius:29px;background:linear-gradient(90deg,rgba(50,215,75,.28),rgba(50,215,75,.08));border:1px solid rgba(50,215,75,.4);overflow:hidden;touch-action:none}'+
+    '.bb2 .sl.dis{filter:grayscale(1);opacity:.5}.bb2 .sl span{position:absolute;inset:0;display:grid;place-items:center;font:800 14px var(--font,system-ui);color:#bff5cb;pointer-events:none;padding-left:40px}'+
+    '.bb2 .sl button{position:absolute;left:4px;top:3px;width:50px;height:50px;border-radius:50%;border:0;background:linear-gradient(180deg,#5df27a,#28b84a);box-shadow:0 0 18px rgba(50,215,75,.6);display:grid;place-items:center;color:#05150a;touch-action:none}'+
+    '.bb2 .sl button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}'+
+    '.bb2 .stop{display:block;width:100%;margin-top:8px;height:40px;border:0;border-radius:14px;background:rgba(255,69,58,.14);color:#ff8a80;font:700 13px var(--font,system-ui)}';
+    document.head.appendChild(st) }
+  var AVC=['#ffb340','#64d2ff','#bf8bff','#32d74b','#ff6a5f','#40e0c8'];
+  function ini(n){ return String(n||'?').split(/\s+/).map(function(w){ return w[0]||'' }).join('').slice(0,2).toUpperCase() }
+  function openSet(){ bbCss(); var F=window.__frApi&&window.__frApi.list?window.__frApi.list():[], sel=C&&C.ids?C.ids.slice():F.slice(0,3).map(function(f){ return f.id }), pick=C?C.due:Date.now()+4*3600000;
     var nine=new Date(); nine.setHours(21,0,0,0); if(nine.getTime()<Date.now()+3600000){ nine.setDate(nine.getDate()+1); nine.setHours(9) }
     var opts=[[2*3600000,'+2 h'],[4*3600000,'+4 h'],[nine.getTime()-Date.now(),nine.getHours()===21?'Tonight 9 PM':'Tomorrow 9 AM']];
-    var o=sheet('<h3>⏱️ Back by</h3><div class="sub">If you don’t check in by this time, the friends you pick get your last spot. The timer runs on the AwareBC server, so it works even if your phone dies.</div>'+
-      '<div class="lab">I’ll be back by</div><div class="oschips">'+opts.map(function(x){ return '<button type="button" data-t="'+Math.round(x[0])+'">'+x[1]+'</button>' }).join('')+'<label class="pk">Pick…<input type="datetime-local"></label></div><div class="due"></div>'+
-      '<div class="lab">Who gets told</div>'+(F.length?F.map(function(f){ return '<label class="fr"><input type="checkbox" value="'+esc(f.id)+'"'+(sel.indexOf(f.id)>=0?' checked':'')+'><b>'+esc(f.n)+'</b><small>#'+esc(f.t)+'</small></label>' }).join(''):'<div class="sub">Add a friend first (Friends ▸ Add friend or Invite). Alerts go to friends on AwareBC.</div>')+
-      '<div class="lab">Trip note (optional)</div><input class="note" maxlength="140" placeholder="Where you’re going, rigs, people" value="'+esc(C&&C.note||'')+'">'+
-      '<div class="row">'+(C?'<button type="button" class="s" data-x="stop">Stop timer</button>':'<button type="button" class="s" data-x="no">Cancel</button>')+'<button type="button" class="p" data-x="go"'+(F.length?'':' disabled')+'></button></div>');
-    function show(){ o.querySelector('.due').textContent=''; o.querySelector('[data-x=go]').textContent=(C?'Update':'Start')+' · back by '+clock(pick); [].forEach.call(o.querySelectorAll('[data-t]'),function(b){ b.classList.toggle('on',Math.abs(Date.now()+ +b.getAttribute('data-t')-pick)<90000) }) }
+    var CLK='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4.5l3 1.8M9.5 2.5h5"/></svg>';
+    var o=sheet('<div class="hd"><h3>Back by</h3><button type="button" data-x="no" aria-label="Close">✕</button></div>'+
+      '<svg class="dial" viewBox="0 0 328 250" role="slider" aria-label="Back by time" tabindex="0"></svg><div class="dh">Drag the dot to set your time</div>'+
+      '<div class="tc">'+opts.map(function(x,i){ return '<button type="button" data-t="'+Math.round(x[0])+'"'+(i===2?' class="w"':'')+'>'+x[1]+'</button>' }).join('')+'<label>Pick…<input type="datetime-local" aria-label="Pick a time"></label></div>'+
+      (F.length?'<div class="card"><span class="k">Tell</span><span class="avs" style="display:flex;gap:6px"></span><span class="nm"></span><button type="button" data-x="chg">Change</button></div>'+
+        '<div class="frs" hidden>'+F.map(function(f){ return '<label class="fr"><input type="checkbox" value="'+esc(f.id)+'"'+(sel.indexOf(f.id)>=0?' checked':'')+'><b>'+esc(f.n)+'</b><small>#'+esc(f.t)+'</small></label>' }).join('')+'</div>'
+        :'<div class="card">Add a friend first (Friends ▸ Add friend or Invite). Alerts go to friends on AwareBC.</div>')+
+      '<input class="note" maxlength="140" placeholder="Trip note: where, rigs, people" value="'+esc(C&&C.note||'')+'" aria-label="Trip note">'+
+      '<div class="ft">Miss it and they get your last spot, even if your phone dies.</div>'+
+      '<div class="sl'+(F.length?'':' dis')+'"><span>'+(C?'Slide to update':'Slide to start timer')+'  ›››</span><button type="button" data-x="go" aria-label="'+(C?'Update timer':'Start timer')+'">'+CLK+'</button></div>'+
+      (C?'<button type="button" class="stop" data-x="stop">Stop timer</button>':''));
+    o.querySelector('.ossh').classList.add('bb2');
+    var D=o.querySelector('.dial'), cx=164, cy=124, R=94;
+    function ang(t){ var d=new Date(t), h=d.getHours()%12+d.getMinutes()/60; return h/12*2*Math.PI-Math.PI/2 }
+    function pt(a,r){ return [cx+Math.cos(a)*r,cy+Math.sin(a)*r] }
+    function draw(){ var a0=ang(Date.now()), a1=ang(pick), p0=pt(a0,R), p1=pt(a1,R), span=(pick-Date.now())/3600000, large=((a1-a0+4*Math.PI)%(2*Math.PI))>Math.PI?1:0, full=span>=12, t='';
+      for(var i=0;i<60;i++){ var q=i/60*2*Math.PI-Math.PI/2, big=i%5===0, a=pt(q,R+16), b=pt(q,R+(big?24:20)); t+='<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'" stroke="rgba(255,255,255,'+(big?.45:.15)+')" stroke-width="'+(big?2:1)+'" stroke-linecap="round"/>' }
+      [12,3,6,9].forEach(function(n){ var p=pt(n/12*2*Math.PI-Math.PI/2,R-24); t+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+4).toFixed(1)+'" text-anchor="middle" font-weight="700" font-size="11" fill="rgba(255,255,255,.35)">'+n+'</text>' });
+      var arc=full?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'"':'<path d="M'+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+' A'+R+' '+R+' 0 '+large+' 1 '+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+'"';
+      var lbl=new Date(pick).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}), m=lbl.match(/^(.*?)\s*([AP]\.?M\.?)$/i), hm=m?m[1]:lbl, ap=m?m[2]+' · ':'', inT=span<1?Math.round(span*60)+' min':(Math.round(span*10)/10).toString().replace(/\.0$/,'')+' h';
+      var day=new Date(pick).toDateString()!==new Date().toDateString()?(new Date(pick).getDate()-new Date().getDate()===1||span<36?'tomorrow · ':''):'';
+      D.innerHTML='<defs><linearGradient id="bbag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient>'+(window.__awLow?'':'<filter id="bbgw" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>')+'<radialGradient id="bbfc"><stop offset="0" stop-color="#1a1610"/><stop offset="1" stop-color="#0d0f12"/></radialGradient></defs>'+
+        '<circle cx="'+cx+'" cy="'+cy+'" r="'+(R+8)+'" fill="url(#bbfc)" stroke="rgba(255,255,255,.06)"/>'+t+'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="14"/>'+
+        (window.__awLow?'':arc+' fill="none" stroke="url(#bbag)" stroke-width="14" stroke-linecap="round" filter="url(#bbgw)" opacity=".75"/>')+arc+' fill="none" stroke="url(#bbag)" stroke-width="14" stroke-linecap="round"/>'+
+        '<circle cx="'+p0[0].toFixed(1)+'" cy="'+p0[1].toFixed(1)+'" r="6" fill="#0b0e12" stroke="#ffd27a" stroke-width="3"/><circle cx="'+p1[0].toFixed(1)+'" cy="'+p1[1].toFixed(1)+'" r="15" fill="#fff" style="filter:drop-shadow(0 0 10px rgba(255,179,64,.9))"/><circle cx="'+p1[0].toFixed(1)+'" cy="'+p1[1].toFixed(1)+'" r="6" fill="#ff8a1a"/>'+
+        '<text x="'+cx+'" y="'+(cy-20)+'" text-anchor="middle" font-weight="600" font-size="11.5" fill="#c9b48f">Back by</text><text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" font-weight="800" font-size="34" fill="#fff">'+esc(hm)+'</text>'+
+        '<text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-weight="700" font-size="12" fill="#ffb340">'+esc(ap+day)+'in '+inT+'</text>';
+      D.setAttribute('aria-valuetext','Back by '+clock(pick)+', in '+inT) }
+    function show(){ draw(); [].forEach.call(o.querySelectorAll('[data-t]'),function(b){ b.classList.toggle('on',Math.abs(Date.now()+ +b.getAttribute('data-t')-pick)<90000) }); friends() }
+    function friends(){ var av=o.querySelector('.avs'); if(!av) return; var ch=[].filter.call(o.querySelectorAll('.fr input'),function(i){ return i.checked }).map(function(i){ return i.value }), fs=F.filter(function(f){ return ch.indexOf(f.id)>=0 });
+      av.innerHTML=fs.slice(0,2).map(function(f,i){ return '<span class="av" style="background:linear-gradient(145deg,'+AVC[i%6]+',color-mix(in srgb,'+AVC[i%6]+' 65%,#000))">'+esc(ini(f.n))+'</span>' }).join('');
+      o.querySelector('.nm').textContent=fs.length?fs.map(function(f){ return f.n }).slice(0,2).join(' and ')+(fs.length>2?' +'+(fs.length-2):''):'No one picked yet' }
+    // drag the dot: the time follows your finger around the clock (5-minute steps, from 15 minutes up to 12 hours ahead)
+    function fromXY(e){ var r=D.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*328-cx, y=(e.clientY-r.top)/r.height*250-cy, a=Math.atan2(y,x)+Math.PI/2; if(a<0) a+=2*Math.PI;
+      var now=new Date(), nh=now.getHours()%12+now.getMinutes()/60, th=a/(2*Math.PI)*12, d=(th-nh+12)%12; if(d<.25) d+=12; var t=Date.now()+d*3600000; t=Math.round(t/300000)*300000; pick=Math.max(Date.now()+900000,t); show() }
+    var drag=false; D.addEventListener('pointerdown',function(e){ drag=true; try{ D.setPointerCapture(e.pointerId) }catch(x){} fromXY(e) }); D.addEventListener('pointermove',function(e){ if(drag) fromXY(e) }); D.addEventListener('pointerup',function(){ drag=false }); D.addEventListener('pointercancel',function(){ drag=false });
+    D.addEventListener('keydown',function(e){ var k=e.key; if(k==='ArrowRight'||k==='ArrowUp'){ pick=Math.min(Date.now()+72*3600000,pick+900000); show(); e.preventDefault() } if(k==='ArrowLeft'||k==='ArrowDown'){ pick=Math.max(Date.now()+900000,pick-900000); show(); e.preventDefault() } });
     show();
     o.querySelector('input[type=datetime-local]').onchange=function(e){ var t=new Date(e.target.value).getTime(); if(t>Date.now()+600000&&t<Date.now()+72*3600000){ pick=t; show() } else toast('Pick a time between 10 minutes and 3 days from now.') };
+    [].forEach.call(o.querySelectorAll('.fr input'),function(i){ i.onchange=friends });
+    function go(t){ var ids=[].map.call(o.querySelectorAll('.fr input:checked'),function(i){ return i.value }); if(!F.length) return toast('Add a friend first, so someone can be told.'); if(!ids.length) return toast('Pick at least one friend to tell.');
+      if(navigator.onLine===false) return toast('Start it while you still have signal, so the server can keep the timer.');
+      var m=me(), note=o.querySelector('.note').value.trim(), lab=o.querySelector('.sl span'); t.disabled=true; lab.textContent='Starting…';
+      post('chk',{op:'set',due:pick,ids:ids,note:note,lat:m&&m.lat,lon:m&&m.lon}).then(function(j){ C={id:j.id,due:j.due,ids:ids,note:note,n:ids.length}; saveC(); o.remove(); toast('Back by '+clock(C.due)+'. Have a good trip.'); setTimeout(function(){ if(window.__pushAsk) window.__pushAsk('So you’ll know right away if a friend you’re watching is overdue.') },3500) },function(e){ t.disabled=false; lab.textContent=(C?'Slide to update':'Slide to start timer')+'  ›››'; knob.style.transform=''; toast(e.message) }) }
+    // slide to start: a tap alone won't start it, so a bump in the rig can't set it off
+    var sl=o.querySelector('.sl'), knob=sl.querySelector('button'), sx=0, moved=0, sliding=false;
+    knob.addEventListener('pointerdown',function(e){ sliding=true; sx=e.clientX; moved=0; try{ knob.setPointerCapture(e.pointerId) }catch(x){} knob.style.transition='none' });
+    knob.addEventListener('pointermove',function(e){ if(!sliding) return; var max=sl.clientWidth-58; moved=Math.max(0,Math.min(max,e.clientX-sx)); knob.style.transform='translateX('+moved+'px)' });
+    function end(){ if(!sliding) return; sliding=false; var max=sl.clientWidth-58; knob.style.transition='transform .25s'; if(moved>=max*.85){ knob.style.transform='translateX('+max+'px)'; go(knob) } else { knob.style.transform=''; if(moved<6) toast('Slide the button to the right to '+(C?'update':'start')+'.') } }
+    knob.addEventListener('pointerup',end); knob.addEventListener('pointercancel',end);
+    knob.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(knob) } });
+    knob.addEventListener('click',function(e){ e.stopPropagation() });
     o.onclick=function(e){ var t=e.target.closest&&e.target.closest('[data-t],[data-x]'); if(!t) return;
       if(t.hasAttribute('data-t')){ pick=Date.now()+ +t.getAttribute('data-t'); show(); return }
       var x=t.getAttribute('data-x'); if(x==='no') return o.remove();
-      if(x==='stop') return act({op:'done'},function(){ C=null; saveC(); o.remove(); toast('Back-by timer stopped.') });
-      if(x==='go'){ var ids=[].map.call(o.querySelectorAll('.fr input:checked'),function(i){ return i.value }); if(!ids.length) return toast('Pick at least one friend to tell.');
-        if(navigator.onLine===false) return toast('Start it while you still have signal, so the server can keep the timer.');
-        var m=me(), note=o.querySelector('.note').value.trim(); t.disabled=true; t.textContent='Starting…';
-        post('chk',{op:'set',due:pick,ids:ids,note:note,lat:m&&m.lat,lon:m&&m.lon}).then(function(j){ C={id:j.id,due:j.due,ids:ids,note:note,n:ids.length}; saveC(); o.remove(); toast('Back by '+clock(C.due)+'. Have a good trip.'); setTimeout(function(){ if(window.__pushAsk) window.__pushAsk('So you\u2019ll know right away if a friend you\u2019re watching is overdue.') },3500) },function(e){ t.disabled=false; show(); toast(e.message) }) } } }
+      if(x==='chg'){ var fs=o.querySelector('.frs'); fs.hidden=!fs.hidden; t.textContent=fs.hidden?'Change':'Done'; return }
+      if(x==='stop') return act({op:'done'},function(){ C=null; saveC(); o.remove(); toast('Back-by timer stopped.') }) } }
 
   // server is the source of truth; overdue alerts for me arrive with each Friends sync (any mode)
   var ack=lj('aw-odack',{});
