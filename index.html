@@ -149,6 +149,18 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* ferry card (sea green, shares the camera card styles) */
+#roadsheet.awcam.awfer .sheet{background:radial-gradient(80% 30% at 20% 0%,rgba(64,224,200,.18),transparent 70%),#0b0e12!important}
+#roadsheet.awfer .awcb{background:linear-gradient(145deg,#40e0c8,#1a9a88)!important;box-shadow:0 4px 14px rgba(64,224,200,.4),inset 0 1px 0 rgba(255,255,255,.45)!important}#roadsheet.awfer .awcb svg .f{fill:#0a0d10;fill-opacity:.25;stroke:none}
+#roadsheet.awfer .awfr{display:flex;gap:4px;padding:3px;border-radius:13px;background:rgba(255,255,255,.06);overflow-x:auto;margin-top:4px}#roadsheet.awfer .awfr button{flex:none;border:0;padding:7px 12px;border-radius:10px;background:none;color:#9aa3ad;font:700 12.5px var(--font)}#roadsheet.awfer .awfr button.on{background:rgba(255,255,255,.14);color:#fff}
+#roadsheet.awfer .awfn{margin-top:10px;padding:12px;border-radius:16px;background:linear-gradient(150deg,rgba(64,224,200,.16),rgba(255,255,255,.03) 65%);border:1px solid rgba(64,224,200,.3)}#roadsheet.awfer .awfn>small{display:block;font:600 11px var(--font);color:#9fe9dc}
+#roadsheet.awfer .awfn .t{display:flex;align-items:center;margin-top:3px}#roadsheet.awfer .awfn .t>b{font:800 28px var(--font)}#roadsheet.awfer .awfn .t span{margin-left:auto;text-align:right}#roadsheet.awfer .awfn .t span b{display:block;font:700 14px var(--font)}#roadsheet.awfer .awfn .t span small{font:500 11px var(--font);color:#9aa3ad}
+#roadsheet.awfer .bar{width:auto!important;display:block;height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}#roadsheet.awfer .bar i{display:block;height:100%;border-radius:4px;background:var(--bc);box-shadow:0 0 8px var(--bc)}#roadsheet.awfer .awfn>.bar+small{display:block;margin-top:4px;font:600 10.5px var(--font);color:#9aa3ad}
+#roadsheet.awfer .awfls{margin-top:10px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:0 12px}#roadsheet.awfer .awfls .r{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}#roadsheet.awfer .awfls .r:first-child{border-top:0}
+#roadsheet.awfer .awfls .r>b{font:800 14px var(--font);width:66px;flex:none}#roadsheet.awfer .awfls .r>div{flex:1;min-width:0}#roadsheet.awfer .awfls .r small{display:block;font:500 11px var(--font);color:#9aa3ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadsheet.awfer .awfls .bar{height:5px;margin-top:4px}#roadsheet.awfer .awfls .r>span{font:700 12px var(--font);flex:none;text-align:right;min-width:62px}#roadsheet.awfer .awfls .r.full{opacity:.55}
+#roadsheet.awfer #fcam{width:100%;max-height:24vh;object-fit:cover;border-radius:14px;display:block;margin-top:10px;cursor:pointer}
+#roadsheet.awfer .awfb2{display:flex;gap:8px;margin-top:10px}#roadsheet.awfer .awfb2 button{flex:1;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#eef1f5;font:700 13px var(--font)}#roadsheet.awfer .awfb2 button.p{border:0;background:linear-gradient(180deg,#5ff0d8,#1a9a88);color:#06131a;font-weight:800;box-shadow:0 6px 18px rgba(64,224,200,.35)}
+#roadsheet.awfer .awfk{display:flex;justify-content:center;gap:18px;margin-top:8px}#roadsheet.awfer .awfk a{color:#9fe9dc;font:700 12.5px var(--font);text-decoration:none}#roadsheet.awfer .awfl{padding:14px 2px;color:#9aa3ad}#roadsheet.awfer .skynote{color:#7d8692}
 /* wildfire card (glow theme, colour follows the fire status) */
 #firesheet.awfire .sheet{background:radial-gradient(80% 30% at 20% 0%,color-mix(in srgb,var(--fc) 22%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
 #firesheet.awfire .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
@@ -783,7 +795,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=149"></script>
+<script src="app.js?v=150"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>

@@ -11,7 +11,7 @@ window.__awm&&window.__awm('roads',function(X){with(X){
     function env(b){ return '&geometry='+encodeURIComponent([b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(','))+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json' }
     function https(u){ u=String(u||''); return /^https:\/\/[^\s"<>]{4,300}$/.test(u)?u:'' }
     function pin(lat,lon,c,emo,sz,label,fn,z){ L.marker([lat,lon],{icon:L.divIcon({className:'',html:'<span class="firemk" role="button" aria-label="'+esc(label)+'" style="--c:'+c+';--sz:'+sz+'px">'+emo+'</span>',iconSize:[0,0]}),keyboard:false,bubblingMouseEvents:false,zIndexOffset:z||-250,title:label}).on('click',fn).addTo(this) }
-    function sheet(title,html,cls){ var rs=document.getElementById('roadsheet'); rs.classList.toggle('awcam',cls==='cam'); document.getElementById('roadtitle').innerHTML=title; var b=document.getElementById('roadbody'); b.innerHTML=html; document.getElementById('roadsheet').hidden=false; return b }
+    function sheet(title,html,cls){ var rs=document.getElementById('roadsheet'); rs.classList.toggle('awcam',cls==='cam'||cls==='ferry'); rs.classList.toggle('awfer',cls==='ferry'); document.getElementById('roadtitle').innerHTML=title; var b=document.getElementById('roadbody'); b.innerHTML=html; document.getElementById('roadsheet').hidden=false; return b }
     function when(t){ if(!t) return ''; var d=new Date(t); if(isNaN(d)) return ''; var m=Math.round((Date.now()-d)/60000); return m<60?(m<1?'just now':m+' min ago'):m<1440?Math.round(m/60)+' h ago':d.toLocaleDateString([], {month:'short',day:'numeric'}) }
     // ----- road data -----
     function loadRoads(force){ var g=++rGen, z=map.getZoom(); if(!roadOn||z<7){ roadLayer.clearLayers(); camLayer.clearLayers(); rKey=''; return }
@@ -79,24 +79,37 @@ window.__awm&&window.__awm('roads',function(X){with(X){
       if(cfg2.ferryMax==='home') ks=TERM[cfg2.ferryHome]?[cfg2.ferryHome]:ks.slice(0,1); else ks=ks.slice(0,capN(cfg2.ferryMax));
       ks.forEach(function(k){ var t=TERM[k]; pin.call(ferryLayer,t[1],t[2],'#1565c0','⛴',24,t[0]+' ferry terminal',function(){ fTerm=k; fRoute=null; fCam=0; ferryRender(); loadFerries() },-150) }) }
     function fillCol(p){ return p>=90?'#e53935':p>=60?'#fb8c00':'#43a047' }
+    // ferry card (glow theme, sea green): the next sailing you can still make, car space bars, drive there, return trip
+    var FIC='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4 15.5h16l-2 4H6z"/><path d="M4 15.5h16l-2 4H6zM7 15.5V11h10v4.5M10 11V8h4v3"/><path d="M2.5 21.5c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1"/></svg>';
+    function fCol(free){ return free<=10?'#ff453a':free<=40?'#ffb340':'#32d74b' }
+    function fTime(s){ var m=/(\d{1,2}):(\d{2})\s*([ap])\.?m/i.exec(String(s||'')); if(!m) return null; var h=+m[1]%12+(/p/i.test(m[3])?12:0), d=new Date(); d.setHours(h,+m[2],0,0); return d.getTime() }
+    function hm(t){ return new Date(t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) }
     function ferryRender(){ var k=fTerm, t=TERM[k]; if(!t) return; var routes=(fData||[]).filter(function(r){return r.fromTerminalCode===k});
       if(!fRoute||!routes.some(function(r){return r.routeCode===fRoute})) fRoute=routes[0]&&routes[0].routeCode;
-      var r=routes.filter(function(x){return x.routeCode===fRoute})[0], h='';
-      if(!fData) h='<div class="ssec">Loading sailings…</div>';
-      else if(!routes.length) h='<div class="ssec">No live sailing info for this terminal. Check bcferries.com.</div>';
-      else { h+='<div class="dtabs" role="tablist" style="overflow-x:auto">'+routes.map(function(x){ var to=(TERM[x.toTerminalCode]||[x.toTerminalCode])[0]; return '<button role="tab" data-r="'+esc(x.routeCode)+'"'+(x.routeCode===fRoute?' class="on"':'')+' style="flex:0 0 auto;padding:0 10px">'+esc(to.replace(/ \(.*\)/,''))+'</button>' }).join('')+'</div>';
-        var up=(r.sailings||[]).filter(function(s){return s.sailingStatus!=='past'}).slice(0,+cfg2.ferryN||4);
-        h+='<div class="ssec" style="margin-top:6px"><h4>'+esc(r.dataStatus==='no-service'?'No service today':'Next sailings · '+(r.sailingDuration||''))+'</h4>'+(up.length?up.map(function(s){ var right=s.sailingStatus==='current'?'<span class="good">Departed '+esc(s.time||'')+'</span>':(s.capacityKnown?(cfg2.ferryFill==='full'?'<b style="color:'+fillCol(s.fill||0)+'">'+(s.fill||0)+'% full</b>':'<b style="color:'+fillCol(s.carFill||s.fill||0)+'">'+(100-(s.carFill||s.fill||0))+'% car space left</b>'):esc(s.status||''));
-          return '<div class="row2"><span><b>'+esc(s.scheduledTime||s.time||'')+'</b> '+esc(s.vesselName||'')+(s.vesselStatus?' · '+esc(s.vesselStatus):'')+'</span><span>'+right+'</span></div>' }).join(''):'No more sailings today.')+'</div>';
+      var r=routes.filter(function(x){return x.routeCode===fRoute})[0], h='', toN=r?(TERM[r.toTerminalCode]||[r.toTerminalCode])[0]:'', fp=nearPt(), dK=t[1]?distNm(fp[0],fp[1],t[1],t[2])*1.852:0;
+      var drive=dK>1?Math.round(dK*1.3/70*60):0; /* rough drive time: road is about 1.3 x straight line at 70 km/h */
+      if(!fData) h='<div class="awfl">Loading sailings…</div>';
+      else if(!routes.length) h='<div class="awfl">No live sailing info for this terminal. Check bcferries.com.</div>';
+      else { if(routes.length>1) h+='<div class="awfr" role="tablist">'+routes.map(function(x){ var to=(TERM[x.toTerminalCode]||[x.toTerminalCode])[0]; return '<button role="tab" data-r="'+esc(x.routeCode)+'"'+(x.routeCode===fRoute?' class="on"':'')+'>'+esc(to.replace(/ \(.*\)/,''))+'</button>' }).join('')+'</div>';
+        var up=(r.sailings||[]).filter(function(s){return s.sailingStatus!=='past'&&s.sailingStatus!=='current'}), now=Date.now();
+        var mk=up.filter(function(s){ var tt=fTime(s.scheduledTime||s.time); var free=s.capacityKnown?100-(s.carFill||s.fill||0):50; return free>0&&(!tt||tt-now>(drive+30)*60000) })[0];
+        if(r.dataStatus==='no-service') h+='<div class="awfl">No service on this route today.</div>';
+        else if(mk){ var tt=fTime(mk.scheduledTime||mk.time), used=mk.capacityKnown?(mk.carFill||mk.fill||0):null, free=used==null?null:100-used;
+          h+='<div class="awfn"><small>Next sailing you can make</small><div class="t"><b>'+esc(mk.scheduledTime||mk.time||'')+'</b><span>'+(free==null?'<b>Space not known</b>':'<b style="color:'+fCol(free)+'">'+free+'% car space</b>')+(tt&&drive?'<small>leave by ~'+esc(hm(tt-(drive+30)*60000))+'</small>':'')+'</span></div>'+
+            (used!=null?'<div class="bar"><i style="width:'+used+'%;--bc:'+fCol(free)+'"></i></div><small>'+used+'% full'+(free<=40?' · filling fast':'')+'</small>':'')+'</div>' }
+        h+='<div class="awfls">'+(up.length?up.slice(0,Math.max(4,+cfg2.ferryN||4)).map(function(s){ var used=s.capacityKnown?(s.carFill||s.fill||0):null, free=used==null?null:100-used, full=free!=null&&free<=0;
+            return '<div class="r'+(full?' full':'')+'"><b>'+esc(s.scheduledTime||s.time||'')+'</b><div><small>'+esc(s.vesselName||'')+(s.vesselStatus?' · '+esc(s.vesselStatus):'')+'</small>'+(used!=null?'<div class="bar"><i style="width:'+used+'%;--bc:'+fCol(free)+'"></i></div>':'')+'</div><span style="color:'+(free==null?'#9aa3ad':fCol(free))+'">'+(free==null?esc(s.status||''):full?'Full':free+'% space')+'</span></div>' }).join(''):'<div class="r"><span style="color:#9aa3ad">No more sailings today.</span></div>')+'</div>';
         var cams=(r.terminal&&r.terminal.webcams)||[], cam=cams[fCam%Math.max(1,cams.length)];
-        if(cfg2.ferryCam==='1'&&cam&&https(cam.imageURL)) h+='<img id="fcam" src="'+esc(https(cam.imageURL)+'?t='+Math.floor(Date.now()/60000))+'" alt="'+esc(cam.label||'Terminal camera')+'" style="width:100%;max-height:28vh;object-fit:cover;border-radius:10px;display:block;cursor:pointer" referrerpolicy="no-referrer"><div class="skynote" style="margin-top:3px">📷 '+esc(cam.label||'')+(cams.length>1?' · tap photo for next camera':'')+'</div>';
-        var su=/^https:\/\/www\.bcferries\.com\//.test(r.sourceURL||'')?r.sourceURL:'https://www.bcferries.com/current-conditions';
-        var toN=(TERM[r.toTerminalCode]||[r.toTerminalCode])[0];
-        h+='<div class="abtns" style="grid-template-columns:1fr 1fr;margin-top:6px"><a class="pri" href="https://www.bcferries.com/RouteSelectionPage" target="_blank" rel="noopener noreferrer">🎟 Buy tickets</a><a href="'+esc(su)+'" target="_blank" rel="noopener noreferrer">Current conditions</a></div>'+
-          '<div class="skynote" style="margin-top:0">Opens BC Ferries booking. Choose '+esc(t[0])+' → '+esc(toN)+' and your sailing there; payment is on their secure site.</div>' }
-      h+='<div class="skynote">Sailings: BC Ferries via bcferriesapi.ca (unofficial, updates every few minutes)</div>';
-      var b=sheet('<span style="font-size:16px">⛴ '+esc(t[0])+'</span>',h);
+        if(cfg2.ferryCam==='1'&&cam&&https(cam.imageURL)) h+='<img id="fcam" src="'+esc(https(cam.imageURL)+'?t='+Math.floor(Date.now()/60000))+'" alt="'+esc(cam.label||'Terminal camera')+'" referrerpolicy="no-referrer"><div class="skynote" style="margin-top:3px">'+esc(cam.label||'Terminal camera')+(cams.length>1?' · tap photo for next camera':'')+'</div>';
+        var back=TERM[r.toTerminalCode]&&(fData||[]).some(function(x){ return x.fromTerminalCode===r.toTerminalCode&&x.toTerminalCode===k });
+        h+='<div class="awfb2">'+(window.__nav&&t[1]?'<button type="button" class="p" data-x="go">Drive to terminal</button>':'')+(back?'<button type="button" data-x="back">Return trip ⇄</button>':'')+'</div>'+
+          '<div class="awfk"><a href="https://www.bcferries.com/RouteSelectionPage" target="_blank" rel="noopener noreferrer">Buy tickets ›</a><a href="'+esc(/^https:\/\/www\.bcferries\.com\//.test(r.sourceURL||'')?r.sourceURL:'https://www.bcferries.com/current-conditions')+'" target="_blank" rel="noopener noreferrer">Current conditions ›</a></div>' }
+      h+='<div class="skynote">Sailings: BC Ferries via bcferriesapi.ca (unofficial, updates every few minutes). Leave-by time is a rough guess and allows 30 min at the terminal.</div>';
+      var b=sheet('<span class="awct"><span class="awcb">'+FIC+'</span><span><b>'+esc(t[0].replace(/ \(.*\)/,''))+(toN?' → '+esc(toN.replace(/ \(.*\)/,'')):'')+'</b><small>'+esc([r&&r.sailingDuration?r.sailingDuration+' crossing':'',dK>1?Math.round(dK)+' km from you':''].filter(Boolean).join(' · ')||'Ferry terminal')+'</small></span></span>',h,'ferry');
       [].forEach.call(b.querySelectorAll('[data-r]'),function(x){ x.onclick=function(){ fRoute=x.getAttribute('data-r'); fCam=0; ferryRender() } });
+      b.onclick=function(e){ var x=e.target.closest&&e.target.closest('[data-x]'); if(!x) return; var a=x.getAttribute('data-x');
+        if(a==='go'&&window.__nav){ document.getElementById('roadsheet').hidden=true; window.__nav.to(L.latLng(t[1],t[2]),t[0]+' ferry terminal') }
+        if(a==='back'&&r){ var from=k; fTerm=r.toTerminalCode; fRoute=((fData||[]).filter(function(y){ return y.fromTerminalCode===fTerm&&y.toTerminalCode===from })[0]||{}).routeCode||null; fCam=0; ferryRender() } };
       var fc=document.getElementById('fcam'); if(fc){ fc.onclick=function(){ fCam++; ferryRender() }; fc.onerror=function(){ fc.remove() } } }
     // ----- buttons, settings, refresh -----
     function paint(){ var a=document.getElementById('roadbtn'), f=document.getElementById('ferrybtn'), s1=document.getElementById('s_road'), s2=document.getElementById('s_ferry');
