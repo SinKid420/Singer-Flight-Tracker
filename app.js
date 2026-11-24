@@ -870,7 +870,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=271, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=272, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1470,7 +1470,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
   // ---- Airports: live weather (aviationweather.gov through the relay) and an arrivals/departures board ----
   var aptOn=false, aptLayer=L.layerGroup().addTo(map), aptData={}, aptSel=null, aptTab='wx', aptT=null, tafCache={};
   aptOn=false;
-  var CATC={VFR:'#34c759',MVFR:'#2f8cff',IFR:'#ff3b30',LIFR:'#d63bff'}, CATW={VFR:'Good flying weather',MVFR:'Marginal: low cloud or haze',IFR:'Poor: low cloud or fog',LIFR:'Very poor: very low cloud or fog'};
+  var ACG={VFR:'#32d74b',MVFR:'#64d2ff',IFR:'#ff453a',LIFR:'#d27bff'}; var CATC={VFR:'#34c759',MVFR:'#2f8cff',IFR:'#ff3b30',LIFR:'#d63bff'}, CATW={VFR:'Good flying weather',MVFR:'Marginal: low cloud or haze',IFR:'Poor: low cloud or fog',LIFR:'Very poor: very low cloud or fog'};
   function visMi(v){ if(v==null) return null; var n=parseFloat(String(v).replace('+','')); return isFinite(n)?n:null }
   function ceilFt(cl){ var c=null; (cl||[]).forEach(function(x){ if(x&&/^(BKN|OVC|OVX|VV)$/.test(x.cover)&&typeof x.base==='number'&&(c==null||x.base<c)) c=x.base }); return c }
   function fltCat(m){ if(m&&CATC[m.fltCat]) return m.fltCat; var c=ceilFt(m&&m.clouds), v=visMi(m&&m.visib); if(c==null) c=99999; if(v==null) v=10; return (c<500||v<1)?'LIFR':(c<1000||v<3)?'IFR':(c<=3000||v<=5)?'MVFR':'VFR' }
@@ -1508,7 +1508,9 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
     var id=rec.icao||rec.id; if(aptData[id]) aptSel=id; aptHead(); aptRender(); moreInfo(rec);
     if(!aptData[id]&&/^[A-Z0-9]{4}$/.test(id)){ var d=0.3; fetch(viaRelay('https://aviationweather.gov/api/data/metar?bbox='+[rec.lat-d,rec.lon-d,rec.lat+d,rec.lon+d].map(function(v){return v.toFixed(2)}).join(',')+'&format=json')).then(function(r){return r.ok?r.json():null}).then(function(list){ (list||[]).forEach(function(m){ if(m&&m.icaoId===id&&(m.visib!=null||m.fltCat)){ aptData[id]=m; if(aInfo===rec){ aptSel=id; aptHead(); aptRender() } } }) }).catch(function(){}) } }
   function aptHead(){ var t=document.getElementById('apttitle'), m=aptSel&&aptData[aptSel], c=m?fltCat(m):null, nm=aInfo?aInfo.name:(m&&m.name)||aptSel||'Airport';
-    t.innerHTML='<span style="display:inline-block;max-width:calc(100vw - 140px);font-size:16px;line-height:1.2;vertical-align:middle;overflow:hidden;max-height:2.4em">'+esc(nm)+'</span>'+(c?'<span class="catpill" style="background:'+CATC[c]+'">'+c+'</span>':'');
+    var sh2=document.getElementById('aptsheet'), lat=aInfo?aInfo.lat:m&&m.lat, lon=aInfo?aInfo.lon:m&&m.lon, codes=[aInfo?(aInfo.icao||aInfo.id):aptSel,aInfo&&aInfo.iata].filter(Boolean).join(' · '), dd=isFinite(lat)?uDist(distNm(me.lat,me.lon,lat,lon))+' '+distUnit()+' from you':'';
+    sh2.classList.add('awapt'); sh2.style.setProperty('--ac',c?ACG[c]:'#64d2ff');
+    t.innerHTML='<span class="awat"><span class="awab"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4 20.5h16V14H4z"/><path d="M4 20.5h16V14H4zM8 14V8h8v6M12 8V4M10 4h4"/></svg></span><span><b>'+esc(nm)+'</b><small>'+esc([codes,dd].filter(Boolean).join(' · '))+'</small></span></span>';
     [].forEach.call(document.querySelectorAll('#apttabs button'),function(b){ var t2=b.getAttribute('data-t'); b.hidden=(t2==='wx'&&!m)||(t2==='info'&&!aInfo) }) }
   function cleanTel(t){ t=String(t||'').split(/[;,]/)[0].trim(); return /^[+(\d][\d\s().\-]{5,24}$/.test(t)?t:'' }
   function cleanUrl(u){ u=String(u||'').trim(); return /^https?:\/\/[^\s"<>]{3,200}$/i.test(u)?u:'' }
@@ -1570,17 +1572,19 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
     if(aptTab==='info'){ h=infoHtml(aInfo) } else
     if(aptTab==='wx'){
       var age=typeof m.obsTime==='number'?Math.round((Date.now()/1000-m.obsTime)/60):null, wx=wxWords(m.wxString);
-      h+='<div class="ssec" style="margin-bottom:6px"><b>'+esc(m.name||m.icaoId)+'</b><br>'+esc(CATW[c])+(age!=null&&age>=0?' · reported '+(age<1?'just now':age+' min ago'):'')+'</div>';
-      h+='<div class="wxg">'+[['Wind',windWords(m)],['Visibility',visWords(m.visib)],['Sky',skyWords(m.clouds)],['Temperature',tempWords(m.temp)],['Pressure',typeof m.altim==='number'?Math.round(m.altim)+' hPa':'—'],['Weather',wx||'None']].map(function(x){return '<div><small>'+x[0]+'</small><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>';
+      var cf0=ceilFt(m.clouds);
+      h+='<div class="awaw" style="--ac:'+ACG[c]+'"><div class="t"><span class="cat">'+esc(CATW[c].split(':')[0])+'</span><small>'+(age!=null&&age>=0?'updated '+(age<1?'just now':age+' min ago'):'')+'</small></div>'+(CATW[c].indexOf(':')>0?'<div class="why">'+esc(CATW[c].split(':')[1].trim())+'</div>':'')+
+        '<div class="g">'+[['Visibility',visWords(m.visib)],['Cloud',cf0!=null?ft(cf0):'Clear'],['Wind',windWords(m).replace(/ from /,' ').replace(/, gusts.*$/,'')],['Temp',tempWords(m.temp)]].map(function(x){ return '<div><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>' }).join('')+'</div></div>';
+      h+='<div class="wxg awax">'+[['Sky',skyWords(m.clouds).replace(/ [\d,]+ (ft|m)$/,'').replace(' clouds','')],['Weather',wx?wx.charAt(0).toUpperCase()+wx.slice(1):'None'],['Pressure',typeof m.altim==='number'?Math.round(m.altim)+' hPa':'—']].map(function(x){return '<div><small>'+x[0]+'</small><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>';
       var warn=[]; if(/TS/.test(m.wxString||'')) warn.push('Thunderstorm at the airport'); var cf=ceilFt(m.clouds); if(cf!=null&&cf<1000) warn.push('Very low cloud ('+ft(cf)+')'); if(typeof m.wgst==='number'&&m.wgst>=25) warn.push('Strong gusts'); var vm=visMi(m.visib); if(vm!=null&&vm<3) warn.push('Low visibility');
       var f=(tafCache[aptSel]||{}).d;
       if(f){ f.forEach(function(x){ if(/TS/.test(x.wxString||'')&&warn.indexOf('Thunderstorms in the forecast')<0) warn.push('Thunderstorms in the forecast') }) }
-      if(warn.length) h+='<div class="ssec"><span class="bad">⚠ '+esc(warn.slice(0,3).join(' · '))+'</span><br>These can cause delays.</div>';
+      if(warn.length) h+='<div class="awaww"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.3v.1"/></svg><div><b>'+esc(warn.slice(0,2).join(' · '))+'</b><small>These can cause delays</small></div></div>';
       h+='<div class="ssec"><h4>Forecast</h4>';
       if(f===undefined) h+='Loading forecast…'; else if(!f||!f.length) h+='No forecast issued for this airport.';
       else { var nowS=Date.now()/1000; f.filter(function(x){return typeof x.timeTo!=='number'||x.timeTo>nowS}).slice(0,4).forEach(function(x){ var fc=fltCat(x), t=typeof x.timeFrom==='number'?new Date(x.timeFrom*1000).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}):'';
           var bits=[x.fcstChange==='TEMPO'?'at times':(x.fcstChange==='PROB'?(x.probability||'')+'% chance':''),wxWords(x.wxString),skyWords(x.clouds),typeof x.wspd==='number'&&x.wspd>0?windWords(x):''].filter(Boolean).join(', ');
-          h+='<div class="row2"><span><b style="color:'+CATC[fc]+'">●</b> '+esc(bits||'No change')+'</span><span>'+esc(t?'from '+t:'')+'</span></div>' }) }
+          h+='<div class="row2"><span><i class="awdot" style="--ac:'+ACG[fc]+'"></i>'+esc(bits||'No change')+'</span><span>'+esc(t?'from '+t:'')+'</span></div>' }) }
       h+='</div><div class="skynote">Weather: aviationweather.gov (METAR/TAF)</div>';
     } else {
       var arr=[], dep=[];
@@ -1589,8 +1593,8 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
         else if(distNm(r.o.la,r.o.lo,m.lat,m.lon)<5){ dep.push({p:p,to:r.d.c,gone:distNm(p.lat,p.lon,m.lat,m.lon)}) } });
       arr.sort(function(a,b){return a.mins-b.mins}); dep.sort(function(a,b){return a.gone-b.gone});
       function rows(list,fn){ return list.slice(0,5).map(fn).join('') }
-      h+='<div class="ssec"><h4>Arriving</h4>'+(arr.length?rows(arr,function(x){ var t=new Date(Date.now()+x.mins*60000).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}); return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> from '+esc(x.from)+' · '+esc(x.p.t||'')+'</span><span>lands ~'+esc(t)+'</span></div>' }):'No arrivals found nearby yet.')+'</div>';
-      h+='<div class="ssec"><h4>Departed</h4>'+(dep.length?rows(dep,function(x){ return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> to '+esc(x.to)+' · '+esc(x.p.t||'')+'</span><span>'+uDist(x.gone)+' '+distUnit()+' out</span></div>' }):'No recent departures found nearby.')+'</div>';
+      h+='<div class="ssec"><h4>Arriving</h4>'+(arr.length?rows(arr,function(x){ var t=new Date(Date.now()+x.mins*60000).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}); return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> from '+esc(x.from)+' · '+esc(x.p.t||'')+'</span><span class="awtg b">Lands ~'+esc(t)+'</span></div>' }):'No arrivals found nearby yet.')+'</div>';
+      h+='<div class="ssec"><h4>Departed</h4>'+(dep.length?rows(dep,function(x){ return '<div class="brow" data-h="'+esc(x.p.hex)+'"><span><b>'+esc(name(x.p))+'</b> to '+esc(x.to)+' · '+esc(x.p.t||'')+'</span><span class="awtg g">'+uDist(x.gone)+' '+distUnit()+' out</span></div>' }):'No recent departures found nearby.')+'</div>';
       h+='<div class="skynote">Built from live planes and their routes around the airport. Airline gate and delay times need a paid feed.</div>';
     }
     if(body._h!==h){ body.innerHTML=h; body._h=h; [].forEach.call(body.querySelectorAll('.brow'),function(r){ r.onclick=function(){ document.getElementById('aptsheet').hidden=true; aptSel=null; select(r.getAttribute('data-h'),true) } }) } }

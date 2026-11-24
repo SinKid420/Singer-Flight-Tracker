@@ -149,6 +149,21 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* airport card (glow theme, colour follows the flying weather) */
+#aptsheet.awapt .sheet{background:radial-gradient(80% 30% at 20% 0%,color-mix(in srgb,var(--ac) 18%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08);--fg:#eef1f5;--dim:#9aa3ad;--chip:rgba(255,255,255,.06)}
+#aptsheet.awapt .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
+#aptsheet.awapt .awat{display:flex;align-items:center;gap:10px;min-width:0}#aptsheet.awapt .awat>span:last-child{display:flex;flex-direction:column;min-width:0}#aptsheet.awapt .awat b{font:800 17px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 130px)}#aptsheet.awapt .awat small{font:500 11.5px var(--font);color:#9aa3ad}
+#aptsheet.awapt .awab{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#64d2ff,#2a8fc0);box-shadow:0 4px 14px rgba(100,210,255,.4),inset 0 1px 0 rgba(255,255,255,.45)}#aptsheet.awapt .awab svg{width:22px;height:22px;fill:none;stroke:#06131a;stroke-width:1.9;stroke-linejoin:round;stroke-linecap:round}#aptsheet.awapt .awab svg .f{fill:#06131a;fill-opacity:.25;stroke:none}
+#aptsheet.awapt #apttabs{background:rgba(255,255,255,.06);border-radius:13px;padding:3px;margin-top:4px}#aptsheet.awapt #apttabs button{border-radius:10px;font-weight:700;color:#9aa3ad}#aptsheet.awapt #apttabs button.on{background:rgba(255,255,255,.14);color:#fff}
+#aptsheet.awapt .awaw{padding:12px;border-radius:16px;background:linear-gradient(150deg,color-mix(in srgb,var(--ac) 16%,transparent),rgba(255,255,255,.03) 65%);border:1px solid color-mix(in srgb,var(--ac) 32%,transparent)}
+#aptsheet.awapt .awaw .t{display:flex;align-items:center}#aptsheet.awapt .awaw .cat{padding:4px 10px;border-radius:9px;background:var(--ac);color:#05150a;font:800 12px var(--font);box-shadow:0 0 12px color-mix(in srgb,var(--ac) 50%,transparent)}#aptsheet.awapt .awaw .t small{margin-left:auto;font:600 11px var(--font);color:#9aa3ad}
+#aptsheet.awapt .awaw .why{font:500 12px var(--font);color:#c7ccd3;margin-top:6px}#aptsheet.awapt .awaw .g{display:flex;gap:7px;margin-top:8px}#aptsheet.awapt .awaw .g div{flex:1;min-width:0}#aptsheet.awapt .awaw .g small{display:block;font:600 10px var(--font);color:#9aa3ad}#aptsheet.awapt .awaw .g b{display:block;font:800 13px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#aptsheet.awapt .wxg div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px}#aptsheet.awapt .awax{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:8px}
+#aptsheet.awapt .ssec{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 12px;margin-top:8px;color:#c7ccd3}#aptsheet.awapt .ssec h4{font:700 12.5px var(--font);color:#9aa3ad;text-transform:none;letter-spacing:0;margin:2px 0 4px}#aptsheet.awapt .ssec .row2,#aptsheet.awapt .ssec .brow{border-top:1px solid rgba(255,255,255,.06);padding:7px 0;color:#eef1f5}#aptsheet.awapt .ssec h4+.row2,#aptsheet.awapt .ssec h4+.brow{border-top:0}
+#aptsheet.awapt .awdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ac);box-shadow:0 0 6px var(--ac);margin-right:7px}
+#aptsheet.awapt .awaww{display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:14px;background:linear-gradient(150deg,rgba(255,179,64,.16),rgba(255,255,255,.03) 65%);border:1px solid rgba(255,179,64,.3)}#aptsheet.awapt .awaww svg{width:20px;height:20px;flex:none;fill:none;stroke:#ffb340;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#aptsheet.awapt .awaww b{display:block;font:700 13px var(--font)}#aptsheet.awapt .awaww small{font:500 11px var(--font);color:#9aa3ad}
+#aptsheet.awapt .awtg{padding:4px 9px;border-radius:9px;font:800 11.5px var(--font);white-space:nowrap}#aptsheet.awapt .awtg.b{background:rgba(100,210,255,.16);color:#9fe2ff}#aptsheet.awapt .awtg.g{background:rgba(255,255,255,.08);color:#c7ccd3}
+#aptsheet.awapt .abtns a{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:14px;color:#eef1f5}#aptsheet.awapt .abtns a.pri{background:linear-gradient(180deg,#7ad9ff,#2a8fc0);color:#06131a;border:0;font-weight:800;box-shadow:0 6px 18px rgba(100,210,255,.35)}#aptsheet.awapt .skynote{color:#7d8692}
 /* ferry card (sea green, shares the camera card styles) */
 #roadsheet.awcam.awfer .sheet{background:radial-gradient(80% 30% at 20% 0%,rgba(64,224,200,.18),transparent 70%),#0b0e12!important}
 #roadsheet.awfer .awcb{background:linear-gradient(145deg,#40e0c8,#1a9a88)!important;box-shadow:0 4px 14px rgba(64,224,200,.4),inset 0 1px 0 rgba(255,255,255,.45)!important}#roadsheet.awfer .awcb svg .f{fill:#0a0d10;fill-opacity:.25;stroke:none}
@@ -795,7 +810,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=151"></script>
+<script src="app.js?v=152"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>
