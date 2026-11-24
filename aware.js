@@ -31,6 +31,20 @@
     '@keyframes awwv{0%,100%{height:6px}50%{height:26px}}'+
     '.aws .ft{color:#9aa4b2;font-size:12px;text-align:center;margin-top:14px}.aws .ft b{color:#fff}'+
     '.aws .ty[hidden]{display:none}.aws .ty{display:flex;gap:8px;margin-top:14px}.aws .ty input{flex:1;min-width:0;height:42px;border-radius:21px;border:1px solid #333a43;background:#22272e;color:#fff;padding:0 14px;font:600 14px var(--font,system-ui)}.aws .ty button{height:42px;border-radius:21px;border:0;background:#ff3b30;color:#fff;font:700 14px var(--font,system-ui);padding:0 16px}';
+  st.textContent+=
+    '.aws.awg{top:auto;max-height:calc(100% - 70px);background:radial-gradient(80% 40% at 50% 0%,rgba(255,69,58,.16),transparent 70%),#0d1015;border-top:1px solid rgba(255,255,255,.08);border-radius:26px 26px 0 0;color:#eef1f5;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 14px)}'+
+    '.awg .g{width:38px;height:4px;background:#3a414a;margin-bottom:8px}.awg .h b{font:800 18px var(--font,system-ui)}.awg .h small{font:500 11.5px var(--font,system-ui)!important;color:#9aa3ad!important}.awg .x{width:32px;height:32px;background:rgba(255,255,255,.08);color:#c2c9d1;font-size:14px}'+
+    '.awg .bm{position:relative;display:grid;place-items:center;width:104px;height:104px;margin:16px auto 0;border-radius:50%;border:0;padding:0;background:radial-gradient(circle,#ff6a5f,#d0281d 70%);box-shadow:0 0 0 10px rgba(255,69,58,.14),0 0 0 22px rgba(255,69,58,.07),0 0 50px rgba(255,69,58,.5),inset 0 2px 0 rgba(255,255,255,.35);transition:transform .15s}'+
+    '.awg .bm svg{width:44px;height:44px}.awg.lis .bm{animation:awpl 1.6s ease-in-out infinite}@keyframes awpl{0%,100%{box-shadow:0 0 0 10px rgba(255,69,58,.18),0 0 0 22px rgba(255,69,58,.08),0 0 50px rgba(255,69,58,.5)}50%{box-shadow:0 0 0 14px rgba(255,69,58,.24),0 0 0 30px rgba(255,69,58,.1),0 0 64px rgba(255,69,58,.65)}}'+
+    '.awg .lst{text-align:center;margin-top:12px;font:700 14px var(--font,system-ui)}.awg .lst .you{margin:2px 0 0;text-align:center;min-height:16px}.awg .lst .you span{background:none;padding:0;border-radius:0;font:500 12px var(--font,system-ui);color:#9aa3ad;max-width:100%}.awg .lst .you span:before{content:"“"}.awg .lst .you span:after{content:"”"}'+
+    '.awg .vg{margin:8px auto 0;width:236px;padding:8px 10px 5px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}.awg .vb{display:flex;justify-content:space-between;align-items:flex-end;height:38px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 9.5px)}'+
+    '.awg .vb i{width:5px;height:3px;border-radius:3px 3px 1px 1px;background:linear-gradient(0deg,#32d74b,#ffd60a 26px,#ff453a 38px);background-size:5px 38px;background-position:bottom;opacity:.35;transition:height .08s linear}.awg.lis .vb i{opacity:1;box-shadow:0 0 6px rgba(255,106,95,.3)}'+
+    '.awg .vl{display:flex;justify-content:space-between;font:600 9.5px var(--font,system-ui);color:#6b737d;margin-top:3px}'+
+    '.awg .ans{margin-top:12px;border-radius:16px;padding:11px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font:500 13px/1.4 var(--font,system-ui);color:#d5dbe3}.awg .ans.hit{background:linear-gradient(160deg,rgba(50,215,75,.12),rgba(255,255,255,.03) 60%);border-color:rgba(50,215,75,.28)}'+
+    '.awg .ar{display:flex;gap:10px;align-items:center}.awg .ai{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;font-size:19px;background:linear-gradient(145deg,#32d74b,#1e9e33);box-shadow:0 4px 12px rgba(50,215,75,.4)}.awg .ar>div{min-width:0}.awg .ar b{display:block;color:#eef1f5;font:800 13.5px var(--font,system-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.awg .ar small{margin:1px 0 0;color:#9aa3ad;font-size:11.5px}'+
+    '.awg .ans .r{margin-top:10px}.awg .ans .r button{height:36px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#d5dbe3;font:800 12.5px var(--font,system-ui)}.awg .ans .r .p{background:linear-gradient(180deg,#5ee877,#24b23e);border:0;color:#04140a}'+
+    '.awg .try{display:none}.awg .ex{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.awg .ex button{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0;font:700 13px var(--font,system-ui);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#d5dbe3}.awg .ex button i{font-style:normal;font-size:17px}'+
+    '.awg .ty{margin-top:14px}.awg .ty input{height:46px;border-radius:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#eef1f5;font:500 14px var(--font,system-ui)}.awg .ty button{width:46px;height:46px;padding:0;border-radius:14px;background:rgba(255,69,58,.2);color:#ff6a5f;font:800 16px var(--font,system-ui)}.awg .ft{display:none}';
   document.head.appendChild(st);
 
   var MIC='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3M9 20h6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
@@ -44,20 +58,34 @@
 
   var S=null;
   function open(listen){ if(S) return; document.body.classList.add('awon'); S=document.createElement('div'); S.className='aws'; S.setAttribute('role','dialog'); S.setAttribute('aria-label','Aware co-pilot');
-    S.innerHTML='<div class="g"></div><div class="h">'+BADGE+'<div><b>Aware</b><small class="s">Ready</small></div><button type="button" class="x" aria-label="Close">✕</button></div>'+
-      '<div class="you"></div><div class="ans"></div><div class="try">Try saying</div><div class="ex"><button type="button" data-q="gas station">⛽ Gas station</button><button type="button" data-q="hospital">🏥 Hospital</button><button type="button" data-q="restaurant">🍔 Restaurant</button></div>'+
-      (SR?'<div class="mic">'+wv()+'<button type="button" class="m" aria-label="Tap to talk">'+MIC+'</button>'+wv()+'</div><div class="ft"><b>Tap to talk</b> · gas and hospitals work with no signal</div>':'')+
-      '<form class="ty"'+(SR?' hidden':'')+'><input type="search" placeholder="Type what you need" enterkeyhint="search" aria-label="What do you need?"><button type="submit">Find</button></form>'+(SR?'':'<div class="ft">Voice isn’t available on this browser, so type instead.</div>');
+    S.className='aws awg'; var bars=''; for(var i=0;i<30;i++) bars+='<i></i>';
+    S.innerHTML='<div class="g"></div><div class="h"><div><b>Aware</b><small>Say what you need. Works with no signal for gas and hospitals.</small></div><button type="button" class="x" aria-label="Close">✕</button></div>'+
+      (SR?'<button type="button" class="m bm" aria-label="Tap to talk">'+MIC+'</button><div class="lst"><span class="s">Tap to talk</span><div class="you"></div></div><div class="vg" aria-hidden="true"><div class="vb">'+bars+'</div><div class="vl"><span>Your voice</span><span>Now ▸</span></div></div>':'<div class="lst"><span class="s">Type what you need</span><div class="you"></div></div>')+
+      '<div class="ans"></div><div class="ex"><button type="button" data-q="gas station" aria-label="Gas station"><i aria-hidden="true">⛽</i>Gas</button><button type="button" data-q="hospital"><i aria-hidden="true">🏥</i>Hospital</button><button type="button" data-q="restaurant" aria-label="Restaurant"><i aria-hidden="true">🍔</i>Food</button></div>'+
+      '<form class="ty"><input type="search" placeholder="Type what you need" enterkeyhint="search" aria-label="What do you need?"><button type="submit" aria-label="Find">➤</button></form>';
     document.body.appendChild(S);
     S.querySelector('.x').onclick=close;
     S.querySelector('.ex').onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-q]'); if(b) ask(b.getAttribute('data-q')) };
     var m=S.querySelector('.m'); if(m) m.onclick=function(){ on?stopL():listenNow() };
     var f=S.querySelector('.ty'); if(f) f.onsubmit=function(e){ e.preventDefault(); var v=f.querySelector('input').value.trim(); if(v) ask(v) };
     if(listen&&SR) listenNow() }
-  function close(){ stopL(); try{ speechSynthesis.cancel() }catch(e){} if(S){ S.remove(); S=null } document.body.classList.remove('awon') }
+  // ---- volume graph: live mic level while listening (falls back to a gentle wave on phones that can't share the mic) ----
+  var VM={sm:null,ac:null,an:null,t:null,lv:[],fake:false}, NOMETER=(function(){ try{ return localStorage.getItem('aw-nometer')==='1' }catch(e){ return false } })();
+  function vPaint(){ if(!S) return; var b=S.querySelectorAll('.vb i'); for(var i=0;i<b.length;i++){ var v=VM.lv[VM.lv.length-b.length+i]||0; b[i].style.height=Math.max(3,Math.round(v*38))+'px' } }
+  function vPush(v){ VM.lv.push(Math.max(0,Math.min(1,v))); if(VM.lv.length>60) VM.lv.splice(0,VM.lv.length-60); vPaint() }
+  function vStart(){ vStop(); VM.lv=[]; var md=navigator.mediaDevices, AC=window.AudioContext||window.webkitAudioContext;
+    function fake(){ VM.fake=true; var ph=0; VM.t=setInterval(function(){ ph+=.45; vPush(.18+.22*Math.abs(Math.sin(ph))*(.6+.4*Math.random())) },90) }
+    if(NOMETER||window.__awLow||!md||!md.getUserMedia||!AC) return fake();
+    md.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(sm){ if(!S||!on){ sm.getTracks().forEach(function(t){ t.stop() }); return }
+      VM.sm=sm; VM.ac=new AC(); var src=VM.ac.createMediaStreamSource(sm); VM.an=VM.ac.createAnalyser(); VM.an.fftSize=512; src.connect(VM.an); var buf=new Uint8Array(VM.an.fftSize);
+      VM.t=setInterval(function(){ VM.an.getByteTimeDomainData(buf); var q=0; for(var i=0;i<buf.length;i++){ var x=(buf[i]-128)/128; q+=x*x } var rms=Math.sqrt(q/buf.length); vPush(Math.pow(Math.min(1,rms*4.2),.7)) },70)
+    },function(){ fake() }) }
+  function vStop(){ clearInterval(VM.t); VM.t=null; if(VM.sm) try{ VM.sm.getTracks().forEach(function(t){ t.stop() }) }catch(e){} if(VM.ac) try{ VM.ac.close() }catch(e){} VM.sm=VM.ac=VM.an=null; VM.fake=false;
+    var n=0, dec=setInterval(function(){ VM.lv=VM.lv.map(function(v){ return v*.6 }); vPaint(); if(++n>8) clearInterval(dec) },60) }
+  function close(){ stopL(); vStop(); try{ speechSynthesis.cancel() }catch(e){} if(S){ S.remove(); S=null } document.body.classList.remove('awon') }
   function status(t,l){ if(!S) return; var s=S.querySelector('.s'); s.textContent=t; s.classList.toggle('l',!!l) }
   function you(t){ if(S) S.querySelector('.you').innerHTML=t?'<span>'+esc(t)+'</span>':'' }
-  function ans(h){ if(S) S.querySelector('.ans').innerHTML=h }
+  function ans(h){ if(!S) return; var a=S.querySelector('.ans'); a.innerHTML=h; a.classList.toggle('hit',h.indexOf('class="ar"')>=0) }
 
   // ---- listening (only after a tap) ----
   // the microphone question comes from the phone; if it was blocked before, say exactly how to allow it and offer typing
@@ -72,11 +100,12 @@
     try{ rec=new SR() }catch(e){ return status('Voice isn’t available here') }
     rec.lang='en-CA'; rec.interimResults=true; rec.maxAlternatives=1; var said='';
     rec.onresult=function(e){ said=''; for(var i=0;i<e.results.length;i++) said+=e.results[i][0].transcript; you(said) };
-    rec.onerror=function(e){ if(e.error==='not-allowed'){ listenNow.ok=0; return blocked() } var t=e.error==='service-not-allowed'?'Voice typing is off on this phone. Turn on Google voice typing in your phone’s settings, or type below.':e.error==='audio-capture'?'I can’t reach the microphone. Another app may be using it. Try again, or type below.':e.error==='network'?'Voice needs some signal on this phone. Tap an example instead.':e.error==='no-speech'?'I didn’t hear anything. Tap the mic and try again.':'';
+    rec.onerror=function(e){ if(e.error==='audio-capture'&&VM.sm&&!NOMETER){ NOMETER=true; try{ localStorage.setItem('aw-nometer','1') }catch(x){} vStop(); rec.onend=null; on=false; rec=null; return setTimeout(listenNow,250) } /* this phone can't share the mic: drop the live meter and listen again */
+      if(e.error==='not-allowed'){ listenNow.ok=0; return blocked() } var t=e.error==='service-not-allowed'?'Voice typing is off on this phone. Turn on Google voice typing in your phone’s settings, or type below.':e.error==='audio-capture'?'I can’t reach the microphone. Another app may be using it. Try again, or type below.':e.error==='network'?'Voice needs some signal on this phone. Tap an example instead.':e.error==='no-speech'?'I didn’t hear anything. Tap the mic and try again.':'';
       if(t){ ans('<span>'+esc(t)+'</span>'); if(e.error!=='no-speech') typeBox() } };
-    rec.onend=function(){ on=false; if(S) S.classList.remove('lis'); status('Ready'); rec=null; if(said.trim()) ask(said.trim()) };
-    try{ rec.start(); on=true; S.classList.add('lis'); status('● Listening…',true); you(''); }catch(e){ on=false } }
-  function stopL(){ if(rec) try{ rec.stop() }catch(e){} on=false; if(S) S.classList.remove('lis') }
+    rec.onend=function(){ on=false; vStop(); if(S) S.classList.remove('lis'); status('Tap to talk'); rec=null; if(said.trim()) ask(said.trim()) };
+    try{ rec.start(); on=true; S.classList.add('lis'); status('Listening…',true); you(''); vStart() }catch(e){ on=false } }
+  function stopL(){ if(rec) try{ rec.stop() }catch(e){} on=false; vStop(); if(S) S.classList.remove('lis') }
   function say(t){ try{ if(!window.speechSynthesis) return; speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance(t); u.lang='en-CA'; u.rate=1; speechSynthesis.speak(u) }catch(e){} }
 
   // ---- understanding: what kind of place ----
@@ -113,14 +142,14 @@
     return Promise.all(jobs).then(function(A){ var all=[].concat.apply([],A), seen={};
       return all.filter(function(p){ if(!isFinite(p.lat)||!isFinite(p.lon)) return false; p.d=hav(m.lat,m.lon,p.lat,p.lon); var k=Math.round(p.lat*500)+':'+Math.round(p.lon*500); if(seen[k]||p.d>250) return false; seen[k]=1; return true }).sort(function(a,b){ return a.d-b.d }).slice(0,8) }) }
   function km(d){ return d<1?Math.round(d*1000)+' m':d<10?d.toFixed(1)+' km':Math.round(d)+' km' }
-  function show(){ if(!S) return; status('Ready'); var m=me(), K=null; KINDS.forEach(function(x){ if(!K&&x.re.test(lastQ)) K=x });
+  function show(){ if(!S) return; status(SR?'Tap to talk':'Type what you need'); var m=me(), K=null; KINDS.forEach(function(x){ if(!K&&x.re.test(lastQ)) K=x });
     var word=K?K.word:clean(lastQ)||'place';
     if(!R.length){ var off=navigator.onLine===false;
       var t=off?(K&&K.k!=='food'?'I couldn’t find a '+word+' in your saved maps. Save maps for this area on Wi-Fi so I can find it with no signal.':'There’s no signal, so I can only find gas and hospitals from your saved maps right now.'):'I couldn’t find a '+word+' near you.';
       ans('<span>'+esc(t)+'</span>'); say(t); return }
     var p=R[ri], dr=dir(m.lat,m.lon,p.lat,p.lon), ic=K?K.ic:'📍', first=ri===0;
     var line=(first?'Nearest '+word+' is ':'Next one is ')+'<b>'+km(p.d)+'</b> '+dr+'.';
-    ans(ic+' '+line+'<small>'+esc(p.n)+(p.town?' · '+esc(p.town):'')+(p.er?' · ER':'')+' · straight-line distance</small><div class="r"><button type="button" class="p" data-a="go">Go there</button>'+(R.length>ri+1?'<button type="button" data-a="nx">Next one</button>':'')+'</div>');
+    ans('<div class="ar"><span class="ai" aria-hidden="true">'+ic+'</span><div><b>'+esc(p.n)+' · '+km(p.d)+'</b><small>'+(first?'Nearest '+esc(word):'Next one')+' · '+dr+(p.town?' · '+esc(p.town):'')+(p.er?' · ER':'')+'</small></div></div><div class="r"><button type="button" class="p" data-a="go">Go there</button>'+(R.length>ri+1?'<button type="button" data-a="nx">Next one</button>':'')+'</div>');
     say((first?'The nearest '+word+' is ':'The next one is ')+p.n+', '+km(p.d).replace('km','kilometres').replace(' m',' metres')+' '+dr+'.');
     S.querySelector('.ans').onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-a]'); if(!b) return;
       if(b.getAttribute('data-a')==='nx'){ ri++; show() }
