@@ -5,7 +5,7 @@
   var OC='awarebc-off-1', RS='https://awarebc.aware-bc.workers.dev';
   var BCR='https://maps.gov.bc.ca/arcserver/rest/services/province/roads_wm/MapServer/tile/{z}/{y}/{x}';
   var SIZES=[[50,'50'],[70,'70'],[100,'100'],[150,'Max']], ZMIN=5, ZMAX=14, TKB=13, CKB=30;
-  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=3','./icons3d.js?v=2','./onboard.js?v=14','./tour.js?v=2','./pins.js?v=4','./rigs.js?v=1','./app.js?v=157','./app2.js?v=8','./srtheme.js?v=1','./nav.js?v=9','./bizpins.js?v=4','./gl.js?v=26','./extras.js?v=12','./signin.js?v=11','./place.js?v=5','./osm.js?v=16','./awplaces.js?v=5','./saved.js?v=4','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=9','./offline.js?v=12','./e2e.js?v=1','./friends.js?v=26','./frtheme.js?v=1','./sonic.js?v=1','./mesh.js?v=5','./riglink.js?v=38','./rltheme.js?v=1','./showroom.js?v=7','./navback.js?v=2','./shell.js?v=8','./menutheme.js?v=1','./toolsheet.js?v=1','./look.js?v=2','./offsafe.js?v=3','./offmore.js?v=1','./aware.js?v=3','./snow.js?v=7','./rain.js?v=3','./ui.js?v=17','./settheme.js?v=1','./lyrtheme.js?v=1','./push.js?v=1','./tools.js?v=9','./roads.js?v=9','./winter.js?v=9','./ar.js?v=9','./sled-zones.json','./manifest.webmanifest'];
+  var LIBS=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css','https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js','./','./index.html','./fb.js?v=1','./crash.js?v=3','./icons3d.js?v=2','./onboard.js?v=14','./tour.js?v=2','./pins.js?v=4','./rigs.js?v=1','./app.js?v=158','./app2.js?v=8','./srtheme.js?v=1','./nav.js?v=9','./bizpins.js?v=4','./gl.js?v=26','./extras.js?v=12','./signin.js?v=11','./place.js?v=5','./osm.js?v=16','./awplaces.js?v=5','./saved.js?v=4','https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js','https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js','./reports.js?v=9','./offline.js?v=12','./e2e.js?v=1','./friends.js?v=26','./frtheme.js?v=1','./sonic.js?v=1','./mesh.js?v=5','./riglink.js?v=38','./rltheme.js?v=1','./showroom.js?v=7','./navback.js?v=2','./shell.js?v=8','./menutheme.js?v=1','./toolsheet.js?v=1','./look.js?v=2','./offsafe.js?v=3','./offmore.js?v=1','./aware.js?v=3','./snow.js?v=7','./rain.js?v=3','./ui.js?v=17','./settheme.js?v=1','./lyrtheme.js?v=1','./push.js?v=1','./tools.js?v=9','./roads.js?v=9','./winter.js?v=9','./ar.js?v=9','./sled-zones.json','./manifest.webmanifest'];
   function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v) }catch(e){ return null } }
   function lj(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
   var ICO={home:'<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
@@ -48,7 +48,10 @@
   var fix=null, track=lj('sky-track',{t:0,p:[]}), wId=null, lineHome=null, pathLine=null, showLine=false, showPath=false;
   if(!track.p) track={t:0,p:[]};
   function brg(a,b,c,d){ var r=Math.PI/180, y=Math.sin((d-b)*r)*Math.cos(c*r), x=Math.cos(a*r)*Math.sin(c*r)-Math.sin(a*r)*Math.cos(c*r)*Math.cos((d-b)*r); return (Math.atan2(y,x)/r+360)%360 }
-  function onFix(p){ var c=p.coords; fix=[c.latitude,c.longitude]; var now=Date.now();
+  var spd=0, lastF=null; // smoothed speed in km/h
+  function onFix(p){ var c=p.coords; var nf=[c.latitude,c.longitude]; var now=Date.now();
+    var v=c.speed!=null&&c.speed>=0?c.speed*3.6:(lastF&&now>lastF[2]+1500?km(lastF[0],lastF[1],nf[0],nf[1])/((now-lastF[2])/3600000):null);
+    if(v!=null&&v<200){ spd=spd?spd*.7+v*.3:v } lastF=[nf[0],nf[1],now]; fix=nf;
     if(now-(track.t||0)>8*3600000) track={t:now,p:[]};
     var last=track.p[track.p.length-1]; if(!last||km(last[0],last[1],fix[0],fix[1])>0.03){ track.p.push([+fix[0].toFixed(5),+fix[1].toFixed(5)]); if(track.p.length>4000) track.p.splice(0,track.p.length-4000); track.t=now; if(track.p.length%5===0) ls('sky-track',JSON.stringify(track)) }
     track.t=now; updHome() }
@@ -57,14 +60,25 @@
   document.addEventListener('visibilitychange',watch);
   function updHome(){ if(!home) return; var p=fix||(A.me()&&A.me().label==='you'?[A.me().lat,A.me().lon]:null);
     if(homeMk&&p) homeMk.setOpacity(km(p[0],p[1],home.lat,home.lon)<0.04?0:1); // at home: your vehicle shows, not the pin
-    if(showLine&&p){ var ll=[p,[home.lat,home.lon]]; if(lineHome) lineHome.setLatLngs(ll); else lineHome=L.polyline(ll,{color:'#30b0c7',weight:4,opacity:.9,dashArray:'10 8',interactive:false}).addTo(map) }
+    if(showLine&&p){ var ll=[p,[home.lat,home.lon]]; if(lineHome) lineHome.setLatLngs(ll); else lineHome=L.polyline(ll,{color:'#64d2ff',weight:4,opacity:.9,dashArray:'10 8',interactive:false}).addTo(map) }
     if(showPath&&track.p.length>1){ if(pathLine) pathLine.setLatLngs(track.p); else pathLine=L.polyline(track.p,{color:'#ffcc00',weight:4,opacity:.95,interactive:false}).addTo(map) }
     var el=document.getElementById('ofhc'); if(!el||el.hidden||!p) return; var d=km(p[0],p[1],home.lat,home.lon), b=brg(p[0],p[1],home.lat,home.lon), mb=map.getBearing?map.getBearing():0;
     el.querySelector('.ofarr').style.transform='rotate('+(b-mb)+'deg)'; el.querySelector('.ofdist').textContent=d<1?Math.round(d*1000)+' m':d.toFixed(d<10?1:0)+' km';
-    el.querySelector('.ofsub').textContent=['N','NE','E','SE','S','SW','W','NW'][Math.round(b/45)%8]+' of you · straight-line distance' }
+    var dir=['North','Northeast','East','Southeast','South','Southwest','West','Northwest'][Math.round(b/45)%8], eta=spd>3?d/spd*60:0;
+    el.querySelector('.ofsub').innerHTML=dir+(eta?' · <b>~'+(eta<60?Math.max(1,Math.round(eta))+' min':(eta/60).toFixed(1)+' h')+'</b> at your speed':' · straight line');
+    var pl=0; for(var i=1;i<track.p.length;i++) pl+=km(track.p[i-1][0],track.p[i-1][1],track.p[i][0],track.p[i][1]);
+    var q=function(s){ return el.querySelector(s) }; q('[data-s=pl]').textContent=pl<1?Math.round(pl*1000)+' m':pl.toFixed(1)+' km';
+    q('[data-s=sp]').textContent=spd>1?Math.round(spd)+' km/h':'Stopped';
+    var sn=sunNext(p[0],p[1]); q('[data-s=sn]').textContent=sn?new Date(sn.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'—'; q('[data-s=snl]').textContent=sn&&sn.rise?'Sunrise':'Sunset' }
+  // next sunset (or sunrise if it's already dark), worked out on the phone, no signal needed
+  function sunAlt(lat,lon,t){ var r=Math.PI/180, d=t/86400000-10957.5, g=(357.529+0.98560028*d)*r, q=280.459+0.98564736*d, Lm=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*r, e=(23.439-0.00000036*d)*r;
+    var ra=Math.atan2(Math.cos(e)*Math.sin(Lm),Math.cos(Lm))/r, dec=Math.asin(Math.sin(e)*Math.sin(Lm)), gm=(18.697374558+24.06570982441908*d)%24*15, ha=(gm+lon-ra)*r;
+    return Math.asin(Math.sin(lat*r)*Math.sin(dec)+Math.cos(lat*r)*Math.cos(dec)*Math.cos(ha))/r }
+  function sunNext(lat,lon){ var t=Date.now(), a0=sunAlt(lat,lon,t), up=a0>-0.833; for(var k=1;k<=24*12;k++){ var t1=t+k*300000, a=sunAlt(lat,lon,t1); if(up?a<=-0.833:a>-0.833) return {t:t1,rise:!up} } return null }
   map.on('rotate',updHome);
   var hc=document.createElement('div'); hc.id='ofhc'; hc.hidden=true; hc.setAttribute('role','dialog'); hc.setAttribute('aria-label','Get me home'); document.getElementById('map').parentNode.appendChild(hc);
-  function openHomeCard(){ if(!home) return; hc.innerHTML='<button type="button" class="ofx" aria-label="Close">'+I('x',15)+'</button><div class="ofhrow"><span class="ofarr" style="color:#30b0c7">'+I('arrow',44)+'</span><div><b class="ofdist">…</b><small class="ofsub">Waiting for GPS…</small></div></div>'+
+  function openHomeCard(){ if(!home) return; hc.innerHTML='<button type="button" class="ofx" aria-label="Close">'+I('x',15)+'</button><div class="ofhrow"><div class="ofdial"><svg viewBox="0 0 104 104" aria-hidden="true"><g stroke="#64d2ff" stroke-opacity=".35" stroke-width="1.5"><path d="M52 6v6M52 92v6M6 52h6M92 52h6"/></g><text x="52" y="21" fill="#9aa3ad" font-size="9" font-weight="700" text-anchor="middle">N</text></svg><span class="ofarr"><svg viewBox="0 0 104 104" aria-hidden="true"><path d="M52 22l15 34-15-8-15 8z" fill="#64d2ff"/><path d="M52 22l15 34-15-8z" fill="#fff" fill-opacity=".25"/></svg></span></div><div><span class="oflb">Home</span><b class="ofdist">…</b><small class="ofsub">Waiting for GPS…</small></div></div>'+
+      '<div class="ofst"><div><b data-s="pl">—</b><small>Your path in</small></div><div><b data-s="sn">—</b><small data-s="snl">Sunset</small></div><div><b data-s="sp">—</b><small>Your speed</small></div></div>'+
       '<div class="ofbtns"><button type="button" data-a="line" aria-pressed="'+showLine+'">Line to home</button><button type="button" data-a="path" aria-pressed="'+showPath+'">My path in</button><button type="button" data-a="set">Change</button></div>';
     hc.hidden=false; hc.querySelector('.ofx').onclick=function(){ hc.hidden=true };
     hc.querySelector('[data-a=line]').onclick=function(){ showLine=!showLine; this.setAttribute('aria-pressed',showLine); if(!showLine&&lineHome){ map.removeLayer(lineHome); lineHome=null } updHome() };
@@ -143,9 +157,17 @@
       for(var k=0;k<5;k++) w() }).catch(function(){ rjob=null; tell({error:true}) });
     return true }
   window.__offSetup=function(){ openSetup() };
-  window.__off={inHome:inHome,corridor:corridor,saveRoute:saveRoute,busy:function(){ return !!rjob },saved:function(){ return routes() },names:function(){ return lj('aw-names',[]) }};
+  window.__off={homeCard:function(){ openHomeCard() },inHome:inHome,corridor:corridor,saveRoute:saveRoute,busy:function(){ return !!rjob },saved:function(){ return routes() },names:function(){ return lj('aw-names',[]) }};
   addRouteLayer();
 
+  (function(){ var st=document.createElement('style'); st.textContent=
+    '#ofhc{background:linear-gradient(160deg,rgba(100,210,255,.12),rgba(18,22,28,0) 55%),#12161c!important;color:#eef1f5!important;border:1px solid rgba(100,210,255,.26);border-radius:24px!important;padding:16px!important;box-shadow:0 18px 40px rgba(0,0,0,.55)!important}body.awshell #ofhc{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)}'+
+    '#ofhc .ofx{top:12px;right:12px;background:rgba(255,255,255,.08);color:#c2c9d1}#ofhc .ofhrow{gap:16px;padding-right:34px}'+
+    '#ofhc .ofdial{position:relative;width:100px;height:100px;flex:none;border-radius:50%;background:radial-gradient(circle,rgba(100,210,255,.2),rgba(100,210,255,.03) 70%);box-shadow:0 0 0 2px rgba(100,210,255,.55),0 0 26px rgba(100,210,255,.35)}#ofhc .ofdial>svg,#ofhc .ofarr,#ofhc .ofarr svg{position:absolute;inset:0;width:100%;height:100%}'+
+    '#ofhc .ofarr{display:block;border-radius:0;background:none;margin:0}#ofhc .oflb{display:block;font:700 11.5px var(--font);color:#64d2ff}#ofhc .ofdist{font:800 32px var(--font);letter-spacing:-.5px;line-height:1.05}#ofhc .ofsub{display:block;color:#9aa3ad;font:500 12.5px var(--font);margin-top:4px}#ofhc .ofsub b{color:#eef1f5}'+
+    '#ofhc .ofst{display:flex;gap:8px;margin-top:14px}#ofhc .ofst div{flex:1;min-width:0;border-radius:13px;padding:8px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07)}#ofhc .ofst b{display:block;font:800 14px var(--font);white-space:nowrap}#ofhc .ofst small{font:500 10.5px var(--font);color:#9aa3ad}'+
+    '#ofhc .ofbtns{gap:8px;margin-top:12px}#ofhc .ofbtns button{height:40px;padding:0 4px;white-space:nowrap;border-radius:13px;font:700 12px var(--font);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#c2c9d1}#ofhc .ofbtns button[aria-pressed=true]{background:linear-gradient(180deg,rgba(100,210,255,.3),rgba(100,210,255,.12));border-color:rgba(100,210,255,.6);color:#fff;box-shadow:0 0 14px rgba(100,210,255,.3)}';
+    document.head.appendChild(st) })();
   // ---------- setup screen (glow theme) ----------
   (function(){ var T='#40e0c8', st=document.createElement('style'); st.textContent=
     '#ofsetup{background:radial-gradient(70% 35% at 50% 22%,rgba(64,224,200,.16),transparent 70%),#0b0e12;color:#eef1f5}'+
