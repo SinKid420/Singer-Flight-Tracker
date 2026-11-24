@@ -106,7 +106,7 @@
   var F={st:null,tg:[],img:null,th:null,pos:null};
   function tile(k){ var s=ST[k], ic={ok:'chk',warn:'warn',bad:'stop'}[k]; return '<button type="button" class="trtile" data-st="'+k+'" style="--c:'+s[0]+'"><span>'+I(ic,20)+'</span><b>'+s[1]+'</b><small>'+s[2]+'</small></button>' }
   function openForm(spot){ if(!spot) return; if(A.show) A.show(false); closeCard(); F={st:null,tg:[],img:null,th:null,pos:{lat:spot.lat,lon:spot.lon}};
-    form.innerHTML='<div class="trfin"><div class="trfh"><b>Report trail</b><button type="button" class="trx2" aria-label="Close">'+I('x',15)+'</button></div>'+
+    form.innerHTML='<div class="trfin"><div class="trfh"><span class="trbd"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M5 21V4h10l-1 4 5 1-1 7H9v5"/><path d="M5 21V4h10l-1 4 5 1-1 7H9"/></svg></span><span class="trht"><b>Report trail</b><small>Other riders see it right away.</small></span><button type="button" class="trx2" aria-label="Close">'+I('x',15)+'</button></div>'+
       '<div class="trq">How\'s the trail?</div><div class="trtiles">'+tile('ok')+tile('warn')+tile('bad')+'</div>'+
       '<div class="trq">What\'s out there? <small>tap any</small></div><div class="trtg">'+TG.map(function(t){ return '<button type="button" data-tg="'+t[0]+'">'+t[1]+' '+t[2]+'</button>' }).join('')+'</div>'+
       '<div class="trq">Add a photo <small>optional</small></div><div class="trpb"><button type="button" data-p="cam">'+I('cam',21)+'Take photo</button><button type="button" data-p="gal">'+I('img',21)+'From gallery</button></div><div class="trprev" hidden></div>'+

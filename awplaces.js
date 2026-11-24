@@ -38,16 +38,18 @@
   function form(o){ o=o||{}; if(!F){ F=document.createElement('div'); F.id='awpf'; F.hidden=true; F.setAttribute('role','dialog'); F.setAttribute('aria-label','Add a place'); document.body.appendChild(F);
       F.addEventListener('click',function(e){ if(e.target===F) F.hidden=true }) }
     var me=ls('sky-trname')||'';
-    F.innerHTML='<div class="sh"><h3>'+(o.id?'Fix this place':o.n?'Fix info for this place':'Add a place')+'</h3>'+
+    var ty0=o.ty||TY[0][0];
+    F.innerHTML='<div class="sh awpg"><div class="hd"><span class="pbd" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="f" d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21zM12 6.5v6M9 9.5h6"/></svg></span><span class="ht"><b>'+(o.id?'Fix this place':o.n?'Fix info for this place':'Add a place')+'</b><small>Missing from the map? Add it for everyone.</small></span><button type="button" class="px" data-a="no" aria-label="Close">✕</button></div>'+
+      '<div class="tyl">Type</div><div class="tyc" role="group" aria-label="Type">'+TY.map(function(t){ return '<button type="button" data-ty="'+esc(t[0])+'"'+(t[0]===ty0?' class="on" aria-pressed="true"':' aria-pressed="false"')+'>'+t[1]+' '+esc(t[0])+'</button>' }).join('')+'</div>'+
       '<label>Name *<input id="awpn" maxlength="80" autocomplete="off" value="'+esc(o.n||'')+'"></label>'+
       '<label>Address<input id="awpa" maxlength="120" autocomplete="off" value="'+esc(o.ad||'')+'" placeholder="Street and town"></label>'+
-      '<label>Phone<input id="awpp" type="tel" maxlength="30" autocomplete="off" value="'+esc(o.ph||'')+'" placeholder="(250) 555-0123"></label>'+
-      '<div class="two"><div><label>Type<select id="awpt">'+TY.map(function(t){ return '<option'+(t[0]===o.ty?' selected':'')+'>'+t[0]+'</option>' }).join('')+'</select></label></div><div><label>Hours<input id="awph" maxlength="120" autocomplete="off" value="'+esc(o.hr||'')+'" placeholder="Mon–Fri 8–5"></label></div></div>'+
+      '<select id="awpt" hidden>'+TY.map(function(t){ return '<option'+(t[0]===ty0?' selected':'')+'>'+t[0]+'</option>' }).join('')+'</select><div class="two"><div><label>Phone<input id="awpp" type="tel" maxlength="30" autocomplete="off" value="'+esc(o.ph||'')+'" placeholder="(250) 555-0123"></label></div><div><label>Hours<input id="awph" maxlength="120" autocomplete="off" value="'+esc(o.hr||'')+'" placeholder="Mon–Fri 8–5"></label></div></div>'+
       '<label>Website<input id="awpw" type="url" maxlength="200" autocomplete="off" value="'+esc(o.ws||'')+'" placeholder="https://"></label><div class="er" role="status"></div>'+
-      '<div class="bt"><button type="button" data-a="no">Cancel</button><button type="button" class="pri" data-a="ok">Save</button></div>'+
+      '<div class="bt"><button type="button" data-a="no">Cancel</button><button type="button" class="pri" data-a="ok">Save place</button></div>'+
       '<div class="nt">Shows in AwareBC right away · Added by '+esc(me||'you')+'. Only add real places.</div></div>';
     F.hidden=false; var er=F.querySelector('.er');
-    F.querySelector('[data-a=no]').onclick=function(){ F.hidden=true };
+    F.querySelector('.tyc').onclick=function(e){ var b=e.target.closest&&e.target.closest('[data-ty]'); if(!b) return; F.querySelector('#awpt').value=b.getAttribute('data-ty'); [].forEach.call(this.querySelectorAll('[data-ty]'),function(x){ var on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-pressed',String(on)) }) };
+    [].forEach.call(F.querySelectorAll('[data-a=no]'),function(x){ x.onclick=function(){ F.hidden=true } });
     F.querySelector('[data-a=ok]').onclick=function(){ var btn=this, v=function(id){ return F.querySelector('#'+id).value.trim() }, ws=v('awpw');
       if(v('awpn').length<2){ er.textContent='Add the name.'; return } if(ws&&!/^https?:\/\//i.test(ws)) ws='https://'+ws;
       btn.disabled=true; btn.textContent='Saving…';

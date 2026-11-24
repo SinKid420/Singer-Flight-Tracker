@@ -606,9 +606,11 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       if(p.t) types[p.t]=(types[p.t]||0)+1 });
     var gl=Object.keys(groups).map(function(k){return groups[k]}).sort(function(x,y){return y.c-x.c});
     var top=function(o,n){return Object.keys(o).sort(function(x,y){return o[y]-o[x]}).slice(0,n)};
-    var h='<div class="skysum"><span><b>'+list.length+'</b> planes</span><span><b>'+nAir+'</b> airline</span><span><b>'+nGa+'</b> private / other</span>'+(nMil?'<span><b>'+nMil+'</b> military</span>':'')+'<span'+(nEm?' style="background:#c62828;color:#fff"':'')+'><b'+(nEm?' style="color:#fff"':'')+'>'+nEm+'</b> emergencies</span></div>';
-    h+=gl.slice(0,6).map(function(g){ return '<div class="alrow"><b>'+esc(g.n===g.code?g.code:g.n+' ('+g.code+')')+'</b><em>'+g.c+'</em><small>'+esc(top(g.t,3).map(function(t){return (TYPES[t]||t)+(g.t[t]>1?' ×'+g.t[t]:'')}).join(', ')||'type unknown')+'</small></div>' }).join('');
-    if(gl.length>6) h+='<div class="skynote">+ '+(gl.length-6)+' more airlines</div>';
+    var tot=Math.max(1,list.length), pA=nAir/tot*100;
+    var h='<div class="skyhero"><div class="skyring" style="background:conic-gradient(#64d2ff 0 '+pA.toFixed(1)+'%,#32d74b '+pA.toFixed(1)+'% 100%)"><b>'+list.length+'</b></div><div class="skylg"><div><i style="background:#64d2ff"></i>Airline<b>'+nAir+'</b></div><div><i style="background:#32d74b"></i>Private<b>'+nGa+'</b></div><div><i style="background:#9aa3ad"></i>Military<b>'+nMil+'</b></div><div><i style="background:#ff453a"></i>Alert<b>'+nEm+'</b></div></div></div>'+(gl.length?'<div class="skylab"><span>Top airlines</span><i>shown on your map</i></div>':'');
+    var LC=['#64d2ff','#40e0c8','#bf8bff','#ffb340','#32d74b','#ff9b5f'];
+    h+=gl.slice(0,5).map(function(g,i){ return '<div class="alrow skyal"><span class="lo" style="background:'+LC[i%6]+'">'+esc(g.code)+'</span><span class="tx"><b>'+esc(g.n===g.code?g.code:g.n)+'</b><small>'+esc(top(g.t,3).map(function(t){return (TYPES[t]||t)+(g.t[t]>1?' ×'+g.t[t]:'')}).join(', ')||'type unknown')+'</small></span><em>'+g.c+'</em></div>' }).join('');
+    if(gl.length>5) h+='<div class="skynote">+ '+(gl.length-5)+' more airlines</div>';
     if(!gl.length) h+='<div class="skynote">No airline flights on the map right now.</div>';
     var tt=top(types,4); if(tt.length) h+='<div class="skynote">Most common: '+esc(tt.map(function(t){return t+' ×'+types[t]}).join(' · '))+'</div>';
     h+='<div class="skynote">Counts the planes shown on your map. Tap Settings for feeds and limits.</div>';
@@ -870,7 +872,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=283, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=284, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
