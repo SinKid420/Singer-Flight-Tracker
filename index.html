@@ -149,6 +149,27 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* highway camera card (glow theme, DriveBC amber) */
+#roadsheet.awcam .sheet{background:radial-gradient(80% 30% at 20% 0%,rgba(255,179,64,.18),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
+#roadsheet.awcam .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
+#roadsheet.awcam .awct{display:flex;align-items:center;gap:10px;min-width:0}#roadsheet.awcam .awct>span:last-child{display:flex;flex-direction:column;min-width:0}
+#roadsheet.awcam .awct b{font:800 17px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#roadsheet.awcam .awct small{font:500 11.5px var(--font);color:#9aa3ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#roadsheet.awcam .awcb{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#ffb340,#c07a10);box-shadow:0 4px 14px rgba(255,179,64,.4),inset 0 1px 0 rgba(255,255,255,.45)}
+#roadsheet.awcam .awcb svg{width:22px;height:22px;fill:none;stroke:#0a0d10;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#roadsheet.awcam .awcph{position:relative;border-radius:16px;overflow:hidden;background:#000;margin-top:4px}#roadsheet.awcam .awcph img{width:100%;display:block;object-fit:contain}
+#roadsheet.awcam .awlv{position:absolute;left:8px;top:8px;padding:3px 8px;border-radius:8px;background:#32d74b;color:#05150a;font:800 10.5px var(--font)}
+#roadsheet.awcam .awar{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:0}#roadsheet.awcam .awar.l{left:8px}#roadsheet.awcam .awar.r{right:8px}
+#roadsheet.awcam .awar svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#roadsheet.awcam .awvw{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:5px}#roadsheet.awcam .awvw button{border:0;padding:4px 10px;border-radius:9px;background:rgba(0,0,0,.5);color:#dfe6ee;font:800 11px var(--font)}#roadsheet.awcam .awvw button.on{background:#fff;color:#0a0d10}
+#roadsheet.awcam #roadts{position:relative;width:100%;aspect-ratio:205/18;overflow:hidden;background:#000;border-radius:8px;margin-top:6px}#roadsheet.awcam #roadts img{position:absolute;right:0;bottom:0;width:390.24%;max-width:none;height:auto}
+#roadsheet.awcam .awst{display:flex;gap:7px;margin-top:10px}#roadsheet.awcam .awst>div{flex:1;border-radius:13px;padding:8px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);min-width:0}
+#roadsheet.awcam .awst small{display:block;font:600 10.5px var(--font);color:#9aa3ad}#roadsheet.awcam .awst b{display:block;font:800 15px var(--font);margin-top:2px;white-space:nowrap}
+#roadsheet.awcam .awcd{display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:14px;background:linear-gradient(150deg,rgba(255,179,64,.16),rgba(255,255,255,.03) 65%);border:1px solid rgba(255,179,64,.3)}#roadsheet.awcam .awcd[hidden]{display:none}
+#roadsheet.awcam .awcd.ok{background:linear-gradient(150deg,rgba(50,215,75,.12),rgba(255,255,255,.03) 65%);border-color:rgba(50,215,75,.28)}#roadsheet.awcam .awcd.ok svg{stroke:#32d74b}
+#roadsheet.awcam .awcd svg{width:20px;height:20px;flex:none;fill:none;stroke:#ffb340;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#roadsheet.awcam .awcd b{display:block;font:700 13px var(--font)}#roadsheet.awcam .awcd small{font:500 11px var(--font);color:#9aa3ad}
+#roadsheet.awcam .awbt{display:flex;gap:8px;margin-top:10px}#roadsheet.awcam .awbt button{flex:1;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#eef1f5;font:700 13px var(--font)}
+#roadsheet.awcam .awbt button.p{border:0;background:linear-gradient(180deg,#ffc35a,#e08a10);color:#1a1004;font-weight:800;box-shadow:0 6px 18px rgba(255,179,64,.35)}
+#roadsheet.awcam .awcap{font:500 11.5px/1.4 var(--font);color:#9aa3ad;margin-top:8px}#roadsheet.awcam .awoff{padding:30px 12px;text-align:center;color:#9aa3ad}
 /* plane card: glow theme, colour follows the plane type */
 body.awshell .dock:has(.card.pk){bottom:calc(64px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0;max-height:calc(100dvh - 190px);overflow-y:auto}.card.pk .grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.card.pk .grid div{padding:6px 7px!important}.card.pk .grid span{font-size:14px!important}.card.pk .grid small{font-size:9.5px}
 .dock:has(.card.pk){background:radial-gradient(80% 50% at 15% 0%,color-mix(in srgb,var(--pkc,#64d2ff) 18%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
@@ -743,7 +764,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=147"></script>
+<script src="app.js?v=148"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>
