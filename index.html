@@ -149,6 +149,21 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* space & night sky (glow theme): aurora glow behind, Earth's horizon at the bottom */
+#spacesheet.awsp .sheet{position:relative;overflow-x:hidden;background:radial-gradient(90% 26% at 50% 0%,rgba(50,215,75,calc(var(--aur,0) * .22)),transparent 70%),radial-gradient(80% 30% at 20% 0%,rgba(191,139,255,.2),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08);padding-bottom:0!important}
+#spacesheet.awsp .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
+#spacesheet.awsp .awspt{display:flex;align-items:center;gap:10px}#spacesheet.awsp .awspt>span:last-child{display:flex;flex-direction:column}#spacesheet.awsp .awspt b{font:800 18px/1.2 var(--font)}#spacesheet.awsp .awspt small{font:500 11.5px var(--font);color:#9aa3ad}
+#spacesheet.awsp .awspb{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#bf8bff,#7a4ad0);box-shadow:0 4px 14px rgba(191,139,255,.45),inset 0 1px 0 rgba(255,255,255,.45)}#spacesheet.awsp .awspb svg{width:22px;height:22px;fill:none;stroke:#0a0d10;stroke-width:1.9;stroke-linejoin:round;stroke-linecap:round}#spacesheet.awsp .awspb svg .f{fill:#0a0d10;fill-opacity:.25;stroke:none}
+#spacesheet.awsp .awspn{margin-top:6px;padding:12px;border-radius:16px;background:linear-gradient(150deg,rgba(191,139,255,.18),rgba(255,255,255,.03) 65%);border:1px solid rgba(191,139,255,.35)}#spacesheet.awsp .awspn>small{display:block;font:600 11px var(--font);color:#d6bfff}
+#spacesheet.awsp .awspn .t{display:flex;align-items:center;margin-top:3px;gap:8px}#spacesheet.awsp .awspn .t>b{font:800 22px/1.15 var(--font);min-width:0}#spacesheet.awsp .awspn .t span{margin-left:auto;text-align:right;flex:none}#spacesheet.awsp .awspn .t span b{display:block;font:800 15px var(--font)}#spacesheet.awsp .awspn .t span small{font:500 11px var(--font);color:#9aa3ad}
+#spacesheet.awsp .awspn .s{display:block;font:800 16px var(--font);margin-top:3px}#spacesheet.awsp .awspn .m{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font:600 12px var(--font);color:#c7ccd3}
+#spacesheet.awsp .awspl{margin-top:8px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:0 12px}#spacesheet.awsp .awspl>div{display:grid;grid-template-columns:1fr auto;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}#spacesheet.awsp .awspl>div:first-child{border-top:0}#spacesheet.awsp .awspl b{font:700 13px var(--font)}#spacesheet.awsp .awspl small{grid-column:1;font:500 11px var(--font);color:#9aa3ad}#spacesheet.awsp .awspl span{grid-row:1/3;grid-column:2;align-self:center;font:700 12px var(--font);color:#d6bfff}
+#spacesheet.awsp .awsps{display:flex;gap:7px;margin-top:8px}#spacesheet.awsp .awsps>div{flex:1;min-width:0;border-radius:13px;padding:8px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}#spacesheet.awsp .awsps small{display:block;font:600 10.5px var(--font);color:#9aa3ad}#spacesheet.awsp .awsps b{display:block;font:800 13.5px var(--font);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#spacesheet.awsp .awspa{margin-top:8px;padding:10px 12px;border-radius:14px;background:linear-gradient(150deg,color-mix(in srgb,var(--ac) 16%,transparent),rgba(255,255,255,.03) 65%);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent)}#spacesheet.awsp .awspa .t{display:flex;align-items:center}#spacesheet.awsp .awspa .t b{font:700 13.5px var(--font)}#spacesheet.awsp .awspa .t span{margin-left:auto;padding:3px 9px;border-radius:9px;background:var(--ac);color:#05150a;font:800 11.5px var(--font);box-shadow:0 0 10px color-mix(in srgb,var(--ac) 50%,transparent)}#spacesheet.awsp .awspa small{display:block;font:500 11px/1.35 var(--font);color:#9aa3ad;margin-top:3px}
+#spacesheet.awsp .awspm{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:8px;padding:0 2px;font:500 11.5px var(--font);color:#9aa3ad}#spacesheet.awsp .awspm b{color:#eef1f5;font:700 12.5px var(--font)}
+#spacesheet.awsp .awspbt{display:flex;gap:8px;margin-top:10px}#spacesheet.awsp .awspbt button{flex:1;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#eef1f5;font:700 13px var(--font)}#spacesheet.awsp .awspbt button.p{border:0;background:linear-gradient(180deg,#d6b5ff,#7a4ad0);color:#0a0d10;font-weight:800;box-shadow:0 6px 18px rgba(191,139,255,.4)}
+#spacesheet.awsp .awspar{text-align:center;margin-top:6px}#spacesheet.awsp .awspar button{border:0;background:none;color:#d6bfff;font:700 12px var(--font);padding:6px}
+#spacesheet.awsp .skynote{color:#7d8692;position:relative;z-index:1}#spacesheet.awsp .awsph{display:block;width:calc(100% + 32px);height:80px;margin:4px -16px 0}
 /* airport card (glow theme, colour follows the flying weather) */
 #aptsheet.awapt .sheet{background:radial-gradient(80% 30% at 20% 0%,color-mix(in srgb,var(--ac) 18%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08);--fg:#eef1f5;--dim:#9aa3ad;--chip:rgba(255,255,255,.06)}
 #aptsheet.awapt .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
@@ -810,7 +825,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=152"></script>
+<script src="app.js?v=153"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>

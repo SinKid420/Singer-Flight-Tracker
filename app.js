@@ -870,7 +870,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=272, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=273, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1139,28 +1139,44 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       setTimeout(function(){ if(tok!==spaceTok||!sats.length) return; var list=[], todo=sats.filter(function(x){return x.tag!=='new'}), i=0;
         (function chunk(){ if(tok!==spaceTok) return; var end=Math.min(i+15,todo.length); for(;i<end;i++){ var x=todo[i], ps=passes(x,x.tag==='station'?24:12,x.tag==='station'?30:60,4); ps.forEach(function(p){ if(x.tag==='station'||(p.vis&&p.max>=30)) list.push(p) }) }
           if(i<todo.length) setTimeout(chunk,0); else renderSpace(r[1],list) })() },50) }) }
-  function renderSpace(kp,pl){ var body=document.getElementById('spacebody'); if(!body) return; var h='';
+  // space & night sky card (glow theme): next bright pass, northern lights chance (the aurora glow brightens with it), Earth's horizon at the bottom
+  var spMore=false;
+  function moonLit(){ var syn=29.530588853, d=(Date.now()/86400000-10956.8)%syn; d=(d+syn)%syn; return Math.round((1-Math.cos(2*Math.PI*d/syn))/2*100) }
+  function spHorizon(){ var sd=11; function q(){ sd=(sd*16807)%2147483647; return sd/2147483647 } var CY=652,RX=760,RY=620,lt='',st='';
+    [[60,8],[140,5],[230,10],[305,6]].forEach(function(c){ for(var i=0;i<(LOWMEM?18:40);i++){ var x=c[0]+(q()-.5)*c[1]*8, rx=x-180, yy=CY-Math.sqrt(Math.max(0,1-rx*rx/(RX*RX)))*RY, y=yy+3+Math.pow(q(),1.6)*32; lt+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(q()<.25?1.3:.75)+'" fill="'+(q()<.5?'#ffcf7a':'#ffe9b0')+'" opacity="'+(.45+q()*.5).toFixed(2)+'"/>' } });
+    for(var i=0;i<30;i++) st+='<circle cx="'+(q()*360).toFixed(1)+'" cy="'+(q()*24).toFixed(1)+'" r=".6" fill="#fff" opacity="'+(.2+q()*.4).toFixed(2)+'"/>';
+    var E='<ellipse cx="180" cy="'+CY+'" rx="'+RX+'" ry="'+RY+'" ';
+    return '<svg class="awsph" viewBox="0 0 360 80" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><radialGradient id="spheg" cx="50%" cy="0%" r="75%"><stop offset="0" stop-color="#1a4270"/><stop offset=".5" stop-color="#0d2440"/><stop offset="1" stop-color="#060d18"/></radialGradient><linearGradient id="sphl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8e2ff"/><stop offset=".6" stop-color="#cfeaff"/><stop offset="1" stop-color="#ffb066"/></linearGradient><linearGradient id="spho" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".45" stop-color="#333"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="sphm"><rect width="360" height="80" fill="url(#spho)"/></mask><radialGradient id="spho2" cx="100%" cy="100%" r="80%"><stop offset="0" stop-color="#ff8a2a" stop-opacity=".35"/><stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/></radialGradient>'+(LOWMEM?'':'<filter id="sphs" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.6"/></filter><filter id="sphg" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>')+'</defs>'+st+
+      (LOWMEM?'':E+'fill="none" stroke="#7cc8ff" stroke-width="16" opacity=".35" filter="url(#sphg)"/>'+E+'fill="none" stroke="#ff9a3c" stroke-width="24" opacity=".4" filter="url(#sphg)" mask="url(#sphm)"/>')+E+'fill="url(#spheg)"/>'+lt+E+'fill="none" stroke="url(#sphl)" stroke-width="3" opacity=".45"'+(LOWMEM?'':' filter="url(#sphs)"')+'/><rect x="0" y="0" width="360" height="80" fill="url(#spho2)"/></svg>' }
+  function renderSpace(kp,pl){ var body=document.getElementById('spacebody'), sh=document.getElementById('spacesheet'); if(!body) return; var h='';
+    sh.classList.add('awsp');
     var up=upNow(), iss=sats.filter(function(x){return x.id==='25544'})[0], issL=null;
     if(iss){ var d=new Date(); issL=look(iss,d,satellite.gstime(d),obsGd()) }
-    h+='<div class="ssec"><h4>Right now</h4>';
-    if(!sats.length) h+='Satellite data could not load. Check your connection and try again.';
-    else { if(issL) h+='<div class="row2"><span>🛰 <b>ISS</b> '+(issL.el>0?'is <b class="good">above you</b>, '+cmp(issL.az)+' · '+Math.round(issL.el)+'° up':'is '+Math.round(distNm(me.lat,me.lon,issL.lat,issL.lon)*1.852).toLocaleString()+' km away')+'</span><span>'+Math.round(issL.h)+' km up</span></div>';
-      h+='<div class="row2"><span><b>'+up.length+'</b> tracked satellites above you · <b>'+up.filter(function(x){return x.vis}).length+'</b> lit and visible</span><span></span></div>' }
-    h+='</div><div class="ssec"><h4>Next passes you can see</h4>';
-    if(pl==null) h+=sats.length?'Working out passes…':'—';
-    else { var vis=pl.filter(function(p){return p.vis||(cfg2.passAll==='1'&&(p.s.id==='25544'||p.s.id==='48274'))}).sort(function(a,b){return a.start-b.start}).slice(0,4);
-      if(!vis.length){ var nx=pl.filter(function(p){return p.s.id==='25544'}).sort(function(a,b){return a.start-b.start})[0]; h+='No bright passes in darkness soon.'+(nx?' Next ISS flyover: '+esc(fmtT(nx.start))+' (daylight or in shadow).':'') }
-      vis.forEach(function(p){ var mins=Math.max(1,Math.round((p.end-p.start)/60000)); h+='<div class="row2"><span><b>'+esc(p.s.id==='25544'?'ISS':p.s.name)+'</b> '+cmp(p.az0)+'→'+cmp(p.az1)+' · '+Math.round(p.max)+'° up</span><span>'+esc(fmtT(p.start))+' · '+mins+'m</span></div>' }) }
-    h+='</div><div class="ssec"><h4>Northern lights</h4>';
-    if(!kp||!kp.length) h+='Space weather could not load.';
+    var ml=moonLit(); document.querySelector('#spacesheet .sheet-head b').innerHTML='<span class="awspt"><span class="awspb"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="f" x="9" y="9" width="6" height="6" rx="1" transform="rotate(45 12 12)"/><rect x="9" y="9" width="6" height="6" rx="1" transform="rotate(45 12 12)"/><path d="M6.5 6.5L3.5 9.5l3 3M17.5 17.5l3-3-3-3"/></svg></span><span><b>Tonight’s sky</b><small>Moon '+ml+'% lit'+(ml<30?' · good for stars':ml>80?' · bright moon':'')+'</small></span></span>';
+    // next bright pass
+    if(!sats.length) h+='<div class="awspn"><small>Satellites</small><b class="s">Satellite data could not load.</b><div class="m">Check your signal and open this again.</div></div>';
+    else if(pl==null) h+='<div class="awspn"><small>Next bright pass you can see</small><b class="s">Working out passes…</b></div>';
+    else { var vis=pl.filter(function(p){return p.vis||(cfg2.passAll==='1'&&(p.s.id==='25544'||p.s.id==='48274'))}).sort(function(a,b){return a.start-b.start}), p0=vis[0];
+      if(p0){ var mins=Math.max(1,Math.round((p0.end-p0.start)/60000)), inM=Math.round((p0.start-Date.now())/60000), nm=p0.s.id==='25544'?'Space Station':p0.s.id==='48274'?'China’s station':p0.s.name;
+        h+='<div class="awspn"><small>Next bright pass you can see</small><div class="t"><b>'+esc(nm)+'</b><span><b>'+esc(new Date(p0.start).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))+'</b><small>'+(inM<=0?'now':inM<60?'in '+inM+' min':inM<1440?'in '+Math.round(inM/60)+' h':esc(fmtT(p0.start)))+'</small></span></div><div class="m"><span>Rises in the '+cmp(p0.az0)+'</span><span>Up to '+Math.round(p0.max)+'°</span><span>'+mins+' min</span></div></div>';
+        if(spMore) h+='<div class="awspl">'+vis.slice(1,6).map(function(p){ var m2=Math.max(1,Math.round((p.end-p.start)/60000)); return '<div><b>'+esc(p.s.id==='25544'?'Space Station':p.s.name)+'</b><small>'+cmp(p.az0)+' → '+cmp(p.az1)+' · '+Math.round(p.max)+'° up · '+m2+' min</small><span>'+esc(fmtT(p.start))+'</span></div>' }).join('')+(vis.length<2?'<div><small>No other bright passes soon.</small></div>':'')+'</div>' }
+      else { var nx=pl.filter(function(p){return p.s.id==='25544'}).sort(function(a,b){return a.start-b.start})[0]; h+='<div class="awspn"><small>Next bright pass you can see</small><b class="s">None in darkness soon</b><div class="m">'+(nx?'Next Space Station flyover: '+esc(fmtT(nx.start))+' (daylight or in shadow)':'Check back tonight')+'</div></div>' } }
+    // right now: the station and how many satellites are up
+    if(sats.length) h+='<div class="awsps"><div><small>Space Station</small><b>'+(issL?(issL.el>0?'Above you · '+cmp(issL.az):Math.round(distNm(me.lat,me.lon,issL.lat,issL.lon)*1.852).toLocaleString()+' km away'):'—')+'</b></div><div><small>Satellites up</small><b>'+up.length+' · '+up.filter(function(x){return x.vis}).length+' lit</b></div></div>';
+    // northern lights
+    var aur=0;
+    if(!kp||!kp.length) h+='<div class="awspa" style="--ac:#8a93a0"><div class="t"><b>Northern lights</b><span>No data</span></div><small>Space weather could not load.</small></div>';
     else { var now=Date.now(), past=kp.filter(function(r){return r.t<=now}), cur=past.length?past[past.length-1].kp:0, mx=Math.max.apply(null,kp.filter(function(r){return r.t>now&&r.t<now+86400000}).map(function(r){return r.kp}).concat([cur]));
-      var need=Math.max(0,Math.min(9,(66-magLat())/2)), ch=mx>=need?['Good chance','good']:(mx>=need-1.5?['Possible, look north','']:['Low chance','bad']);
-      h+='<div class="row2"><span><b class="'+ch[1]+'">'+ch[0]+'</b> in the next 24 h</span><span>Kp '+cur.toFixed(1)+' now · up to '+mx.toFixed(1)+'</span></div><div>Your area needs about Kp '+Math.ceil(need)+'+ and a dark, clear sky.</div>' }
-    var ms=nextShower(); if(ms){ var dd=Math.round((ms.d-Date.now())/86400000); h+='</div><div class="ssec"><h4>Next meteor shower</h4><div class="row2"><span><b>'+ms.n+'</b> · up to '+ms.z+' an hour</span><span>'+(dd<=1?'peaking now':'peak '+ms.d.toLocaleDateString([], {month:'short',day:'numeric'}))+'</span></div>' }
-    h+='</div><div class="stog"><button data-k="map" class="'+(spaceCfg.map?'on':'')+'">ISS on map</button><button data-k="ar" class="'+(spaceCfg.ar?'on':'')+'">Satellites in AR</button></div>';
-    h+='<div class="skynote">Orbits: CelesTrak · Space weather: NOAA SWPC</div>';
+      var need=Math.max(0,Math.min(9,(66-magLat())/2)), lvl=mx>=need?2:mx>=need-1.5?1:0, ch=['Low chance','Possible','Good chance'][lvl], col=['#8a93a0','#ffd60a','#32d74b'][lvl]; aur=[.15,.5,1][lvl];
+      h+='<div class="awspa" style="--ac:'+col+'"><div class="t"><b>Northern lights</b><span>'+ch+'</span></div><small>Kp '+cur.toFixed(1)+' now, up to '+mx.toFixed(1)+' in 24 h · your area needs about Kp '+Math.max(1,Math.round(need))+'+'+(lvl?' · look low to the north after dark':'')+'</small></div>' }
+    var ms=nextShower(); if(ms){ var dd=Math.round((ms.d-Date.now())/86400000); h+='<div class="awspm"><span>Next meteor shower</span><b>'+ms.n+'</b><small>'+(dd<=1?'peaking now':'peak '+ms.d.toLocaleDateString([], {month:'short',day:'numeric'}))+' · up to '+ms.z+'/h</small></div>' }
+    h+='<div class="awspbt"><button type="button" class="p'+(spaceCfg.map?' on':'')+'" data-k="map">'+(spaceCfg.map?'Station on map ✓':'Show station on map')+'</button><button type="button" data-a="more">'+(spMore?'Fewer passes ‹':'More passes ›')+'</button></div>';
+    h+='<div class="awspar"><button type="button" data-k="ar" class="'+(spaceCfg.ar?'on':'')+'">'+(spaceCfg.ar?'✓ ':'')+'Satellites in AR camera</button></div>';
+    h+='<div class="skynote">Orbits: CelesTrak · Space weather: NOAA SWPC</div>'+spHorizon();
+    sh.style.setProperty('--aur',aur);
     body.innerHTML=h;
-    [].forEach.call(body.querySelectorAll('.stog button'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-k'); spaceCfg[k]=!spaceCfg[k]; b.classList.toggle('on',spaceCfg[k]); var e1=document.getElementById(k==='map'?'s_issmap':'s_satar'); if(e1) e1.value=spaceCfg[k]?'1':'0'; try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} issTick() } }) }
+    [].forEach.call(body.querySelectorAll('[data-k]'),function(b){ b.onclick=function(){ var k=b.getAttribute('data-k'); spaceCfg[k]=!spaceCfg[k]; var e1=document.getElementById(k==='map'?'s_issmap':'s_satar'); if(e1) e1.value=spaceCfg[k]?'1':'0'; try{localStorage.setItem('sky-space',JSON.stringify(spaceCfg))}catch(e){} issTick(); renderSpace(kp,pl) } });
+    var mb=body.querySelector('[data-a=more]'); if(mb) mb.onclick=function(){ spMore=!spMore; renderSpace(kp,pl) } }
   document.getElementById('spacebtn').onclick=openSpace;
   // ---- Lightning (Environment Canada CLDN, 10-minute flash density) ----
   (function(){
