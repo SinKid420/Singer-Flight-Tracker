@@ -447,6 +447,12 @@ body.fsrp #rotbtn{visibility:hidden}#rotbtn{top:auto;right:auto;left:max(10px,en
 #locmsg.awloc b{font:800 15.5px var(--font);margin:0}#locmsg .lh small{display:block;color:#9aa3ad;font:500 11.5px var(--font);margin-top:1px}
 #locmsg .lt{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}#locmsg .lt span{font:600 11px var(--font);padding:5px 8px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#c2c9d1}
 #locmsg .lr{display:flex;gap:8px;margin-top:12px}#locmsg .lr button{margin:0;height:40px;border-radius:12px}#locmsg #gpsgo{flex:1;background:linear-gradient(180deg,#7fdcff,#3aa9d6);color:#05121a;font:800 13.5px var(--font);box-shadow:0 6px 16px rgba(100,210,255,.35)}#locmsg #gpsno{background:none;color:#9aa3ad;font:600 13px var(--font);padding:0 12px}
+#locmsg.awamb{border-color:rgba(255,179,64,.32);background:linear-gradient(160deg,rgba(255,179,64,.14),rgba(18,22,28,0) 60%),#12161c}
+#locmsg .amb .lbd{background:linear-gradient(145deg,#ffb340,#d9851a);box-shadow:0 4px 14px rgba(255,179,64,.45),inset 0 1px 0 rgba(255,255,255,.4)}#locmsg .amb .lbd svg{stroke:#1a0f02}#locmsg .amb .lbd .f{fill:#1a0f02}
+#locmsg .lx{position:absolute;right:10px;top:10px;margin:0;width:28px;height:28px;padding:0;border-radius:50%;background:rgba(255,255,255,.08);color:#c2c9d1;font-size:12px}
+#locmsg .ls{margin-top:12px;display:flex;flex-direction:column;gap:7px}#locmsg .ls div{display:flex;gap:9px;align-items:center;font:500 12.5px var(--font);color:#d5dbe3}#locmsg .ls i{font-style:normal;width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font:800 11px var(--font);background:rgba(255,179,64,.16);color:#ffb340;border:1px solid rgba(255,179,64,.4)}#locmsg .ls em{font-style:normal;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.08);font-weight:700}
+#locmsg .amb .lr{margin-top:13px}#locmsg .amb #gpsgo,#locmsg .amb #gpsset{flex:1;background:linear-gradient(180deg,#ffc966,#e8941f);color:#1a0f02;font:800 13.5px var(--font);box-shadow:0 6px 16px rgba(255,179,64,.35)}#locmsg .amb #gpschk{margin:0;height:40px;padding:0 12px;border-radius:12px;color:#c2c9d1;font:700 12.5px var(--font);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}#locmsg .amb .lr>#gpschk:only-child{flex:1}
+#locmsg.awloc .lh{padding-right:30px}#locmsg #gpsno.lx{background:rgba(255,255,255,.08);padding:0;color:#c2c9d1;font-size:12px}
 #locmsg .lp{position:absolute;left:0;right:0;top:100%;margin-top:10px;font:500 10.5px var(--font);color:#8a929c;text-align:center;text-shadow:0 1px 4px #000}#locmsg b{display:block;font-size:14px;margin-bottom:2px}#locmsg button{display:block;margin:6px auto 0;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:6px 14px;font:700 13px var(--font)}.gpst{width:100%;border-collapse:collapse;margin:2px 0;text-align:left}.gpst td{padding:2px 0;font-size:12px;vertical-align:top}.gpst td:first-child{color:#aaa;padding-right:8px;white-space:nowrap}.leaflet-marker-icon.me.stale i{opacity:.45;filter:grayscale(1)}.leaflet-marker-icon.me b{display:none;position:absolute;left:50%;top:50%;width:0;height:0;margin:-27px 0 0 -9px;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid var(--mc,#ff3b30);filter:drop-shadow(0 0 2px #fff) drop-shadow(0 1px 2px rgba(0,0,0,.6));transform-origin:9px 27px;transform:rotate(var(--hd,0deg))}.leaflet-marker-icon.me.mv b{display:block}#gear{bottom:150px;color:var(--dim)}
 body.keyon .legends{left:calc(max(10px,env(safe-area-inset-left,0px)) + 52px);bottom:58px}
 .pill{justify-content:space-between;right:calc(max(16px,env(safe-area-inset-right,0px)) + 80px)}.pill .stat{font-size:14px;text-align:right;margin-left:6px}
@@ -833,7 +839,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=14"></script><script src="tour.js?v=2" defer></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=160"></script>
+<script src="app.js?v=161"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>
