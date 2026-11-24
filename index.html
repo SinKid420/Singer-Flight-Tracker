@@ -149,6 +149,25 @@ body.zout .mk .lbl:not(.sel){display:none}
 #hubbtn.alert2{background:#c62828;color:#fff;box-shadow:var(--shadow),0 0 0 4px rgba(198,40,40,.3)}
 @keyframes hubp{50%{box-shadow:0 0 0 8px rgba(198,40,40,.25)}}
 .hubban{color:#fff;font:700 14px/1.3 var(--font);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+/* wildfire card (glow theme, colour follows the fire status) */
+#firesheet.awfire .sheet{background:radial-gradient(80% 30% at 20% 0%,color-mix(in srgb,var(--fc) 22%,transparent),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
+#firesheet.awfire .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
+#firesheet.awfire .awft{display:flex;align-items:center;gap:10px;min-width:0}#firesheet.awfire .awft>span:last-child{display:flex;flex-direction:column;min-width:0}
+#firesheet.awfire .awft b{font:800 17px/1.2 var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 130px)}#firesheet.awfire .awft small{font:500 11.5px var(--font);color:#9aa3ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 130px)}
+#firesheet.awfire .awfb{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,var(--fc),color-mix(in srgb,var(--fc) 65%,#000));box-shadow:0 4px 14px color-mix(in srgb,var(--fc) 45%,transparent),inset 0 1px 0 rgba(255,255,255,.45)}
+#firesheet.awfire .awfb svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linejoin:round}#firesheet.awfire .awfb svg .f{fill:#fff;fill-opacity:.3;stroke:none}
+#firesheet.awfire .awfp{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}#firesheet.awfire .awfp span{padding:5px 11px;border-radius:11px;background:rgba(255,255,255,.06);font:700 12px var(--font);color:#c7ccd3}
+#firesheet.awfire .awfp .st{background:color-mix(in srgb,var(--fc) 20%,transparent);border:1px solid color-mix(in srgb,var(--fc) 45%,transparent);color:color-mix(in srgb,var(--fc) 60%,#fff);font-weight:800;box-shadow:0 0 12px color-mix(in srgb,var(--fc) 25%,transparent)}#firesheet.awfire .awfp .nt{color:#ffd27a;background:rgba(255,179,64,.16)}
+#firesheet.awfire .awfs{display:flex;gap:7px;margin-top:10px}#firesheet.awfire .awfs>div{flex:1;min-width:0;border-radius:13px;padding:8px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+#firesheet.awfire .awfs small,#firesheet.awfire .awfg small,#firesheet.awfire .awfa>small{display:block;font:600 10.5px var(--font);color:#9aa3ad}#firesheet.awfire .awfs b{display:block;font:800 15px var(--font);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#firesheet.awfire .awfg{margin-top:8px;border-radius:14px;padding:8px 12px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}#firesheet.awfire .awfg svg{display:block;width:100%;height:26px;margin-top:4px}
+#firesheet.awfire .awfe{display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:14px;background:linear-gradient(150deg,rgba(255,179,64,.16),rgba(255,255,255,.03) 65%);border:1px solid rgba(255,179,64,.3);cursor:pointer}#firesheet.awfire .awfe[hidden]{display:none}
+#firesheet.awfire .awfe.ord{background:linear-gradient(150deg,rgba(255,69,58,.2),rgba(255,255,255,.03) 65%);border-color:rgba(255,69,58,.45)}#firesheet.awfire .awfe svg{width:20px;height:20px;flex:none;fill:none;stroke:#ffb340;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#firesheet.awfire .awfe.ord svg{stroke:#ff453a}
+#firesheet.awfire .awfe b{display:block;font:700 13px var(--font)}#firesheet.awfire .awfe small{font:500 11px var(--font);color:#9aa3ad}
+#firesheet.awfire .awfa{margin-top:8px;border-radius:14px;padding:8px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}#firesheet.awfire .awfa .brow{padding:5px 0;cursor:pointer;color:#eef1f5}
+#firesheet.awfire .awfbt{display:flex;gap:8px;margin-top:10px}#firesheet.awfire .awfbt>*{flex:1;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#eef1f5;font:700 13px var(--font);display:grid;place-items:center;text-decoration:none}
+#firesheet.awfire .awfbt .p{border:0;background:linear-gradient(180deg,color-mix(in srgb,var(--fc) 80%,#fff),var(--fc));color:#fff;font-weight:800;box-shadow:0 6px 18px color-mix(in srgb,var(--fc) 40%,transparent)}
+#firesheet.awfire .skynote{color:#7d8692}
 /* highway camera card (glow theme, DriveBC amber) */
 #roadsheet.awcam .sheet{background:radial-gradient(80% 30% at 20% 0%,rgba(255,179,64,.18),transparent 70%),#0b0e12!important;color:#eef1f5;border-top:1px solid rgba(255,255,255,.08)}
 #roadsheet.awcam .sheet-head .close{background:rgba(255,255,255,.08);color:#eef1f5}
@@ -764,7 +783,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=12"></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=1"></script>
-<script src="app.js?v=148"></script>
+<script src="app.js?v=149"></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=9"></script>
