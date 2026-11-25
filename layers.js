@@ -20,7 +20,7 @@
   /* ---- Layers page ---- */
   '#awlyr{position:fixed;inset:0;z-index:6050;background:rgba(0,0,0,.35);display:flex;align-items:flex-end}#awlyr[hidden]{display:none}'+
   '#awlyr .in{width:100%;max-height:calc(100% - 70px);overflow-y:auto;box-sizing:border-box;border-radius:24px 24px 0 0;padding:10px 14px 10px;color:#eef1f5;font-family:'+F+';background:radial-gradient(80% 30% at 50% 0%,rgba(100,210,255,.12),transparent 70%),#0d1015;border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -14px 30px rgba(0,0,0,.5)}'+
-  'body.awshell #awlyr{bottom:calc(env(safe-area-inset-bottom,0px) + 62px)}body.awshell #awlyr .in{max-height:calc(100vh - 140px)}'+
+  'body.awshell #awlyr{bottom:calc(env(safe-area-inset-bottom,0px) + 62px)}body.awshell #awlyr .in{max-height:calc(100vh - 76px)}'+
   '#awlyr .hd{display:flex;gap:11px;align-items:center}#awlyr .bd{width:48px;height:48px;flex:none;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#64d2ff,#2a8fb8);box-shadow:0 4px 14px rgba(100,210,255,.45),inset 0 1px 0 rgba(255,255,255,.4)}'+
   '#awlyr .bd svg{fill:none;stroke:#04121a;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#awlyr .bd .f{fill:#04121a;fill-opacity:.28;stroke:none}'+
   '#awlyr .t{flex:1;min-width:0}#awlyr .t b{display:block;font:800 23px '+F+';letter-spacing:-.3px}#awlyr .t small{display:block;font:600 13.5px '+F+';color:#b8c2cc;margin-top:2px}'+
@@ -28,11 +28,11 @@
   '#awlyr .tip{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:8px 10px;border-radius:12px;background:rgba(255,179,64,.1);border:1px solid rgba(255,179,64,.28);font:500 11.5px/1.35 '+F+';color:#d5dbe3}#awlyr .tip b{color:#ffc966}'+
   '#awlyr .tip.busy{background:rgba(255,69,58,.12);border-color:rgba(255,69,58,.45);box-shadow:0 0 14px rgba(255,69,58,.18)}#awlyr .tip.busy b{color:#ff8a80}'+
   '#awlyr .gh{display:flex;justify-content:space-between;align-items:baseline;font:800 14px '+F+';color:#eef1f5;margin:9px 0 6px}#awlyr .gh a{font:700 11.5px '+F+';color:#64d2ff;text-decoration:none}'+
-  '#awlyr .ly{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}#awlyr .ly button{position:relative;height:54px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 2px;font:600 10.5px/1.1 '+F+';color:#c2c9d1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}'+
-  '#awlyr .ly em{font-style:normal;font-size:18px;line-height:1}#awlyr .ly span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+  '#awlyr .ly{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#awlyr .ly button{position:relative;height:64px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0 2px;font:700 12px/1.1 '+F+';color:#d5dbe3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}'+
+  '#awlyr .ly em{font-style:normal;font-size:22px;line-height:1}#awlyr .ly span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
   '#awlyr .ly .on{border-color:rgba(100,210,255,.55);background:linear-gradient(180deg,rgba(100,210,255,.22),rgba(100,210,255,.06));color:#fff;box-shadow:0 0 12px rgba(100,210,255,.25)}'+
   '#awlyr .ly .on:after{content:"";position:absolute;right:7px;top:7px;width:6px;height:6px;border-radius:50%;background:#32d74b;box-shadow:0 0 6px #32d74b}#awlyr .ly .dim{opacity:.38}'+
-  '#awlyr .mo{display:flex;gap:6px}#awlyr .mo button{flex:1;min-width:0;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:5px;font:700 11.5px '+F+';color:#c2c9d1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);white-space:nowrap}'+
+  '#awlyr .mo{display:flex;gap:6px}#awlyr .mo button{flex:1;min-width:0;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:5px;font:700 12.5px '+F+';color:#c2c9d1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);white-space:nowrap}'+
   '#awlyr .mo button.on{border-color:rgba(100,210,255,.55);color:#fff;background:rgba(100,210,255,.12)}#awlyr .mo small{font:600 10px '+F+';color:#64d2ff}#awlyr .mo button[data-a=look]{flex-direction:column;gap:1px}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
