@@ -26,7 +26,7 @@
     if(t.classList&&t.classList.contains('sheet-bg')){ t.hidden=true; return true } t.hidden=true; return true }
   // remember where you came from: a screen that opens right as another closes is its "child"
   var prev=[], parent={}, lastClose={k:null,t:0}, backT=0;
-  function watch(){ var now=stack().map(key), t=Date.now(), byBack=t-backT<700;
+  function watch(){ if(document.hidden||document.body.classList.contains('moving')) return; /* skip while the map is being dragged: saves work on older phones */ var now=stack().map(key), t=Date.now(), byBack=t-backT<700;
     var retTo=null;
     prev.forEach(function(k){ if(now.indexOf(k)<0){ if(parent[k]) retTo=parent[k]; if(byBack&&parent[k]){ var o=OPEN[parent[k]]; var p=parent[k]; delete parent[k]; if(o) setTimeout(function(){ var b=document.querySelector(o); if(b&&stack().map(key).indexOf(p)<0) b.click() },120) } else delete parent[k]; if(!byBack) lastClose={k:k,t:t,ret:retTo} } }); /* only a screen closed by tapping (not by back) can be a parent */
     now.forEach(function(k){ if(prev.indexOf(k)<0&&lastClose.k&&lastClose.k!==k&&lastClose.ret!==k&&k!==retTo&&t-lastClose.t<700&&OPEN[lastClose.k]) parent[k]=lastClose.k });

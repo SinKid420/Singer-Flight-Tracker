@@ -43,7 +43,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
     G._getTiledPixelBounds=function(c){ var b=o.call(this,c); if(!this._map||!this._awRdy||this.getTileSize().x>256||(this.options.opacity===0)) return b; return new L.Bounds(b.min.subtract([pd,pd]),b.max.add([pd,pd])) };
     G.onAdd=function(m){ var s=this; if(!s._awHk){ s._awHk=1; s.on('loading',function(){ if(!s._awPre) s._awRdy=false }); s.on('load',function(){ if(s._awRdy||!s._map) return; s._awRdy=true; s._awPre=1; try{ s._update() }catch(e){} s._awPre=0 }) } return oa.call(this,m) } })();
   (function(){ try{ var nv=navigator, v=nv.vibrate&&nv.vibrate.bind(nv); if(v) nv.vibrate=function(p){ try{ if(nv.userActivation&&!nv.userActivation.hasBeenActive) return false; return v(p) }catch(e){ return false } } }catch(e){} })();
-var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
+var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZoom:2,preferCanvas:true,fadeAnimation:!window.__awLow,rotate:true,bearing:0,touchRotate:true,shiftKeyRotate:true,rotateControl:false}).setView([me.lat,me.lon],8);
   map.attributionControl.setPrefix('<b>AwareBC</b> © Josh Singer');
   (function(){ var ac=map.attributionControl.getContainer(), t=null; ac.title='Tap to read all credits'; L.DomEvent.disableClickPropagation(ac); ac.addEventListener('click',function(e){ if(e.target.closest('a')&&ac.classList.contains('open')) return; e.preventDefault(); ac.classList.toggle('open'); clearTimeout(t); if(ac.classList.contains('open')) t=setTimeout(function(){ ac.classList.remove('open') },8000) }) })();
   var tempEl=null, tempC=null, tcfg='C';
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=305, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=306, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');

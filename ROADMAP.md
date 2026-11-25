@@ -1,0 +1,45 @@
+# AwareBC roadmap (by Josh Singer)
+
+🟢 done · 🟠 in progress · 🔴 still to build. Updated Nov 25, 2026.
+
+## 🟢 Finished
+- 🟢 Live map (satellite, street, 3D), On-road / Off-road modes
+- 🟢 Live planes for everyone (FlyItalyADSB key hidden on the server as FIA_KEY)
+- 🟢 Road closures, highway cameras, ferries, airports, weather, temperature, rain/snow effects
+- 🟢 Wildfires, Alerts / Emergency hub (shows last saved while loading), space weather
+- 🟢 Avalanche & winter info, sled zones, trails & FSR roads
+- 🟢 Rig Link: nearby riders, profiles, badges, 20-colour top-down rigs that turn with you
+- 🟢 Friends, groups, chat, SOS, block/report, delete my friends & chat data
+- 🟢 Showroom, trail reports, add a place
+- 🟢 Directions + driving mode
+- 🟢 Aware voice co-pilot with volume meter
+- 🟢 Tools page, Layers page, safety timer, survival tools
+- 🟢 Offline maps, Home card (ETA, sunset), works with no signal
+- 🟢 Welcome screens, quick tour, update pop-up, back button closes pages
+- 🟢 Rough-area fallback + GPS check
+- 🟢 Privacy, Terms & Rider Rules page
+- 🟢 Automatic smoke + regression tests (tests/run.sh)
+
+## 🟠 In progress
+- 🟠 Polish pass: every page clean at 360×640, smooth on older phones
+- 🟠 Live testing on real devices (desktop Chrome location still blocked)
+- 🟠 Android app: builds, but test signing key and no push when closed
+- 🟠 Plane feed reliability (free backups refuse Cloudflare; relies on FIA key)
+
+## 🔴 Still to build (app stores)
+- 🔴 Google Play developer account ($25 once)
+- 🔴 Apple developer account ($99/yr) + Mac or cloud Mac for iPhone builds
+- 🔴 Google sign-in setup (Google Cloud Client ID)
+- 🔴 Firebase project for push alerts when the app is closed
+- 🔴 Private release signing key + .aab store bundle
+- 🔴 Play listing: screenshots, description, content rating, Data safety form
+- 🔴 Play closed test: 12+ testers for 14 days in a row (new personal accounts)
+- 🔴 iPhone native features to pass Apple's "more than a website" rule (4.2)
+- 🔴 Full in-app account deletion (both stores require it)
+- 🔴 Crash/error reports you can see
+- 🔴 Backup plan if a free feed or key stops working
+- 🔴 Free-tier limits check for more users (Cloudflare, Mapbox)
+- 🔴 Accessibility check (text size, contrast, screen readers)
+- 🔴 Support email + web page for store listings
+
+Suggested order: Android release key → account deletion → Firebase push → Play closed test → iPhone native features.
