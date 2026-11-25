@@ -872,7 +872,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=287, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=288, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
     P.then(function(ps){ var ago=lastFix?Math.round((Date.now()-lastFix)/1000):-1, E=['Error','Blocked','No GPS signal','Timed out'];
@@ -1933,10 +1933,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
   // Works as an installable app once the page is hosted on https
   if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(function(){});
     // the app opens from the phone straight away; when a newer version has downloaded in the background, offer it
-    navigator.serviceWorker.addEventListener('message',function(e){ if(!e.data||e.data.t!=='upd'||document.getElementById('updbar')) return;
-      var b=document.createElement('button'); b.id='updbar'; b.type='button'; b.textContent='AwareBC was updated · tap to refresh';
-      b.style.cssText='position:fixed;z-index:1500;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);border:0;border-radius:18px;padding:9px 14px;background:#0a84ff;color:#fff;font:700 13px var(--font);box-shadow:0 4px 12px rgba(0,0,0,.45);white-space:nowrap';
-      b.onclick=function(){ location.reload() }; document.body.appendChild(b); setTimeout(function(){ if(b.parentNode) b.remove() },20000) }) }
+    navigator.serviceWorker.addEventListener('message',function(e){ if(!e.data||e.data.t!=='upd') return; if(window.__updPop) window.__updPop(); else location.reload() }) }
 })();
 
 // ---------- Settings ▸ App updates: check now, download with progress, install ----------
