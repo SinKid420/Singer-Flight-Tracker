@@ -45,7 +45,7 @@
   /* Me sheet */
   '#awme{position:fixed;inset:0;z-index:5900;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}#awme[hidden]{display:none}'+
   '#awme .in{width:100%;background:#15181d;border-radius:20px 20px 0 0;padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 14px);max-height:85vh;overflow:auto}'+
-  '#awme .gr{width:40px;height:4px;border-radius:2px;background:#3a3f47;margin:0 auto 10px}#awme h3{display:flex;align-items:center;font:800 19px var(--font,system-ui);color:#fff;margin:0 2px 10px}'+
+  '#awme .gr{width:40px;height:4px;border-radius:2px;background:#3a3f47;margin:0 auto 10px}#awme h3{display:flex;align-items:center;font:800 19px var(--font,system-ui);color:#fff;margin:0 2px 10px}#awme h3.phd>span{flex:1;min-width:0}#awme h3.phd b{display:block;font:800 23px var(--font,system-ui);letter-spacing:-.3px}#awme h3.phd small{display:block;font:600 13.5px var(--font,system-ui);color:#b8c2cc;margin-top:2px}'+
   '#awme h3 button{margin-left:auto;width:40px;height:40px;border-radius:50%;border:0;background:#2c2c2e;color:#fff;display:grid;place-items:center}'+
   '#awme .ls{background:#1e2227;border-radius:16px;overflow:hidden}#awme .ls button{width:100%;display:flex;align-items:center;gap:12px;padding:0 14px;height:54px;border:0;background:none;color:#eef0f3;font:600 15px var(--font,system-ui);text-align:left;border-top:1px solid #2a2f36}'+
   '#awme .ls button:first-child{border-top:0}#awme .ls button span{flex:1}#awme .ls button em{font-style:normal;color:#8b929c;font:500 13px var(--font,system-ui)}#awme .ls button>svg:last-child{color:#5b626c}'+
@@ -95,11 +95,13 @@
   function me(show){ if(!M){ M=document.createElement('div'); M.id='awme'; M.setAttribute('role','dialog'); M.setAttribute('aria-label','Profile'); document.body.appendChild(M);
       M.addEventListener('click',function(e){ if(e.target===M||e.target.closest('[data-a=x]')){ M.hidden=true; return } var b=e.target.closest('[data-g]'); if(!b) return; var g=b.getAttribute('data-g');
         if(g==='look'){ var nv=b.getAttribute('data-v')||'classic', cur=''; try{ cur=localStorage.getItem('aw-look')==='new'?'new':'classic'; if(nv===cur) return; localStorage.setItem('aw-look',nv) }catch(x){} [].forEach.call(M.querySelectorAll('.pseg button'),function(x){ x.classList.toggle('on',x===b) }); setTimeout(function(){ location.reload() },350); return }
+        if(g==='show'){ M.hidden=true; if(window.__showroom) setTimeout(function(){ window.__showroom.open() },60); return }
+        if(g==='upd'){ M.hidden=true; setTimeout(function(){ click('gear'); setTimeout(function(){ var su=document.querySelector('#updfolder > summary'); if(su) su.click(); var c=$('updchk'); if(c) setTimeout(function(){ c.click() },300) },350) },60); return }
         if(g==='prof'){ if(window.__rlProfile){ M.hidden=true; window.__rlProfile() } return }
         if(g==='rot'||g==='key'||g==='rep'){ if(g==='rot') click('rotbtn'); if(g==='key'){ var k=document.body.classList.toggle('awkey'); if(document.body.classList.contains('keyon')!==k) click('keybtn') } if(g==='rep') click('trbtn'); setTimeout(fill,120); return }
         M.hidden=true; setTimeout(function(){ click(g) },60) }) }
     fill(); M.hidden=!show }
-  var PI={gear:'<path class="f" d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><path d="M12 3.5l1.6 2.2 2.7-.5.6 2.7 2.4 1.3-1.1 2.5 1.1 2.5-2.4 1.3-.6 2.7-2.7-.5L12 20.5l-1.6-2.2-2.7.5-.6-2.7-2.4-1.3L5.8 12 4.7 9.5l2.4-1.3.6-2.7 2.7.5z"/><circle cx="12" cy="12" r="3.2"/>',
+  var PI={upd:'<circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M12 7.5v8M8.5 12l3.5 3.5 3.5-3.5"/>',gear:'<path class="f" d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/><path d="M12 3.5l1.6 2.2 2.7-.5.6 2.7 2.4 1.3-1.1 2.5 1.1 2.5-2.4 1.3-.6 2.7-2.7-.5L12 20.5l-1.6-2.2-2.7.5-.6-2.7-2.4-1.3L5.8 12 4.7 9.5l2.4-1.3.6-2.7 2.7.5z"/><circle cx="12" cy="12" r="3.2"/>',
     riders:'<circle class="f" cx="9" cy="8.5" r="3.3"/><circle cx="9" cy="8.5" r="3.3"/><path d="M3 19.5c.8-3.3 3.2-5 6-5s5.2 1.7 6 5"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.5 14.8c1.8.6 3 2.2 3.5 4.7"/>',
     key:'<rect class="f" x="4" y="5" width="16" height="14" rx="2.5"/><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 9.5h2M8 13h2M12.5 9.5h3.5M12.5 13h3.5M8 16.5h8"/>',
     nav:'<path class="f" d="M12 3l7 17-7-4-7 4z"/><path d="M12 3l7 17-7-4-7 4z"/>',
@@ -115,20 +117,16 @@
     var P=pf(), RS=window.__rl&&window.__rl.RS, rot=$('rotbtn'), rp=$('trbtn'), fr=document.querySelector('#frbtn .frbd,#frbtn em'), frn=fr&&!fr.hidden?fr.textContent.trim():'';
     if(!pfAsked&&window.__rlProfData&&navigator.onLine!==false){ pfAsked=1; window.__rlProfData().catch(function(){}) }
     var B='#64d2ff',G='#32d74b',A='#ffb340',V='#bf8bff',R='#ff453a';
-    var T=[['gear','gear','Settings','All options',B],['frbtn','riders','Friends',frn?frn+' new':'Chat and share',G]];
-    if(off()) T.push(['bbbtn','clock','Back by','Check-in timer',R]);
-    T.push(['key','key','Map key',document.body.classList.contains('awkey')?'Shown':'Hidden',A]);
-    T.push(['rot','nav','Turn map with me',rot&&rot.getAttribute('aria-pressed')==='true'?'On':'Off',V]);
-    if(off()&&rp) T.push(['rep','flag','Trail reports',rp.classList.contains('off')?'Hidden':'Shown',A]);
+    /* Profile = you, your people and your settings (map things live in Layers, actions in Tools) */
+    var T=[['frbtn','riders','Friends',frn?frn+' new':'Chat and share',G],['show','cam','Showroom','Rigs from riders',R],['gear','gear','Settings','All options',B],['upd','upd','App updates','v'+(window.__AWV||''),G]];
     var lk=''; try{ lk=localStorage.getItem('aw-look')||'' }catch(e){}
     var nm=P.n||name||'Rider', ini=nm.split(/\s+/).map(function(w){ return w[0]||'' }).join('').slice(0,2).toUpperCase(), rtn='';
     if(P.rt&&window.__rigs){ window.__rigs.list.forEach(function(r){ if(r[0]===P.rt) rtn=r[1] }) }
     var sub=[P.rig||rtn,P.nb?P.nb+' badge'+(P.nb>1?'s':''):''].filter(Boolean).join(' · ')||'Tap to set up your rider profile';
     var cov=P.cov&&RS?'<img alt="" src="'+RS+'/rlm/'+esc(P.cov)+'">':PCOV, av=P.av&&RS?'<img alt="" src="'+RS+'/rlm/'+esc(P.av)+'">':'<span>'+esc(ini||'?')+'</span>';
-    M.innerHTML='<div class="in"><div class="gr"></div><h3>Profile<button type="button" data-a="x" aria-label="Close">'+ic('x',18)+'</button></h3>'+
+    M.innerHTML='<div class="in"><div class="gr"></div><h3 class="phd"><span><b>Profile</b><small>You, your people and your settings</small></span><button type="button" data-a="x" aria-label="Close">'+ic('x',18)+'</button></h3>'+
       '<button type="button" class="pcard" data-g="prof" aria-label="My rider profile"><span class="pcv">'+cov+'<em>'+pic('cam',13)+(P.cov?'Edit cover':'Add cover')+'</em></span><span class="prow"><span class="pav">'+av+'</span><span class="pnm"><b>'+esc(nm)+(P.t?' <small>#'+esc(P.t)+'</small>':'')+'</b><small>'+esc(sub)+'</small></span>'+pic('chev',16)+'</span></button>'+
       '<div class="ptl'+(T.length>4?' six':'')+'">'+T.map(function(t){ return '<button type="button" data-g="'+t[0]+'" style="--c:'+t[4]+'"><span class="pib">'+pic(t[1],21,'#0a0d10')+'</span><b>'+(T.length>4&&t[0]==='rot'?'Turn map':t[2])+'</b><small>'+t[3]+'</small></button>' }).join('')+'</div>'+
-      '<div class="plook">'+pic('look',20,'#bf8bff')+'<b>Map look</b><span class="pseg" role="group" aria-label="Map look"><button type="button" data-g="look" data-v="classic"'+(lk==='new'?'':' class="on"')+'>Classic</button><button type="button" data-g="look" data-v="new"'+(lk==='new'?' class="on"':'')+'>New</button></span></div>'+
       '<div class="ft"><b>AwareBC</b> · created by Josh Singer</div></div>' }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) }
 
