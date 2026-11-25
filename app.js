@@ -813,7 +813,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     return Promise.all(on.map(fetchSource)).then(function(res){
       var good=res.filter(function(r){return r.ok});
       if(!good.length){
-        if(res.every(function(r){return r.err==='429'})){ slow=Math.min(slow+1,4); slowUntil=Date.now()+refreshMs*Math.pow(2,slow); setStat('Feed busy<br>retrying…',true); return }
+        if(res.every(function(r){return r.err==='429'})){ slow=Math.min(slow+1,4); slowUntil=Date.now()+refreshMs*Math.pow(2,slow); setStat('Feed busy<br>retrying…',true); if(!apiKey) showWelcome('setup'); return }
         failCount++; if(failCount>1) showWelcome('error');
         var code=res.map(function(r){return r.err}).filter(function(c){return /^\d+$/.test(c||'')})[0];
         setStat(!navigator.onLine?'No internet<br>check connection':(failCount>1?'Feed error<br>tap for fix':'Connecting…'),true);
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=303, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=304, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
