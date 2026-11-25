@@ -53,7 +53,7 @@
     var a=document.getElementById('apikey'), b=document.getElementById('fsave'); if(a&&b){ a.value=k; b.click() } }
   window.__planeKey={open:open,has:has};
   /* Profile: a clear "Turn on live planes" row while no key is saved */
-  function row(){ if(has()) return; var pc=document.querySelector('.pcard'); if(!pc||pc.parentNode.querySelector('.awpkrow')) return; css();
+  function row(){ var st=document.getElementById('stat'); if(has()||!(st&&st.classList.contains('bad'))){ var o=document.querySelector('.awpkrow'); if(o) o.remove(); return } var pc=document.querySelector('.pcard'); if(!pc||pc.parentNode.querySelector('.awpkrow')) return; css();
     var b=document.createElement('button'); b.type='button'; b.className='awpkrow';
     b.innerHTML='<span class="bd">✈️</span><span><b>Turn on live planes</b><small>Paste your free key</small></span><em>Set up</em>';
     b.onclick=function(e){ e.stopPropagation(); open() }; pc.parentNode.insertBefore(b,pc.nextSibling) }
