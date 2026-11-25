@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=293, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=294, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1718,6 +1718,9 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
   (function(){
     var btn=document.getElementById('hubbtn'), sheetEl=document.getElementById('hubsheet'), body=document.getElementById('hubbody'); if(!btn||!sheetEl) return;
     var hubLayer=L.layerGroup().addTo(map), H={t:0}, open=-1, busy=false, evacPolys=[];
+    /* the last check is kept on the phone, so the hub opens straight away with it while a fresh check runs (only if it was near here, within a day) */
+    try{ var HC=JSON.parse(localStorage.getItem('aw-hubc')||'null'); if(HC&&HC.H&&HC.H.t&&Date.now()-HC.H.t<864e5&&(!isFinite(me.lat)||me.label==='none'||distNm(me.lat,me.lon,HC.lat,HC.lon)<15)) H=HC.H }catch(e){}
+    function saveH(){ try{ var j=JSON.stringify({H:H,lat:me.lat,lon:me.lon}); if(j.length>600000){ var c=JSON.parse(j); (c.H.evac||[]).forEach(function(e){ e.rings=[] }); j=JSON.stringify(c) } localStorage.setItem('aw-hubc',j) }catch(e){} }
     var BCWS='https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/', WFIGS='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/', WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
     var gjC={}; function o5b(b){ var cx=(b.w+b.e)/2, cy=(b.s+b.n)/2, hw=Math.max((b.e-b.w)/2,.75), hh=Math.max((b.n-b.s)/2,.5); return [cx-hw,cy-hh,cx+hw,cy+hh].map(function(v){return (Math.round(v*4)/4).toFixed(2)}).join(',') }
     function gj(u,o){ var hit=gjC[u]; if(hit&&Date.now()-hit.t<60000) return hit.p; var p=fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}); gjC[u]={t:Date.now(),p:p}; return p }
@@ -1749,7 +1752,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
         inUS?gj(WS+'TravelInfoRoadAlerts/FeatureServer/0/query?where=RoadClosedFlag%3D1&outFields=Road,RoadDirection,HeadlineMessage'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {road:[a.Road,a.RoadDirection].filter(Boolean).join(' '),text:String(a.HeadlineMessage||'').slice(0,300),lat:g.y,lon:g.x} }) }):[]
       ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(x){return isFinite(x.lat)}) });
       var keys=Object.keys(jobs);
-      return Promise.all(keys.map(function(k){return jobs[k]})).then(function(r){ keys.forEach(function(k,i){ H[k]=r[i] }); H.wx=[].concat(H.wxc||[],H.wxu||[]).sort(function(a,b){return b.level-a.level}); H.t=Date.now(); busy=false; paint(); if(!sheetEl.hidden) render() }).catch(function(){ busy=false }) }
+      return Promise.all(keys.map(function(k){return jobs[k]})).then(function(r){ keys.forEach(function(k,i){ H[k]=r[i] }); H.wx=[].concat(H.wxc||[],H.wxu||[]).sort(function(a,b){return b.level-a.level}); H.t=Date.now(); busy=false; saveH(); paint(); if(!sheetEl.hidden) render() }).catch(function(){ busy=false; if(!sheetEl.hidden) render() }) }
     function aqiWord(a){ return a==null?'—':a<=50?'Good':a<=100?'Moderate':a<=150?'Unhealthy for sensitive groups':a<=200?'Unhealthy':a<=300?'Very unhealthy':'Hazardous' }
     function aqiCol(a){ return a==null?'var(--dim)':a<=50?'#43a047':a<=100?'#fbc02d':a<=150?'#fb8c00':a<=200?'#e53935':'#8e24aa' }
     function level(){ var L=0, why='';
@@ -1779,7 +1782,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       sheetEl.classList.add('awth'); var sc=98; tiles.forEach(function(c){ var v=sev(c.c); sc-=v===1?7:v===2?12:0 }); if(lv.L>=3) sc=Math.min(sc,15); else if(lv.L>=2) sc=Math.min(sc,55); sc=Math.max(5,sc);
       var rc=lv.L>=3?SC[2]:lv.L>=2?SC[1]:SC[0], word=['All clear','Mostly clear','Take care','Danger'][lv.L], warn=tiles.filter(function(c){ return sev(c.c)>0 }).length;
       sheetEl.style.setProperty('--awglow',rc);
-      var sub='<div class="awtsub">Within '+km()+' km · checked '+esc(new Date(H.t).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}))+'</div>';
+      var sub='<div class="awtsub">Within '+km()+' km · checked '+esc(new Date(H.t).toLocaleTimeString([], {hour12:true,hour:'numeric',minute:'2-digit'}))+(busy?' · <span class="hubupd">updating…</span>':'')+'</div>';
       if(cur){ var cc=sev(cur.c), col=cc<0?'#8a93a0':SC[cc];
         body.innerHTML=sub+'<button class="awtback" aria-label="Back">'+hic('back',18)+'Back</button><div class="awtdet"><div class="awtdh"><span class="awtib" style="--c:'+col+'">'+hic(cur.k,24,'#0a0d10')+'</span><div><b>'+esc(cur.t)+'</b><div style="color:'+col+'">'+cur.r+'</div></div></div><div class="awtdb">'+cur.d+'</div></div>';
         body.querySelector('.awtback').onclick=function(){ open=-1; render() }; hubWire(); return }
@@ -1797,7 +1800,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       [].forEach.call(body.querySelectorAll('.awtile,.awthelp'),function(b){ b.onclick=function(){ open=+b.getAttribute('data-i'); render(); sheetEl.querySelector('.sheet').scrollTop=0 } });
       var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() }; hubWire() }
     function hubWire(){ [].forEach.call(body.querySelectorAll('.hubgo'),function(a){ a.onclick=function(e){ e.preventDefault(); sheetEl.hidden=true; if(window.__nav) window.__nav.to({lat:+a.getAttribute('data-la'),lng:+a.getAttribute('data-lo')},a.getAttribute('data-n')) } }) }
-    function render(){ if(me.label!=='you'){ body.innerHTML='<div class="hubban" style="background:#fb8c00">⚠ Location needed</div><div class="ssec">Alerts are checked around where you are. Turn on location so AwareBC can check evacuations, fires, floods, weather and road closures near you.'+(me.label==='last'?' (Your last known spot is older than 6 hours.)':'')+'</div><div class="abtns"><a href="#" id="hubloc" class="pri" role="button" style="grid-column:1/-1">📍 Find my location</a></div>'; var hl=document.getElementById('hubloc'); if(hl) hl.onclick=function(e){ e.preventDefault(); var lb=document.getElementById('locate'); if(lb) lb.click() }; return }
+    function render(){ if(me.label!=='you'&&!(H.t&&me.label==='last')){ body.innerHTML='<div class="hubban" style="background:#fb8c00">⚠ Location needed</div><div class="ssec">Alerts are checked around where you are. Turn on location so AwareBC can check evacuations, fires, floods, weather and road closures near you.'+(me.label==='last'?' (Your last known spot is older than 6 hours.)':'')+'</div><div class="abtns"><a href="#" id="hubloc" class="pri" role="button" style="grid-column:1/-1">📍 Find my location</a></div>'; var hl=document.getElementById('hubloc'); if(hl) hl.onclick=function(e){ e.preventDefault(); var lb=document.getElementById('locate'); if(lb) lb.click() }; return }
       if(!H.t){ body.innerHTML='<div class="ssec">Checking alerts near you…</div>'; return }
       var lv=level(), h='', CT=[]; function row(i,icon,title,right,col,detail){ CT.push({i:i,k:HK[i],t:title,r:right,c:col,d:detail}); return '' }
       var ev=H.evac||[], ords=ev.filter(function(e){return e.order}).length;
@@ -1827,7 +1830,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       var fb=document.getElementById('firebtn'); if(fb&&!fb.classList.contains('on')) fb.click();
       var rb=document.getElementById('roadbtn'); if(rb&&!rb.classList.contains('on')) rb.click();
       sheetEl.hidden=true; var b=kmBox(Math.min(km(),60)); map.fitBounds([[b.s,b.w],[b.n,b.e]]) }
-    btn.onclick=function(){ sheetEl.hidden=false; render(); if(!H.t||Date.now()-H.t>120000) gather() };
+    btn.onclick=function(){ sheetEl.hidden=false; var g=!H.t||Date.now()-H.t>120000; if(g) gather(); render() };
     document.getElementById('hubx').onclick=function(){ sheetEl.hidden=true };
     sheetEl.onclick=function(e){ if(e.target===sheetEl) sheetEl.hidden=true };
     setTimeout(function(){ if(cfg2.hubAuto==='1') gather() },8000);
