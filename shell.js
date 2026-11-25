@@ -39,7 +39,7 @@
   /* tab bar */
   '#awtabs{position:fixed;z-index:1005;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 64px);padding-bottom:env(safe-area-inset-bottom,0px);display:flex;background:#14171b;border-top:1px solid #23272d}'+
   '#awtabs button{flex:1;border:0;background:none;color:#8b929c;display:grid;justify-items:center;align-content:center;gap:3px;font:600 11px var(--font,system-ui);position:relative}#awtabs button.on{color:#ff453a;font-weight:700}'+
-  '#awtabs .bd{position:absolute;top:8px;left:50%;margin-left:6px;width:10px;height:10px;border-radius:50%;background:#ff453a;border:2px solid #14171b}#awtabs .bd[hidden]{display:none}'+
+  '#awtabs .bd{position:absolute;top:8px;left:50%;margin-left:6px;width:10px;height:10px;border-radius:50%;background:#ff453a;border:2px solid #14171b}#awtabs .bd[hidden]{display:none}#awtabs button[hidden]{display:none}'+
   'body.navon #awtabs,body.navon #awtop,body.navon #awchips{display:none}'+
   'body.srchon #awtop,body.srchon #awchips{visibility:hidden}'+
   /* Me sheet */
@@ -82,12 +82,13 @@
 
   // ---- tab bar ----
   var tabs=document.createElement('nav'); tabs.id='awtabs'; tabs.setAttribute('aria-label','Main');
-  tabs.innerHTML='<button type="button" class="on" data-t="map">'+ic('map',23)+'Map</button><button type="button" data-t="alerts">'+ic('bell',23)+'Alerts<i class="bd" hidden></i></button><button type="button" data-t="mid"></button><button type="button" data-t="me">'+ic('me',23)+'Profile</button>';
+  tabs.innerHTML='<button type="button" class="on" data-t="map">'+ic('map',23)+'Map</button><button type="button" data-t="alerts">'+ic('bell',23)+'Alerts<i class="bd" hidden></i></button><button type="button" data-t="mid"></button><button type="button" data-t="tl2" hidden>'+ic('tool',23)+'Tools</button><button type="button" data-t="me">'+ic('me',23)+'Profile</button>';
   document.body.appendChild(tabs);
   tabs.onclick=function(e){ var b=e.target.closest('button'); if(!b) return; var t=b.getAttribute('data-t');
     if(t==='map'){ if(M) M.hidden=true; return }
     if(t==='alerts'){ click('hubbtn'); return }
     if(t==='mid'){ if(off()) click('rlbtn'); else click('toolbtn'); return }
+    if(t==='tl2'){ if(window.__awTools) window.__awTools.open(); else click('toolbtn'); return }
     if(t==='me'){ me(true) } };
 
   // ---- Me: settings, friends and the rest of the old buttons ----
@@ -133,6 +134,7 @@
   // ---- keep everything in step with the app ----
   function paint(){ var o=off();
     [].forEach.call(top.querySelectorAll('.md button'),function(b){ b.classList.toggle('on',(b.getAttribute('data-m')==='fsr')===o) });
+    var t2=tabs.querySelector('[data-t=tl2]'); if(t2) t2.hidden=!o; /* Off-road: Rig Link and Tools both get a tab */
     var mid=tabs.querySelector('[data-t=mid]'), want=o?'rl':'tl'; if(mid.__k!==want){ mid.__k=want; mid.innerHTML=o?ic('radio',23)+'Rig Link':ic('tool',23)+'Tools' }
     var tv=$('tval'), c1=chips.querySelector('.c1'); if(tv&&/\d/.test(tv.textContent)){ c1.hidden=false; c1.innerHTML=ic('temp',14)+tv.textContent+($('tcap')&&/F/.test($('tcap').textContent)?'F':'C')+' now' } else c1.hidden=true;
     var lv=window.__hub&&window.__hub.level&&window.__hub.level(), c2=chips.querySelector('.c2'), bd=tabs.querySelector('.bd');
