@@ -295,7 +295,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
       suv:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(10,2)">'+w(5,24)+'<rect width="20" height="36" rx="5" fill="'+c+'"'+S+'/><path d="M3 8Q10 5 17 8L16 12Q10 10.5 4 12Z" fill="'+G+'"/><rect x="3.5" y="13" width="13" height="17" rx="2" fill="rgba(255,255,255,.22)"/><path d="M4 17H16M4 22H16M4 27H16" stroke="rgba(0,0,0,.4)" stroke-width="1.2"/><path d="M4 31.5H16L15 34H5Z" fill="'+G+'"/></g></svg>' },
       atv:function(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="translate(9,4)"><rect x="-2" y="2" width="5" height="9" rx="2" fill="#111"/><rect x="19" y="2" width="5" height="9" rx="2" fill="#111"/><rect x="-2" y="21" width="5" height="9" rx="2" fill="#111"/><rect x="19" y="21" width="5" height="9" rx="2" fill="#111"/><path d="M4 3H18L19 13L16 16V26L18 30H4L6 26V16L3 13Z" fill="'+c+'"'+S+'/><rect x="2" y="7" width="18" height="2" rx="1" fill="#222"/><ellipse cx="11" cy="20" rx="3.5" ry="6" fill="'+G+'"/></g></svg>' } } })();
   /* Off-road My spot: the rider's own rig drawing (picked in Rig Link) in a round chip with a ring in their colour; the arrow shows which way you're going */
-  function rigChip(k,c){ if(!window.__rigs) return ''; if(k==='rig'||!__rigs.has(k)){ try{ k=localStorage.getItem('aw-myrt')||'' }catch(e){} } return __rigs.svg(__rigs.has(k)?k:'pickup',40,true).replace('stroke="#30d158"','stroke="'+c+'"') }
+  function rigChip(k,c,chip){ if(!window.__rigs) return ''; var mine=k==='rig'||!__rigs.has(k), rc=''; if(mine){ try{ k=localStorage.getItem('aw-myrt')||''; rc=localStorage.getItem('aw-myrc')||'' }catch(e){} } k=__rigs.has(k)?k:'pickup'; /* your rig in your paint colour, seen from above; the map turns it to face the way you're going */ return chip?__rigs.svg(k,40,c||true,rc):__rigs.svg(k,52,false,rc) }
   /* Off-road has its own pick: the dot, "My rig" (the rig from your Rig Link profile) or any rig drawing */
   var meOff={k:'rig'}; try{ var mo=JSON.parse(localStorage.getItem('sky-meicon-off')||'null'); if(mo&&(mo.k==='dot'||mo.k==='rig'||(window.__rigs&&__rigs.has(mo.k)))) meOff.k=mo.k }catch(e){}
   var ME_K=[['dot','Dot'],['car','Car'],['truck','Truck'],['suv','SUV']] /* On-road only: quads, snowmobiles and rigs are in the Off-road pick */, ME_C=['#ff3b30','#2f80ed','#27ae60','#f2c94c','#f2f2f2','#222222'], meSt={k:'dot',c:'#ff3b30'};
@@ -309,7 +309,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     var OFFK=[['dot','Dot'],['rig','My rig']].concat(window.__rigs?__rigs.list:[]);
     function dotSvg(c){ return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="'+c+'" opacity=".25"/><circle cx="20" cy="20" r="8" fill="'+c+'"/><circle cx="20" cy="20" r="3.5" fill="#fff"/></svg>' }
     function paint(){ bi.innerHTML=ME_K.map(function(k){ return '<button type="button" data-k="'+k[0]+'" aria-label="'+k[1]+'" aria-pressed="'+(meSt.k===k[0])+'">'+(k[0]==='dot'?dotSvg(meSt.c):ME_IC[k[0]](meSt.c))+'</button>' }).join('');
-      bo.innerHTML=OFFK.map(function(k){ return '<button type="button" data-o="'+k[0]+'" aria-label="'+k[1]+'" aria-pressed="'+(meOff.k===k[0])+'">'+(k[0]==='dot'?dotSvg(meSt.c):rigChip(k[0],meSt.c))+(k[0]==='rig'?'<em>Mine</em>':'')+'</button>' }).join('');
+      bo.innerHTML=OFFK.map(function(k){ return '<button type="button" data-o="'+k[0]+'" aria-label="'+k[1]+'" aria-pressed="'+(meOff.k===k[0])+'">'+(k[0]==='dot'?dotSvg(meSt.c):rigChip(k[0],meSt.c,true))+(k[0]==='rig'?'<em>Mine</em>':'')+'</button>' }).join('');
       bc.innerHTML=ME_C.map(function(c){ return '<button type="button" class="mc" data-c="'+c+'" aria-label="Colour '+c+'" aria-pressed="'+(meSt.c===c)+'" style="background:'+c+'"></button>' }).join('') }
     function save(){ try{ localStorage.setItem('sky-meicon',JSON.stringify(meSt)); localStorage.setItem('sky-meicon-off',JSON.stringify(meOff)) }catch(e){} paint(); meDraw() }
     bo.onclick=function(e){ var b=e.target.closest('button'); if(b){ meOff.k=b.getAttribute('data-o'); save() } };
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=300, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=302, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1479,7 +1479,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
         if(window.MutationObserver){ new MutationObserver(vis).observe(fb,{attributes:true,attributeFilter:['aria-pressed']}); new MutationObserver(function(){ if(pn.hidden&&!gv.hidden) mode(false) }).observe(pn,{attributes:true,attributeFilter:['hidden']}) }
         lab(); draw(); vis() })();
       document.addEventListener('error',function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('phimg')&&t.parentNode) t.parentNode.remove() },true);
-window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return me },esc:esc,fb:fb,pn:pn,show:show,relay:function(){ return relay||'https://awarebc.aware-bc.workers.dev/' }};
+window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return baseLayers },me:function(){ return me },esc:esc,fb:fb,pn:pn,show:show,relay:function(){ return relay||'https://awarebc.aware-bc.workers.dev/' }};
     })();
     set(true); mode(baseKey==='fsr');
   })();

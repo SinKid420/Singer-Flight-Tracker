@@ -67,6 +67,9 @@
   '.skylab{display:flex;justify-content:space-between;font:700 11.5px '+F+';color:#9aa3ad;margin:14px 0 7px}.skylab i{font-style:normal;font-weight:500;color:#6b737d}'+
   '.alrow.skyal{display:flex;align-items:center;gap:10px;padding:9px 11px;margin-bottom:6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}.skyal .lo{width:36px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;font:800 10.5px '+F+';color:#04121a}'+
   '.skyal .tx{flex:1;min-width:0}.skyal .tx b{display:block;font:700 13px '+F+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skyal .tx small{display:block;font:500 11px '+F+';color:#9aa3ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skyal em{font-style:normal;font:800 15px '+F+';color:#eef1f5!important}'+
+  /* riders' rigs on the map: drawn from above, no round chip behind them */
+  '.awp-rd>.awpi:has(svg.awrig),.rlpin.rig{width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;overflow:visible!important}'+
+  '.awp-rd>.awpi svg.awrig,.rlpin.rig svg.awrig{width:46px!important;height:46px!important;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--c,#30d158) 70%,transparent)) drop-shadow(0 2px 3px rgba(0,0,0,.6));transition:transform .6s}.rlpin.rig svg.awrig{width:42px!important;height:42px!important}'+
   /* small fixes found in the check-over */
   '#rlx .rlt b{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:16px;line-height:1.15}.svbt button:disabled{opacity:.4;filter:grayscale(.7);box-shadow:none}'+
   '#skysheet .skynote{text-align:center;font:500 10.5px '+F+';color:#6b737d;margin-top:8px}';
