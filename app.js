@@ -319,7 +319,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var meHalo = {setLatLng:function(){return meHalo}};
   var ring = L.circle([me.lat,me.lon],{radius:radiusNm*1852,color:'#ff3b30',weight:1.5,opacity:.6,fill:false,dashArray:'5 7',interactive:false}).addTo(map);
   // no spot yet: no vehicle or range ring in the middle of BC; last known spot (6 h+) shows greyed out
-  function meShow(){ var on=me.label!=='none'; meMark.setOpacity(on?1:0); ring.setStyle({opacity:on?.6:0}); var el=meMark.getElement(); if(el&&me.label==='last') el.classList.add('stale') }
+  function meShow(){ var on=me.label!=='none'; meMark.setOpacity(on?1:0); ring.setStyle({opacity:on?.6:0}); var el=meMark.getElement(); if(el) el.classList.toggle('stale',me.label==='last'||me.label==='area') }
   meShow();
 
   function syncLabels(){document.getElementById('map').classList.toggle('nolabels',map.getZoom()<7)}
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=298, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=299, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1003,7 +1003,17 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   function roughB(ac){ var r=ac>150; rb.hidden=!r; if(r) rb.textContent='Rough spot ±'+(ac>=1000?(ac/1000).toFixed(1)+' km':Math.round(ac)+' m')+' · waiting for GPS';
     if(!NATIVE){ roughN=ac>=1500?roughN+1:0; if(roughN>=2&&!apxWebTold){ apxWebTold=true; say('<b>Chrome is only sharing a rough spot</b>Phone Settings ▸ Apps ▸ Chrome ▸ Permissions ▸ Location ▸ turn on Use precise location, then reload and tap My spot.',20000) } } }
   function awake(on){ try{ if(on&&!wl&&navigator.wakeLock&&!document.hidden){ wl=1; navigator.wakeLock.request('screen').then(function(x){ wl=x; x.addEventListener('release',function(){ wl=null }) },function(){ wl=null }) } else if(!on&&wl&&wl.release){ wl.release(); wl=null } }catch(e){ wl=null } }
-  function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
+  /* no location from the phone or computer: show your rough area from your internet connection (town level, from the AwareBC server, nothing stored), so the map and alerts still work.
+     It is never used for sharing your spot with riders: those need real location. */
+  var areaTried=false;
+  function roughArea(){ if(areaTried||me.label==='you'||navigator.onLine===false) return; areaTried=true;
+    fetch('https://awarebc.aware-bc.workers.dev/where',{credentials:'omit'}).then(function(r){ return r.ok?r.json():null }).then(function(j){ if(!j||!j.ok||me.label==='you') return;
+      me.lat=j.lat; me.lon=j.lon; me.label='area'; try{ meMark.setLatLng([j.lat,j.lon]); ring.setLatLng([j.lat,j.lon]) }catch(e){} meShow();
+      if(!userMoved()) map.setView([j.lat,j.lon],10,{animate:false});
+      var t=document.createElement('div'); t.className='frtoast'; t.style.zIndex=6500; t.textContent='Showing your rough area'+(j.city?' near '+j.city:'')+'. Allow location for your exact spot.'; document.body.appendChild(t); setTimeout(function(){ t.classList.add('go') },5200); setTimeout(function(){ t.remove() },5800);
+      try{ window.__hub&&window.__hub.refresh() }catch(e){} }).catch(function(){}) }
+  var moved0=false; map.on('dragstart',function(){ moved0=true }); function userMoved(){ return moved0 }
+  function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err) setTimeout(roughArea,1500); if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
   var told=false;
   function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:true,maximumAge:1000,timeout:30000}) }catch(e){ wId=null } }
   function stopWatch(){ if(wId!=null&&navigator.geolocation) navigator.geolocation.clearWatch(wId); wId=null }
@@ -1022,7 +1032,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   // Location permission check: ask for it if it hasn't been asked, explain how to fix it if it's blocked, and restart GPS as soon as it's allowed
   if(navigator.permissions&&navigator.permissions.query) (OB?new Promise(function(ok){ OB.onDone(ok) }):Promise.resolve()).then(function(){ return navigator.permissions.query({name:'geolocation'}) }).then(function(r){
     function chk(first){ if(r.state==='granted'){ if(!first){ startWatch(); say('<b>Location on ✅</b>Tap My spot to follow you.',4000) } return }
-      if(told) return; told=true; setTimeout(function(){ if(r.state==='denied') say(why({code:1}),20000,true); else if(r.state==='prompt') say('<div class="awlc"><div class="lh"><span class="lbd"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span><b>Turn on location</b><small>See what’s around you.</small></span></div><div class="lt"><span>📍 My spot</span><span>⚠️ Trail alerts</span><span>✈️ Planes overhead</span></div><div class="lr"><button type="button" id="gpsgo">Allow location</button><button type="button" id="gpsno">Not now</button></div></div><div class="lp">Your spot stays on your phone unless you share it.</div>',30000) },first?2500:0) }
+      if(r.state==='denied') setTimeout(roughArea,1500); if(told) return; told=true; setTimeout(function(){ if(r.state==='denied') say(why({code:1}),20000,true); else if(r.state==='prompt') say('<div class="awlc"><div class="lh"><span class="lbd"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span><b>Turn on location</b><small>See what’s around you.</small></span></div><div class="lt"><span>📍 My spot</span><span>⚠️ Trail alerts</span><span>✈️ Planes overhead</span></div><div class="lr"><button type="button" id="gpsgo">Allow location</button><button type="button" id="gpsno">Not now</button></div></div><div class="lp">Your spot stays on your phone unless you share it.</div>',30000) },first?2500:0) }
     chk(true); r.onchange=function(){ told=r.state!=='denied'?told:false; chk(false) } }).catch(function(){});
   // My spot: centre on you and keep following as you move. Tries precise GPS first, then a rougher fix, and says why if it can't.
   (function(){ var t=null, held=false; locBtn.addEventListener('pointerdown',function(){ held=false; clearTimeout(t); t=setTimeout(function(){ held=true; gpsCheck() },650) });
@@ -1811,7 +1821,7 @@ window.__AW={map:map,base:function(){ return baseLayers },me:function(){ return 
       [].forEach.call(body.querySelectorAll('.awtile,.awthelp'),function(b){ b.onclick=function(){ open=+b.getAttribute('data-i'); render(); sheetEl.querySelector('.sheet').scrollTop=0 } });
       var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() }; hubWire() }
     function hubWire(){ [].forEach.call(body.querySelectorAll('.hubgo'),function(a){ a.onclick=function(e){ e.preventDefault(); sheetEl.hidden=true; if(window.__nav) window.__nav.to({lat:+a.getAttribute('data-la'),lng:+a.getAttribute('data-lo')},a.getAttribute('data-n')) } }) }
-    function render(){ if(me.label!=='you'&&!(H.t&&me.label==='last')){ body.innerHTML='<div class="hubban" style="background:#fb8c00">⚠ Location needed</div><div class="ssec">Alerts are checked around where you are. Turn on location so AwareBC can check evacuations, fires, floods, weather and road closures near you.'+(me.label==='last'?' (Your last known spot is older than 6 hours.)':'')+'</div><div class="abtns"><a href="#" id="hubloc" class="pri" role="button" style="grid-column:1/-1">📍 Find my location</a></div>'; var hl=document.getElementById('hubloc'); if(hl) hl.onclick=function(e){ e.preventDefault(); var lb=document.getElementById('locate'); if(lb) lb.click() }; return }
+    function render(){ if(me.label!=='you'&&me.label!=='area'&&!(H.t&&me.label==='last')){ body.innerHTML='<div class="hubban" style="background:#fb8c00">⚠ Location needed</div><div class="ssec">Alerts are checked around where you are. Turn on location so AwareBC can check evacuations, fires, floods, weather and road closures near you.'+(me.label==='last'?' (Your last known spot is older than 6 hours.)':'')+'</div><div class="abtns"><a href="#" id="hubloc" class="pri" role="button" style="grid-column:1/-1">📍 Find my location</a></div>'; var hl=document.getElementById('hubloc'); if(hl) hl.onclick=function(e){ e.preventDefault(); var lb=document.getElementById('locate'); if(lb) lb.click() }; return }
       if(!H.t){ body.innerHTML='<div class="ssec">Checking alerts near you…</div>'; return }
       var lv=level(), h='', CT=[]; function row(i,icon,title,right,col,detail){ CT.push({i:i,k:HK[i],t:title,r:right,c:col,d:detail}); return '' }
       var ev=H.evac||[], ords=ev.filter(function(e){return e.order}).length;
