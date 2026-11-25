@@ -17,7 +17,7 @@
     {t:'Alerts',ic:'bell',el:function(){ return tabBtn('Alerts') },p:'Fires, evacuations and closures near you, all in one place.'}
   ];
   var st=document.createElement('style'); st.textContent=
-    'body.awtour #tut{display:none!important}body.awtour #menubtn{animation:none!important}'+
+    '#tut{display:none!important}body.awtour #menubtn{animation:none!important}'+
     '#awtour{position:fixed;inset:0;z-index:7000;font-family:var(--font,system-ui);color:#eef1f5}#awtour .ring{position:fixed;border-radius:22px;border:2px solid '+B+';box-shadow:0 0 0 6px rgba(100,210,255,.14),0 0 28px rgba(100,210,255,.55);transition:all .3s ease;pointer-events:none}#awtour .dm{position:fixed;left:0;top:0;width:100%;height:100%}#awtour .dm path{fill:rgba(4,6,9,.86);fill-rule:evenodd}'+
     '#awtour .cd{position:fixed;left:16px;right:16px;max-width:400px;margin:0 auto;border-radius:22px;padding:18px;background:linear-gradient(160deg,rgba(100,210,255,.12),rgba(20,24,30,.96) 55%);border:1px solid rgba(100,210,255,.28);box-shadow:0 18px 40px rgba(0,0,0,.5);transition:top .3s ease}'+
     '#awtour .ar{position:absolute;width:16px;height:16px;transform:rotate(45deg);background:#1a2a36;border:1px solid rgba(100,210,255,.28)}#awtour .ar.up{top:-9px;border-right:0;border-bottom:0}#awtour .ar.dn{bottom:-9px;border-left:0;border-top:0;background:#151b22}'+

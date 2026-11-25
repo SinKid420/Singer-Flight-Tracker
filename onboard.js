@@ -80,7 +80,7 @@
       var mic=function(ok){ if(!MIC) return finish(ok); var d=false, go=function(){ if(!d){ d=true; finish(ok) } }; setTimeout(go,25000);
         try{ navigator.mediaDevices.getUserMedia({audio:true}).then(function(sm){ try{ sm.getTracks().forEach(function(t){ t.stop() }) }catch(e){} go() },go) }catch(e){ go() } };
       try{ navigator.geolocation.getCurrentPosition(function(){ mic(true) },function(er){ mic(!(er&&er.code===1)) },{enableHighAccuracy:false,timeout:20000,maximumAge:600000}) }catch(x){ mic(false) } } };
-  function finish(ok){ if(!active) return; active=false; allowed=ok; ls('aw-ob','1'); O.remove(); if(ls('aw-obmode')==='off'){ var fb=document.querySelector('.seg button[data-b=fsr]'); if(fb&&!document.body.classList.contains('fsron')) setTimeout(function(){ fb.click() },300) } var w=waiters; waiters=[]; w.forEach(function(f){ try{ f(ok) }catch(e){} }); setTimeout(offer,1400) }
+  function finish(ok){ if(!active) return; active=false; allowed=ok; ls('aw-ob','1'); O.remove(); if(ls('aw-obmode')==='off'){ var fb=document.querySelector('.seg button[data-b=fsr]'); if(fb&&!document.body.classList.contains('fsron')) setTimeout(function(){ fb.click(); setTimeout(function(){ [].forEach.call(document.querySelectorAll('.lyrp'),function(p){ p.hidden=true }) },120) },300) } /* switch to Off-road without popping open its layer list */ var w=waiters; waiters=[]; w.forEach(function(f){ try{ f(ok) }catch(e){} }); setTimeout(offer,1400) }
 
   // on the map: make a profile now, or skip
   function card(html){ var d=document.createElement('div'); d.className='awobc'; d.setAttribute('role','dialog'); d.innerHTML='<div class="grab"></div>'+html; document.body.appendChild(d); return d }

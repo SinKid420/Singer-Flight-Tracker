@@ -192,7 +192,7 @@
       if(a==='sv'){ var n=Q.querySelector('[data-q=n]').value.trim(), rig=Q.querySelector('[data-q=r]').value.trim(); if(!n){ toast('Add your name, or tap Skip.'); return } if(window.__nameOk&&!window.__nameOk(n)) return;
         ls('sky-trname',n.slice(0,24)); if(navigator.onLine===false){ toast('Name saved. Add your photo and badges when you have signal.'); return done() }
         b.disabled=true; b.textContent='Saving…'; var o={op:'pf',rig:rig,sk:sel.indexOf('aid')>=0?['aid']:[]}; if(sel.indexOf('strap')>=0) o.sk.push('rec'); if(av) o.av=av; if(cov) o.cov=cov;
-        api(o).then(function(){ return sel.length?api({op:'pb',pb:sel}):null }).then(function(){ toast('Profile saved 👍'); done() },function(err){ b.disabled=false; b.textContent='Save profile'; toast(err.message) }) } } };
+        api(o).then(function(){ return sel.length?api({op:'pb',pb:sel}):null }).then(function(){ toast('Profile saved 👍'); done() },function(err){ if(/fetch|network|load failed|timed? ?out/i.test(String(err&&err.message))){ toast('No signal right now. Your name is saved; add your photo and badges when you’re back online.'); return done() } b.disabled=false; b.textContent='Save profile'; toast(err.message) }) } } };
   // ---------- edit my profile ----------
   var myPf={}, pfNew={};
   function pfEdit(){ var f=myPf||{}; pfNew={}; var fld=function(k,l,ph,mx){ return '<label class="pff"><span>'+l+'</span><input data-k="'+k+'" maxlength="'+mx+'" value="'+esc(f[k]||'')+'" placeholder="'+ph+'"></label>' };
