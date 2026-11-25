@@ -7,10 +7,11 @@
     box:'<path class="f" d="M12 3.5l8 4v9l-8 4-8-4v-9z"/><path d="M12 3.5l8 4v9l-8 4-8-4v-9zM4 7.5l8 4 8-4M12 11.5v9"/>',
     planet:'<circle class="f" cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="6"/><path d="M3 15.5c3 1.5 15-4 18-7.5"/><path d="M17.5 3.5h3M19 2v3"/>',
     mark:'<path class="f" d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/><path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',
+    cam:'<path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path class="f" d="M12 7l4 2.5v5L12 17l-4-2.5v-5z"/><path d="M12 7l4 2.5v5L12 17l-4-2.5v-5z"/>',
     x:'<path d="M6 6l12 12M18 6L6 18"/>'};
   function svg(n,s,c){ return '<svg class="awti" viewBox="0 0 24 24" aria-hidden="true" style="width:'+s+'px;height:'+s+'px'+(c?';color:'+c:'')+'">'+P[n]+'</svg>' }
   var T=[['t_rescue','buoy','Rescue & signal','Rescue card and signal spots','#ff453a'],['t_comms','radio','Off-grid comms','Repeaters and radio channels','#64d2ff'],['t_sled','sled','Mountain sledder','Riding zones, slopes, snow','#40e0c8',1],
-    ['t_supply','box','Supply chain','Fuel prices and port news','#ffb340'],['t_planet','planet','Planetary threats','Space weather, radiation','#bf8bff'],['t_saved','mark','Saved','Your saved spots','#32d74b']];
+    ['t_supply','box','Supply chain','Fuel prices and port news','#ffb340'],['t_planet','planet','Planetary threats','Space weather, radiation','#bf8bff'],['t_saved','mark','Saved','Your saved spots','#32d74b'],['arbtn','cam','AR sky camera','Point at the sky to name planes','#64d2ff']];
   var css='#awtools{position:fixed;inset:0;z-index:6060;background:rgba(0,0,0,.5);display:flex;align-items:flex-end}#awtools[hidden]{display:none}'+
     '#awtools .in{width:100%;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));background:radial-gradient(80% 36% at 20% 0%,rgba(255,179,64,.18),transparent 70%),radial-gradient(60% 30% at 100% 0%,rgba(64,224,200,.14),transparent 70%),#0b0e12;border-top:1px solid rgba(255,255,255,.08);color:#eef1f5;font-family:var(--font,system-ui)}'+
     '#awtools .awti{display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}#awtools .awti .f{fill:currentColor;fill-opacity:.28;stroke:none}'+
