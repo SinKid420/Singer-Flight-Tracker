@@ -24,11 +24,35 @@
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
   var S=null;
   function off(){ return document.body.classList.contains('fsron') }
-  function open(){ if(!S){ S=document.createElement('div'); S.id='awtools'; S.setAttribute('role','dialog'); S.setAttribute('aria-label','Survival tools'); document.body.appendChild(S);
-      S.addEventListener('click',function(e){ if(e.target===S||e.target.closest('[data-a=x]')){ S.hidden=true; return } var b=e.target.closest('[data-t]'); if(!b) return; S.hidden=true; var t=document.getElementById(b.getAttribute('data-t')); if(t) setTimeout(function(){ t.click() },60) }) }
-    var list=T.filter(function(t){ return (!t[5]||off())&&document.getElementById(t[0]) });
-    S.innerHTML='<div class="in"><div class="hd"><div><b>Survival tools</b><small>Help for the backcountry</small></div><button type="button" data-a="x" aria-label="Close">'+svg('x',17)+'</button></div>'+
-      '<div class="gr">'+list.map(function(t){ return '<button type="button" data-t="'+t[0]+'" style="--c:'+t[4]+'"><span class="ib">'+svg(t[1],22,'#0a0d10')+'</span><b>'+t[2]+'</b><small>'+t[3]+'</small></button>' }).join('')+'</div>'+
+  // the Tools page: everything you DO, in four groups. Off-road-only tools are dimmed in On-road; tapping one switches mode first.
+  function me(){ var m=window.__AW&&__AW.me&&__AW.me(); return m&&isFinite(m.lat)?m:null }
+  function id(x){ return function(){ var e=document.getElementById(x); if(e) e.click() } }
+  var G=[['Get around',[['🧭','Directions','#64d2ff','both',function(){ var e=document.getElementById('srch')||document.querySelector('#awtop .sr'); if(e) e.click() }],
+      ['⭐','Saved spots','#ffd60a','both',function(){ window.__saved&&__saved.open() }],['📍','Add a place','#64d2ff','both',function(){ window.__awp&&__awp.form({}) }],['📥','Save maps','#40e0c8','both',function(){ window.__offline&&__offline.open() }]]],
+    ['On the trail',[['⏱️','Back by','#ffb340','off',id('bbbtn')],['🧰','Trip tools','#40e0c8','off',function(){ window.__trip&&__trip.open() }],
+      ['🚩','Report trail','#ffb340','off',function(){ var m=me(); if(window.__trReport) __trReport(m?m.lat:__AW.map.getCenter().lat,m?m.lon:__AW.map.getCenter().lng) }],['🎙️','Aware','#ff453a','off',function(){ window.__aware&&__aware.open(true) }]]],
+    ['Look up',[['📷','AR sky camera','#64d2ff','both',id('arbtn')],['🌌',"Tonight's sky",'#bf8bff','both',id('spacebtn')],['🛰️','GPS check','#32d74b','both',function(){ window.__gpsCheck&&__gpsCheck() }],['✈️','Around you now','#c2c9d1','both',function(){ window.__openSky&&__openSky() }]]],
+    ['Survival',[['🆘','Rescue &amp; signal','#ff453a','both',id('t_rescue')],['📻','Off-grid comms','#64d2ff','both',id('t_comms')],['📦','Supply chain','#ffb340','both',id('t_supply')],['☄️','Planet threats','#bf8bff','both',id('t_planet')],['🛷','Mountain sledder','#40e0c8','off',id('t_sled')]]]];
+  var css2='#awtools .in.tg2{padding:10px 14px 12px;background:radial-gradient(80% 30% at 50% 0%,rgba(64,224,200,.12),transparent 70%),#0d1015;border-top:1px solid rgba(255,255,255,.08)}body.awshell #awtools{bottom:calc(env(safe-area-inset-bottom,0px) + 62px)}body.awshell #awtools .in.tg2{max-height:calc(100vh - 90px)}'+
+    '#awtools .tg2 .hd{gap:11px}#awtools .tg2 .tbd{width:48px;height:48px;flex:none;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#40e0c8,#1f9e8b);box-shadow:0 4px 14px rgba(64,224,200,.45),inset 0 1px 0 rgba(255,255,255,.4)}'+
+    '#awtools .tg2 .tbd svg{width:26px;height:26px;fill:none;stroke:#05110f;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#awtools .tg2 .tbd .f{fill:#05110f;fill-opacity:.28;stroke:none}'+
+    '#awtools .tg2 .hd b{font:800 23px var(--font,system-ui);letter-spacing:-.3px}#awtools .tg2 .hd small{font:600 13.5px var(--font,system-ui);color:#b8c2cc}#awtools .tg2 .hd button{width:34px;height:34px}'+
+    '#awtools .tg2 .gh{font:800 14px var(--font,system-ui);color:#eef1f5;margin:7px 0 5px}#awtools .tg2 .tt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}'+
+    '#awtools .tg2 .tt button{height:58px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0 2px;font:600 10.5px/1.15 var(--font,system-ui);color:#d5dbe3;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}'+
+    '#awtools .tg2 .tt em{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-size:15px;background:color-mix(in srgb,var(--c) 16%,transparent)}#awtools .tg2 .tt span{max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:10px;line-height:1.1}#awtools .tg2 .tt .dim{opacity:.38}'+
+    '#awtools .tg2 .sos{margin-top:10px}';
+  var st2=document.createElement('style'); st2.textContent=css2; document.head.appendChild(st2);
+  var ACT=[];
+  function open(){ if(!S){ S=document.createElement('div'); S.id='awtools'; S.setAttribute('role','dialog'); S.setAttribute('aria-label','Tools'); document.body.appendChild(S);
+      S.addEventListener('click',function(e){ if(e.target===S||e.target.closest('[data-a=x]')){ S.hidden=true; return } var b=e.target.closest('[data-i],[data-t]'); if(!b) return; S.hidden=true;
+        if(b.hasAttribute('data-t')){ var t=document.getElementById(b.getAttribute('data-t')); if(t) setTimeout(function(){ t.click() },60); return }
+        var x=ACT[+b.getAttribute('data-i')]; if(!x) return;
+        if(x[3]==='off'&&!off()){ var mb=document.querySelector('#awtop .md button[data-m=fsr]')||document.querySelector('.seg button[data-b=fsr]'); if(mb) mb.click(); setTimeout(function(){ document.querySelectorAll('.lyrp').forEach(function(p){ p.hidden=true }); try{ x[4]() }catch(er){} },700); return }
+        setTimeout(function(){ try{ x[4]() }catch(er){} },60) }) }
+    ACT=[]; var o=off();
+    S.innerHTML='<div class="in tg2"><div class="hd"><span class="tbd" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="f" d="M3 7h18v12H3z"/><path d="M3 7h18v12H3zM8 7V4h8v3M3 12h18"/></svg></span><div style="flex:1;min-width:0"><b>Tools</b><small>Things you do · '+(o?'Off-road':'On-road')+'</small></div><button type="button" data-a="x" aria-label="Close">'+svg('x',17)+'</button></div>'+
+      G.map(function(g){ var L2=g[1].filter(function(x){ return x[3]!=='off'||o||x[1]!=='Mountain sledder' }); return '<div class="gh">'+g[0]+'</div><div class="tt">'+L2.map(function(x){ var i=ACT.push(x)-1, dim=x[3]==='off'&&!o;
+        return '<button type="button" data-i="'+i+'" style="--c:'+x[2]+'"'+(dim?' class="dim" aria-label="'+x[1]+' (Off-road, tap to switch)"':'')+'><em aria-hidden="true">'+x[0]+'</em><span>'+x[1]+'</span></button>' }).join('')+'</div>' }).join('')+
       '<button type="button" class="sos" data-t="t_rescue" style="width:100%;text-align:left;color:#eef1f5"><span class="ib">'+svg('buoy',18,'#0a0d10')+'</span><span><b>In danger? Call 911</b><small>Rescue card shows your exact spot</small></span></button></div>';
     S.hidden=false }
   window.addEventListener('click',function(e){ var b=e.target&&e.target.closest&&e.target.closest('#toolbtn'); if(!b||!document.body.classList.contains('awshell')) return;
