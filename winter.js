@@ -34,7 +34,7 @@ window.__awm&&window.__awm('winter',function(X){with(X){
     function avHtml(j){ var head='<div class="awav">', r=j&&j.report;
       if(!r) return head+'<div class="awavh"><span class="awavb">'+MIC+'</span><div><b>Avalanche forecast</b><small>No forecast for your area right now</small></div></div></div>';
       var d=(r.dangerRatings||[])[0], top='low';
-      var url=/^https:\/\/(www\.)?avalanche\.ca\/[^\s"<>]{0,200}$/.test(j.url||'')?j.url:'https://avalanche.ca/map', area=(j.area&&j.area.name)||r.title||'Your area';
+      var url=/^https:\/\/(www\.)?avalanche\.ca\/[^\s"<>]{0,200}$/.test(j.url||'')?j.url:'https://avalanche.ca/map', area=(function(){ var n=j.area&&j.area.name, t=r.title||''; if(n&&/^[0-9a-f]{20,}$/i.test(n)) n=''; /* early season: the name is an id and the title lists every region */ if(!n&&t&&t.split('-').length<=3&&t.length<=40) n=t; return n||(t.split('-').length>3?'All BC regions (early season)':'Your area') })();
       var h='<div class="awavh"><span class="awavb">'+MIC+'</span><div><b>'+esc(area)+'</b><small>'+esc([d&&d.date&&d.date.display?d.date.display:'Today','Avalanche Canada',r.dateIssued?'issued '+new Date(r.dateIssued).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):''].filter(Boolean).join(' · '))+'</small></div></div>';
       if(d&&d.ratings){ h+='<div class="awavr">'; ['alp','tln','btl'].forEach(function(k){ var x=d.ratings[k]; if(!x) return; var v=String((x.rating&&x.rating.value)||'').toLowerCase(), c=AVK[v]||'#8a93a0'; if((AVN[v]||0)>(AVN[top]||0)) top=v;
         h+='<div style="--ac:'+c+'"><i></i><b>'+esc(x.display||k)+'</b><span>'+(AVN[v]?AVN[v]+' · ':'')+esc((x.rating&&x.rating.display)||'No rating')+'</span></div>' }); h+='</div>' }

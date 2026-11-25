@@ -13,7 +13,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
       Object.keys(memo).forEach(function(k){ if(now-memo[k].t>60000) delete memo[k] });
       var p=of.call(window,u,o); memo[u]={t:now,p:p}; p.then(function(r){ if(!r.ok) delete memo[u] },function(){ delete memo[u] }); return p.then(function(r){ return r.clone() }) } })();
   // ---- Parts of the app that load a moment after the map opens (tools, roads, winter mountains, AR) ----
-  var __mods={}, MODV=9;
+  var __mods={}, MODV=10;
   function __mod(n,ctx,ids){ __mods[n]={ctx:ctx,ids:ids,p:null,done:false} }
   function __load(n){ var m=__mods[n]; if(!m||m.done) return Promise.resolve(); if(m.p) return m.p;
     m.p=new Promise(function(res){ var s=document.createElement('script'); s.src=n+'.js?v='+MODV; s.onload=function(){ res() }; s.onerror=function(){ m.p=null; s.remove(); res() }; document.head.appendChild(s) }); return m.p }
@@ -30,7 +30,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   // Independent volunteer ADS-B networks. Each returns the same readsb-style JSON; results are merged by aircraft id.
   // FlyItalyADSB allows web pages to read it (free personal key). The others work only through a relay.
   var SOURCES = [
-    {id:'FlyItalyADSB',needsKey:true,url:function(a,b,r){return 'https://api.flyitalyadsb.com/api/aircraft/v2/lat/'+a+'/lon/'+b+'/dist/'+r}},
+    {id:'FlyItalyADSB',needsKey:true,url:function(a,b,r){return 'https://api.flyitalyadsb.com/v2/lat/'+a+'/lon/'+b+'/dist/'+Math.min(500,Math.ceil(r*1.852))}},
     {id:'adsb.lol',url:function(a,b,r){return 'https://api.adsb.lol/v2/point/'+a+'/'+b+'/'+r}},
   ];
   var src = 0;
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=302, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=303, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1840,7 +1840,7 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
       h+=row(5,'🌊','Floods (BC)',fl.length?(fw.length?fw.length+' warning'+(fw.length>1?'s':'')+'/watch':fl.length+' advisor'+(fl.length>1?'ies':'y')):'None',fl.some(function(x){ return x.level===3 })?'#e53935':fl.length?'#fb8c00':'#43a047',
         fl.length?fl.slice(0,8).map(function(x){ return '<div class="row2"><span><b style="color:'+(x.level===3?'#e53935':x.level===2?'#fb8c00':'#fbc02d')+'">'+(x.level===3?'WARNING':x.level===2?'Watch':'Advisory')+'</b> '+esc(String(x.title).replace(/^(flood warning|flood watch|high streamflow advisory)\s*[-–:]*\s*/i,''))+(x.local?' <b>· your area</b>':'')+'</span>'+(/^https:\/\/bcrfc\.env\.gov\.bc\.ca\//.test(x.url||'')?'<span><a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">Bulletin ›</a></span>':'')+'</div>' }).join('')+'<small>BC River Forecast Centre · river gauges show on the map with the Creeks layer</small>':'No flood warnings or advisories from the BC River Forecast Centre.');
       var hp=H.help||[], pick=[], seenK={}; hp.forEach(function(p){ var t=p.t, k=t.amenity==='hospital'?'er':t.emergency==='defibrillator'?'aed':t.aeroway==='helipad'?'heli':t.emergency==='phone'?'phone':'hut'; if(!seenK[k]||(k==='hut'&&seenK[k]<2)){ seenK[k]=(seenK[k]||0)+1; pick.push(p) } });
-      h+=row(6,'🆘','Nearest help',hp.length?uDist(hp[0].d/1852)+' '+distUnit():navigator.onLine===false?'No signal':'None found',hp.length?'#43a047':null,
+      h+=row(6,'🆘','Nearest help',hp.length?(+uDist(hp[0].d/1852,1)<1?'Under 1 '+distUnit():uDist(hp[0].d/1852)+' '+distUnit()):navigator.onLine===false?'No signal':'None found',hp.length?'#43a047':null,
         pick.length?pick.slice(0,6).map(function(p){ return '<div class="row2"><span><b>'+esc(p.label)+'</b></span><span>'+esc(where(p.lat,p.lon))+' <a href="#" class="hubgo" data-la="'+p.lat+'" data-lo="'+p.lon+'" data-n="'+esc(p.label)+'">Go ›</a></span></div>' }).join('')+'<small>ER hospitals, defibrillators, emergency phones, helipads, ranger stations and huts · OpenStreetMap volunteers (may be incomplete)</small>':'No emergency places mapped within 40 km. Call 911 in an emergency.');
       var rd=H.roads||[];
       h+=row(4,'🚧','Road closures',rd.length?rd.length+' closed':'None',rd.length?'#e53935':'#43a047',
