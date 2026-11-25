@@ -39,5 +39,15 @@
   addEventListener('popstate',function(){ if(skip>0){ skip--; return } if(depth>0){ depth--; soon() } });
   addEventListener('keydown',function(e){ if(e.key!=='Escape') return; var a=document.activeElement; if(a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.value) return; soon() });
   setInterval(watch,250);
+  /* opening a main page (tab bar, Layers, Search) closes whatever page was open before, so screens never pile up behind each other */
+  var KEEP='#awob,#awtour,#awupd,.legends,#tut,#locmsg,#navp';
+  function closeAll(except){ for(var i=0;i<12;i++){ var L=stack().filter(function(e){ return !e._k&&!(e.matches&&(e.matches(KEEP)||(except&&e.matches(except)))) }).concat(stack().filter(function(e){ return e._k==='toolon'||e._k==='menuon' }));
+      if(!L.length) return; var t=L[0]; if(t._k){ document.body.classList.remove(t._k); continue } var c=closer(t); if(c) c.click(); else t.hidden=true; if(shown(t)) t.hidden=true } }
+  var MAINS=[['#awtabs [data-t=map]',''],['#awtabs [data-t=alerts]','#hubsheet'],['#awtabs [data-t=me]','#awme'],['#awtabs [data-t=tl2]','#awtools'],['#menubtn','#awlyr'],['#awtop .sr','#srbox']];
+  addEventListener('click',function(e){ if(!e.isTrusted||!e.target.closest) return; var hit=null;
+    MAINS.forEach(function(m){ if(!hit&&e.target.closest(m[0])) hit=m });
+    if(!hit){ var mid=e.target.closest('#awtabs [data-t=mid]'); if(mid) hit=['',document.body.classList.contains('fsron')?'#rlx':'#awtools'] }
+    if(!hit) return; closeAll(hit[1]||null) },true);
+  window.__closeAll=closeAll;
   window.__navBack={depth:function(){ return depth+'/'+skip+'/'+history.length }, stack:function(){ return stack().map(key) }, back:function(){ if(depth>0) history.back(); else soon() }};
 })();
