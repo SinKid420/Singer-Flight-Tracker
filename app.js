@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=317, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=318, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1755,7 +1755,7 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
     function saveH(){ try{ var j=JSON.stringify({H:H,lat:me.lat,lon:me.lon}); if(j.length>600000){ var c=JSON.parse(j); (c.H.evac||[]).forEach(function(e){ e.rings=[] }); j=JSON.stringify(c) } localStorage.setItem('aw-hubc',j) }catch(e){} }
     var BCWS='https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/', WFIGS='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/', WS='https://data.wsdot.wa.gov/arcgis/rest/services/TravelInformation/';
     var gjC={}; function o5b(b){ var cx=(b.w+b.e)/2, cy=(b.s+b.n)/2, hw=Math.max((b.e-b.w)/2,.75), hh=Math.max((b.n-b.s)/2,.5); return [cx-hw,cy-hh,cx+hw,cy+hh].map(function(v){return (Math.round(v*4)/4).toFixed(2)}).join(',') }
-    function gj(u,o){ var hit=gjC[u]; if(hit&&Date.now()-hit.t<60000) return hit.p; var p=fetch(u,o).then(function(r){return r.ok?r.json():null}).catch(function(){return null}); gjC[u]={t:Date.now(),p:p}; return p }
+    function gj(u,o){ var hit=gjC[u]; if(hit&&Date.now()-hit.t<60000) return hit.p; var p=fetch(u,o).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json() }); p.catch(function(){ delete gjC[u] }); gjC[u]={t:Date.now(),p:p}; return p } /* a source that fails is reported as not checked, never as "None" */
 
     function kmBox(km){ var dl=km/111, dn=km/(111*Math.cos(me.lat*Math.PI/180)); return {s:me.lat-dl,n:me.lat+dl,w:me.lon-dn,e:me.lon+dn} }
     function env(b){ return '&geometry='+encodeURIComponent([b.w,b.s,b.e,b.n].map(function(v){return v.toFixed(3)}).join(','))+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json' }
@@ -1784,7 +1784,7 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
         inUS?gj(WS+'TravelInfoRoadAlerts/FeatureServer/0/query?where=RoadClosedFlag%3D1&outFields=Road,RoadDirection,HeadlineMessage'+env(b)).then(function(j){ return (j&&j.features||[]).map(function(f){ var a=f.attributes, g=f.geometry||{}; return {road:[a.Road,a.RoadDirection].filter(Boolean).join(' '),text:String(a.HeadlineMessage||'').slice(0,300),lat:g.y,lon:g.x} }) }):[]
       ]).then(function(r){ return [].concat(r[0]||[],r[1]||[]).filter(function(x){return isFinite(x.lat)}) });
       var keys=Object.keys(jobs);
-      return Promise.all(keys.map(function(k){return jobs[k]})).then(function(r){ keys.forEach(function(k,i){ H[k]=r[i] }); H.wx=[].concat(H.wxc||[],H.wxu||[]).sort(function(a,b){return b.level-a.level}); H.t=Date.now(); busy=false; saveH(); paint(); if(!sheetEl.hidden) render() }).catch(function(){ busy=false; if(!sheetEl.hidden) render() }) }
+      return Promise.all(keys.map(function(k){return Promise.resolve(jobs[k]).then(function(v){ return {ok:1,v:v} },function(){ return {ok:0} })})).then(function(r){ var nowT=Date.now(); H.tk=H.tk||{}; H.bad={}; keys.forEach(function(k,i){ if(r[i].ok){ H[k]=r[i].v; H.tk[k]=nowT } else H.bad[k]=1 }); H.wx=[].concat(H.wxc||[],H.wxu||[]).sort(function(a,b){return b.level-a.level}); H.t=Date.now(); busy=false; saveH(); paint(); if(!sheetEl.hidden) render() }).catch(function(){ busy=false; if(!sheetEl.hidden) render() }) }
     function aqiWord(a){ return a==null?'—':a<=50?'Good':a<=100?'Moderate':a<=150?'Unhealthy for sensitive groups':a<=200?'Unhealthy':a<=300?'Very unhealthy':'Hazardous' }
     function aqiCol(a){ return a==null?'var(--dim)':a<=50?'#43a047':a<=100?'#fbc02d':a<=150?'#fb8c00':a<=200?'#e53935':'#8e24aa' }
     function level(){ var L=0, why='';
@@ -1810,6 +1810,17 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
     function hic(n,s,c){ return '<svg class="awti" viewBox="0 0 24 24" aria-hidden="true" style="width:'+s+'px;height:'+s+'px'+(c?';color:'+c:'')+'">'+HI[n]+'</svg>' }
     function sev(c){ c=String(c||'').toLowerCase(); return c==='#e53935'||c==='#c62828'||c==='#8e24aa'?2:c==='#fb8c00'||c==='#fbc02d'?1:c==='#43a047'?0:-1 }
     var SC=['#32d74b','#ffb340','#ff453a'];
+    /* where each tile's info comes from, and how old it is */
+    var SRC={0:[['evac'],'BC Gov'],1:[['wxc','wxu'],'Env. Canada'],2:[['fires'],'BC Wildfire'],3:[['aqhi','air'],'Env. Canada'],4:[['roads'],'DriveBC'],5:[['flood'],'BC River Fcst']};
+    function srcLine(i){ var s=SRC[i]; if(!s) return ''; var tk=H.tk||{}, bad=H.bad||{}, t=0, miss=false;
+      s[0].forEach(function(k){ if(tk[k]&&(!t||tk[k]<t)) t=tk[k]; if(bad[k]) miss=true });
+      var m=t?Math.round((Date.now()-t)/60000):-1, age=m<0?'':m<1?'just now':m<60?m+' min':Math.round(m/60)+' h';
+      return '<small class="awtsrc'+(miss||m>30?' old':'')+'">'+esc(s[1])+(miss?(age?' · couldn’t update, '+age+' old':''):age?' · '+age:'')+'</small>' }
+    function notChecked(i){ var s=SRC[i]; if(!s) return false; var tk=H.tk||{}, bad=H.bad||{}; return s[0].every(function(k){ return !tk[k] })&&s[0].some(function(k){ return bad[k] }) } /* never show "None" for a source we couldn't reach */
+    function scoreInfo(sc){ var d=document.createElement('div'); d.id='awscore'; d.setAttribute('role','dialog'); d.setAttribute('aria-label','What the safety score means');
+      var R=[['🟢',sc+' = '+(sc>=98?'nothing reported near you':'your score right now'),'It starts at 98 and never shows 100: no app can promise you’re safe.'],['🟡','−7 for each yellow tile','Something to watch, like an air quality advisory.'],['🔴','−12 for each red tile','A warning or closure. Evacuation orders cap it at 15.']];
+      d.innerHTML='<div class="in"><button type="button" class="x" aria-label="Close">✕</button><b class="t">What the safety score means</b><small class="s">A quick summary of official alerts within '+km()+' km</small><div class="rs">'+R.map(function(r){ return '<div><span>'+r[0]+'</span><span><b>'+esc(r[1])+'</b><small>'+esc(r[2])+'</small></span></div>' }).join('')+'</div><p>Sources: BC Wildfire Service, DriveBC, Environment Canada, BC River Forecast Centre. Checked when you open this, and every 10 min with auto-check on.</p></div>';
+      document.body.appendChild(d); d.addEventListener('click',function(e){ if(e.target===d||e.target.closest('.x')) d.remove() }) }
     function hubPaint(lv,CT){ var help=CT.filter(function(c){ return c.i===6 })[0], tiles=CT.filter(function(c){ return c.i!==6 }), cur=open>=0&&CT.filter(function(c){ return c.i===open })[0];
       sheetEl.classList.add('awth'); var sc=98; tiles.forEach(function(c){ var v=sev(c.c); sc-=v===1?7:v===2?12:0 }); if(lv.L>=3) sc=Math.min(sc,15); else if(lv.L>=2) sc=Math.min(sc,55); sc=Math.max(5,sc);
       var rc=lv.L>=3?SC[2]:lv.L>=2?SC[1]:SC[0], word=['All clear','Mostly clear','Take care','Danger'][lv.L], warn=tiles.filter(function(c){ return sev(c.c)>0 }).length;
@@ -1823,12 +1834,13 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
         '<circle cx="68" cy="68" r="54" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="13"/>'+(LOWMEM?'':'<circle cx="68" cy="68" r="54" fill="none" stroke="url(#awrg)" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+dash+'" transform="rotate(-90 68 68)" filter="url(#awgl)" opacity=".8"/>')+
         '<circle class="awtarc" cx="68" cy="68" r="54" fill="none" stroke="url(#awrg)" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+dash+'" transform="rotate(-90 68 68)"/><circle cx="68" cy="68" r="40" fill="'+rc+'" fill-opacity=".08"/>'+
         '<text x="68" y="72" text-anchor="middle" font-weight="800" font-size="36" fill="#fff">'+sc+'</text><text x="68" y="92" text-anchor="middle" font-weight="600" font-size="11" fill="rgba(255,255,255,.62)">safety score</text></svg>'+
-        '<div class="awtsum"><span class="awtpill" style="--c:'+rc+'">'+word+'</span><div class="awtwhy">'+esc(lv.why)+(lv.L&&warn>1?'. '+(warn-1)+' more to watch.':lv.L?'.':'.')+'</div>'+
+        '<div class="awtsum"><span class="awtpill" style="--c:'+rc+'">'+word+'</span><div class="awtwhy">'+esc(lv.why)+(lv.L&&warn>1?'. '+(warn-1)+' more to watch.':lv.L?'.':'.')+'</div>'+'<button type="button" class="awtwhat">ⓘ What does '+sc+' mean?</button>'+
         (help?'<button class="awthelp" data-i="6">'+hic('help',16,'#64d2ff')+'<span>Nearest help'+(/\d/.test(help.r)?' · '+help.r:'')+'</span>'+hic('chev',14)+'</button>':'')+'</div></div>';
-      h+='<div class="awtgrid">'+tiles.map(function(c){ var v=sev(c.c), col=v<0?'#8a93a0':SC[v]; return '<button class="awtile" data-i="'+c.i+'" style="--c:'+col+'"><span class="awtrow"><span class="awtib">'+hic(c.k,24,'#0a0d10')+'</span><span class="awtdot"></span></span><b>'+esc(c.t.replace(' (BC)','').replace('Weather alerts','Weather'))+'</b><span class="awtst">'+c.r+'</span></button>' }).join('')+'</div>';
+      h+='<div class="awtgrid">'+tiles.map(function(c){ var nc=notChecked(c.i); if(nc){ c={i:c.i,k:c.k,t:c.t,r:'Couldn’t check',c:'',d:c.d} } var v=sev(c.c), col=v<0?'#8a93a0':SC[v]; return '<button class="awtile" data-i="'+c.i+'" style="--c:'+col+'"><span class="awtrow"><span class="awtib">'+hic(c.k,24,'#0a0d10')+'</span><span class="awtdot"></span></span><b>'+esc(c.t.replace(' (BC)','').replace('Weather alerts','Weather'))+'</b><span class="awtst">'+c.r+'</span>'+srcLine(c.i)+'</button>' }).join('')+'</div>';
       h+='<div class="awtdock"><a href="#" id="hubmap" class="pri" role="button">'+hic('map',20)+'Show on map</a><a href="https://www.emergencyinfobc.gov.bc.ca/" target="_blank" rel="noopener noreferrer">'+hic('info',20)+'SOS info BC</a><a href="https://www.drivebc.ca/" target="_blank" rel="noopener noreferrer">'+hic('car',20)+'DriveBC</a></div>';
       h+='<div class="awtnote">In danger? Call 911. Always follow official orders.</div>';
       body.innerHTML=h;
+      var ww=body.querySelector('.awtwhat'); if(ww) ww.onclick=function(){ scoreInfo(sc) };
       [].forEach.call(body.querySelectorAll('.awtile,.awthelp'),function(b){ b.onclick=function(){ open=+b.getAttribute('data-i'); render(); sheetEl.querySelector('.sheet').scrollTop=0 } });
       var hm=document.getElementById('hubmap'); if(hm) hm.onclick=function(e){ e.preventDefault(); showOnMap() }; hubWire() }
     function hubWire(){ [].forEach.call(body.querySelectorAll('.hubgo'),function(a){ a.onclick=function(e){ e.preventDefault(); sheetEl.hidden=true; if(window.__nav) window.__nav.to({lat:+a.getAttribute('data-la'),lng:+a.getAttribute('data-lo')},a.getAttribute('data-n')) } }) }

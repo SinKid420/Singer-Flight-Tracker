@@ -81,4 +81,15 @@
     'html body #srx .srtb button:not(.srrf),html body #srx .srct button,html body #rlx.awth .rlfl button,html body #rlx.awth .nrseg button,html body #rlx .rlfl button,html body #rlx .nrseg button{min-height:44px!important;height:auto!important;font-size:14.5px!important;border-radius:22px!important;padding-left:16px!important;padding-right:16px!important}'+
     'html body #rlx.awth .nrseg{border-radius:24px!important}';
   document.head.appendChild(ch);
+  /* data freshness: source + age on Emergency hub tiles, and the safety score explainer */
+  var fr=document.createElement('style'); fr.textContent=
+    '.awtile .awtsrc{display:block;font:500 10.5px/1.2 '+F+';color:rgba(255,255,255,.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.awtile .awtsrc.old{color:#ffb340}'+
+    '.awtwhat{display:block;margin-top:6px;background:none;border:0;padding:0;color:#64d2ff;font:600 12.5px '+F+';min-height:24px;text-align:left}'+
+    '#awscore{position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}'+
+    '#awscore .in{position:relative;width:100%;max-width:460px;background:radial-gradient(120% 70% at 85% -10%,rgba(50,215,75,.2),transparent 60%),#0d1116;color:#fff;border-radius:22px 22px 0 0;padding:18px 18px calc(20px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.08);font:14px/1.4 '+F+'}'+
+    '#awscore .x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#fff;font-size:18px}'+
+    '#awscore .t{display:block;font-size:20px;padding-right:44px}#awscore .s{color:#a9b4bf}#awscore .rs{margin-top:12px;display:grid;gap:7px}'+
+    '#awscore .rs>div{display:flex;gap:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px}#awscore .rs b{display:block}#awscore .rs small{color:#a9b4bf}'+
+    '#awscore p{margin:10px 0 0;font-size:12.5px;color:#cfd6dd}';
+  document.head.appendChild(fr);
 })();

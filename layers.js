@@ -28,7 +28,7 @@
   '#awlyr .tip{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:8px 10px;border-radius:12px;background:rgba(255,179,64,.1);border:1px solid rgba(255,179,64,.28);font:500 11.5px/1.35 '+F+';color:#d5dbe3}#awlyr .tip b{color:#ffc966}'+
   '#awlyr .tip.busy{background:rgba(255,69,58,.12);border-color:rgba(255,69,58,.45);box-shadow:0 0 14px rgba(255,69,58,.18)}#awlyr .tip.busy b{color:#ff8a80}'+
   '#awlyr .gh{display:flex;justify-content:space-between;align-items:baseline;font:800 14px '+F+';color:#eef1f5;margin:9px 0 6px}#awlyr .gh a{font:700 11.5px '+F+';color:#64d2ff;text-decoration:none}'+
-  '#awlyr .ly{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#awlyr .ly button{position:relative;height:64px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0 2px;font:700 12px/1.1 '+F+';color:#d5dbe3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}'+
+  '#awlyr .ly{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#awlyr .ly button{position:relative;height:64px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0 2px;font:700 12px/1.1 '+F+';color:#d5dbe3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}#awlyr .ly button.hasage{justify-content:flex-start;padding-top:7px;gap:3px}#awlyr .ly button .age{position:absolute;left:0;right:0;bottom:5px;font:600 10px/1 '+F+';color:#64d2ff}#awlyr .ly button .age.old{color:#ffb340}'+
   '#awlyr .ly em{font-style:normal;font-size:22px;line-height:1}#awlyr .ly span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
   '#awlyr .ly .on{border-color:rgba(100,210,255,.55);background:linear-gradient(180deg,rgba(100,210,255,.22),rgba(100,210,255,.06));color:#fff;box-shadow:0 0 12px rgba(100,210,255,.25)}'+
   '#awlyr .ly .on:after{content:"";position:absolute;right:7px;top:7px;width:6px;height:6px;border-radius:50%;background:#32d74b;box-shadow:0 0 6px #32d74b}#awlyr .ly .dim{opacity:.38}'+
@@ -56,6 +56,7 @@
     return [[o?'Roads &amp; trails':'Roads &amp; travel',o?['fsr','back','motor','close','camp','creek','trail','rep']:['road','ferry','apt','fsr']],['Weather &amp; sky',['fire','lt','rain','mt','plane','space']]].map(function(g){ return [g[0],g[1].filter(function(k){ return exists(K[k]) })] }) }
 
   var S=null;
+  setInterval(function(){ if(S&&!S.hidden&&S.querySelector('.age')) paint() },30000); /* keep "4 min ago" current while Layers is open */
   function paint(){ if(!S||S.hidden) return; var G=groups(), n=0;
     G.forEach(function(g){ g[1].forEach(function(k){ if(hereOk(K[k])&&isOn(K[k])) n++ }) });
     var lk='classic'; try{ lk=localStorage.getItem('aw-look')==='new'?'new':'classic' }catch(e){}
@@ -63,7 +64,8 @@
       (n>=(off()?11:7)?'<div class="tip busy" role="status"><span aria-hidden="true">⚠️</span><span><b>'+n+' layers on:</b> the map may get busy and run slower. Turn off any you don’t need.</span></div>'
           :'<div class="tip"><span aria-hidden="true">💡</span><span><b>Tip:</b> turn on only what you need. Lots of layers can clutter the map and slow older phones.</span></div>')+
       G.map(function(g,gi){ return '<div class="gh"><span>'+g[0]+'</span>'+(gi===0?'<a href="#" data-a="more">All map layers ›</a>':'')+'</div><div class="ly">'+g[1].map(function(k){ var t=K[k], ok=hereOk(t), on=ok&&isOn(t);
-        return '<button type="button" data-k="'+k+'" class="'+(on?'on':'')+(ok?'':' dim')+'" aria-pressed="'+on+'"'+(ok?'':' aria-label="'+t[2]+' ('+(t[3]==='off'?'Off-road':'On-road')+' only, tap to switch)"')+'><em aria-hidden="true">'+t[1]+'</em><span>'+t[2]+'</span></button>' }).join('')+'</div>' }).join('')+
+        var F=window.__fresh, age=on&&F&&F.get(k)?F.ago(k):'', st=age&&F.stale(k); /* how fresh this layer's data is */
+        return '<button type="button" data-k="'+k+'" class="'+(on?'on':'')+(ok?'':' dim')+(age?' hasage':'')+'" aria-pressed="'+on+'"'+(ok?'':' aria-label="'+t[2]+' ('+(t[3]==='off'?'Off-road':'On-road')+' only, tap to switch)"')+'><em aria-hidden="true">'+t[1]+'</em><span>'+t[2]+'</span>'+(age?'<small class="age'+(st?' old':'')+'">'+age+'</small>':'')+'</button>' }).join('')+'</div>' }).join('')+
       '<div class="gh"><span>Map options</span></div><div class="mo"><button type="button" data-a="key"'+(document.body.classList.contains('awkey')?' class="on"':'')+'>🗝️ Map key</button><button type="button" data-a="rot"'+(pressed('rotbtn')?' class="on"':'')+'>🧭 Auto-rotate</button><button type="button" data-a="look">🎨 Map look <small>'+(lk==='new'?'New':'Classic')+'</small></button></div>' }
   function open(){ if(!S){ S=document.createElement('div'); S.id='awlyr'; S.hidden=true; S.setAttribute('role','dialog'); S.setAttribute('aria-label','Layers'); S.innerHTML='<div class="in"></div>'; document.body.appendChild(S);
       S.addEventListener('click',function(e){ if(e.target===S){ close(); return } var b=e.target.closest&&e.target.closest('[data-k],[data-a]'); if(!b) return; e.preventDefault();
