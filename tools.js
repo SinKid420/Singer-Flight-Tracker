@@ -16,13 +16,17 @@ window.__awm&&window.__awm('tools',function(X){with(X){
     function J(u){ return fetch(u).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json() }) }
     var relayOld=false; function T(u){ return fetch(u).then(function(r){ if(!r.ok){ if(r.status===403&&relay&&u.indexOf(relay)===0) relayOld=true; throw new Error(r.status) } return r.text() }) }
     // small saved copies so each screen still shows the last data with no signal
+    var bgBusy={}; function rerun(){ try{ if(cur&&sh&&!sh.hidden&&MODS[cur]) MODS[cur].r[curTab](vt) }catch(e){} }
     function cached(k,ttlMin,fn){ var c=null; try{ c=JSON.parse(localStorage.getItem('sky-p-'+k)||'null') }catch(e){}
       if(c&&Date.now()-c.at<ttlMin*60000) return Promise.resolve({d:c.d,at:c.at});
+      /* older results show straight away while fresh ones load in the background; the page redraws itself when they arrive */
+      if(c&&c.d!=null){ if(!bgBusy[k]){ bgBusy[k]=1; Promise.resolve().then(fn).then(function(d){ bgBusy[k]=0; if(d==null) return; try{ localStorage.setItem('sky-p-'+k,JSON.stringify({at:Date.now(),d:d})) }catch(e){} if(typeof rerun==='function') rerun() }).catch(function(){ bgBusy[k]=0 }) }
+        return Promise.resolve({d:c.d,at:c.at,refreshing:true}) }
       return Promise.resolve().then(fn).then(function(d){ if(d==null) throw new Error('empty'); try{ localStorage.setItem('sky-p-'+k,JSON.stringify({at:Date.now(),d:d})) }catch(e){} return {d:d,at:Date.now()} })
         .catch(function(){ return c?{d:c.d,at:c.at,stale:true}:null }) }
     function tile(lbl,val,sub,col){ return '<div class="ptile"'+(col?' style="box-shadow:inset 0 -3px 0 '+col+'"':'')+'><small>'+lbl+'</small><b>'+val+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>' }
     function sec(h,inner){ return '<div class="ssec"><h4>'+h+'</h4>'+inner+'</div>' }
-    function when(r){ return r?(r.stale?'<span style="color:#fb8c00">Offline copy · '+ago(r.at)+'</span>':'Updated '+ago(r.at)):'' }
+    function when(r){ return r?(r.refreshing?'<span style="color:#64d2ff">Saved '+ago(r.at)+' · updating…</span>':r.stale?'<span style="color:#fb8c00">Offline copy · '+ago(r.at)+'</span>':'Updated '+ago(r.at)):'' }
     function spark(vals,col){ vals=(vals||[]).filter(function(v){return typeof v==='number'&&isFinite(v)}); if(vals.length<2) return ''; var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), w=100, h=22, rg=(mx-mn)||1;
       return '<svg class="pspark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="'+(col||'var(--accent)')+'" stroke-width="1.6" vector-effect="non-scaling-stroke" points="'+vals.map(function(v,i){return (i*w/(vals.length-1)).toFixed(1)+','+(h-1-(v-mn)/rg*(h-2)).toFixed(1)}).join(' ')+'"/></svg>' }
     function lvl(txt,col){ return '<span class="firepill" style="margin:0;background:'+col+'">'+txt+'</span>' }
