@@ -1,6 +1,6 @@
 # AwareBC roadmap (by Josh Singer)
 
-🟢 done · 🟠 in progress · 🔴 still to build. Updated Nov 25, 2026.
+🟢 done · 🟠 in progress · 🔴 still to build. Updated Nov 25, 2026 (evening).
 
 ## 🟢 Finished
 - 🟢 Live map (satellite, street, 3D), On-road / Off-road modes
@@ -21,20 +21,24 @@
 - 🟢 Automatic smoke + regression tests (tests/run.sh)
 
 ## 🟠 In progress
-- 🟠 Polish pass: every page clean at 360×640, smooth on older phones
 - 🟠 Live testing on real devices (desktop Chrome location still blocked)
-- 🟠 Android app: builds, but test signing key and no push when closed
-- 🟠 Plane feed reliability (free backups refuse Cloudflare; relies on FIA key)
+- 🟠 Android release signing key + .aab store bundle (waiting on Josh's OK)
 
 ## 🔴 Still to build (app stores)
+You:
 - 🔴 Google Play developer account ($25 once)
+- 🔴 Firebase project for push alerts when the app is closed (send google-services.json)
+- 🔴 Google sign-in setup (Google Cloud Client ID) — optional
 - 🔴 Apple developer account ($99/yr) + Mac or cloud Mac for iPhone builds
-- 🔴 Google sign-in setup (Google Cloud Client ID)
-- 🔴 Firebase project for push alerts when the app is closed
-- 🔴 Private release signing key + .aab store bundle
+Together:
 - 🔴 Play listing: screenshots, description, content rating, Data safety form
 - 🔴 Play closed test: 12+ testers for 14 days in a row (new personal accounts)
 - 🔴 iPhone native features to pass Apple's "more than a website" rule (4.2)
+- 🔴 Owner tool: delete a rider by tag (for emailed deletion requests)
+
+## 🟢 Done for production
+- 🟢 Polish pass + older-phone speed-ups
+- 🟢 Live planes for everyone (hidden key) + FlyItalyADSB credits
 - 🟢 Full in-app account deletion (Settings ▸ Account)
 - 🟢 Anonymous crash reports + owner view
 - 🟢 Check data sources screen; last saved data shown when a feed is down
@@ -42,4 +46,4 @@
 - 🟢 Accessibility pass (44 px chips, tap areas, screen-reader messages)
 - 🟢 Support page (support.html) + awarebc.help@gmail.com
 
-Suggested order: Android release key → account deletion → Firebase push → Play closed test → iPhone native features.
+Suggested order: release key → Play account → Firebase push → Play listing + closed test → iPhone.
