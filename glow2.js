@@ -76,4 +76,9 @@
   var st=document.createElement('style'); st.id='glow2'; st.textContent=css; document.head.appendChild(st);
   /* modules that load later add their own styles; keep this one last so the glow look wins */
   var mv=0; new MutationObserver(function(){ if(mv||document.head.lastElementChild===st) return; mv=1; setTimeout(function(){ mv=0; if(document.head.lastElementChild!==st) document.head.appendChild(st) },0) }).observe(document.head,{childList:true});
+  /* fingertip-size filter chips (44 px round pills): Showroom and Rig Link */
+  var ch=document.createElement('style'); ch.textContent=
+    'html body #srx .srtb button:not(.srrf),html body #srx .srct button,html body #rlx.awth .rlfl button,html body #rlx.awth .nrseg button,html body #rlx .rlfl button,html body #rlx .nrseg button{min-height:44px!important;height:auto!important;font-size:14.5px!important;border-radius:22px!important;padding-left:16px!important;padding-right:16px!important}'+
+    'html body #rlx.awth .nrseg{border-radius:24px!important}';
+  document.head.appendChild(ch);
 })();
