@@ -166,4 +166,15 @@
     }).catch(function () { t.src = url });
     return t;
   };
+
+  // ---------- alerts when the app is closed (Firebase). Only in builds made with the GOOGLE_SERVICES_JSON secret ----------
+  (function () { if (!(C.isPluginAvailable && C.isPluginAvailable('PushNotifications'))) return; var PN = reg('PushNotifications');
+    function send(tk) { var uid = ''; try { uid = localStorage.getItem('sky-uid') || '' } catch (e) {} if (!uid || !tk) return; try { if (localStorage.getItem('aw-fcm') === tk) return } catch (e) {}
+      fetch('https://awarebc.aware-bc.workers.dev/s/psub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: uid, fcm: tk }) }).then(function (r) { if (r.ok) try { localStorage.setItem('aw-fcm', tk) } catch (e) {} }).catch(function () {}) }
+    PN.addListener('registration', function (t) { send(t && t.value) });
+    PN.addListener('pushNotificationActionPerformed', function (a) { var u = a && a.notification && a.notification.data && a.notification.data.url; if (u && /^\.\/(\?[\w=&-]*)?$/.test(u)) location.href = u });
+    function go() { PN.checkPermissions().then(function (p) { return p.receive === 'granted' ? p : PN.requestPermissions() }).then(function (p) { if (p.receive === 'granted') PN.register() }).catch(function () {}) }
+    /* asked after the person has a rider key (friends / Rig Link), not on first open */
+    var tries = 0; (function wait() { var uid = ''; try { uid = localStorage.getItem('sky-uid') || '' } catch (e) {} if (uid) go(); else if (++tries < 60) setTimeout(wait, 30000) })();
+  })();
 })();
