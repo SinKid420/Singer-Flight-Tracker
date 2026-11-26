@@ -1,36 +1,71 @@
 <p align="center">
-  <img src="logo-512.png" alt="Singers Flight Tracker logo" width="200">
+  <img src="awarebc-512.png" alt="AwareBC logo" width="180">
 </p>
 
-<h1 align="center">Singers Flight Tracker</h1>
+<h1 align="center">AwareBC</h1>
 
 <p align="center">
-  <b>See every plane overhead, live: where it's going, what it is, and what it's doing.</b><br>
+  <b>Every road. Every trail. Every alert.</b><br>
+  A live safety map for British Columbia drivers and off-road riders, by Josh Singer.<br><br>
   <a href="https://sinkid420.github.io/Singer-Flight-Tracker/">Open the app</a> ·
-  <a href="https://sinkid420.github.io/Singer-Flight-Tracker/privacy.html">Privacy policy</a>
+  <a href="https://sinkid420.github.io/Singer-Flight-Tracker/support.html">Support</a> ·
+  <a href="https://sinkid420.github.io/Singer-Flight-Tracker/privacy.html">Privacy &amp; Terms</a> ·
+  <a href="https://github.com/SinKid420/Singer-Flight-Tracker/releases/tag/android-test">Android test app</a>
 </p>
 
 ---
 
 ## What it is
 
-Singers Flight Tracker is a free, phone-first live flight tracker. Open it and every aircraft around you appears on the map, updated every few seconds. Tap a plane to see its route, arrival time and cockpit data, or hold your phone up to the sky and let AR label the planes you can see. No account, no ads, no tracking.
+AwareBC puts everything that matters on the road or the trail on one live map: closures and cameras, wildfires and evacuation alerts, weather, avalanche danger, ferries, planes overhead, and the riders you trust. It's built for BC, works on a phone first, and keeps working with no signal. No ads, no tracking, no selling data.
 
-## Features
+AwareBC is **not an emergency service**. In an emergency, call 911.
 
-- **Live map** of the closest planes (30 by default, adjustable), coloured by altitude, with trails
-- **Tap any plane** for airline, aircraft type, photo, departure and destination with the route drawn on the map, and an **arrival time estimate**
-- **Cockpit tab**: flight phase, autopilot altitude and heading, autopilot modes, altimeter setting, vertical speed and squawk code
-- **Aircraft tab**: registration, maker and model, registered owner, country and airline details
-- **AR mode**: point your camera at the sky and planes are labelled where they are
-- **Emergency alerts** when a plane nearby squawks 7700, 7600 or 7500
-- **Around you now**: which airlines and aircraft types are flying near you
-- **Animated weather radar** for Canada, the US and Mexico, plus local temperature
-- **Map, Satellite and Terrain** views with Day, Night or Auto theme, and a compass with rotating map
-- **Installable** on your phone's home screen (Google Play version coming)
+## Two modes
 
-## Data sources
+**On-road**: city, highways, cameras and ferries.
+- DriveBC closures, incidents and highway cameras
+- BC Ferries sailings and capacity, airports
+- Directions with a driving mode and spoken turns
 
-Flight positions from [adsb.lol](https://adsb.lol) and FlyItalyADSB · routes and aircraft records from [adsbdb](https://www.adsbdb.com) · map © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors · radar from Environment and Climate Change Canada, NOAA/IEM and RainViewer · weather from Open-Meteo · photos from Planespotters.net
+**Off-road**: FSRs, trails, Rig Link and a safety timer.
+- Forest Service Roads, rec sites and trails, sled zones
+- Avalanche forecasts and winter info
+- **Rig Link**: see nearby riders (rounded to about 1 km), profiles, badges and top-down rigs in your own colour
+- Trail reports, a safety timer, survival tools and the **Aware** tap-to-talk co-pilot
 
-v80: FSR trail reports (photo, note, status, spot, comments).
+## Everywhere
+
+- Live planes overhead (FlyItalyADSB · flyitalyadsb.com, CC BY-SA 4.0)
+- Wildfires, evacuation orders, weather alerts, air quality, rain radar and space weather
+- Alerts / Emergency hub with a safety score and nearest help
+- Friends, groups and end-to-end locked chat, with SOS
+- Saved offline maps and a Home card (ETA, sunset)
+- Showroom: rigs posted by riders
+- Automatic updates, anonymous crash reports, and a "Check data sources" screen
+
+## Tech
+
+- Plain JavaScript modules (no build step) on GitHub Pages, installable as a web app
+- Android app built with Capacitor by GitHub Actions on every change
+- Server: one Cloudflare Worker with a SQLite Durable Object (friends, Rig Link, reports, push, plane relay)
+- Free data sources only
+
+## Tests
+
+```
+bash tests/run.sh
+```
+Smoke and regression tests open the app at 360×640 (Samsung A32 size) with all outside data mocked. See [tests/README.md](tests/README.md).
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) (🟢 done · 🟠 in progress · 🔴 to do).
+
+## Contributing
+
+Bug reports and ideas are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), the [Code of Conduct](CODE_OF_CONDUCT.md) and the [Security policy](SECURITY.md).
+
+## License
+
+© 2026 Josh Singer. All rights reserved. See [LICENSE](LICENSE) for details and third-party credits.
