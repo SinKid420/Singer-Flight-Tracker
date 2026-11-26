@@ -44,16 +44,21 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace
           cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/AwareBC.apk
       - name: Build the Play Store bundle (signed with AwareBC's private key)
+        continue-on-error: true
         working-directory: app/build/android
         env:
-          KP: ${{ secrets.ANDROID_KEY_PASS }}
+          KP0: ${{ secrets.ANDROID_KEY_PASS }}
         run: |
           # the private key is stored locked (app/release/awarebc-release.jks.enc); only the ANDROID_KEY_PASS secret can open it
-          if [ -z "$KP" ]; then echo "No ANDROID_KEY_PASS secret yet: skipping the store bundle"; exit 0; fi
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in "$GITHUB_WORKSPACE/app/release/awarebc-release.jks.enc" -out "$RUNNER_TEMP/rel.jks" -pass env:KP
-          ./gradlew bundleRelease --no-daemon --stacktrace -Pandroid.injected.signing.store.file="$RUNNER_TEMP/rel.jks" -Pandroid.injected.signing.store.password="$KP" -Pandroid.injected.signing.key.alias=awarebc -Pandroid.injected.signing.key.password="$KP"
+          S="$GITHUB_WORKSPACE/store-status.txt"
+          KP="$(printf '%s' "$KP0" | tr -d '[:space:]')"; export KP
+          if [ -z "$KP" ]; then echo "No ANDROID_KEY_PASS secret found in GitHub Actions secrets." > "$S"; exit 0; fi
+          if ! openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in "$GITHUB_WORKSPACE/app/release/awarebc-release.jks.enc" -out "$RUNNER_TEMP/rel.jks" -pass env:KP; then echo "The ANDROID_KEY_PASS secret didn't unlock the key (wrong password? it has ${#KP} characters, it should have 32)." > "$S"; exit 0; fi
+          if ! ./gradlew bundleRelease --no-daemon -Pandroid.injected.signing.store.file="$RUNNER_TEMP/rel.jks" -Pandroid.injected.signing.store.password="$KP" -Pandroid.injected.signing.key.alias=awarebc -Pandroid.injected.signing.key.password="$KP" > "$RUNNER_TEMP/gradle.log" 2>&1; then
+            { echo "The store bundle build failed:"; grep -E "What went wrong|error:|Error:|> " "$RUNNER_TEMP/gradle.log" | head -15; } > "$S"; rm -f "$RUNNER_TEMP/rel.jks"; exit 0; fi
           rm -f "$RUNNER_TEMP/rel.jks"
           cp app/build/outputs/bundle/release/app-release.aab "$GITHUB_WORKSPACE/AwareBC-store.aab"
+          echo "OK: AwareBC-store.aab built and signed." > "$S"
       - name: Publish the live update (apps update themselves from this)
         env:
           GH_TOKEN: ${{ github.token }}
@@ -70,10 +75,11 @@ jobs:
           gh release upload android-test AwareBC.apk --clobber
           gh release edit android-test --notes "Test app for Android, build ${{ github.run_number }}. Tap AwareBC.apk on your phone to install."
       - name: Publish the Play Store bundle
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          [ -f AwareBC-store.aab ] || { echo "No store bundle this time"; exit 0; }
-          gh release view android-store >/dev/null 2>&1 || gh release create android-store --prerelease --title "AwareBC Play Store bundle" --notes "Upload AwareBC-store.aab to Google Play Console (Testing or Production)."
-          gh release upload android-store AwareBC-store.aab --clobber
-          gh release edit android-store --notes "Play Store bundle, build ${{ github.run_number }}. Upload AwareBC-store.aab in Google Play Console."
+          [ -f store-status.txt ] || echo "The store bundle step didn't run." > store-status.txt
+          gh release view android-store >/dev/null 2>&1 || gh release create android-store --prerelease --title "AwareBC Play Store bundle" --notes "Setting up"
+          [ -f AwareBC-store.aab ] && gh release upload android-store AwareBC-store.aab --clobber
+          gh release edit android-store --notes "Build ${{ github.run_number }}: $(cat store-status.txt) Upload AwareBC-store.aab in Google Play Console."
