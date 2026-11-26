@@ -711,6 +711,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <div class="sheet-bg" id="fsheet" hidden>
   <div class="sheet" role="dialog" aria-label="Settings">
     <div class="sheet-head"><b>Settings</b><button class="close" id="fclose" aria-label="Close">✕</button></div>
+    <details class="folder" id="acctfolder"><summary>Account</summary><div class="acb"></div><div class="acdel"><p class="fhelp">Delete your rider account and everything tied to it: profile, rig, badges, friends, chats, posts, places you added and saved settings on this phone.</p><button class="setbtn acdelbtn" id="acdel" type="button">Delete my account</button></div></details>
     <details class="folder" id="updfolder"><summary>App updates</summary><div class="setrow" id="updver">Version</div><button class="setbtn" id="updchk" type="button">Check for updates</button><div class="fhelp" id="updmsg" role="status" hidden></div><div class="updbar" id="updprog" hidden><i></i></div><button class="setbtn updgo" id="updgo" type="button" hidden>Install update now</button><a class="setbtn updgo" id="updapk" href="https://github.com/SinKid420/Singer-Flight-Tracker/releases/download/android-test/AwareBC.apk" target="_blank" rel="noopener" hidden>Download the new app (AwareBC.apk)</a></details>
     <details class="folder" id="mefolder"><summary>My spot icon</summary><div class="mepick" id="meicons" role="group" aria-label="My spot icon"></div><div class="mepick" id="mecols" role="group" aria-label="My spot colour"></div></details>
     <details class="folder" id="gfolder"><summary>General</summary>
@@ -849,8 +850,9 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="onboard.js?v=16"></script><script src="tour.js?v=3" defer></script>
 <script src="pins.js?v=4"></script>
 <script src="rigs.js?v=2"></script>
-<script src="app.js?v=186"></script>
+<script src="app.js?v=187"></script>
 <script src="planekey.js?v=2" defer></script>
+<script src="account.js?v=1" defer></script>
 <script src="app2.js?v=8"></script>
 <script src="srtheme.js?v=1" defer></script>
 <script src="reports.js?v=10"></script>
@@ -883,7 +885,7 @@ body.srchon #srch,body.menuon #srch,body.toolon #srch,body.keyon #srch{visibilit
 <script src="bizpins.js?v=4" defer></script>
 <script src="gl.js?v=26" defer></script>
 <script src="extras.js?v=12" defer></script>
-<script src="signin.js?v=11" defer></script>
+<script src="signin.js?v=12" defer></script>
 <script src="place.js?v=5" defer></script>
 <script src="osm.js?v=16" defer></script>
 <script src="awplaces.js?v=6" defer></script>

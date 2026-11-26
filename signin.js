@@ -84,7 +84,7 @@
     else { body.innerHTML='<div class="fhelp">Optional. Sign in to get your friends, chat, trail reports and settings back on a new phone. Maps, GPS and alerts work without it.</div><div class="acg" style="margin:8px 0;display:flex;justify-content:center;min-height:44px"></div>';
       var g=body.querySelector('.acg'); if(F.open) gButton(g); } }
   function mount(){ var up=document.getElementById('updfolder'); if(!up){ setTimeout(mount,500); return } if(!GCLIENT&&!PREVIEW) return;
-    F=document.createElement('details'); F.className='folder'; F.id='acctfolder'; F.innerHTML='<summary>Account</summary><div class="acb"></div>'; up.parentNode.insertBefore(F,up);
+    F=document.getElementById('acctfolder'); if(!F){ F=document.createElement('details'); F.className='folder'; F.id='acctfolder'; F.innerHTML='<summary>Account</summary><div class="acb"></div>'; up.parentNode.insertBefore(F,up) }
     F.addEventListener('toggle',function(){ paintSet(); var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) }); paintSet() }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
   // keep the backup fresh (twice a day while signed in)

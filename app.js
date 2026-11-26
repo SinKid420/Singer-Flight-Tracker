@@ -127,15 +127,15 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   window.__mbx={has:function(){ return !!MBT }, on:MBX, set:function(v){ try{ localStorage.setItem('aw-satsrc',v?'mapbox':'esri') }catch(e){} location.reload() }};
   var BASES={
     map:{sat:false,layers:function(){return [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
+      {maxZoom:19,maxNativeZoom:19,attribution:'Map © OpenStreetMap contributors · ADS-B: FlyItalyADSB, flyitalyadsb.com (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}},
     sat:{sat:true,layers:function(){return [
-      (MBX()?L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}'+(LOWMEM?'':'@2x')+'.jpg90?access_token='+MBT,L.extend((LOWMEM?{maxZoom:19,maxNativeZoom:19,tileSize:256,zoomOffset:0,keepBuffer:0}:{maxZoom:19,maxNativeZoom:18,tileSize:512,zoomOffset:-1}),{attribution:'Imagery © Mapbox © Maxar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})).on('tileload',function(){ window.__mbxTile(true) }).on('tileerror',function(){ window.__mbxTile(false) }):
-      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})),
+      (MBX()?L.tileLayer('https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}'+(LOWMEM?'':'@2x')+'.jpg90?access_token='+MBT,L.extend((LOWMEM?{maxZoom:19,maxNativeZoom:19,tileSize:256,zoomOffset:0,keepBuffer:0}:{maxZoom:19,maxNativeZoom:18,tileSize:512,zoomOffset:-1}),{attribution:'Imagery © Mapbox © Maxar · ADS-B: FlyItalyADSB, flyitalyadsb.com (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})).on('tileload',function(){ window.__mbxTile(true) }).on('tileerror',function(){ window.__mbxTile(false) }):
+      new EsriSmart(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:19,tileSize:RET?128:256,zoomOffset:RET?1:0,attribution:'Imagery © Esri, Maxar, Earthstar · ADS-B: FlyItalyADSB, flyitalyadsb.com (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:19,attribution:'Roads © Esri, HERE, Garmin'}),
       L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{subdomains:['server','services'],maxZoom:19,maxNativeZoom:17})]}},
     fsr:{sat:true,layers:function(){ return BASES.sat.layers() }},
     terrain:{sat:false,layers:function(){return [L.tileLayer(ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
+      {maxZoom:19,maxNativeZoom:17,attribution:'Map © Esri, USGS, NOAA · ADS-B: FlyItalyADSB, flyitalyadsb.com (CC BY-SA 4.0), adsb.lol · Photos: Planespotters.net'})]}}
   };
   // instant first picture: one very zoomed-out satellite layer (about 2 downloads for the whole screen) sits under the sharp map,
   // so there is never a blank screen while the detail loads on weak signal. Older phones use it instead of a stand-in per piece.
@@ -569,7 +569,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     if(cells.length>8){ cells=cells.filter(function(c){return c[1]!=='—'}).slice(0,8) }
     while(cells.length%4) cells.push(['','']);
     var sig=[(p.seen!=null?'seen '+Math.round(p.seen)+'s ago':''),(p.messages?p.messages.toLocaleString()+' msgs':''),(NACP[p.nac_p]?'position '+NACP[p.nac_p]:''),(p.version!=null?'ADS-B v'+p.version:(p.type||'')),((p.dbFlags&1)?'military':''),(p.emergency&&p.emergency!=='none'?(EMG[p.emergency]||p.emergency):'')].filter(Boolean).join(' · ');
-    return '<div class="grid g8">'+cells.map(function(c){return c[0]?cell(c[0],c[1]):'<div style="visibility:hidden"></div>'}).join('')+'</div><div class="meta">'+esc(sig||'Live broadcast data')+'</div>';
+    return '<div class="grid g8">'+cells.map(function(c){return c[0]?cell(c[0],c[1]):'<div style="visibility:hidden"></div>'}).join('')+'</div><div class="meta">'+esc(sig||'Live broadcast data')+'</div><div class="meta awcred">Live data: <a href="https://flyitalyadsb.com" target="_blank" rel="noopener">FlyItalyADSB</a> (flyitalyadsb.com) \u00b7 <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></div>';
   }
   var acdb={}, acPend={}, acSave=null; try{acdb=JSON.parse(localStorage.getItem('sky-acdb')||'{}')||{}}catch(e){acdb={}}
   function acRec(h){ var r=acdb[h]; if(r&&Date.now()-r.t<(r.v?604800000:86400000)) return r.v; if(acPend[h]) return r?r.v:null; acPend[h]=1;
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=306, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=307, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
