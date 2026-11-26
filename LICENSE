@@ -19,8 +19,7 @@ not an emergency service. In an emergency, call 911.
 -------------------------------------------------------------------------------
 Third-party software and data used by AwareBC keep their own licenses:
 
-- Leaflet 1.9.4 (BSD 2-Clause), leaflet-rotate 0.2.8 (GPL-3.0),
-  MapLibre GL JS 4.7.1 (BSD 3-Clause), PMTiles 3.2.1 (BSD 3-Clause),
+- Leaflet 1.9.4 (BSD 2-Clause), MapLibre GL JS 4.7.1 (BSD 3-Clause), PMTiles 3.2.1 (BSD 3-Clause),
   Capacitor (MIT). These are loaded from their public sources and are
   not covered by the notice above.
 - Live aircraft data: FlyItalyADSB (flyitalyadsb.com), CC BY-SA 4.0;

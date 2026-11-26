@@ -41,11 +41,10 @@ if (step === 'web') {
     if (/\.(html|js|json|webmanifest|png|svg)$/.test(f) && !/^(sky-overhead-personal|logo-)/.test(f) && f !== 'sw.js' && f !== 'icon.svg') fs.copyFileSync(path.join(ROOT, f), path.join(W, f));
   }
   // map libraries saved inside the app so it opens with no signal
-  const LF = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/', LR = 'https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js';
+  const LF = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
   await get(LF + 'leaflet.min.js', path.join(W, 'lib', 'leaflet.min.js'));
   await get(LF + 'leaflet.min.css', path.join(W, 'lib', 'leaflet.min.css'));
   for (const i of ['layers.png', 'layers-2x.png', 'marker-icon.png', 'marker-icon-2x.png', 'marker-shadow.png']) await get(LF + 'images/' + i, path.join(W, 'lib', 'images', i));
-  await get(LR, path.join(W, 'lib', 'leaflet-rotate.js'));
   const MLJ = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js', PMJ = 'https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js';
   await get(MLJ, path.join(W, 'lib', 'maplibre-gl.js'));
   await get(PMJ, path.join(W, 'lib', 'pmtiles.js'));
@@ -54,7 +53,7 @@ if (step === 'web') {
   let h = fs.readFileSync(path.join(W, 'index.html'), 'utf8');
   // the saved libraries must match the website's integrity hashes exactly
   const { createHash } = await import('node:crypto');
-  for (const [u, f] of [[LF + 'leaflet.min.css', 'leaflet.min.css'], [LF + 'leaflet.min.js', 'leaflet.min.js'], [LR, 'leaflet-rotate.js'], [MLJ, 'maplibre-gl.js'], [PMJ, 'pmtiles.js']]) {
+  for (const [u, f] of [[LF + 'leaflet.min.css', 'leaflet.min.css'], [LF + 'leaflet.min.js', 'leaflet.min.js'], [MLJ, 'maplibre-gl.js'], [PMJ, 'pmtiles.js']]) {
     const m = new RegExp('"' + u.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '"[^>]*integrity="(sha384-[^"]+)"').exec(h);
     const got = 'sha384-' + createHash('sha384').update(fs.readFileSync(path.join(W, 'lib', f))).digest('base64');
     console.log('integrity', f, got);
@@ -62,10 +61,9 @@ if (step === 'web') {
   }
   h = R(h, '"' + LF + 'leaflet.min.css"', '"lib/leaflet.min.css"', 'index.html');
   h = R(h, '"' + LF + 'leaflet.min.js"', '"lib/leaflet.min.js"', 'index.html');
-  h = R(h, '"' + LR + '"', '"lib/leaflet-rotate.js"', 'index.html');
   h = R(h, '"' + MLJ + '"', '"lib/maplibre-gl.js"', 'index.html');
   h = R(h, '"' + PMJ + '"', '"lib/pmtiles.js"', 'index.html');
-  h = h.replace(/(<script src="lib\/leaflet-rotate\.js"[^>]*><\/script>)/, '$1\n<script src="lib/capacitor.js"></script>\n<script src="native.js"></script>');
+  h = h.replace(/(<script src="awrotate\.js[^"]*"><\/script>)/, '$1\n<script src="lib/capacitor.js"></script>\n<script src="native.js"></script>');
   if (!h.includes('<script src="native.js">')) throw new Error('index.html: could not add native.js');
   // the app stores its own files, so no website service worker
   // the Capacitor bridge adds a small script of its own to the page, so the app's copy allows that

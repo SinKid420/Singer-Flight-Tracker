@@ -8,7 +8,6 @@ module.exports=async(c,opt={})=>{ await c.addInitScript(()=>{ try{ if(localStora
  if(/^http:\/\/localhost/.test(u)) return r.continue();
  if(/leaflet\.min\.css/.test(u)) return r.fulfill({path:L+'/leaflet.min.css',contentType:'text/css'});
  if(/leaflet\.min\.js/.test(u)) return r.fulfill({path:L+'/leaflet.min.js',contentType:'application/javascript'});
- if(/leaflet-rotate/.test(u)) return r.fulfill({path:L+'/leaflet-rotate.js',contentType:'application/javascript'});
  if(/openmaps\.gov\.bc\.ca/.test(u)&&/DRA_DGTL_ROAD_ATLAS/.test(u)){ (opt.log||[]).push('dra'); return r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(/startIndex=0/.test(u)?roads():{type:'FeatureCollection',features:[]})}) }
  if(/openmaps\.gov\.bc\.ca/.test(u)&&/(FTEN_ROAD|WAA_MVPR)/.test(u)) return r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"type":"FeatureCollection","features":[]}'});
  if(/router\.project-osrm/.test(u)){ (opt.log||[]).push('osrm'); return r.abort() }
