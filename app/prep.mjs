@@ -1,4 +1,4 @@
-// AwareBC app builder (by Josh Singer). GitHub runs this to turn the website into the Android app.
+// AwareBC app builder (by Josh Singer). GitHub runs this to turn the website into the Android app (with closed-app alerts when Firebase is set up).
 //   node app/prep.mjs web      -> app/build: package.json, capacitor.config.json, www/ (the website, made to work offline)
 //   node app/prep.mjs android  -> after "npx cap add android": icons, notification icon, version number
 import fs from 'node:fs';
