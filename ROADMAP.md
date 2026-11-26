@@ -35,11 +35,11 @@
 - 🔴 Play listing: screenshots, description, content rating, Data safety form
 - 🔴 Play closed test: 12+ testers for 14 days in a row (new personal accounts)
 - 🔴 iPhone native features to pass Apple's "more than a website" rule (4.2)
-- 🔴 Full in-app account deletion (both stores require it)
-- 🔴 Crash/error reports you can see
-- 🔴 Backup plan if a free feed or key stops working
-- 🔴 Free-tier limits check for more users (Cloudflare, Mapbox)
-- 🔴 Accessibility check (text size, contrast, screen readers)
-- 🔴 Support email + web page for store listings
+- 🟢 Full in-app account deletion (Settings ▸ Account)
+- 🟢 Anonymous crash reports + owner view
+- 🟢 Check data sources screen; last saved data shown when a feed is down
+- 🟢 Free-tier headroom (planes 10 s, quiet friends checks)
+- 🟢 Accessibility pass (44 px chips, tap areas, screen-reader messages)
+- 🟢 Support page (support.html) + awarebc.help@gmail.com
 
 Suggested order: Android release key → account deletion → Firebase push → Play closed test → iPhone native features.
