@@ -1,0 +1,31 @@
+AwareBC
+Copyright (c) 2026 Josh Singer. All rights reserved.
+
+This repository and everything in it (source code, designs, icons, images,
+text and app builds) is the property of Josh Singer.
+
+You may view the code on GitHub and open issues or pull requests to suggest
+changes. You may not copy, modify, distribute, publish, sublicense, sell, or
+use any part of it in another app, website or product without written
+permission from Josh Singer (awarebc.help@gmail.com).
+
+By submitting a pull request, issue or other contribution, you agree that
+Josh Singer may use, change and publish it as part of AwareBC under these
+same terms, with no payment owed.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. AwareBC is
+not an emergency service. In an emergency, call 911.
+
+-------------------------------------------------------------------------------
+Third-party software and data used by AwareBC keep their own licenses:
+
+- Leaflet 1.9.4 (BSD 2-Clause), leaflet-rotate 0.2.8 (GPL-3.0),
+  MapLibre GL JS 4.7.1 (BSD 3-Clause), PMTiles 3.2.1 (BSD 3-Clause),
+  Capacitor (MIT). These are loaded from their public sources and are
+  not covered by the notice above.
+- Live aircraft data: FlyItalyADSB (flyitalyadsb.com), CC BY-SA 4.0;
+  adsb.lol (ODbL); adsbdb; photos from Planespotters.net.
+- Map data © OpenStreetMap contributors (ODbL); imagery © Esri, Maxar,
+  Mapbox; BC government open data (Open Government Licence – British
+  Columbia); Environment and Climate Change Canada; NOAA; Avalanche Canada;
+  RainViewer; Open-Meteo (CC BY 4.0).

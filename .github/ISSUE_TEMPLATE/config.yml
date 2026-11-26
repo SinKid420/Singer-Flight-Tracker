@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help & support
+    url: https://sinkid420.github.io/Singer-Flight-Tracker/support.html
+    about: Quick fixes, account deletion and the support email.
+  - name: Report a security problem (private)
+    url: https://github.com/SinKid420/Singer-Flight-Tracker/blob/main/SECURITY.md
+    about: Please email security problems instead of posting them here.

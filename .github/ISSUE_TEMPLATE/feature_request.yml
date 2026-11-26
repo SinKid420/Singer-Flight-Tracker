@@ -1,0 +1,34 @@
+name: Feature idea
+description: Suggest something new or better for AwareBC
+title: "[Idea]: "
+labels: ["idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What should AwareBC do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Who does it help, and how?
+      placeholder: Sledders could see avalanche danger before heading up.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Where does it belong?
+      options:
+        - On-road
+        - Off-road
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: free
+    attributes:
+      label: Free data source (if you know one)
+      description: AwareBC only uses free sources.
