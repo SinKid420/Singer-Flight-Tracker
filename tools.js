@@ -56,6 +56,10 @@ window.__awm&&window.__awm('tools',function(X){with(X){
       [].forEach.call(tabsEl.children,function(b){ b.onclick=function(){ open(k,+b.getAttribute('data-i')) } });
       sh.hidden=false; body.innerHTML='<div class="ssec">Loading…</div>'; m.r[curTab](vt) }
     function put(t,h){ if(t===vt&&!sh.hidden) body.innerHTML=h; return t===vt }
+    /* first visits are quick too: once per install, Supply chain and Planetary threats load quietly in the background (saved for next time) */
+    setTimeout(function(){ try{ if(localStorage.getItem('aw-pref1')||navigator.onLine===false) return; localStorage.setItem('aw-pref1','1') }catch(e){ return }
+      var jobs=[]; ['supply','planet'].forEach(function(k){ MODS[k].r.forEach(function(f){ jobs.push(f) }) });
+      (function next(){ var f=jobs.shift(); if(!f) return; if(!document.hidden){ try{ f(-1) }catch(e){} } setTimeout(next,2500) })() },20000);
 
     // ================= 1. MOUNTAIN SLEDDER =================
     function alpine(){ var u='https://api.open-meteo.com/v1/forecast?latitude='+me.lat.toFixed(2)+'&longitude='+me.lon.toFixed(2)+'&hourly=temperature_2m,temperature_850hPa,wind_speed_700hPa,wind_direction_700hPa,snowfall&past_days=1&forecast_days=1&timezone=auto';

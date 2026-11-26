@@ -41,6 +41,25 @@
     var jobs=[]; try{ if(window.caches) jobs.push(caches.keys().then(function(k){ return Promise.all(k.map(function(n){ return caches.delete(n) })) })) }catch(e){}
     try{ if(indexedDB.databases) jobs.push(indexedDB.databases().then(function(a){ a.forEach(function(x){ if(x.name) indexedDB.deleteDatabase(x.name) }) })) }catch(e){}
     return Promise.all(jobs).catch(function(){}) }
+  /* owner tool: delete a rider by tag (for deletion requests that arrive by email) */
+  function owner(){ var old=document.getElementById('awdel'); if(old) old.remove(); css(); var d=document.createElement('div'); d.id='awdel'; d.className='awdelo'; d.setAttribute('role','dialog'); d.setAttribute('aria-label','Delete a rider by tag');
+    d.innerHTML='<div class="in"><button type="button" class="x" aria-label="Close">\u2715</button><h3><span class="bd">\ud83d\udee1\ufe0f</span><span>Delete a rider by tag<small>Owner only \u00b7 for emailed requests</small></span></h3>'+
+      '<label for="adtag">Rider tag from the email</label><input id="adtag" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="4K7Q" style="text-transform:uppercase">'+
+      '<div class="adrow"><button type="button" class="keep adfind" style="flex:1">Find rider</button></div><div class="adres" style="margin-top:10px;display:grid;gap:8px"></div><p class="msg" aria-live="polite"></p></div>';
+    document.body.appendChild(d); var inp=d.querySelector('#adtag'), res=d.querySelector('.adres'), msg=d.querySelector('.msg');
+    d.addEventListener('click',function(e){ if(e.target===d||e.target.closest('.x')) d.remove() });
+    function call(b){ return fetch(RS+'/s/mod',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({uid:ls('sky-uid'),name:ls('sky-trname')},b))}).then(function(r){ return r.json() }) }
+    function esc(t){ return String(t||'').replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) }
+    d.querySelector('.adfind').onclick=function(){ msg.className='msg'; msg.textContent='Looking\u2026'; res.innerHTML='';
+      call({op:'find',tag:inp.value}).then(function(j){ if(j.error){ msg.className='msg bad'; msg.textContent=j.error; return } msg.textContent=j.riders.length?'':'No rider with tag #'+j.tag+'.';
+        res.innerHTML=j.riders.map(function(r){ return '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px"><span style="flex:1"><b>'+esc(r.n||'Rider')+' #'+esc(j.tag)+'</b><small style="display:block;color:#a9b4bf">'+(r.seen?'Last seen '+new Date(r.seen).toLocaleDateString():'')+'</small></span><button type="button" class="go" data-id="'+esc(r.id)+'" style="height:44px;border:0;border-radius:12px;padding:0 14px;color:#fff;font-weight:700;background:linear-gradient(180deg,#ff6b61,#d92d22)">Delete</button></div>' }).join('');
+        [].forEach.call(res.querySelectorAll('[data-id]'),function(b){ b.onclick=function(){ if(b.textContent!=='Tap again'){ b.textContent='Tap again'; return } b.disabled=true;
+          call({op:'wipe',id:b.getAttribute('data-id')}).then(function(x){ if(x.error) throw 0; b.textContent='Deleted \u2713'; msg.className='msg'; msg.textContent='Deleted. Reply to the email to let them know.' }).catch(function(){ b.disabled=false; b.textContent='Delete'; msg.className='msg bad'; msg.textContent='\ud83d\udcf6 Couldn\u2019t delete right now. Try again.' }) } }) })
+      .catch(function(){ msg.className='msg bad'; msg.textContent='\ud83d\udcf6 Couldn\u2019t reach the server.' }) };
+    setTimeout(function(){ inp.focus() },250) }
+  (function(){ var asked=0; document.addEventListener('toggle',function(e){ var f=e.target; if(!f||f.id!=='acctfolder'||!f.open||asked) return; asked=1; var uid=ls('sky-uid'); if(!uid) return;
+    fetch(RS+'/s/myplaces',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})}).then(function(r){ return r.json() }).then(function(j){ if(!(j&&j.admin)||document.getElementById('acown')) return;
+      var b=document.createElement('button'); b.type='button'; b.className='setbtn'; b.id='acown'; b.style.color='#64d2ff'; b.textContent='Delete a rider by tag (owner)'; b.onclick=owner; var d=f.querySelector('.acdel'); if(d) f.insertBefore(b,d); else f.appendChild(b) }).catch(function(){}) },true) })();
   window.__delAcct={open:open};
   document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('#acdel')){ e.preventDefault(); open() } });
   css();
