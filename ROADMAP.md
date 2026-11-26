@@ -21,7 +21,7 @@
 - 🟢 Automatic smoke + regression tests (tests/run.sh)
 
 ## 🟠 In progress
-- 🟠 Live testing on real devices (desktop Chrome location still blocked)
+- 🟠 Live testing on real devices (map rotation ✓ on phone; desktop Chrome location still blocked)
 - 🟢 Android release signing key + .aab store bundle (AwareBC-store.aab on the android-store release)
 
 ## 🔴 Still to build (app stores)
