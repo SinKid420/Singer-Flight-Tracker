@@ -3,8 +3,15 @@
 name: App crash test
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Android app"]
+    types: [completed]
+permissions:
+  contents: write
 jobs:
   test:
+    # runs by hand, or after an Android build whose commit message has [crashtest] in it
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && contains(github.event.workflow_run.head_commit.message, '[crashtest]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
@@ -61,6 +68,7 @@ jobs:
             for p in $(awk '{print $2}' rp.txt); do adb shell kill -9 $p || true; done
             sleep 15
             adb shell pidof com.awarebc.app > pid3.txt || echo "NOT RUNNING" > pid3.txt
+            adb exec-out screencap -p > screen.png || true
             adb logcat -d > logcat.txt || true
       - name: Show crashes
         if: always()
@@ -75,3 +83,24 @@ jobs:
         with:
           name: logcat-api${{ matrix.api }}
           path: logcat.txt
+      - name: Write a short report
+        if: always()
+        run: |
+          {
+            echo "API ${{ matrix.api }} · $(date -u +%Y-%m-%dT%H:%MZ)"
+            echo "first open: $(cat pid1.txt 2>/dev/null) | after location: $(cat pid2.txt 2>/dev/null) | after map process killed: $(cat pid3.txt 2>/dev/null)"
+            echo "--- crashes"
+            grep -A12 "FATAL EXCEPTION" logcat.txt | head -40 || true
+            echo "--- app console errors"
+            grep -E "Capacitor/Console.*(Error|Uncaught|TypeError)|chromium.*Uncaught" logcat.txt | sed -E 's/.*(Capacitor\/Console|chromium)//' | sort | uniq -c | sort -rn | head -25 || true
+          } > report-api${{ matrix.api }}.txt
+          cat report-api${{ matrix.api }}.txt
+      - name: Publish the report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view crash-test -R ${{ github.repository }} >/dev/null 2>&1 || gh release create crash-test -R ${{ github.repository }} --prerelease --title "AwareBC crash test results" --notes "Latest virtual-phone test results." || true
+          cp screen.png screen-api${{ matrix.api }}.png 2>/dev/null || true
+          gh release upload crash-test -R ${{ github.repository }} report-api${{ matrix.api }}.txt --clobber
+          [ -s screen-api${{ matrix.api }}.png ] && gh release upload crash-test -R ${{ github.repository }} screen-api${{ matrix.api }}.png --clobber || true
