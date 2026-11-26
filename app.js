@@ -828,7 +828,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     }).catch(function(e){ try{console.warn('poll',e)}catch(_){} }).then(function(){busy=false;schedule()});
   }
   var slow=0, slowUntil=0, planesOn=false;
-  function schedule(){clearTimeout(timer);timer=setTimeout(poll,slow?refreshMs*Math.pow(2,slow):refreshMs);
+  function schedule(){clearTimeout(timer); var rm=window.__awSaver?Math.max(refreshMs,30000):refreshMs; /* battery saver: planes every 30 s */ timer=setTimeout(poll,slow?rm*Math.pow(2,slow):rm);
     document.getElementById('map').parentNode.style.setProperty('--glide','.12s');}
   document.addEventListener('visibilitychange',function(){if(!document.hidden){clearTimeout(timer);poll()}});
   var movT=null;
@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=319, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=320, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1026,8 +1026,9 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var moved0=false; map.on('dragstart',function(){ moved0=true }); function userMoved(){ return moved0 }
   function lost(err){ if(err) lastErr={code:err.code|0,msg:err.message||''}; if(err) setTimeout(roughArea,1500); if(err&&err.code===1){ stopWatch(); if(follow||locBtn.classList.contains('on')||!told){ told=true; follow=false; locBtn.classList.remove('follow','on'); say(why(err),20000,true) } } }
   var told=false;
-  function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:true,maximumAge:1000,timeout:30000}) }catch(e){ wId=null } }
+  function startWatch(){ if(wId!=null||!navigator.geolocation) return; try{ wId=navigator.geolocation.watchPosition(onFix,lost,{enableHighAccuracy:!window.__awSaver,maximumAge:window.__awSaver?15000:1000,timeout:30000}) }catch(e){ wId=null } }
   function stopWatch(){ if(wId!=null&&navigator.geolocation) navigator.geolocation.clearWatch(wId); wId=null }
+  window.__awRegps=function(){ if(wId!=null){ stopWatch(); startWatch() } }; /* battery saver switches GPS power */
   document.addEventListener('visibilitychange',function(){ if(document.hidden) stopWatch(); else startWatch() });
   var resT=null;
   function resumeFollow(){ resT=null; if(follow||wId==null||!lastFix||Date.now()-lastFix>60000) return; follow=true; userZoom=false; locBtn.classList.add('follow'); zoomTo([me.lat,me.lon],DRIVEZ); say(moving?'Drive mode · back to following you':'Back to following you',2000) }
