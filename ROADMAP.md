@@ -1,6 +1,6 @@
 # AwareBC roadmap (by Josh Singer)
 
-🟢 done · 🟠 in progress · 🔴 still to build. Updated Nov 25, 2026 (evening).
+🟢 done · 🟠 in progress · 🔴 still to build. Updated Nov 26, 2026.
 
 ## 🟢 Finished
 - 🟢 Live map (satellite, street, 3D), On-road / Off-road modes
@@ -27,16 +27,20 @@
 ## 🔴 Still to build (app stores)
 You:
 - 🔴 Google Play developer account ($25 once)
-- 🔴 Firebase project for push alerts when the app is closed (send google-services.json)
 - 🔴 Google sign-in setup (Google Cloud Client ID) — optional
 - 🔴 Apple developer account ($99/yr) + Mac or cloud Mac for iPhone builds
 Together:
-- 🔴 Play listing: screenshots, description, content rating, Data safety form
+- 🟠 Play listing: pack ready (doc + graphics); fill it in once the Play account exists
 - 🔴 Play closed test: 12+ testers for 14 days in a row (new personal accounts)
 - 🔴 iPhone native features to pass Apple's "more than a website" rule (4.2)
-- 🔴 Owner tool: delete a rider by tag (for emailed deletion requests)
 
 ## 🟢 Done for production
+- 🟢 Closed-app alerts in the Android app (Firebase)
+- 🟢 Android crash test on virtual Android 13 + 14: no crashes ([crashtest] in a commit runs it)
+- 🟢 Owner tool: delete a rider by tag
+- 🟢 Pick my spot on the map (when location is blocked)
+- 🟢 Tester invite page (testers.html)
+- 🟢 Own map rotation code (no GPL), README, License, community files
 - 🟢 Polish pass + older-phone speed-ups
 - 🟢 Live planes for everyone (hidden key) + FlyItalyADSB credits
 - 🟢 Full in-app account deletion (Settings ▸ Account)
