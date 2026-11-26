@@ -1,6 +1,6 @@
-// AwareBC crash reports (by Josh Singer). Kept on this phone only: Settings ▸ Crash reports.
+// AwareBC crash reports (by Josh Singer). Kept on this phone (Settings ▸ Crash reports) and, unless turned off, sent anonymously to the AwareBC server.
 // Saves script errors, map graphics failures, the app closing unexpectedly (with what the map was doing just before),
-// and the Android app's own crash notes. Nothing is sent anywhere.
+// and the Android app's own crash notes. The copy sent has no rider name and no location.
 (function(){
   var K='aw-crash', AL='aw-alive', MAX=30, t0=Date.now(), nErr=0;
   function rd(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)||'null'); return v==null?d:v }catch(e){ return d } }
@@ -15,7 +15,15 @@
     if(navigator.deviceMemory) s.ram=navigator.deviceMemory+' GB'; s.app=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
     try{ s.perf=(window.__awPerf||'auto')+(window.__awLow?'/low':'/fast'); s.sat=localStorage.getItem('aw-satsrc')||'esri'; var sn=window.__snow&&__snow.state(), rn=window.__rainfx&&__rainfx.state(); s.fx=(sn&&sn.running?'snow'+sn.flakes:'')+(rn&&rn.running?'rain'+rn.drops:'')||'none' }catch(e){}
     s.scr=screen.width+'x'+screen.height+'@'+(window.devicePixelRatio||1); return s }
-  function add(kind,msg,extra){ var l=rd(K,[]); l.unshift({t:Date.now(),k:kind,m:String(msg||'').slice(0,600),s:extra||state()}); if(l.length>MAX) l.length=MAX; wr(K,l); badge() }
+  function add(kind,msg,extra){ var l=rd(K,[]), x={t:Date.now(),k:kind,m:String(msg||'').slice(0,600),s:extra||state()}; l.unshift(x); if(l.length>MAX) l.length=MAX; wr(K,l); badge(); queue(x) }
+  /* anonymous copy to the AwareBC server so Josh can fix bugs (no rider name, no location): Settings > Crash reports can turn it off */
+  var RS='https://awarebc.aware-bc.workers.dev', Q='aw-crq';
+  function sendOn(){ try{ return localStorage.getItem('aw-crsend')!=='0' }catch(e){ return true } }
+  function queue(x){ if(!sendOn()) return; var q=rd(Q,[]); q.push(x); if(q.length>10) q=q.slice(-10); wr(Q,q); clearTimeout(queue.t); queue.t=setTimeout(flush,4000) }
+  function dev(){ var u=navigator.userAgent; return ((u.match(/Android [\d.]+|iPhone OS [\d_]+|Windows NT [\d.]+|Mac OS X [\d_]+|CrOS/)||['?'])[0]+' · '+((u.match(/(Chrome|Firefox|Version)\/[\d]+/)||[''])[0])+(navigator.deviceMemory?' · '+navigator.deviceMemory+'GB':'')).slice(0,80) }
+  function flush(){ var q=rd(Q,[]), uid=''; if(!q.length||!sendOn()||navigator.onLine===false) return; try{ uid=localStorage.getItem('sky-uid')||'' }catch(e){} if(!uid) return;
+    var part=q.slice(0,5); fetch(RS+'/s/crash',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid,v:String(window.__AWV||''),dev:dev(),r:part})}).then(function(r){ if(r.ok){ wr(Q,rd(Q,[]).slice(part.length)); if(rd(Q,[]).length) setTimeout(flush,3000) } }).catch(function(){}) }
+  addEventListener('online',function(){ setTimeout(flush,2000) }); setTimeout(flush,12000);
   window.__crash={add:function(k,m){ add(k,m) },list:function(){ return rd(K,[]) },clear:function(){ wr(K,[]); badge() }};
 
   // script errors (first few per session, so one repeating error doesn't fill the log)
@@ -46,12 +54,33 @@
     fold=document.createElement('details'); fold.className='folder'; fold.id='crashfolder';
     fold.innerHTML='<summary>Crash reports<span class="crn"></span></summary><div class="fhelp" role="status"></div><textarea readonly rows="7" style="width:100%;box-sizing:border-box;background:var(--chip);color:var(--fg);border:0;border-radius:10px;padding:8px;font:11px/1.35 ui-monospace,monospace" aria-label="Crash reports"></textarea>'+
       '<button class="setbtn crb" type="button" data-a="sel">Select all</button><button class="setbtn crb" type="button" data-a="copy">Copy</button><button class="setbtn crb" type="button" data-a="clr">Clear reports</button>';
+    var acf=document.getElementById('acctfolder')||fold, acd=acf.querySelector('.acdel'); (acd?function(h){ acd.insertAdjacentHTML('beforebegin',h) }:function(h){ acf.insertAdjacentHTML('beforeend',h) })('<label class="setrow" for="crsend">Send crash reports<input type="checkbox" id="crsend"></label><p class="fhelp">Anonymous: only the error, app version and phone type. Never your name or location.</p><button class="setbtn" type="button" id="crall" style="color:#64d2ff" hidden>All riders\u2019 reports (owner)</button>');
     up.parentNode.insertBefore(fold,up.nextSibling); cnt=fold.querySelector('.crn'); badge(); ui();
+    var cs=acf.querySelector('#crsend'); cs.checked=sendOn(); cs.onchange=function(){ try{ localStorage.setItem('aw-crsend',cs.checked?'1':'0') }catch(e){} if(!cs.checked) wr(Q,[]) };
+    var ca=acf.querySelector('#crall'), asked=0; acf.addEventListener('toggle',function(){ if(!acf.open||asked) return; asked=1; var uid=''; try{ uid=localStorage.getItem('sky-uid')||'' }catch(e){} if(!uid) return;
+      fetch(RS+'/s/myplaces',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:uid})}).then(function(r){ return r.json() }).then(function(j){ ca.hidden=!(j&&j.admin) }).catch(function(){}) });
+    ca.onclick=function(){ owner() };
     fold.addEventListener('toggle',function(){ if(fold.open) ui(); var sh=document.querySelector('#fsheet .sheet'); if(sh) sh.classList.toggle('fopen',!!document.querySelector('#fsheet details.folder[open]')) });
     var ta=fold.querySelector('textarea');
     fold.querySelector('[data-a=sel]').onclick=function(){ ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length) };
     fold.querySelector('[data-a=copy]').onclick=function(){ ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length); var ok=false; try{ ok=document.execCommand('copy') }catch(e){} this.textContent=ok?'Copied ✓':'Now press and hold the text ▸ Copy'; var b=this; setTimeout(function(){ b.textContent='Copy' },2500) };
     fold.querySelector('[data-a=clr]').onclick=function(){ window.__crash.clear(); ui() } }
+  /* owner view: every rider's anonymous reports, most common first */
+  function owner(){ var uid=''; try{ uid=localStorage.getItem('sky-uid')||'' }catch(e){} var d=document.createElement('div'); d.id='awcr'; d.setAttribute('role','dialog'); d.setAttribute('aria-label','All crash reports');
+    d.style.cssText='position:fixed;inset:0;z-index:6600;background:#0d1116;color:#fff;display:flex;flex-direction:column;padding:14px 14px calc(14px + env(safe-area-inset-bottom));font:14px/1.35 system-ui,sans-serif';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:10px"><b style="font-size:20px;flex:1">Crash reports <small style="display:block;font-size:12.5px;font-weight:400;color:#a9b4bf">All riders \u00b7 last 30 days \u00b7 anonymous</small></b><button type="button" aria-label="Close" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-size:18px">\u2715</button></div>'+
+      '<div class="crl" style="flex:1;overflow:auto;margin-top:10px;display:grid;gap:8px;align-content:start">Loading\u2026</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" data-a="cp" style="flex:1;height:46px;border-radius:12px;border:0;background:#64d2ff;color:#06202c;font-weight:700">Select all to copy</button><button type="button" data-a="cl" style="flex:1;height:46px;border-radius:12px;border:1px solid rgba(255,69,58,.4);background:rgba(255,69,58,.14);color:#ff6b61;font-weight:700">Clear all</button></div><textarea readonly style="position:absolute;left:-9999px;top:0;width:10px;height:10px"></textarea>';
+    document.body.appendChild(d); d.querySelector('[aria-label=Close]').onclick=function(){ d.remove() };
+    var list=d.querySelector('.crl'), ta=d.querySelector('textarea');
+    function call(b){ return fetch(RS+'/s/crashes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({uid:uid},b||{}))}).then(function(r){ return r.json() }) }
+    function esc(t){ return String(t).replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c] }) }
+    function load(){ call().then(function(j){ if(j.error) throw j.error; var top=j.top||[];
+      list.innerHTML=top.length?top.map(function(x){ return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px"><div style="display:flex;gap:8px;align-items:center"><b style="background:#ff453a;border-radius:9px;padding:1px 8px;font-size:13px">'+x.n+'\u00d7</b><b style="flex:1">'+esc(x.k)+'</b><small style="color:#a9b4bf">v'+esc(x.v||'?')+' \u00b7 '+new Date(x.t).toLocaleDateString([],{month:'short',day:'numeric'})+'</small></div><div style="margin-top:4px;color:#dfe5ea;font-size:13px;word-break:break-word">'+esc(x.m)+'</div></div>' }).join(''):'<p style="color:#a9b4bf;text-align:center;margin-top:40px">\u2713 No crash reports. Nice and stable.</p>';
+      ta.value='AwareBC crash reports (all riders)\n\n'+(j.r||[]).map(function(x){ return new Date(x.t).toISOString().slice(0,16)+' v'+x.v+' '+x.k+' | '+x.dev+'\n'+x.m+'\n'+x.s }).join('\n\n') }).catch(function(e){ list.textContent=typeof e==='string'?e:'\ud83d\udcf6 Couldn\u2019t load reports. Check your signal.' }) }
+    d.querySelector('[data-a=cp]').onclick=function(){ ta.style.cssText='width:100%;height:120px;margin-top:8px;background:#000;color:#fff;border-radius:10px'; ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length); var ok=false; try{ ok=document.execCommand('copy') }catch(e){} this.textContent=ok?'Copied \u2713':'Press and hold the text \u25b8 Copy' };
+    var clr=d.querySelector('[data-a=cl]'); clr.onclick=function(){ if(clr.textContent!=='Tap again to clear'){ clr.textContent='Tap again to clear'; return } call({op:'clear'}).then(load) };
+    load() }
   function toast(){ var l=rd(K,[]); if(!l.length||Date.now()-l[0].t>20000||l[0].k!=='Closed unexpectedly') return; var d=document.createElement('div');
     d.style.cssText='position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:3000;background:rgba(28,28,30,.96);color:#fff;border-radius:12px;padding:10px 12px;font:13px/1.35 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.5);text-align:center';
     d.innerHTML='<b style="display:block;margin-bottom:2px">AwareBC closed unexpectedly</b>A crash report was saved in Settings ▸ Crash reports.'+(window.__glNote?'<br>'+window.__glNote:''); document.body.appendChild(d); setTimeout(function(){ d.remove() },window.__glNote?11000:7000) }
