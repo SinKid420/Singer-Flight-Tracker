@@ -65,7 +65,9 @@ if (step === 'web') {
   h = R(h, '"' + LF + 'leaflet.min.js"', '"lib/leaflet.min.js"', 'index.html');
   h = R(h, '"' + MLJ + '"', '"lib/maplibre-gl.js"', 'index.html');
   h = R(h, '"' + PMJ + '"', '"lib/pmtiles.js"', 'index.html');
-  h = h.replace(/(<script src="awrotate\.js[^"]*"><\/script>)/, '$1\n<script src="lib/capacitor.js"></script>\n<script src="native.js"></script>');
+  h = h.replace(/(<script src="awrotate\.js[^"]*"><\/script>)/, '$1\n<script src="native.js"></script>');
+  /* Capacitor's bridge loads first, so messages from the phone that arrive early (after a reload) have somewhere to land */
+  h = R(h, '<head>', '<head>\n<script src="lib/capacitor.js"></script>', 'index.html');
   if (!h.includes('<script src="native.js">')) throw new Error('index.html: could not add native.js');
   // the app stores its own files, so no website service worker
   // the Capacitor bridge adds a small script of its own to the page, so the app's copy allows that
