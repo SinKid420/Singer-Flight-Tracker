@@ -86,4 +86,4 @@ jobs:
           [ -f store-status.txt ] || echo "The store bundle step didn't run." > store-status.txt
           gh release view android-store >/dev/null 2>&1 || gh release create android-store --prerelease --title "AwareBC Play Store bundle" --notes "Setting up"
           [ -f AwareBC-store.aab ] && gh release upload android-store AwareBC-store.aab --clobber
-          gh release edit android-store --notes "Build ${{ github.run_number }}: $(cat store-status.txt) Upload AwareBC-store.aab in Google Play Console."
+          gh release edit android-store --notes "Build ${{ github.run_number }}: $(cat store-status.txt) Closed-app alerts (Firebase file): ${{ secrets.GOOGLE_SERVICES_JSON != '' && 'ON' || 'not added yet' }}. Upload AwareBC-store.aab in Google Play Console."
