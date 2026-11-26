@@ -61,6 +61,7 @@ const denyGeo = state => ({ init: st => { const q = navigator.permissions.query.
   await test('Layers page: groups, tip, 7+ layers turns into a red warning', async ok => {
     await p.click('#menubtn'); await p.waitForTimeout(500); ok(await K.shown(p, '#awlyr .in'), 'not open');
     ok(/Tip:/.test(await p.evaluate(() => document.querySelector('#awlyr .tip').innerText)), 'no tip');
+    if (await p.$('#awlyr .morerow')) { await p.click('#awlyr .morerow'); await p.waitForTimeout(300) } // Planes and Space sit under a folded "More"
     for (const k of ['fire', 'lt', 'rain', 'plane', 'mt', 'road', 'ferry', 'apt']) { await p.click('#awlyr [data-k=' + k + ']'); await p.waitForTimeout(250) }
     await p.waitForTimeout(700); ok(await p.evaluate(() => document.querySelector('#awlyr .tip').classList.contains('busy')), 'no busy warning');
     const o = await K.offscreen(p, '#awlyr .in'); ok(!o.length, 'off screen: ' + o);
@@ -68,8 +69,9 @@ const denyGeo = state => ({ init: st => { const q = navigator.permissions.query.
   await test('Layers: tapping a dimmed Off-road layer switches to Off-road', async ok => {
     await p.click('#awlyr [data-k=fsr]'); await p.waitForTimeout(2200); ok(await p.evaluate(() => document.body.classList.contains('fsron')), 'did not switch');
     await p.evaluate(() => { document.querySelector('#awtop [data-m=sat]').click() }); await p.waitForTimeout(1200); await p.keyboard.press('Escape'); });
-  await test('Tools page: 4 groups, wrench badge, every tool opens its screen', async ok => {
-    await p.evaluate(() => window.__awLayers && __awLayers.close()); await K.openTab(p, 'Tools'); await p.waitForTimeout(500);
+  await test('Tools page: groups, folded More, wrench badge, every tool opens its screen', async ok => {
+    await p.evaluate(() => { window.__awLayers && __awLayers.close(); localStorage.removeItem('aw-toolmore') }); await K.openTab(p, 'Tools'); await p.waitForTimeout(500);
+    ok(await p.$('#awtools .morerow'), 'More is not folded'); await p.click('#awtools .morerow'); await p.waitForTimeout(400);
     ok(/M14\.7 6\.3/.test(await p.evaluate(() => document.querySelector('#awtools .tbd').innerHTML)), 'no wrench on page');
     ok(/M14\.7 6\.3/.test(await p.evaluate(() => document.querySelector('#awtabs [data-t=mid]').innerHTML)), 'no wrench on tab');
     const n = await p.evaluate(() => document.querySelectorAll('#awtools .tt button').length); ok(n >= 16, n + ' tools'); const dead = [];
