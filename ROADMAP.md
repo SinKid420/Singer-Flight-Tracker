@@ -47,3 +47,4 @@ Together:
 - 🟢 Support page (support.html) + awarebc.help@gmail.com
 
 Suggested order: release key → Play account → Firebase push → Play listing + closed test → iPhone.
+
