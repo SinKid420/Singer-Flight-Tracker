@@ -22,7 +22,7 @@
 
 ## 🟠 In progress
 - 🟠 Live testing on real devices (desktop Chrome location still blocked)
-- 🟠 Android release signing key + .aab store bundle (waiting on Josh's OK)
+- 🟢 Android release signing key + .aab store bundle (AwareBC-store.aab on the android-store release)
 
 ## 🔴 Still to build (app stores)
 You:
