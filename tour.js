@@ -48,7 +48,7 @@
     var mo=new MutationObserver(function(){ if(O&&!O.isConnected){ mo.disconnect(); if(ls('aw-tut')!=='1') done() } }); mo.observe(document.body,{childList:true});
     document.body.appendChild(O); addEventListener('resize',paint); paint() }
   /* wait until the welcome screens and any first-run sheets are gone */
-  function busy(){ if(document.querySelector('#awob,.awobc,.rlq,.pushask,.awobt')) return true; var c=document.querySelector('#ofsetup:not([hidden]) .ofcta'); if(vis(c)) return true; return !!document.querySelector('.awsheet.on,[role=dialog][aria-modal=true]:not(#awtour)') }
+  function busy(){ if(document.querySelector('#awob,.awobc,.rlq,.pushask,.awobt,#awperm')) return true; /* wait for the "why we ask" card too */ var c=document.querySelector('#ofsetup:not([hidden]) .ofcta'); if(vis(c)) return true; return !!document.querySelector('.awsheet.on,[role=dialog][aria-modal=true]:not(#awtour)') }
   var n=0, t=setInterval(function(){ n++; if(ls('aw-tut')==='1'){ clearInterval(t); return } if(!document.body.classList.contains('tuton')) return; if(busy()||!vis(document.getElementById('menubtn'))) return; clearInterval(t); setTimeout(function(){ if(!busy()&&ls('aw-tut')!=='1') start(); else { t=null; wait() } },600) },700);
   function wait(){ var t2=setInterval(function(){ if(ls('aw-tut')==='1') return clearInterval(t2); if(!busy()){ clearInterval(t2); start() } },900) }
   window.__tour={ start:function(){ ls('aw-tut','0'); if(!O) start() } };
