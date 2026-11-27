@@ -35,6 +35,12 @@ Together:
 - 🔴 iPhone native features to pass Apple's "more than a website" rule (4.2)
 
 ## 🟢 Done for production
+- 🟢 Trust: source + age on alerts, score explained, layer freshness, 'Couldn't check' instead of false 'None'
+- 🟢 Simpler Layers/Tools with folded 'More'
+- 🟢 Battery saver offer at 20%
+- 🟢 'Why we ask' cards before permissions (Play prominent disclosure)
+- 🟢 Rider name + password login (password never leaves the phone)
+- 🟢 'What works with no signal' card on Save maps
 - 🟢 Closed-app alerts in the Android app (Firebase)
 - 🟢 Android crash test on virtual Android 13 + 14: no crashes ([crashtest] in a commit runs it)
 - 🟢 Owner tool: delete a rider by tag
