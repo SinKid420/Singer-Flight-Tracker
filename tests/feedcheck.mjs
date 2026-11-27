@@ -18,13 +18,17 @@ const F = [
   ['BC Ferries', 'https://www.bcferriesapi.ca/v2/capacity/', j => !!j && typeof j === 'object'],
   ['Space weather', 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json', j => arr(j) && j.length > 1],
   ['Trails & FSRs (BC map data)', 'https://openmaps.gov.bc.ca/geo/pub/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=WHSE_FOREST_TENURE.FTEN_REC_SITE_POINTS_SVW&outputFormat=json&count=1', j => arr(j.features)],
-  ['OpenStreetMap data', 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json][timeout:20];node(50.6,-120.4,50.7,-120.3)[amenity=fuel];out 1;'), j => arr(j.elements)],
+  ['OpenStreetMap data', 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json][timeout:20];node(50.6,-120.4,50.7,-120.3)[amenity=fuel];out 1;'), j => arr(j.elements), 'https://overpass.kumi.systems/api/interpreter'],
   ['Place search', 'https://photon.komoot.io/api/?q=Kamloops&limit=1', j => arr(j.features) && j.features.length > 0],
   ['Directions', 'https://router.project-osrm.org/route/v1/driving/' + lo + ',' + la + ';' + (lo + .05) + ',' + (la + .05) + '?overview=false', j => j.code === 'Ok'],
   ['AwareBC server', RS + 'where', j => 'ok' in j],
 ];
 
-async function one([name, url, good]) {
+async function one([name, url, good, backup]) {
+  if (backup) { // the app switches to a backup copy of this service when the main one is busy: fine if either answers
+    const m = await one([name, url, good]); if (m.ok) return m;
+    const b2 = await one([name, url.replace(/^https:\/\/[^/]+\/api\/interpreter/, backup), good]);
+    return b2.ok ? { name: name + ' (main server down, backup working)', ok: true, ms: b2.ms } : m; }
   const t0 = Date.now();
   for (let tryN = 0; tryN < 2; tryN++) { // one retry: a single hiccup isn't worth an email
     try {
