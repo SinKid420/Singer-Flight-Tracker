@@ -17,8 +17,8 @@
   var G = navigator.geolocation, subs = {}, n = 0, wid = null, starting = false, last = null;
   // Android's own location service (the one maps apps use): faster and more reliable than the web view's GPS. Older app installs without it keep the old way.
   var GEO = reg('Geolocation'), geoOK = !!(C.isPluginAvailable && C.isPluginAvailable('Geolocation')), gid = null;
-  function gErr(e) { var m = String((e && e.message) || e || ''); return { code: /denied|permission|not authorized/i.test(m) ? 1 : /timeout|timed out/i.test(m) ? 3 : 2, message: m } }
-  function gPerm() { return GEO.checkPermissions().then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; return (p.location === 'granted' || p.coarseLocation === 'granted') ? p : GEO.requestPermissions() }).then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; if (p.location !== 'granted' && p.coarseLocation !== 'granted') throw new Error('Location permission denied'); return p }) }
+  function gErr(e) { var m = String((e && e.message) || e || ''); return { code: /denied|permission|not authorized|Not now/i.test(m) ? 1 : /timeout|timed out/i.test(m) ? 3 : 2, message: m } }
+  function gPerm() { return GEO.checkPermissions().then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; return (p.location === 'granted' || p.coarseLocation === 'granted') ? p : (window.__permAsk ? window.__permAsk('loc') : Promise.resolve(true)).then(function (y) { if (!y) throw new Error('Not now'); return GEO.requestPermissions() }) }).then(function (p) { window.__native.approx = p.location !== 'granted' && p.coarseLocation === 'granted'; if (p.location !== 'granted' && p.coarseLocation !== 'granted') throw new Error('Location permission denied'); return p }) }
   function gStart() { if (!geoOK || gid != null) return; gid = 'pending';
     gPerm().then(function () { return GEO.watchPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 2000 }, function (p, e) {
       if (e) { var x = gErr(e); if (x.code === 1) each(1, x); return }
@@ -64,7 +64,7 @@
 
   // ---------- notifications for danger alerts ----------
   var lastN = '', lastT = 0, nid = Date.now() % 100000;
-  LN.requestPermissions().catch(function () {});
+  (window.__permAsk ? window.__permAsk('notif') : Promise.resolve(true)).then(function (y) { if (y) return LN.requestPermissions() }).catch(function () {}); /* explained first, then Android asks */
   LN.createChannel({ id: 'danger', name: 'Danger trail alerts', description: 'Caution and Blocked reports ahead of you', importance: 5, visibility: 1, vibration: true }).catch(function () {});
   // friends & chat messages arrive as phone notifications when AwareBC is in the background
   LN.createChannel({ id: 'chat', name: 'Friends & chat', description: 'Messages and friend requests', importance: 4, visibility: 1, vibration: true }).catch(function () {});
@@ -173,7 +173,7 @@
       fetch('https://awarebc.aware-bc.workers.dev/s/psub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid: uid, fcm: tk }) }).then(function (r) { if (r.ok) try { localStorage.setItem('aw-fcm', tk) } catch (e) {} }).catch(function () {}) }
     PN.addListener('registration', function (t) { send(t && t.value) });
     PN.addListener('pushNotificationActionPerformed', function (a) { var u = a && a.notification && a.notification.data && a.notification.data.url; if (u && /^\.\/(\?[\w=&-]*)?$/.test(u)) location.href = u });
-    function go() { PN.checkPermissions().then(function (p) { return p.receive === 'granted' ? p : PN.requestPermissions() }).then(function (p) { if (p.receive === 'granted') PN.register() }).catch(function () {}) }
+    function go() { PN.checkPermissions().then(function (p) { return p.receive === 'granted' ? p : (window.__permAsk ? window.__permAsk('notif') : Promise.resolve(true)).then(function (y) { return y ? PN.requestPermissions() : p }) }).then(function (p) { if (p.receive === 'granted') PN.register() }).catch(function () {}) }
     /* asked after the person has a rider key (friends / Rig Link), not on first open */
     var tries = 0; (function wait() { var uid = ''; try { uid = localStorage.getItem('sky-uid') || '' } catch (e) {} if (uid) go(); else if (++tries < 60) setTimeout(wait, 30000) })();
   })();

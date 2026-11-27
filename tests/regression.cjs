@@ -35,9 +35,9 @@ const denyGeo = state => ({ init: st => { const q = navigator.permissions.query.
 
   // ---------- location ----------
   p = await app(denyGeo('prompt'));
-  await test('Turn on location card: tags, Allow + Not now, closes', async ok => {
-    await p.waitForTimeout(2500); const t = await p.evaluate(() => document.getElementById('locmsg').innerText); ok(/Turn on location/.test(t) && /Not now/.test(t) && /Trail alerts/.test(t), t.slice(0, 80));
-    await p.click('#gpsno'); await p.waitForTimeout(200); ok(!(await K.shown(p, '#locmsg')), 'did not close'); });
+  await test('Location "why we ask" card: explains, Allow + Not now, closes (no blocked warning after Not now)', async ok => {
+    await p.waitForTimeout(2500); const t = await p.evaluate(() => (document.getElementById('awperm') || {}).innerText || ''); ok(/Allow location/.test(t) && /Not now/.test(t) && /never shared/.test(t), t.slice(0, 80));
+    await p.click('#awperm [data-a=no]'); await p.waitForTimeout(1500); ok(!(await p.$('#awperm')), 'did not close'); ok(!(await K.shown(p, '#locmsg')), 'blocked warning showed after Not now'); });
   await p.ctx.close();
   p = await app(Object.assign({ desktop: true }, denyGeo('denied')));
   await test('Computer, site blocked: "Location is blocked for AwareBC" with click steps', async ok => { await p.waitForTimeout(1500); const t = await p.evaluate(() => document.getElementById('locmsg').innerText); ok(/blocked for AwareBC/.test(t) && /Site settings/.test(t), t.slice(0, 90)); });
