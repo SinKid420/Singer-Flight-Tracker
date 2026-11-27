@@ -18,8 +18,8 @@
     '.awtoast .awb{display:flex;gap:8px;margin-top:8px}.awtoast .awb button{flex:1;min-height:36px;border:0;border-radius:18px;font:700 13px var(--font,system-ui);background:#2c2c2e;color:#fff}.awtoast .awb .pri{background:var(--accent,#ff3b30)}'+
     '#navp .nelv{display:flex;align-items:center;gap:8px;margin:4px 0 2px;font-size:12px;color:var(--dim,#aaa)}#navp .nelv svg{flex:none;width:96px;height:30px}#navp .nelv b{color:var(--fg,#fff)}'+
     '#navp button[data-x=voice]{flex:0 0 40px;min-width:40px;padding:0}#navp .nsv{font-size:12px;color:var(--dim,#aaa);margin-top:3px}'+
-    '.gaugemk{display:block;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#0288d1;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.6);font:700 9px/12px system-ui;color:#fff;text-align:center}.gaugemk.up{background:#e65100}.gaugemk.dn{background:#2e7d32}'+
-    '.gpop small{color:#666}.gpop svg{display:block;margin:4px 0}#fsrleg .slopeleg{grid-column:1/-1;width:0;min-width:100%;display:flex;gap:5px;align-items:center;white-space:nowrap;font:600 10px var(--font,system-ui);color:var(--dim,#aaa);margin-top:2px;overflow:hidden}#fsrleg .slopeleg span{display:inline-flex;align-items:center;gap:2px}#fsrleg .slopeleg b{display:inline-block;width:9px;height:9px;border-radius:2px}');
+    '.gaugemk{display:block;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#0288d1;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.6);font:700 10.5px/12px system-ui;color:#fff;text-align:center}.gaugemk.up{background:#e65100}.gaugemk.dn{background:#2e7d32}'+
+    '.gpop small{color:#666}.gpop svg{display:block;margin:4px 0}#fsrleg .slopeleg{grid-column:1/-1;width:0;min-width:100%;display:flex;gap:5px;align-items:center;white-space:nowrap;font:600 10.5px var(--font,system-ui);color:var(--dim,#aaa);margin-top:2px;overflow:hidden}#fsrleg .slopeleg span{display:inline-flex;align-items:center;gap:2px}#fsrleg .slopeleg b{display:inline-block;width:9px;height:9px;border-radius:2px}');
 
   // ============ 1. Spoken directions ============
   var voiceOn=ls('aw-voice')!=='0', NP=null;
