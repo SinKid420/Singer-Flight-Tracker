@@ -1,0 +1,50 @@
+# AwareBC daily data-source check: every morning, tests each live feed the app uses.
+# If one is down or its format changed, it opens an issue titled "Data source down" (GitHub emails the owner).
+# When everything works again, it closes that issue. One email per new problem, not one every day.
+name: Daily data-source check
+on:
+  schedule:
+    - cron: '23 14 * * *'   # 6:23 AM Pacific (7:23 in summer)
+  workflow_dispatch:
+  push:
+    paths: ['tests/feedcheck.mjs', '.github/workflows/feedcheck.yml']
+permissions:
+  contents: read
+  issues: write
+concurrency: feedcheck
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tests/feedcheck.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check every data source
+        id: run
+        continue-on-error: true
+        run: node tests/feedcheck.mjs
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.run.outcome }}
+        run: |
+          T="Data source down"
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number --jq '.[0].number // empty')
+          if [ "$OUTCOME" = "failure" ]; then
+            DOWN=$(grep '^🔴' feedcheck.md | sed 's/ — .*//' | sort | tr '\n' ' ' || true)
+            if [ -z "$N" ]; then
+              gh issue create --title "$T" --body-file feedcheck.md
+            else
+              OLD=$(gh issue view "$N" --json body --jq .body | grep '^🔴' | sed 's/ — .*//' | sort | tr '\n' ' ' || true)
+              gh issue edit "$N" --body-file feedcheck.md
+              if [ "$OLD" != "$DOWN" ]; then gh issue comment "$N" --body "The list of sources that are down changed: $DOWN"; fi
+            fi
+          elif [ -n "$N" ]; then
+            gh issue close "$N" --comment "All data sources are working again ✅"
+          fi
+          cat feedcheck.md >> "$GITHUB_STEP_SUMMARY"
