@@ -138,7 +138,7 @@
     var mid=tabs.querySelector('[data-t=mid]'), want=o?'rl':'tl'; if(mid.__k!==want){ mid.__k=want; mid.innerHTML=o?ic('radio',23)+'Rig Link':ic('tool',23)+'Tools' }
     var tv=$('tval'), c1=chips.querySelector('.c1'); if(tv&&/\d/.test(tv.textContent)){ c1.hidden=false; c1.innerHTML=ic('temp',14)+tv.textContent+($('tcap')&&/F/.test($('tcap').textContent)?'F':'C')+' now' } else c1.hidden=true;
     var lv=window.__hub&&window.__hub.level&&window.__hub.level(), c2=chips.querySelector('.c2'), bd=tabs.querySelector('.bd');
-    if(lv){ c2.hidden=false; c2.className='c2 '+(lv.L>=2?'w2':lv.L===1?'w1':'ok'); c2.innerHTML=ic(lv.L?'warn':'ok',14)+(lv.L?esc(lv.why):'No alerts near you'); bd.hidden=!lv.L } else { c2.hidden=true; bd.hidden=true }
+    if(lv&&lv.L){ /* only when there IS an alert: "no alerts" doesn't need to sit on the map */ c2.hidden=false; c2.className='c2 '+(lv.L>=2?'w2':'w1'); c2.innerHTML=ic('warn',14)+esc(lv.why); bd.hidden=false } else { c2.hidden=true; bd.hidden=true }
     if(M&&!M.hidden) fill() }
   try{ new MutationObserver(paint).observe(document.body,{attributes:true,attributeFilter:['class']}) }catch(e){}
   setInterval(paint,4000); setTimeout(paint,300); setTimeout(paint,2500);
