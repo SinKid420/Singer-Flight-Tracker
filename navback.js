@@ -38,7 +38,9 @@
   function soon(){ var L=stack(); if(!L.length) return; var k0=key(L[0]); backT=Date.now(); setTimeout(function(){ var M=stack(); if(M.length&&key(M[0])===k0) closeTop(); setTimeout(watch,80) },60) }
   addEventListener('popstate',function(){ if(skip>0){ skip--; return } if(depth>0){ depth--; soon() } });
   addEventListener('keydown',function(e){ if(e.key!=='Escape') return; var a=document.activeElement; if(a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.value) return; soon() });
-  setInterval(watch,250);
+  /* checks when something on screen opens or closes (map tiles and markers ignored), plus a slow safety check every 1.5 s: much lighter than checking 4 times a second */
+  var __offMap=function(rs){ for(var i=0;i<rs.length;i++){ var t=rs[i].target; t=t&&t.nodeType===1?t:t&&t.parentElement; if(!t||!t.closest||!t.closest('.leaflet-container')) return true } return false }; var wq=0; new MutationObserver(function(rs){ if(wq||!__offMap(rs)) return; wq=1; setTimeout(function(){ wq=0; watch() },60) }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style','open']});
+  setInterval(watch,1500);
   /* opening a main page (tab bar, Layers, Search) closes whatever page was open before, so screens never pile up behind each other */
   var KEEP='#awob,#awtour,#awupd,.legends,#tut,#locmsg,#navp';
   function closeAll(except){ for(var i=0;i<12;i++){ var L=stack().filter(function(e){ return !e._k&&!(e.matches&&(e.matches(KEEP)||(except&&e.matches(except)))) }).concat(stack().filter(function(e){ return e._k==='toolon'||e._k==='menuon' }));

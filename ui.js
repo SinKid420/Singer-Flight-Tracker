@@ -120,7 +120,7 @@
      tap the "AwareBC · Created by Josh Singer" line at the bottom of Settings 7 times to show or hide them */
   var DEV=false; try{ DEV=localStorage.getItem('aw-dev')==='1' }catch(e){} document.body.classList.toggle('awdev',DEV);
   var dst=document.createElement('style'); dst.textContent='body:not(.awdev) .awdevonly{display:none!important}'; document.head.appendChild(dst);
-  function devMark(){ function m(e){ if(e) e.classList.add('awdevonly') }
+  function devMark(){ function m(e){ if(e&&!e.classList.contains('awdevonly')) e.classList.add('awdevonly') } /* only when missing: re-adding still counts as a change and kept other helpers busy */
     m(document.getElementById('crashfolder')); var sp=document.getElementById('s_perf'); if(sp){ m(sp.closest('label')); m(document.getElementById('s_perfh')) }
     var ss=document.getElementById('aw_satsrc'); if(ss) m(ss.closest('label'));
     [].forEach.call(document.querySelectorAll('#fsheet .subh'),function(h){ if(/Flight feeds/.test(h.textContent)&&!h.classList.contains('awdevonly')){ for(var n=h;n;n=n.nextElementSibling) m(n) } });
@@ -129,6 +129,6 @@
   function all(){ [].forEach.call(document.querySelectorAll('.lyrp'),tidy); satRow(); legRow(); scan(document); bigX(); bigArr(); devMark() }
   function start(){ all(); waitMap(); setTimeout(all,1500); setTimeout(all,5000);
     // new screens and sheets built later get switches too
-    if(window.MutationObserver){ var q=false; new MutationObserver(function(){ if(q) return; q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
+    if(window.MutationObserver){ var __offMap=function(rs){ for(var i=0;i<rs.length;i++){ var t=rs[i].target; t=t&&t.nodeType===1?t:t&&t.parentElement; if(!t||!t.closest||!t.closest('.leaflet-container')) return true } return false }; var q=false; new MutationObserver(function(rs){ if(q||!__offMap(rs)) return; /* map tiles and markers don't count */ q=true; setTimeout(function(){ q=false; all() },250) }).observe(document.body,{childList:true,subtree:true}) } }
   if(document.readyState==='complete') setTimeout(start,200); else addEventListener('load',function(){ setTimeout(start,200) });
 })();

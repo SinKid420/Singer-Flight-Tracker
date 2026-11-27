@@ -57,7 +57,7 @@
     var b=document.createElement('button'); b.type='button'; b.className='awpkrow';
     b.innerHTML='<span class="bd">✈️</span><span><b>Turn on live planes</b><small>Paste your free key</small></span><em>Set up</em>';
     b.onclick=function(e){ e.stopPropagation(); open() }; pc.parentNode.insertBefore(b,pc.nextSibling) }
-  var rq=0; new MutationObserver(function(){ if(rq) return; rq=1; requestAnimationFrame(function(){ rq=0; row() }) }).observe(document.documentElement,{childList:true,subtree:true});
+  var __offMap=function(rs){ for(var i=0;i<rs.length;i++){ var t=rs[i].target; t=t&&t.nodeType===1?t:t&&t.parentElement; if(!t||!t.closest||!t.closest('.leaflet-container')) return true } return false }; var rq=0; new MutationObserver(function(rs){ if(rq||!__offMap(rs)) return; rq=1; requestAnimationFrame(function(){ rq=0; row() }) }).observe(document.documentElement,{childList:true,subtree:true});
   /* Plane messages ("Needs a feed", "Can't reach the feeds", "Feed busy") open this screen when there's no key */
   document.addEventListener('click',function(e){ if(has()) return; var t=e.target.closest&&e.target.closest('#wbtn,#stat'); if(!t) return;
     if(t.id==='stat'&&!t.classList.contains('bad')) return; e.preventDefault(); e.stopImmediatePropagation(); open() },true);
