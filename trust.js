@@ -1,7 +1,7 @@
 /* Data you can trust (by Josh Singer): when a map layer's source stops answering, say so plainly instead of quietly
    showing old data: "DriveBC isn't answering · showing what we had at 2:15 PM". Once per source every 30 minutes, only for layers you have on. */
 (function(){
-  var BTN={road:'roadbtn',fire:'firebtn',ferry:'ferrybtn',apt:'aptbtn',lt:'ltbtn',mt:'mtbtn',rep:'trbtn'}, ICO={road:'🚧',fire:'🔥',ferry:'⛴️',apt:'🛫',lt:'⚡',mt:'❄️',rep:'🚩',fsr:'🌲',trail:'🥾'};
+  var BTN={road:'roadbtn',fire:'firebtn',ferry:'ferrybtn',apt:'aptbtn',lt:'ltbtn',mt:'mtbtn',rep:'trbtn'}, ICO={road:'🚧',fire:'🔥',ferry:'⛴️',apt:'🛫',mt:'❄️',rep:'🚩'}; /* only live data gets a note: trails, FSRs and lightning (it has its own note) just show "Couldn't check" on their tile */
   var said={}, pend=[], pt=null;
   function on(k){ if(k==='fsr'||k==='trail') return document.body.classList.contains('fsron'); var b=document.getElementById(BTN[k]); return !!b&&(b.getAttribute('aria-pressed')==='true'||b.classList.contains('on')) }
   function hm(t){ var d=new Date(t), same=new Date().toDateString()===d.toDateString(); return (same?'':d.toLocaleDateString([],{month:'short',day:'numeric'})+' ')+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) }
