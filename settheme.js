@@ -30,7 +30,7 @@
   var B='#64d2ff',G='#32d74b',A='#ffb340',R='#ff453a',V='#bf8bff',T='#40e0c8';
   var M={gfolder:['gear','Basics',B],mefolder:['spot','My spot',R],wffolder:['storm','Weather',A],cfolder:['comp','Compass',B],
     dirfolder:['turn','Directions',A],osmfolder:['pin','Places',G],rdfolder:['road','DriveBC',A],bfolder:['ferry','BC Ferries',T],
-    mtfolder:['snow','Winter',T],nrfolder:['riders','Riders',G],pcfolder:['plane','Planes',B],hbfolder:['sos','Safety',R],blkfolder:['block','Blocked',V],updfolder:['upd','Updates',G],
+    mtfolder:['snow','Snow',T],nrfolder:['riders','Riders',G],pcfolder:['plane','Planes',B],hbfolder:['sos','Safety',R],blkfolder:['block','Blocked',V],updfolder:['upd','Updates',G],
     arfolder:['cam','AR camera',V],v3folder:['cube','3D view',V],apfolder:['apt','Airports',B],ffolder:['feed','Flight feeds',B],prfolder:['tent','Survival',G],spfolder:['sat','Space',V],
     crashfolder:['bug','Crashes',R],rfolder:['map','Map look',G],fsfolder:['trail','FSR map',A],ltfolder:['bolt','Lightning',A],acctfolder:['user','Account',B]};
   function svg(n){ return '<svg class="awti" viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px;color:#0a0d10">'+(P[n]||P.gear)+'</svg>' }
