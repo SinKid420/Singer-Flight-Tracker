@@ -60,10 +60,10 @@ const denyGeo = state => ({ init: st => { const q = navigator.permissions.query.
     ok(r[0] >= 38, 'height ' + r[0]); ok(r[2] === 'sat' && /100, 210, 255|64d2ff/i.test(r[1]), 'On-road not blue'); });
   await test('Layers page: groups, tip, 7+ layers turns into a red warning', async ok => {
     await p.click('#menubtn'); await p.waitForTimeout(500); ok(await K.shown(p, '#awlyr .in'), 'not open');
-    ok(/Tip:/.test(await p.evaluate(() => document.querySelector('#awlyr .tip').innerText)), 'no tip');
+    ok(/What shows on the map/.test(await p.evaluate(() => document.querySelector('#awlyr .hd').innerText)), 'no subtitle'); // tip box replaced by a short warning in the subtitle (Nov 2026)
     if (await p.$('#awlyr .morerow')) { await p.click('#awlyr .morerow'); await p.waitForTimeout(300) } // Planes and Space sit under a folded "More"
     for (const k of ['fire', 'lt', 'rain', 'plane', 'mt', 'road', 'ferry', 'apt']) { await p.click('#awlyr [data-k=' + k + ']'); await p.waitForTimeout(250) }
-    await p.waitForTimeout(700); ok(await p.evaluate(() => document.querySelector('#awlyr .tip').classList.contains('busy')), 'no busy warning');
+    await p.waitForTimeout(700); ok(await p.evaluate(() => { const t = document.querySelector('#awlyr .tip'); return !!t && t.classList.contains('busy') }), 'no busy warning');
     const o = await K.offscreen(p, '#awlyr .in'); ok(!o.length, 'off screen: ' + o);
     ok(/Auto-rotate/.test(await p.evaluate(() => document.querySelector('#awlyr .mo').innerText)), 'Auto-rotate label'); });
   await test('Layers: tapping a dimmed Off-road layer switches to Off-road', async ok => {
