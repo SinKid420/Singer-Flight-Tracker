@@ -43,7 +43,7 @@
   function rainOn(){ var s=$('radop'); return !!s&&+s.value>=0.2 }
   var TL=[ // [key, emoji, name, mode on|off|both, kind, id]
     ['road','🚗','DriveBC','on','btn','roadbtn'],['ferry','⛴️','Ferries','on','btn','ferrybtn'],['apt','🛫','Airports','on','btn','aptbtn'],
-    ['fsr','🛣️','FSRs','off','sel','s_fsrFsr'],['back','〰️','Back roads','off','sel','s_fsrRoad'],['motor','🛻','4×4 trails','off','sel','s_fsrMotor'],['close','🚧','Closures','both','sel','s_fsrClose'],
+    ['fsr','<svg viewBox="0 0 24 24" style="width:1.15em;height:1.15em;vertical-align:-.2em"><path d="M2 13l5-7 4 5 3-3 8 5z" fill="#5d6b78"/><path d="M5 22c2-4 9-3 9-6s-4-3-2-5h1.5c-1.5 2 3 2.5 3 5 0 3.5-6 3-6.5 6z" fill="#a0703c"/><path d="M8 21.5c1.5-2.5 6-2.6 6.6-5" stroke="#6e4a24" stroke-width=".8" fill="none" stroke-dasharray="1 1"/></svg>','FSRs','off','sel','s_fsrFsr'],['back','〰️','Back roads','off','sel','s_fsrRoad'],['motor','🛻','4×4 trails','off','sel','s_fsrMotor'],['close','🚧','Closures','both','sel','s_fsrClose'],
     ['camp','🏕️','Camping','both','sel','s_fsrCamp'],['creek','💧','Creeks','both','sel','s_water'],['trail','🥾','Trails','both','sel','s_fsrOsm'],['rep','🚩','Trail reports','off','btn','trbtn'],
     ['fire','🔥','Wildfires','both','btn','firebtn'],['lt','⚡','Lightning','both','btn','ltbtn'],['rain','🌧️','Rain radar','both','rain',''],['mt','❄️','Winter','both','btn','mtbtn'],
     ['plane','✈️','Planes','both','btn','planebtn'],['space','🛰️','Space','both','open','spacebtn']];
