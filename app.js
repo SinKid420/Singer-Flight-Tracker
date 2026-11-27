@@ -5,7 +5,7 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   var me = {lat:53.7, lon:-127.6, label:'none'};
   // Open where you were last time (saved to about 100 m on this phone only); older than 6 hours counts as "last known", not where you are.
   try{var lp=JSON.parse(localStorage.getItem('sky-lastpos')||'null'); if(lp&&isFinite(lp.lat)&&isFinite(lp.lon)&&Math.abs(lp.lat)<=90&&Math.abs(lp.lon)<=180){me.lat=+lp.lat;me.lon=+lp.lon;me.label=lp.t&&Date.now()-lp.t<6*3600000?'you':'last'}}catch(e){}
-  var cfg2={fsrRdOp:'0.4',waterOp:'0.4',water:'1',fsrOp:'1',fsrWalk:'1',fsrBike:'1',fsrMotor:'1',fsrFsr:'1',fsrRoad:'1',fsrPlan:'1',fsrBcts:'1',fsrTh:'1',fsrCamp:'1',fsrClose:'1',fsrOsm:'1',arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all',ltAge:'30',ltAlert:'off',mt:'auto',mtPins:'1',prepSolar:'off'};
+  var cfg2={fsrRdOp:'0.4',waterOp:'0.4',water:'1',fsrOp:'1',fsrWalk:'1',fsrBike:'1',fsrMotor:'1',fsrFsr:'1',fsrRoad:'1',fsrPlan:'1',fsrBcts:'1',fsrTh:'1',fsrCamp:'1',fsrClose:'1',fsrOsm:'1',arMax:'40',arDetail:'full',ovShow:'1',ovMins:'30',ovDist:'3',emShow:'1',starlink:'1',passAll:'0',aptOnlyBad:'0',dtab:'ov',adir:'1',atype:'all',fireAll:'0',firePer:'1',fireAc:'1',roadCams:'1',roadEvt:'all',camAuto:'0',roadCons:'1',roadPass:'1',roadWA:'1',ferryHome:'none',ferryN:'4',ferryFill:'car',ferryCam:'1',ferryJump:'1',hubKm:'100',hubAuto:'1',hubBadge:'1',v3Ex:'1',v3Fps:'smooth',declutter:'1',nearRef:'me',aMax:'all',wxMax:'auto',fireKm:'map',fireMax:'all',camMax:'all',evtMax:'all',ferryMax:'all',ltAge:'60',ltAlert:'off',mt:'auto',mtPins:'1',prepSolar:'off'};
   // ---- The same weather request asked twice at once (or within a minute) goes out only once ----
   (function(){ var of=window.fetch, memo={}, HOSTS=/^https:\/\/(api\.open-meteo\.com|api\.rainviewer\.com)\//;
     window.fetch=function(u,o){ if(typeof u!=='string'||(o&&o.method&&o.method!=='GET')||!HOSTS.test(u)) return of.apply(window,arguments);
@@ -26,6 +26,8 @@ if(typeof L==='undefined'){document.addEventListener('DOMContentLoaded',function
   function byNear(p){ return function(a,b){ return distNm(p[0],p[1],a.lat,a.lon)-distNm(p[0],p[1],b.lat,b.lon) } }
   try{var c2=JSON.parse(localStorage.getItem('sky-cfg2')||'{}'); Object.keys(cfg2).forEach(function(k){ if(c2&&typeof c2[k]==='string'&&/^[a-z0-9.]{1,10}$/i.test(c2[k])) cfg2[k]=c2[k] })}catch(e){}
   function saveCfg2(){ try{localStorage.setItem('sky-cfg2',JSON.stringify(cfg2))}catch(e){} }
+  /* lightning used to look back only 30 min, so the map was often empty: move everyone to 1 hour once (they can change it back in Settings) */
+  try{ if(!localStorage.getItem('aw-lt60')){ localStorage.setItem('aw-lt60','1'); if(cfg2.ltAge==='30'){ cfg2.ltAge='60'; saveCfg2() } } }catch(e){}
   var refreshMs = 10000, /* 10 s keeps the free server well inside its daily limit */ timer = null, busy = false, radiusNm = 100, selected = null, planes = {}, trails = {}, lastData = [], failCount = 0;
   // Independent volunteer ADS-B networks. Each returns the same readsb-style JSON; results are merged by aircraft id.
   // FlyItalyADSB allows web pages to read it (free personal key). The others work only through a relay.
@@ -873,7 +875,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=334, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=335, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1231,31 +1233,53 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
     var btn=document.getElementById('ltbtn'), bar=document.getElementById('ltal');
     function paint(){ if(btn){ btn.classList.toggle('on',ltOn); btn.setAttribute('aria-pressed',ltOn?'true':'false') } }
     function latest(){ if(tLatest&&Date.now()-tAt<5*60000) return Promise.resolve(tLatest);
-      return fetch(WMS+'&request=GetCapabilities&layer='+LYR).then(function(r){return r.text()}).then(function(x){ var m=/default="(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"/.exec(x.slice(x.indexOf(LYR))); if(m){ tLatest=m[1]; tAt=Date.now() } return tLatest }).catch(function(){ return tLatest }) } // no signal: keep the last good time (or none)
+      return fetch(WMS+'&request=GetCapabilities&layer='+LYR).then(function(r){return r.text()}).then(function(x){ var m=/default="(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)"/.exec(x.slice(x.indexOf(LYR))); if(m){ tLatest=m[1]; tAt=Date.now() } return tLatest||guess() }).catch(function(){ return tLatest||guess() }) }
+    /* the newest 10-minute frame is usually 10-20 min old: a safe guess when the list of times doesn't load */
+    function guess(){ var t=Date.now()-20*60000; return iso(t-t%600000) } // no signal: keep the last good time (or none)
     function iso(ms){ return new Date(ms).toISOString().replace(/\.\d+Z$/,'Z') }
     // one 10-minute frame for a box -> list of [lat,lon] cells with lightning
     function frame(s,w,n,e,time){ var W=Math.max(16,Math.min(640,Math.round((e-w)*111*Math.cos((s+n)/2*Math.PI/180)/2.5))), H=Math.max(16,Math.min(640,Math.round((n-s)*111/2.5)));
       var u=WMS+'&request=GetMap&layers='+LYR+'&styles=&crs=EPSG:4326&bbox='+[s,w,n,e].map(function(v){return v.toFixed(3)}).join(',')+'&width='+W+'&height='+H+'&format=image/png&transparent=true&time='+time;
       if(cache[u]) return Promise.resolve(cache[u]);
-      return fetch(u).then(function(r){ return r.ok?r.blob():null }).then(function(b){ if(!b||!/png/.test(b.type)) return []; return createImageBitmap(b).then(function(im){
+      return fetch(u).then(function(r){ return r.ok?r.blob():null }).then(function(b){ if(!b||!/png/.test(b.type)) return null; /* didn't load: unknown, not "no lightning" */ return createImageBitmap(b).then(function(im){
         var c=document.createElement('canvas'); c.width=W; c.height=H; var g=c.getContext('2d'); g.drawImage(im,0,0); var d=g.getImageData(0,0,W,H).data, out=[];
         for(var y=0;y<H;y++) for(var x=0;x<W;x++){ if(d[(y*W+x)*4+3]>0) out.push([n-(y+.5)*(n-s)/H, w+(x+.5)*(e-w)/W]) }
-        var k=Object.keys(cache); if(k.length>40) delete cache[k[0]]; cache[u]=out; return out }) }).catch(function(){ return [] }) }
+        var k=Object.keys(cache); if(k.length>80) delete cache[k[0]]; cache[u]=out; return out }) }).catch(function(){ return null }) }
     function frames(s,w,n,e,count){ return latest().then(function(t){ if(!t) return []; var t0=Date.parse(t), jobs=[];
       for(var i=0;i<count;i++) jobs.push(frame(s,w,n,e,iso(t0-i*600000)));
       return Promise.all(jobs).then(function(rs){ return {t:t0,frames:rs} }) }) }
     function draw(){ var g=++gen; layer.clearLayers(); if(!ltOn) return; var z=map.getZoom(); if(z<4) return;
       var b=map.getBounds().pad(0.1), s=Math.max(31.6,b.getSouth()), n=Math.min(73.7,b.getNorth()), w=Math.max(-156,b.getWest()), e=Math.min(-38.7,b.getEast()); if(s>=n||w>=e) return;
-      var cnt=cfg2.ltAge==='10'?1:cfg2.ltAge==='60'?6:3;
-      frames(s,w,n,e,cnt).then(function(res){ if(g!==gen||!res||!res.frames) return; var bins={};
-        res.frames.forEach(function(cells,age){ cells.forEach(function(c){ var p=map.latLngToContainerPoint(c), k=Math.floor(p.x/22)+'_'+Math.floor(p.y/22), o=bins[k];
+      var cnt=cfg2.ltAge==='10'?1:cfg2.ltAge==='30'?3:cfg2.ltAge==='180'?18:6;
+      frames(s,w,n,e,cnt).then(function(res){ if(g!==gen||!res||!res.frames) return; var bins={}, bad=res.frames.filter(function(x){ return x===null }).length;
+        res.frames.forEach(function(cells,age){ (cells||[]).forEach(function(c){ var p=map.latLngToContainerPoint(c), k=Math.floor(p.x/22)+'_'+Math.floor(p.y/22), o=bins[k];
           if(!o) bins[k]={lat:c[0],lon:c[1],age:age,n:1}; else { o.n++; if(age<o.age){ o.age=age; o.lat=c[0]; o.lon=c[1] } } }) });
         var list=Object.keys(bins).map(function(k){return bins[k]}).sort(function(a,b){return a.age-b.age}).slice(0,250), pt=[me.lat,me.lon];
         list.forEach(function(o){ var mins=(o.age+1)*10, km=Math.round(distNm(pt[0],pt[1],o.lat,o.lon)*1.852);
           L.marker([o.lat,o.lon],{icon:L.divIcon({className:'',html:'<span class="ltmk a'+Math.min(o.age,2)+'" role="img" aria-label="Lightning">⚡</span>',iconSize:[0,0]}),keyboard:false,zIndexOffset:-200,title:'Lightning'})
             .bindPopup('<b>⚡ Lightning</b><br>Within the last '+mins+' min<br>'+km+' km from you',{closeButton:false}).addTo(layer) });
-        setStatLt(list.length) }) }
-    function setStatLt(n){ var el=document.getElementById('ltnote'); if(!el) return; clearTimeout(setStatLt.t); el.hidden=!!n; if(!n) setStatLt.t=setTimeout(function(){ el.hidden=true },4000) }
+        setStatLt(list.length,bad===res.frames.length,cnt) }) }
+    /* nothing in view: look much wider (about 900 km around you, last 3 h) and say where the nearest lightning is, so an empty map is never a mystery */
+    var wide={k:'',t:0,v:null};
+    function nearest(){ var c=map.getCenter(), k=c.lat.toFixed(0)+','+c.lng.toFixed(0); if(wide.k===k&&Date.now()-wide.t<10*60000) return Promise.resolve(wide.v);
+      var s=Math.max(31.6,c.lat-8), n=Math.min(73.7,c.lat+8), dw=12/Math.cos(c.lat*Math.PI/180), w=Math.max(-156,c.lng-dw), e=Math.min(-38.7,c.lng+dw);
+      return latest().then(function(t){ if(!t) return null; var t0=Date.parse(t), jobs=[]; for(var i=0;i<18;i++) jobs.push(frame(s,w,n,e,iso(t0-i*600000)));
+        return Promise.all(jobs).then(function(rs){ if(rs.every(function(x){ return x===null })) return null; var best=null;
+          rs.forEach(function(cells,age){ (cells||[]).forEach(function(q){ var d=distNm(c.lat,c.lng,q[0],q[1])*1.852; if(!best||d<best.km-30||(d<best.km&&age<=best.age)) best={km:d,age:age,lat:q[0],lon:q[1]} }) });
+          var v={best:best,t:t0}; wide={k:k,t:Date.now(),v:v}; return v }) }) }
+    function dirTo(la,lo,la2,lo2){ var r=Math.PI/180, y=Math.sin((lo2-lo)*r)*Math.cos(la2*r), x=Math.cos(la*r)*Math.sin(la2*r)-Math.sin(la*r)*Math.cos(la2*r)*Math.cos((lo2-lo)*r), b=(Math.atan2(y,x)/r+360)%360; return ['N','NE','E','SE','S','SW','W','NW'][Math.round(b/45)%8] }
+    function setStatLt(n,failed,cnt){ var el=document.getElementById('ltnote'); if(!el) return; clearTimeout(setStatLt.t); var my=gen;
+      if(n){ el.hidden=true; return }
+      var win=cnt===1?'10 min':cnt===3?'30 min':cnt===18?'3 h':'hour';
+      function show(h,ms){ if(my!==gen||!ltOn) return; el.innerHTML=h; el.hidden=false; var b=el.querySelector('button'); if(b) b.onclick=function(){ var o=b._o; map.setView([o.lat,o.lon],Math.max(7,Math.min(map.getZoom(),9))) };
+        clearTimeout(setStatLt.t); setStatLt.t=setTimeout(function(){ el.hidden=true },ms||9000); return b }
+      if(failed){ show('\u26a1 Couldn\u2019t reach the lightning data (Environment Canada). Trying again soon.',7000); return }
+      show('\u26a1 None in view (last '+win+') \u00b7 checking farther out\u2026',12000);
+      nearest().then(function(v){ if(my!==gen) return;
+        if(!v){ show('\u26a1 None in view (last '+win+')',6000); return }
+        if(!v.best){ show('\u26a1 No lightning within about 900 km in the last 3 h. That\u2019s normal outside storm season.',9000); return }
+        var o=v.best, mins=(o.age+1)*10, ago=mins<60?mins+' min':Math.round(mins/60*10)/10+' h', km=uDist(o.km/1.852)+' '+distUnit();
+        var b=show('\u26a1 None in view \u00b7 nearest: '+km+' '+dirTo(map.getCenter().lat,map.getCenter().lng,o.lat,o.lon)+', '+ago+' ago <button type="button" style="margin-left:auto;border:0;border-radius:9px;padding:6px 10px;font:700 13px var(--font);background:#f9a825;color:#111">Show</button>',12000); if(b) b._o=o }) }
     // alerts: only when turned on in Settings
     function check(){ var R=+cfg2.ltAlert; if(!R||document.hidden&&!('Notification' in window)) return;
       var dLat=R/111, dLon=R/(111*Math.cos(me.lat*Math.PI/180));
