@@ -131,7 +131,7 @@
       if(showKey) h+='<div class="frsmall">Press and hold, then Copy. Save it somewhere private (like your password app). <b>Anyone with this key can act as you</b>, so never send it to anyone.</div><input class="frkey" readonly value="'+esc(uid())+'" aria-label="Your rider key">';
       h+='<form class="fradd" data-f="restore" style="margin-top:8px"><input maxlength="64" placeholder="New phone? Paste your saved key" aria-label="Restore rider key" autocomplete="off"><button type="submit" class="frbt">Restore</button></form>';
       h+='<button type="button" class="frlink red" data-a="wipe">Delete my friends &amp; chat data</button>';
-      h+='<div class="frsmall"><a href="privacy.html" target="_blank" rel="noopener">Privacy &amp; rider rules</a> · Chats are deleted after 30 days. 🆘 sends your spot to a chat, it does not call 911.</div>';
+      h+='<div class="frsmall"><a href="privacy.html" target="_blank" rel="noopener">Privacy &amp; rider rules</a> · Chats are deleted after 30 days. 🆘 sends your spot to a chat only.</div>';
       if(S.admin) h+='<button type="button" class="frbt r" data-a="mod">Moderator: reports</button>';
     }
     h+='</div>'; sh.innerHTML=h; sh.className='list' }
@@ -262,7 +262,7 @@
     if(a==='msgspot'){ var la=+b.getAttribute('data-lat'), lo=+b.getAttribute('data-lon'); close(); var ll=L.latLng(la,lo); map.once('moveend',function(){ setTimeout(function(){ if(window.__pin) window.__pin(ll,(b.getAttribute('data-n')||'Friend')+'\'s spot') },60) }); map.flyTo(ll,Math.max(map.getZoom(),14),{duration:1}); return }
     if(a==='qspot'){ var sp=mySpot(); if(!sp) return toast('No GPS spot yet.'); return send('',sp) }
     if(a==='qok') return send('👍 OK');
-    if(a==='qhelp'){ if(!sure(b,'Tap again: sends your spot here (not 911)')) return; var hp=mySpot(); if(navigator.onLine===false&&window.__mesh&&__mesh.sound&&__mesh.sound.on()) __mesh.sound.help(); if(navigator.onLine===false&&window.__mesh&&__mesh.on()&&hp){ helpId=__mesh.help(hp.lat,hp.lon,'Needs help')||null; toast('🆘 Sent to everyone nearby with AwareBC') } return send('🆘 Need help!',hp) }
+    if(a==='qhelp'){ if(!sure(b,'Tap again: sends your spot to this chat')) return; var hp=mySpot(); if(navigator.onLine===false&&window.__mesh&&__mesh.sound&&__mesh.sound.on()) __mesh.sound.help(); if(navigator.onLine===false&&window.__mesh&&__mesh.on()&&hp){ helpId=__mesh.help(hp.lat,hp.lon,'Needs help')||null; toast('🆘 Sent to everyone nearby with AwareBC') } return send('🆘 Need help!',hp) }
     if(a==='gaddsel'){ var sel=sh.querySelector('.frgadd'); var have={}; (chat.mem||[]).forEach(function(m){ have[m.id]=1 }); var opts=S.friends.filter(function(f){ return !have[f.id] });
       if(!opts.length) return toast('All your friends are already in this group.'); sel.innerHTML='<option value="">Pick a friend…</option>'+opts.map(function(f){ return '<option value="'+esc(f.id)+'">'+esc(f.n)+' #'+esc(f.t)+'</option>' }).join(''); sel.hidden=false; b.hidden=true; return }
     if(a==='gleave'){ if(b.getAttribute('data-sure')!=='1'){ b.setAttribute('data-sure','1'); b.textContent='Tap again to leave'; return } return api('gleave',{g:chat.id}).then(function(){ toast('You left the group'); chat=null; view='list'; return sync() }).then(render).catch(function(x){ toast(x.message) }) }

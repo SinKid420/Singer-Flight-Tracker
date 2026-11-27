@@ -56,7 +56,7 @@
         if(g[2]&&!moreOpen()) return '<button type="button" class="morerow" data-a="mtog"><b>'+g[0]+'</b><span>Show '+L2.length+' ›</span></button><small class="morehint">'+g[2]+'</small>'; /* "More": folded away until tapped */
         return '<div class="gh"'+(g[2]?' style="display:flex"':'')+'>'+g[0]+(g[2]?'<a href="#" data-a="mtog" style="margin-left:auto;font:600 12.5px var(--font,system-ui);color:#64d2ff;text-decoration:none">Hide ‹</a>':'')+'</div><div class="tt">'+L2.map(function(x){ var i=ACT.push(x)-1, dim=x[3]==='off'&&!o;
         return '<button type="button" data-i="'+i+'" style="--c:'+x[2]+'"'+(dim?' class="dim" aria-label="'+x[1]+' (Off-road, tap to switch)"':'')+'><em aria-hidden="true">'+x[0]+'</em><span>'+x[1]+'</span></button>' }).join('')+'</div>' }).join('')+
-      '<button type="button" class="sos" data-t="t_rescue" style="width:100%;text-align:left;color:#eef1f5"><span class="ib">'+svg('buoy',18,'#0a0d10')+'</span><span><b>In danger? Call 911</b><small>Rescue card shows your exact spot</small></span></button></div>';
+      '<button type="button" class="sos" data-t="t_rescue" style="width:100%;text-align:left;color:#eef1f5"><span class="ib">'+svg('buoy',18,'#0a0d10')+'</span><span><b>Rescue card</b><small>Your exact spot, ready for rescuers</small></span></button></div>';
     S.hidden=false }
   window.addEventListener('click',function(e){ var b=e.target&&e.target.closest&&e.target.closest('#toolbtn'); if(!b||!document.body.classList.contains('awshell')) return;
     e.stopPropagation(); e.preventDefault(); document.body.classList.remove('toolon'); open() },true);
