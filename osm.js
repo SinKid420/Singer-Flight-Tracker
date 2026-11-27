@@ -27,7 +27,7 @@
   function speedU(i,j){ var b=bb(i,j,SS); return OP+encodeURIComponent('[out:json][timeout:25];way('+b+')[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|track|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$"][maxspeed];out tags geom;') }
   var CC={}, ck=[];
   var run=0, Q=[]; function slot(fn){ return new Promise(function(ok){ Q.push(function(){ run++; fn().then(ok,function(){ ok(null) }).then(function(){ run--; if(Q.length) Q.shift()() }) }); if(run<2) Q.shift()() }) } // Overpass allows about 2 at once
-  function get(u){ if(CC[u]) return CC[u]; var p=slot(function(){ return fetch(u).then(function(r){ if(!r.ok) throw 0; return r.json() }).then(function(j){ return j.elements||[] }) }).then(function(x){ if(!x) delete CC[u]; return x }); CC[u]=p; ck.push(u); if(ck.length>80) delete CC[ck.shift()]; return p }
+  function get(u){ if(CC[u]) return CC[u]; var p=slot(function(){ window.__ovqLow=1; var fq=fetch(u); window.__ovqLow=0; /* background trail data: waits behind things you asked for */ return fq.then(function(r){ if(!r.ok) throw 0; return r.json() }).then(function(j){ return j.elements||[] }) }).then(function(x){ if(!x) delete CC[u]; return x }); CC[u]=p; ck.push(u); if(ck.length>80) delete CC[ck.shift()]; return p }
   function cellsFor(b,s){ var o=[]; for(var i=Math.floor(b.s/s);i<=Math.floor(b.n/s);i++) for(var j=Math.floor(b.w/s);j<=Math.floor(b.e/s);j++) o.push([i,j]); return o }
   function kindOf(t){ if(t.barrier) return 'gate'; var a=t.amenity;
     if(a==='fuel'||a==='charging_station') return 'fuel'; if(a==='hospital'||a==='ranger_station'||t.emergency||t.aeroway==='helipad'||t.tourism==='wilderness_hut'||t.tourism==='alpine_hut'||a==='shelter') return 'help';
