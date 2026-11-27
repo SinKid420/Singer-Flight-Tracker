@@ -53,7 +53,7 @@
   function hereOk(t){ return t[3]==='both'||(t[3]==='off')===off() }
   function toggle(t){ if(t[4]==='btn'){ var b=$(t[5]); if(b) b.click() } else if(t[4]==='sel') setSel(t[5],selOn(t[5])?'0':'1'); else setSel('radop',rainOn()?'0.05':'0.6') }
   function groups(){ var o=off();
-    return [[o?'Roads &amp; trails':'Roads &amp; travel',o?['fsr','back','motor','close','camp','creek','trail','rep']:['road','ferry','apt','fsr']],['Weather',['fire','lt','rain','mt']],['More',['plane','space'],'Planes overhead, space weather']].map(function(g){ return [g[0],g[1].filter(function(k){ return exists(K[k]) }),g[2]] }) }
+    return [[o?'Roads &amp; trails':'Roads &amp; travel',o?['fsr','back','motor','close','camp','trail','rep']:['road','ferry','apt','fsr']],['Weather',['fire','lt','rain','mt']],['More',['plane','space'],'Planes overhead, space weather']].map(function(g){ return [g[0],g[1].filter(function(k){ return exists(K[k]) }),g[2]] }) }
   function moreOpen(){ try{ return localStorage.getItem('aw-lyrmore')==='1' }catch(e){ return false } }
 
   var S=null;
