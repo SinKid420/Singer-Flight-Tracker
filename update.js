@@ -16,7 +16,9 @@
 
   // other first-run screens and driving come first: the card waits for a calm moment
   function busy(){ var b=document.body.classList; return !!document.querySelector('#awob,#awtour,.rlq:not([hidden]),#ofsetup:not([hidden])')||b.contains('navdrv')||document.hidden }
-  function show(apply){ pend=apply; if(shown||Date.now()<snooze) return; if(busy()){ setTimeout(function(){ if(pend&&!shown) show(pend) },15000); return }
+  addEventListener('pointerdown',function(){ window.__awTouched=1 },{once:true,capture:true});
+  /* found in the first 45 seconds, before you've touched anything: switch to the new version straight away, no card */
+  function show(apply){ pend=apply; if(!window.__awTouched&&performance.now()<45000&&!document.hidden&&Date.now()-(+ls('aw-autoupd')||0)>600000){ ls('aw-autoupd',String(Date.now())); try{ apply() }catch(x){ location.reload() } return } if(shown||Date.now()<snooze) return; if(busy()){ setTimeout(function(){ if(pend&&!shown) show(pend) },15000); return }
     var d=document.createElement('div'); d.id='awupd'; d.setAttribute('role','dialog'); d.setAttribute('aria-label','Update available');
     d.innerHTML='<div class="h"><span class="bd" aria-hidden="true"><svg viewBox="0 0 24 24"><circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M12 7.5v8M8.5 12l3.5 3.5 3.5-3.5"/></svg></span><span class="t"><b>Update available</b><small>A new version of AwareBC is ready. It takes about 2 seconds, and your settings and saved maps stay.</small></span><button type="button" class="x" data-u="later" aria-label="Close">✕</button></div>'+
       '<div class="r"><button type="button" class="lt" data-u="later">Later</button><button type="button" class="go" data-u="go">Update now</button></div>';
@@ -36,7 +38,7 @@
   function check(force){ if(navigator.onLine===false) return; var gap=NAT?6*3600000:10*60000; if(!force&&Date.now()-last<gap) return; last=Date.now(); if(NAT) natCheck(); else webCheck() }
 
   window.__updPop=function(){ show(NAT?function(){ location.reload() }:webApply) }; // the service worker says a new copy downloaded
-  setTimeout(function(){ check(true) },8000);
+  setTimeout(function(){ check(true) },3000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) check(false) });
   addEventListener('online',function(){ check(false) });
   setInterval(function(){ if(!document.hidden) check(true) },30*60000);

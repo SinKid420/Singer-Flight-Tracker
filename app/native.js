@@ -127,8 +127,11 @@
       localStorage.removeItem('aw-pending'); WV.setServerBasePath({ path: p.path }).then(persist).catch(function () {}); return;
     }
     if (p && p.n <= cur.n) localStorage.removeItem('aw-pending');
+    // as soon as the map is up, look for a newer version. If it downloads within a minute of opening and you haven't touched the screen yet, switch to it right away
+    var t0 = Date.now(), touched = false; addEventListener('pointerdown', function () { touched = true }, { once: true, capture: true });
+    (function wait(n) { if (window.__AW && window.__AW.map) { check(cur).then(function (r) { if (r && r.state === 'ready' && !touched && Date.now() - t0 < 60000) window.__native.applyUpdate() }); return } if (n < 20) setTimeout(function () { wait(n + 1) }, 1000) })(0);
     setTimeout(function () {
-      if (window.__AW && window.__AW.map) { clean(cur.id); setTimeout(function () { check(cur) }, 5000); return }
+      if (window.__AW && window.__AW.map) { clean(cur.id); return }
       WV.getServerBasePath().then(function (r) { // this version didn't start: go back to the built-in one
         if (!r || !r.path || r.path.indexOf('/live/') < 0) return;
         var bad = lsj('aw-bad', []); bad.push(cur.id); lss('aw-bad', bad.slice(-20));

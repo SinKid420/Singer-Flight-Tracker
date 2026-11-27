@@ -873,7 +873,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=326, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=327, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -1983,7 +1983,7 @@ window.__AW={hd:function(){ return lastHd },map:map,base:function(){ return base
   // Works as an installable app once the page is hosted on https
   if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(function(){});
     // the app opens from the phone straight away; when a newer version has downloaded in the background, offer it
-    navigator.serviceWorker.addEventListener('message',function(e){ if(!e.data||e.data.t!=='upd') return; if(window.__updPop) window.__updPop(); else location.reload() }) }
+    navigator.serviceWorker.addEventListener('message',function(e){ if(!e.data||e.data.t!=='upd') return; /* a newer version arrived right after opening (slow signal): swap to it at once, before you start using the map */ var la=0; try{ la=+localStorage.getItem('aw-autoupd')||0 }catch(x){} if(e.data.auto&&!window.__awTouched&&performance.now()<45000&&Date.now()-la>600000){ try{ localStorage.setItem('aw-autoupd',String(Date.now())) }catch(x){} location.reload(); return } if(window.__updPop) window.__updPop(); else location.reload() }); addEventListener('pointerdown',function(){ window.__awTouched=1 },{once:true,capture:true}) }
 })();
 
 // ---------- Settings ▸ App updates: check now, download with progress, install ----------
