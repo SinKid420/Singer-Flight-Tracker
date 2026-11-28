@@ -37,6 +37,13 @@
   '#awchips button{pointer-events:auto;display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:6px 10px;border-radius:12px;border:1px solid #2a2f36;background:rgba(23,26,30,.9);color:#eef0f3;font:650 11.5px var(--font,system-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
   '#awchips button[hidden]{display:none}#awchips .c1 svg{color:#64d2ff}#awchips .ok svg{color:#32d74b}#awchips .w1 svg{color:#ffb340}#awchips .w2 svg{color:#ff453a}'+
   /* tab bar */
+  /* the map credits line sits under the tab bar (inside its bottom edge), off the map */
+  'body.awshell #awtabs{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)!important}'+
+  'body.awshell .leaflet-control-attribution{position:fixed!important;left:0!important;right:0!important;bottom:env(safe-area-inset-bottom,0px)!important;z-index:1006;margin:0!important;padding:0 8px!important;background:transparent!important;text-align:center;font-size:10.5px!important;line-height:14px!important;height:14px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#7d848e!important;max-width:none!important}'+
+  'body.awshell .leaflet-control-attribution.open{height:auto;max-height:40vh;overflow:auto;white-space:normal;background:rgba(14,14,16,.96)!important;padding:8px 12px!important;line-height:1.4!important;border-top:1px solid #23272d}'+
+  'body.awshell.navon .leaflet-control-attribution{display:none}'+
+  /* main map buttons (Layers, My spot) one size bigger */
+  'body.awshell #menubtn,body.awshell #locate{width:48px!important;height:48px!important}body.awshell #menubtn svg,body.awshell #locate svg{transform:scale(1.08)!important}'+
   '#awtabs{position:fixed;z-index:1005;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 64px);padding-bottom:env(safe-area-inset-bottom,0px);display:flex;background:#14171b;border-top:1px solid #23272d}'+
   '#awtabs button{flex:1;border:0;background:none;color:#8b929c;display:grid;justify-items:center;align-content:center;gap:3px;font:600 11px var(--font,system-ui);position:relative}#awtabs button.on{color:#ff453a;font-weight:700}'+
   '#awtabs .bd{position:absolute;top:8px;left:50%;margin-left:6px;width:10px;height:10px;border-radius:50%;background:#ff453a;border:2px solid #14171b}#awtabs .bd[hidden]{display:none}#awtabs button[hidden]{display:none}'+
@@ -66,6 +73,8 @@
   '#awme .pseg{margin-left:auto;display:flex;background:rgba(255,255,255,.07);border-radius:10px;padding:2px}#awme .pseg button{border:0;background:none;padding:6px 11px;border-radius:8px;font:700 12px var(--font,system-ui);color:#9aa3ad}#awme .pseg button.on{background:#eef1f5;color:#0a0d10}'+
   '#awme .ft{text-align:center;color:#8b929c;font:500 12px var(--font,system-ui);margin-top:12px}#awme .ft b{color:#fff}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+  /* credits line: moved out of the map so it can sit under the tab bar (the map draws below the tabs) */
+  (function mv(n){ var ac=document.querySelector('.leaflet-control-attribution'); if(!ac){ if(n<40) setTimeout(function(){ mv(n+1) },250); return } if(document.body.classList.contains('awshell')&&ac.parentNode!==document.body) document.body.appendChild(ac) })(0);
 
   // ---- top bar: search + mode switch ----
   var top=document.createElement('div'); top.id='awtop';
