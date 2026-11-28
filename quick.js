@@ -42,7 +42,10 @@
   function add(k){ if(Q.some(function(q){ return q.k===k })) return; /* starts just above the middle, then you drag it into place */ Q.push({k:k,x:.5,y:.42}); save(); draw();
     setTimeout(function(){ showBar(k,'Drag <b>'+LY.K[k][2]+'</b> where you want it, then tap Done.') },120) }
   function remove(k){ Q=Q.filter(function(q){ return q.k!==k }); save(); draw(); LY.refresh() }
-  window.__quick={has:function(k){ return Q.some(function(q){ return q.k===k }) },add:add,remove:remove};
+  /* dropped straight onto the map from Layers: lands where you let go (or moves there if it was already on the map) */
+  function addAt(k,x,y){ var q=Q.filter(function(z){ return z.k===k })[0]; if(q){ q.x=x; q.y=y } else Q.push({k:k,x:x,y:y}); save(); draw();
+    var n=document.createElement('div'); n.className='frtoast'; n.style.zIndex=6400; n.textContent='📌 '+LY.K[k][2]+' added to your map. Hold it to move or remove.'; document.body.appendChild(n); setTimeout(function(){ n.classList.add('go') },2600); setTimeout(function(){ n.remove() },3200) }
+  window.__quick={addAt:addAt,has:function(k){ return Q.some(function(q){ return q.k===k }) },add:add,remove:remove};
   draw(); addEventListener('resize',draw);
   new MutationObserver(function(){ paint() }).observe(document.body,{attributes:true,attributeFilter:['class']});
   setInterval(paint,2500);
