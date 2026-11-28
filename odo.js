@@ -33,7 +33,9 @@
   function show(){ if(!el){ el=document.createElement('button'); el.type='button'; el.id='awodo'; el.setAttribute('aria-label','Odometer: tap for today and trip reset');
       el.innerHTML='<div><b class="s">0</b><small>km/h</small></div><div><b class="t">0</b><small>trip km</small></div><div class="tot"><b class="o">0</b><small>total km</small></div>'; el.onclick=card; document.body.appendChild(el) }
     el.hidden=false; paint() }
-  function paint(){ if(!el) return; el.querySelector('.s').textContent=Math.round(spd); el.querySelector('.t').textContent=fmt(O.trip,1); el.querySelector('.o').textContent=fmt(O.tot,O.tot<100?1:0) }
+  /* during directions the strip sits just above the arrival bar, wherever that bar ends up */
+  function place(){ if(!el) return; var nb=document.body.classList.contains('navon')&&document.querySelector('#navp .nbar'); if(nb&&nb.offsetParent!==null){ var r=nb.getBoundingClientRect(); el.style.setProperty('bottom',Math.round(innerHeight-r.top+8)+'px','important') } else el.style.removeProperty('bottom') }
+  function paint(){ if(!el) return; place(); el.querySelector('.s').textContent=Math.round(spd); el.querySelector('.t').textContent=fmt(O.trip,1); el.querySelector('.o').textContent=fmt(O.tot,O.tot<100?1:0) }
   /* stopped for a minute: the strip tucks away (the km are still counted when you move again) */
   setInterval(function(){ var nv=document.body.classList.contains('navon'); if(nv&&O.tot>0) show(); if(el&&!el.hidden&&!nv&&Date.now()-movT>60000){ spd=0; el.hidden=true } if(nv&&Date.now()-movT>20000){ spd=0; paint() } },5000);
   function card(){ var o=document.createElement('div'); o.id='awodosh'; o.setAttribute('role','dialog'); o.setAttribute('aria-label','Odometer');
