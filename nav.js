@@ -39,8 +39,11 @@
     '#navp .nthen{margin:10px -14px -14px;padding:7px 14px;border-radius:0 0 22px 22px;background:rgba(0,0,0,.22);font:700 12px var(--font,system-ui);color:#bfe9ff}#navp.drv .nsv{margin-top:8px;font:600 12px var(--font,system-ui);color:#e9f7ff}#navp.drv .nw div,#navp.drv>.nw{background:rgba(0,0,0,.22);border-color:rgba(255,201,102,.4)}'+
     '#navp .nbar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);margin:0;padding:12px 14px;border-radius:20px;display:flex;align-items:center;gap:10px;background:#12161c;border:1px solid rgba(255,255,255,.1);box-shadow:0 14px 34px rgba(0,0,0,.5)}body.awshell #navp .nbar{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)}'+
     '#navp .neta{flex:1;min-width:0}#navp .neta b{display:block;font:800 20px var(--font,system-ui);color:#32d74b}#navp .neta small{font:600 12px var(--font,system-ui);color:#9aa3ad}#navp .nbar button{flex:none;height:40px;padding:0 14px;border-radius:12px}#navp .nbar .nend{background:rgba(255,69,58,.18);border-color:rgba(255,69,58,.5);color:#ff6a5f;font-weight:800}#navp.drv .nl{max-height:26vh;background:rgba(0,0,0,.18);border-radius:12px;padding:0 8px;margin-top:10px;border:0}'+
+    /* Aurora night look: teal turn banner, teal arrival time */
+    'body.awnight #navp.drv{background:linear-gradient(160deg,#16927a,#0c4a40);border-color:rgba(79,240,192,.35);box-shadow:0 14px 34px rgba(0,0,0,.55),0 0 30px rgba(79,240,192,.25)}body.awnight #navp .neta b{color:#4ff0c0}body.awnight #navp .nthen{color:#c9fff0}body.awnight #navp .nbar{background:#0e1517;border-color:rgba(79,240,192,.15)}'+
     'body.navon #locmsg{top:calc(env(safe-area-inset-top,0px) + 232px)}.navdest{font-size:26px;line-height:1;filter:drop-shadow(0 1px 2px #000)}';
   document.head.appendChild(css);
+  function NT(){ return document.body.classList.contains('awnight') } /* night: Aurora teal route */
   var P=document.createElement('div'); P.id='navp'; P.hidden=true; P.setAttribute('role','region'); P.setAttribute('aria-label','Directions'); document.body.appendChild(P);
   var lineB=null, lineF=null, destM=null, dest=null, rt=null, nav=false, showList=false, busy=0, wid=null, offN=0, lastRe=0, lastPos=null;
 
@@ -48,8 +51,8 @@
     if(m==='uturn') return '↩'; if(/sharp left|^left/.test(m)) return '⬅'; if(/sharp right|^right/.test(m)) return '➡'; if(m==='slight left') return '↖'; if(m==='slight right') return '↗'; return '⬆' }
 
   function draw(){ clear(true); if(!rt) return;
-    lineB=L.polyline(rt.pts,{color:'#0b3d91',weight:9,opacity:.85,interactive:false}).addTo(map);
-    lineF=L.polyline(rt.pts,{color:rt.mode==='off'?'#ffb300':'#40a9ff',weight:5,opacity:1,interactive:false}).addTo(map) }
+    lineB=L.polyline(rt.pts,{color:NT()?'#0b4a3a':'#0b3d91',weight:9,opacity:.85,interactive:false}).addTo(map);
+    lineF=L.polyline(rt.pts,{color:NT()?'#4ff0c0':rt.mode==='off'?'#ffb300':'#40a9ff',weight:5,opacity:1,interactive:false}).addTo(map) }
   function clear(keepDest){ if(lineB) map.removeLayer(lineB); if(lineF) map.removeLayer(lineF); lineB=lineF=null; if(!keepDest&&destM){ map.removeLayer(destM); destM=null } }
 
   function at(sec){ return new Date(Date.now()+sec*1000).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}) }

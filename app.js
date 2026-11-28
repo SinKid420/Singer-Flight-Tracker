@@ -279,7 +279,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var themeMode='day';
   try{var tmv=localStorage.getItem('sky-theme'); if(tmv==='day'||tmv==='night'||tmv==='auto') themeMode=tmv}catch(e){}
   function sunAlt(lat,lon,t){var D=Math.PI/180,n=t/86400000+2440587.5-2451545.0,Lm=(280.46+0.9856474*n)%360,g=((357.528+0.9856003*n)%360)*D,lam=(Lm+1.915*Math.sin(g)+0.02*Math.sin(2*g))*D,eps=23.439*D,dec=Math.asin(Math.sin(eps)*Math.sin(lam)),ra=Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam)),gm=(18.697374558+24.06570982441908*n)%24,ha=(gm*15+lon)*D-ra;return Math.asin(Math.sin(lat*D)*Math.sin(dec)+Math.cos(lat*D)*Math.cos(dec)*Math.cos(ha))/D}
-  function applyTheme(){var night=themeMode==='night'||(themeMode==='auto'&&sunAlt(me.lat,me.lon,Date.now())<-1); document.getElementById('map').classList.toggle('night',night)}
+  function applyTheme(){var night=themeMode==='night'||(themeMode==='auto'&&sunAlt(me.lat,me.lon,Date.now())<-1); document.getElementById('map').classList.toggle('night',night); document.body.classList.toggle('awnight',night) /* Aurora night look for pages, directions and the route */}
   (function(){var sel=document.getElementById('maptheme'); if(sel){sel.value=themeMode; sel.onchange=function(){themeMode=sel.value;try{localStorage.setItem('sky-theme',themeMode)}catch(e){} applyTheme()}} })();
   applyTheme(); setInterval(applyTheme,300000);
   // one Settings folder open at a time so the sheet stays on one screen
@@ -875,7 +875,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=346, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=347, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');

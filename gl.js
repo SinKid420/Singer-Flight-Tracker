@@ -72,7 +72,8 @@
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
   var neon=ls('aw-neon')==='1'; // Off-road "Neon topo" theme: charcoal relief, white labels, glowing red trails
-  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:(k==='fsr'&&hill||NEWL)&&!LOW,lab:vec||labOn,poi:k==='sat'&&inBC()&&ls('aw-ovt')!=='0'} } // businesses only on On road, in BC (older phones too, lighter: see ovtLayers)
+  function night(){ var m=document.getElementById('map'); return !!(m&&m.classList.contains('night')) }
+  function want(){ var k=baseKey(); if(night()&&!dead){ if(k==='sat') return {kind:'aurora',hill:false,lab:true,poi:inBC()&&ls('aw-ovt')!=='0',nt:1}; if(k==='fsr') return {kind:'neon',hill:!LOW,lab:true,poi:false,nt:1} } /* Night: dark teal maps (Aurora) */ if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:(k==='fsr'&&hill||NEWL)&&!LOW,lab:vec||labOn,poi:k==='sat'&&inBC()&&ls('aw-ovt')!=='0'} } // businesses only on On road, in BC (older phones too, lighter: see ovtLayers)
   function inBC(){ var c=map.getCenter(); return c.lat>48.2&&c.lat<60.1&&c.lng>-139.5&&c.lng<-114 }
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
@@ -137,17 +138,29 @@
       /* gas stations and hospitals: always shown (never hidden behind other pins), found by type or by fuel brand name, a little less strict on Overture's score */
       {id:'aw-ovt-key',type:'symbol',source:'ovt','source-layer':lyr,minzoom:13,filter:['all',OPEN,['>=',['to-number',['coalesce',['get','confidence'],1],1],0.35],KEYP(o)],layout:L.extend({},BIZL,{'icon-image':['case',HOSP(o),'bz-doc','bz-gas'],'icon-allow-overlap':true,'symbol-sort-key':0}),paint:{}},
       {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:LOW?16:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true,'text-padding':4},paint:WHITE}]} }
-  function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
+  function neonStyle(nt){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
       var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
-        layers:[{id:'nn-bg',type:'background',paint:{'background-color':'#15171a'}},
+        layers:[{id:'nn-bg',type:'background',paint:{'background-color':nt?'#11191c':'#15171a'}},
 
-          {id:'nn-water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':'#0f1a22','fill-opacity':0.9}},
+          {id:'nn-water',type:'fill',source:'openmaptiles','source-layer':'water',paint:{'fill-color':nt?'#0b2030':'#0f1a22','fill-opacity':0.9}},
           {id:'nn-river',type:'line',source:'openmaptiles','source-layer':'waterway',paint:{'line-color':'#2b4656','line-width':['interpolate',['linear'],['zoom'],8,0.4,14,1.6]}},
           {id:'nn-road',type:'line',source:'openmaptiles','source-layer':'transportation',filter:['in',['get','class'],['literal',['motorway','trunk','primary','secondary','tertiary','minor','service']]],paint:{'line-color':'#6b7078','line-opacity':0.55,'line-width':['interpolate',['linear'],['zoom'],8,0.4,15,1.8]}}]};
-      if(LOW) delete st.sources['aw-dem']; else st.layers.splice(1,0,{id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-highlight-color':'#5d626a','hillshade-accent-color':'#2a1016','hillshade-illumination-direction':315}});
+      if(LOW) delete st.sources['aw-dem']; else st.layers.splice(1,0,{id:'nn-hill',type:'hillshade',source:'aw-dem',paint:{'hillshade-exaggeration':0.85,'hillshade-shadow-color':'#050607','hillshade-accent-color':nt?'#0f3a35':'#2a1016','hillshade-highlight-color':nt?'#4a6b68':'#5d626a','hillshade-illumination-direction':315}});
       s.layers.forEach(function(l){ var sl=l['source-layer']; if(l.type!=='symbol'||!/^(place|water_name|mountain_peak|transportation_name)$/.test(sl||'')) return; var o=JSON.parse(JSON.stringify(l)), p=o.paint||{};
         p['text-color']=sl==='water_name'?'#7fa6bd':'#e6e8ec'; p['text-halo-color']='rgba(0,0,0,0.9)'; p['text-halo-width']=1.3; if(o.layout){ delete o.layout['icon-image'] } o.paint=p; st.layers.push(o) });
       if(s.sprite) st.sprite=s.sprite; return st }) }
+  /* Aurora (night, On-road): OpenFreeMap's Liberty street map recoloured dark teal: charcoal land, deep blue water, dark green parks,
+     roads brighter by size, soft light labels with dark halos. Business pins and gas/hospitals stay on top. */
+  var AU={bg:'#11191c',land:'#141e22',park:'#10251c',wood:'#0f2119',water:'#0b2030',river:'#12364d',bld:'#1b262c',minor:'#22303a',mid:'#2b3a43',major:'#33454f',casing:'#070b0d',rail:'#263238',bound:'#2e4a52',txt:'#dfe9e7',road:'#9fb3b8',wtxt:'#5f9fb0',halo:'#0a1013'};
+  function auroraStyle(w){ return getJ(OFM+'styles/liberty').then(function(s0){ var st=ofmSrc(JSON.parse(JSON.stringify(s0)));
+      st.layers=st.layers.filter(function(l){ return l.type!=='fill-extrusion'&&l.type!=='hillshade' }).map(function(l){ var sl=l['source-layer']||'', id=l.id||'', p=l.paint=l.paint||{};
+        if(l.type==='background'){ p['background-color']=AU.bg; return l }
+        if(l.type==='fill'){ p['fill-color']=sl==='water'?AU.water:sl==='building'?AU.bld:/wood|forest/.test(id)?AU.wood:/park|grass|landcover|green|cemetery|pitch/.test(id+sl)?AU.park:AU.land; delete p['fill-pattern']; p['fill-outline-color']='rgba(0,0,0,0)'; if(sl==='building') p['fill-opacity']=0.9; return l }
+        if(l.type==='line'){ var c=sl==='waterway'?AU.river:sl==='boundary'?AU.bound:/rail/.test(id)?AU.rail:/casing/.test(id)?AU.casing:/motorway|trunk/.test(id)?AU.major:/primary|secondary/.test(id)?AU.mid:AU.minor; p['line-color']=c; delete p['line-pattern']; return l }
+        if(l.type==='symbol'){ var wn=/water|marine|ocean|lake|river|bay/.test(sl); p['text-color']=wn?AU.wtxt:sl==='transportation_name'?AU.road:AU.txt; p['text-halo-color']=AU.halo; p['text-halo-width']=1.5; if(l.layout&&l.layout['icon-image']) p['icon-opacity']=0.85; return l }
+        return l });
+      if(w.ovt){ var O=ovtLayers(w.ovt); st.sources.ovt=O.src; st.layers=st.layers.concat(O.layers) }
+      return st }) }
   /* New look labels: one clean style, soft dark halo, colour by kind (places white, roads light grey, water blue, peaks warm), nothing under 11 px */
   function polish(st){ if(!st||!st.layers) return st; var CO={place:'#ffffff',transportation_name:'#e6eaef',water_name:'#bfe3ff',waterway:'#bfe3ff',mountain_peak:'#f3e7d3',poi:'#ffffff',park:'#d8f0d0'};
     st.layers.forEach(function(l){ if(l.type!=='symbol'||!l.layout||!l.layout['text-field']) return; var sl=l['source-layer']||'', p=l.paint=l.paint||{}, k=/water|marine|ocean|lake|river|bay/i.test(sl)?'water_name':sl;
@@ -156,7 +169,8 @@
       if(sl==='place'&&!l.layout['text-letter-spacing']) l.layout['text-letter-spacing']=0.03 }); return st }
   function build(w){ var P=build0(w); return NEWL?P.then(polish):P }
   function build0(w){
-    if(w.kind==='neon') return neonStyle();
+    if(w.kind==='neon') return neonStyle(w.nt);
+    if(w.kind==='aurora') return auroraStyle(w);
     if(w.kind!=='sat') return getJ(OFM+'styles/'+w.kind).then(function(s){ var st=ofmSrc(JSON.parse(JSON.stringify(s))); return w.hill?addHill(st):st });
     // over the satellite picture: transparent map, upright labels (OpenFreeMap roads + Esri places), optional hillshade
     return getJ(OFM+'styles/liberty').then(function(s0){ var s=JSON.parse(JSON.stringify(s0)), st={version:8,glyphs:s.glyphs,sprite:s.sprite,sources:{},layers:[]};
@@ -174,10 +188,10 @@
   function setAttr(t){ var c=map.attributionControl; if(!c||t===attr) return; if(attr) c.removeAttribution(attr); attr=t; if(t) c.addAttribution(t) }
   function off(){ box.style.display='none'; curKey=''; leafletBase(true); rasterLabels(true); setAttr(''); map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(1) }) }
   var seq=0;
-  function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab+'|'+w.poi, my=++seq;
+  function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab+'|'+w.poi+'|'+(w.nt?'n':''), my=++seq;
     if(w.kind==='sat'&&!w.lab&&!w.hill&&!w.poi){ off(); return }
     if(key===curKey){ after(w); return }
-    (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
+    (w.poi&&(w.kind==='sat'||w.kind==='aurora')&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,antialias:!LOW,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?8:60,refreshExpiredTiles:false},cam()));
           gl.on('styleimagemissing',function(e){ if(/^bz-/.test(e.id)&&window.__biz&&!gl.hasImage(e.id)) try{ gl.addImage(e.id,window.__biz.image(e.id.slice(3)),{pixelRatio:2}) }catch(x){} });
           gl.on('load',function(){ loaded=true; after(want()) }); var idT=0; gl.on('idle',function(){ if(ovLyr&&window.__osmRedraw&&Date.now()-idT>4000){ idT=Date.now(); window.__osmRedraw() } }); gl.on('styledata',function(){ if(gl.isStyleLoaded&&gl.isStyleLoaded()){ loaded=true; after(want()) } });
@@ -190,6 +204,7 @@
     map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(vec?0:1) }); // the saved picture map would cover the street map
     setAttr((vec||w.lab?'© OpenFreeMap © OpenMapTiles':'')+(w.lab&&!vec?' · Labels © Esri':'')+(w.hill?' · Terrain: AWS Terrain Tiles':'')); sync() }
   window.__glBase=function(){ setTimeout(apply,0) };
+  /* Night on/off (or Auto at sunset): rebuild the map in the right style */ (function(){ var m=document.getElementById('map'), was=night(); if(m&&window.MutationObserver) new MutationObserver(function(){ var n=night(); if(n!==was){ was=n; apply() } }).observe(m,{attributes:true,attributeFilter:['class']}) })();
   // tap a business or place on the map (from the street-map data already on the phone): opens its info card
   map.on('click',function(e){ if(!gl||!loaded||dead||box.style.display==='none'||!window.__pin||baseKey()!=='sat') return; var p=e.containerPoint, F=[];
     try{ F=gl.queryRenderedFeatures([[p.x-16,p.y-16],[p.x+16,p.y+16]]).filter(function(f){ return (f.sourceLayer==='poi'&&f.properties&&f.properties.name||f.source==='ovt')&&f.geometry&&f.geometry.type==='Point' }) }catch(x){ return }
