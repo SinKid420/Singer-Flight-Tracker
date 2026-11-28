@@ -20,9 +20,11 @@
   function tick(){ if(!off()) return; var m=me(); if(!m) return; var now=Date.now();
     if(lastPos){ var d=km(lastPos.lat,lastPos.lon,m.lat,m.lon), dt=(now-lastPos.t)/3600000; if(d>0.03&&d/Math.max(dt,1e-4)<200){ F.km=(F.km||0)+d; sj('aw-fuel',F); trip(m,d,now); fuelWarn() } else if(d>0.03) trip(m,0,now) } else trip(m,0,now);
     lastPos={lat:m.lat,lon:m.lon,t:now} }
-  function trip(m,d,now){ if(!T||now-T.last>6*3600000) T={t0:now,last:now,km:0,pts:[[+m.lat.toFixed(5),+m.lon.toFixed(5)]],top:0,ph:0};
+  function trip(m,d,now){ if(!T||now-T.last>6*3600000) T={t0:now,last:now,km:0,pts:[[+m.lat.toFixed(5),+m.lon.toFixed(5)]],top:0,ph:0,up:0};
     T.last=now; T.km+=d; var p=T.pts[T.pts.length-1]; if(km(p[0],p[1],m.lat,m.lon)>0.15){ T.pts.push([+m.lat.toFixed(5),+m.lon.toFixed(5)]); if(T.pts.length>2500) T.pts=T.pts.filter(function(x,i){ return i%2===0 }) }
-    if(isFinite(m.alt)&&m.alt>T.top) T.top=Math.round(m.alt); sj('aw-trip',T) }
+    if(isFinite(m.alt)){ if(m.alt>T.top) T.top=Math.round(m.alt); /* metres climbed: only real climbs (GPS height wobbles a few metres) */ if(T.la==null) T.la=m.alt; else if(m.alt-T.la>8){ T.up=(T.up||0)+(m.alt-T.la); T.la=m.alt } else if(T.la-m.alt>8) T.la=m.alt }
+    if(d>0){ var y=new Date().getFullYear(), S=lj('aw-season',{y:y,km:0}); if(S.y!==y) S={y:y,km:0}; S.km+=d; sj('aw-season',S) } /* this year's kilometres: your Bush rank */
+    sj('aw-trip',T) }
   var warned=0;
   function range(){ return F.tank&&F.use?Math.max(0,F.tank/F.use*100-(F.km||0)):null }
   function fuelWarn(){ var r=range(); if(r==null) return; if(r<60&&Date.now()-warned>1800000){ warned=Date.now(); buzz(); toast('⛽ About '+Math.round(r)+' km of fuel left. Head toward gas.') } }
@@ -62,23 +64,51 @@
       .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json() }).then(function(j){ return (j.features||[]).map(function(x){ return x.properties||{} }) }) }
 
   // ================= trip recap card (a picture you can share) =================
+  // Bush rank: this year's Off-road kilometres level you up
+  var RANKS=[[0,'Backroad Rookie'],[50,'Trail Explorer'],[150,'Trail Hand'],[300,'Backroad Pro'],[600,'Backroad Legend'],[1000,'Bush Boss'],[2000,'Bush Legend']];
+  function rank(kmY){ var i=0; while(i<RANKS.length-1&&kmY>=RANKS[i+1][0]) i++; return {i:i,name:RANKS[i][1],next:RANKS[i+1]||null,from:RANKS[i][0]} }
+  // badges you collect (kept on this phone): earned once, shown bright from then on
+  var BADGES=[['summit','🏔️','Summit bagger',function(t,vis){ return vis>0 }],['century','🛻','Century run',function(t){ return t.km>=100 }],['high','⛰️','High roller',function(t){ return t.top>=1500 }],
+    ['early','🌅','Early bird',function(t){ return new Date(t.t0).getHours()<7 }],['night','🌙','Night owl',function(t){ var h=new Date(t.last).getHours(); return h>=21||h<4 }],['climb','🧗','Big climber',function(t){ return (t.up||0)>=1000 }]];
+  var SAY=['Put on some miles, bud.','Good day in the bush.','Dirt don’t lie.','Rig’s earned a wash.','Back before the coffee went cold.','Another one for the logbook.','That’s how you see BC.'];
   function recap(){ if(!T||T.pts.length<2){ toast('Drive a little in Off-road first, then make your recap.'); return }
-    var W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H; var g=c.getContext('2d');
-    var gr=g.createLinearGradient(0,0,0,H); gr.addColorStop(0,'#1d2633'); gr.addColorStop(1,'#0b0d10'); g.fillStyle=gr; g.fillRect(0,0,W,H);
+    var W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H; var g=c.getContext('2d'), F='system-ui,sans-serif';
+    function rr(x,y,w,h,r){ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h) }
+    // background: dark forest green with topo lines
+    var bg=g.createRadialGradient(W*.8,0,40,W*.8,0,H*1.1); bg.addColorStop(0,'#2d3d2e'); bg.addColorStop(.7,'#0e1310'); g.fillStyle=bg; g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(160,200,140,.12)'; g.lineWidth=3; for(var i=0;i<9;i++){ var y0=200+i*78; g.beginPath(); g.moveTo(-20,y0); g.bezierCurveTo(260,y0-90+i*6,520,y0+110,760,y0-20); g.bezierCurveTo(900,y0-70,1020,y0+30,W+20,y0-10); g.stroke() }
+    // title
+    var nm=''; try{ nm=localStorage.getItem('sky-trname')||'' }catch(e){} var d0=new Date(T.t0);
+    g.fillStyle='#fff'; g.font='800 64px '+F; g.fillText(d0.toLocaleDateString([], {weekday:'long'})+' in the bush',60,110);
+    g.fillStyle='#9aa4b2'; g.font='600 34px '+F; g.fillText(d0.toLocaleDateString([], {month:'long',day:'numeric'})+(nm?' · '+nm:''),60,158);
+    // the route, glowing
     var la=T.pts.map(function(p){ return p[0] }), lo=T.pts.map(function(p){ return p[1] }), s=Math.min.apply(null,la), n=Math.max.apply(null,la), w=Math.min.apply(null,lo), e=Math.max.apply(null,lo), kx=Math.cos((s+n)/2*Math.PI/180);
-    var bw=Math.max((e-w)*kx,1e-4), bh=Math.max(n-s,1e-4), sc=Math.min(860/bw,640/bh), ox=(W-bw*sc)/2, oy=170+(700-bh*sc)/2;
-    g.strokeStyle='rgba(255,255,255,.06)'; g.lineWidth=2; for(var i=0;i<8;i++){ g.beginPath(); g.moveTo(0,170+i*100); g.lineTo(W,170+i*100); g.stroke() }
-    g.lineJoin='round'; g.lineCap='round'; g.strokeStyle='#ff3b30'; g.lineWidth=12; g.beginPath();
-    T.pts.forEach(function(p,i){ var x=ox+(p[1]-w)*kx*sc, y=oy+(n-p[0])*sc; if(i) g.lineTo(x,y); else g.moveTo(x,y) }); g.stroke();
-    var a=T.pts[0], b=T.pts[T.pts.length-1]; [[a,'#30d158'],[b,'#fff']].forEach(function(q){ g.fillStyle=q[1]; g.beginPath(); g.arc(ox+(q[0][1]-w)*kx*sc,oy+(n-q[0][0])*sc,18,0,7); g.fill() });
-    g.fillStyle='#fff'; g.font='800 64px system-ui,sans-serif'; g.fillText('My trip',60,110); g.font='600 34px system-ui,sans-serif'; g.fillStyle='#9aa4b2'; g.fillText(new Date(T.t0).toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'}),60,155);
-    var hrs=(T.last-T.t0)/3600000, st=[[(T.km||0).toFixed(T.km<10?1:0)+' km','distance'],[Math.floor(hrs)+'h '+Math.round(hrs%1*60)+'m','time out'],[T.top?T.top.toLocaleString()+' m':'–','highest point']];
-    st.forEach(function(x,i){ var X=60+i*330; g.fillStyle='#15191e'; g.beginPath(); g.roundRect?g.roundRect(X,920,300,170,28):g.rect(X,920,300,170); g.fill(); g.fillStyle='#fff'; g.font='800 54px system-ui,sans-serif'; g.fillText(x[0],X+28,1000); g.fillStyle='#9aa4b2'; g.font='600 30px system-ui,sans-serif'; g.fillText(x[1],X+28,1050) });
-    var vis=Object.keys(V).filter(function(k){ return V[k]>=T.t0 }).length; g.fillStyle='#ffd54f'; g.font='700 36px system-ui,sans-serif'; g.fillText(vis?'🏅 '+vis+' summit'+(vis>1?'s, passes or lookouts':', pass or lookout')+' reached':'',60,1160);
-    g.fillStyle='#fff'; g.font='800 40px system-ui,sans-serif'; g.fillText('AwareBC',60,1280); g.fillStyle='#ff453a'; g.font='700 30px system-ui,sans-serif'; g.fillText('by Josh Singer',250,1280);
-    c.toBlob(function(bl){ if(!bl) return; var f=new File([bl],'awarebc-trip.png',{type:'image/png'});
-      if(navigator.canShare&&navigator.canShare({files:[f]})) navigator.share({files:[f],title:'My AwareBC trip',text:(T.km||0).toFixed(1)+' km on AwareBC'}).catch(function(){});
-      else { var u=URL.createObjectURL(bl), o=sheet('<h3>📸 Your trip recap</h3><img alt="Trip recap" src="'+u+'" style="width:100%;border-radius:14px;margin-top:8px"><a class="omb p" href="'+u+'" download="awarebc-trip.png">Save picture</a>') } },'image/png') }
+    var bw=Math.max((e-w)*kx,1e-4), bh=Math.max(n-s,1e-4), sc=Math.min(880/bw,520/bh), ox=(W-bw*sc)/2, oy=200+(560-bh*sc)/2;
+    function X(p){ return ox+(p[1]-w)*kx*sc } function Y(p){ return oy+(n-p[0])*sc }
+    g.lineJoin='round'; g.lineCap='round'; g.shadowColor='#ff9f0a'; g.shadowBlur=30; g.strokeStyle='#ff9f0a'; g.lineWidth=14; g.beginPath();
+    T.pts.forEach(function(p,i){ if(i) g.lineTo(X(p),Y(p)); else g.moveTo(X(p),Y(p)) }); g.stroke(); g.shadowBlur=0;
+    var a=T.pts[0], b=T.pts[T.pts.length-1]; g.fillStyle='#30d158'; g.beginPath(); g.arc(X(a),Y(a),20,0,7); g.fill(); g.fillStyle='#fff'; g.beginPath(); g.arc(X(b),Y(b),16,0,7); g.fill();
+    // stats
+    var hrs=(T.last-T.t0)/3600000, st=[[(T.km||0).toFixed(T.km<10?1:0)+' km','distance'],[Math.floor(hrs)+'h '+Math.round(hrs%1*60)+'m','out there'],[T.top?T.top.toLocaleString()+' m':(T.up?'+'+Math.round(T.up).toLocaleString()+' m':'–'),T.top?'highest point':'climbed']];
+    st.forEach(function(x,i){ var x0=60+i*330; g.fillStyle='rgba(255,255,255,.07)'; rr(x0,770,300,150,28); g.fill(); g.strokeStyle='rgba(255,255,255,.1)'; g.lineWidth=2; g.stroke();
+      g.fillStyle='#fff'; g.font='800 52px '+F; g.fillText(x[0],x0+26,842); g.fillStyle='#9aa4b2'; g.font='600 28px '+F; g.fillText(x[1],x0+26,888) });
+    // rank and progress bar
+    var S=lj('aw-season',{y:0,km:0}), kmY=S.y===new Date().getFullYear()?S.km:T.km, R=rank(kmY);
+    g.fillStyle='#ffd54f'; g.font='900 46px '+F; g.fillText('🏆 '+R.name,60,995);
+    g.fillStyle='#9aa4b2'; g.font='600 28px '+F; g.fillText('Level '+(R.i+1)+' · '+Math.round(kmY).toLocaleString()+' km this year'+(R.next?' · '+Math.max(1,Math.round(R.next[0]-kmY))+' km to '+R.next[1]:''),60,1036);
+    var pr=R.next?Math.min(1,(kmY-R.from)/(R.next[0]-R.from)):1; g.fillStyle='rgba(255,255,255,.09)'; rr(60,1054,960,18,9); g.fill(); var pg=g.createLinearGradient(60,0,1020,0); pg.addColorStop(0,'#ff9f0a'); pg.addColorStop(1,'#ffd54f'); g.fillStyle=pg; rr(60,1054,Math.max(18,960*pr),18,9); g.fill();
+    // badges: earned ones bright, the rest faded; a new one gets a callout
+    var vis=Object.keys(V).filter(function(k){ return V[k]>=T.t0 }).length, B=lj('aw-badges',{}), fresh=[];
+    BADGES.forEach(function(x){ if(!B[x[0]]&&x[3](T,vis)){ B[x[0]]=Date.now(); fresh.push(x) } }); sj('aw-badges',B);
+    g.font='64px '+F; BADGES.forEach(function(x,i){ g.globalAlpha=B[x[0]]?1:.22; g.fillText(x[1],60+i*110,1150) }); g.globalAlpha=1;
+    g.font='700 30px '+F; g.fillStyle=fresh.length?'#fff':'#9aa4b2'; g.fillText(fresh.length?(fresh.length>2?fresh.length+' new badges!':'New badge: '+fresh.map(function(x){ return x[2] }).join(' + ')+'!'):Object.keys(B).length+' of '+BADGES.length+' badges collected',60,1205);
+    // a line in the Northern bush style, and the credit
+    g.fillStyle='#c5ceb8'; g.font='italic 600 32px '+F; g.fillText('“'+SAY[Math.floor(T.t0/1000)%SAY.length]+'”',60,1260);
+    g.fillStyle='#fff'; g.font='800 38px '+F; g.fillText('AwareBC',60,1318); g.fillStyle='#ff453a'; g.font='700 30px '+F; g.fillText('by Josh Singer',236,1318);
+    if(fresh.length) try{ navigator.vibrate&&navigator.vibrate([40,60,40]) }catch(x){}
+    c.toBlob(function(bl){ if(!bl) return; var f=new File([bl],'awarebc-trip.png',{type:'image/png'}), u=URL.createObjectURL(bl);
+      var o=sheet('<button type="button" class="rcx" aria-label="Close" style="float:right;width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:15px">✕</button><h3>📸 Your ride card</h3><img alt="Ride card" src="'+u+'" style="width:100%;border-radius:14px;margin-top:8px">'+(navigator.canShare&&navigator.canShare({files:[f]})?'<button type="button" class="omb p" data-sh="1">Share</button>':'')+'<a class="omb'+(navigator.canShare?'':' p')+'" href="'+u+'" download="awarebc-trip.png">Save picture</a>');
+      var cx=o&&o.querySelector('.rcx'); if(cx) cx.onclick=function(){ o.remove() }; var sb=o&&o.querySelector&&o.querySelector('[data-sh]'); if(sb) sb.onclick=function(){ navigator.share({files:[f],title:'My AwareBC ride',text:(T.km||0).toFixed(1)+' km on AwareBC · '+R.name}).catch(function(){}) } },'image/png') }
 
   // ================= weekend planner =================
   function nextWeekend(days){ var out=[]; days.forEach(function(d,i){ var w=new Date(d+'T12:00').getDay(); if((w===6||w===0)&&out.length<2) out.push(i) }); return out }
@@ -105,7 +135,7 @@
     var o=sheet('<div class="omhd"><span class="ombd" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="f" d="M3 7h18v12H3z"/><path d="M3 7h18v12H3zM8 7V4h8v3M3 12h18"/></svg></span><span><b>Trip tools</b><small>Off-road · works from your own GPS</small></span><button type="button" class="omx" data-a="close" aria-label="Close">✕</button></div>'+
       '<button type="button" class="omfu" data-t="fuel"><span class="r"><span><b>'+(r==null?'Set your tank':'About '+Math.round(r)+' km')+'</b><small>'+(r==null?'to see your fuel range':'fuel range left')+'</small></span><em>⛽ '+(r==null?'Set up':'Tank')+'</em></span><span class="fb"><i style="width:'+pct.toFixed(0)+'%;background:linear-gradient(90deg,'+(r!=null&&r<60?'#ff453a,#ff6a5f':r!=null&&r<120?'#ffb340,#ffd60a':'#ffb340,#40e0c8')+')"></i></span><span class="fl"><span>Empty</span><span>'+(r==null?'Counts km from your GPS':Math.round(F.km||0)+' km since you filled up')+'</span><span>Full</span></span></button>'+
       '<div class="omgd">'+tl('fire','🔥','#ff453a','Campfires','BC Wildfire Service','<span class="omfp">'+(m?'Checking…':'Needs location')+'</span>')+tl('wl','🐻','#ffb340','Wildlife','Shows for 24 hours','+ Report one')+
-        tl('plan','🗓️','#64d2ff','Weekend planner','Best spots by forecast','Find spots')+tl('recap','🏁','#bf8bff','Trip recap',(T?(T.km||0).toFixed(1):'0')+' km · '+(T?Math.floor(hrs)+' h '+Math.round(hrs%1*60)+' min':'–'),'Make card')+
+        tl('plan','🗓️','#64d2ff','Weekend planner','Best spots by forecast','Find spots')+tl('recap','🏁','#bf8bff','Ride card',(T?(T.km||0).toFixed(1):'0')+' km · '+(T?Math.floor(hrs)+' h '+Math.round(hrs%1*60)+' min':'–'),'Make card')+
         tl('exp','⛰️','#40e0c8','Explorer badge','Summits, passes, lookouts',Object.keys(V).length+' found')+(inCv?tl('cv','🚙','#c2c9d1','Convoy role','Lead & sweep alerts',role?role.charAt(0).toUpperCase()+role.slice(1):'Member'):'')+'</div>'+
       '<div class="omsec" data-s="fuel" hidden><div class="lab">⛽ Fuel range</div><div class="omc"><div class="omrow"><label>Tank (L)<input type="number" inputmode="decimal" min="10" max="400" data-f="tank" value="'+(F.tank||'')+'" placeholder="80"></label><label>Uses (L/100 km)<input type="number" inputmode="decimal" min="3" max="60" data-f="use" value="'+(F.use||'')+'" placeholder="14"></label></div>'+
         '<div class="omrow"><button type="button" class="omb" data-a="fsave">Save</button><button type="button" class="omb p" data-a="fill">⛽ Filled up</button></div></div></div>'+
