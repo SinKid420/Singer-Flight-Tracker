@@ -72,7 +72,8 @@
   try{ var cl=JSON.parse(localStorage.getItem('aw-crash')||'[]')[0]; if(hill&&cl&&cl.k==='Closed unexpectedly'&&Date.now()-cl.t<180000&&cl.s&&/\|true\|/.test(cl.s.gl||'')){ hill=false; ls('aw-hill','0'); window.__glNote='3D hills were switched off to keep the map steady. Turn them back on in Off-road layers.' } }catch(e){}
   function baseKey(){ var b=document.querySelector('.seg button[aria-pressed=true]'); return b?b.getAttribute('data-b'):'sat' }
   var neon=ls('aw-neon')==='1'; // Off-road "Neon topo" theme: charcoal relief, white labels, glowing red trails
-  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:(k==='fsr'&&hill||NEWL)&&!LOW,lab:vec||labOn,poi:k==='sat'&&!LOW} } // businesses only on On road
+  function want(){ var k=baseKey(); if(k==='fsr'&&neon) return {kind:'neon',hill:!LOW,lab:true,poi:false}; /* terrain shading uses a lot of graphics memory: off on older phones */ var vec=k==='sat'&&style!=='sat'; return {kind:vec?style:'sat',hill:(k==='fsr'&&hill||NEWL)&&!LOW,lab:vec||labOn,poi:k==='sat'&&inBC()&&ls('aw-ovt')!=='0'} } // businesses only on On road, in BC (older phones too, lighter: see ovtLayers)
+  function inBC(){ var c=map.getCenter(); return c.lat>48.2&&c.lat<60.1&&c.lng>-139.5&&c.lng<-114 }
 
   // ---------- the GL map lives in its own pane, held upright and screen-sized while Leaflet moves and turns ----------
   var pane=map.createPane('glmap',map._rotatePane||map.getPane('mapPane')); pane.style.zIndex=250; pane.style.pointerEvents='none';
@@ -132,10 +133,10 @@
   function bizIcon(str){ var c=['case']; BK.forEach(function(k){ c.push(['any'].concat(k[1].map(function(w){ return ['in',w,str] }))); c.push('bz-'+k[0]) }); c.push('bz-shop'); return c }
   var BIZL={'icon-anchor':'center','icon-size':.85,'icon-allow-overlap':false,'text-font':['Noto Sans Regular'],'text-size':11,'text-anchor':'top','text-offset':[0,0.15],'text-max-width':8,'text-optional':true,'text-padding':4};
   function ovtLayers(o){ var u=o.u, lyr=o.layer, nm=o.nf==='names'?'':['get',o.nf]; /* names stored as text blobs: dots only, the name shows on tap */ return {src:{type:'vector',url:'pmtiles://'+u,attribution:'Places © Overture Maps Foundation'},layers:[
-      {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:['all',CLOSED,['!',KEYP(o)]],layout:L.extend({'icon-image':bizIcon(CATS)},BIZL),paint:{}},
+      {id:'aw-ovt-pin',type:'symbol',source:'ovt','source-layer':lyr,minzoom:LOW?15:14.5,filter:['all',CLOSED,['!',KEYP(o)]],layout:L.extend({'icon-image':bizIcon(CATS)},BIZL),paint:{}},
       /* gas stations and hospitals: always shown (never hidden behind other pins), found by type or by fuel brand name, a little less strict on Overture's score */
-      {id:'aw-ovt-key',type:'symbol',source:'ovt','source-layer':lyr,minzoom:14.5,filter:['all',OPEN,['>=',['to-number',['coalesce',['get','confidence'],1],1],0.35],KEYP(o)],layout:L.extend({},BIZL,{'icon-image':['case',HOSP(o),'bz-doc','bz-gas'],'icon-allow-overlap':true,'symbol-sort-key':0}),paint:{}},
-      {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true,'text-padding':4},paint:WHITE}]} }
+      {id:'aw-ovt-key',type:'symbol',source:'ovt','source-layer':lyr,minzoom:13,filter:['all',OPEN,['>=',['to-number',['coalesce',['get','confidence'],1],1],0.35],KEYP(o)],layout:L.extend({},BIZL,{'icon-image':['case',HOSP(o),'bz-doc','bz-gas'],'icon-allow-overlap':true,'symbol-sort-key':0}),paint:{}},
+      {id:'aw-ovt-lab',type:'symbol',source:'ovt','source-layer':lyr,minzoom:LOW?16:15,filter:CLOSED,layout:{'text-field':['coalesce',['to-string',nm],''],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8,'text-optional':true,'text-padding':4},paint:WHITE}]} }
   function neonStyle(){ return getJ(OFM+'styles/liberty').then(function(s0){ var s=ofmSrc(JSON.parse(JSON.stringify(s0)));
       var st={version:8,glyphs:s.glyphs,sources:{openmaptiles:s.sources.openmaptiles,'aw-dem':{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:LOW?11:14,attribution:'Terrain: AWS Terrain Tiles (Mapzen)'}},
         layers:[{id:'nn-bg',type:'background',paint:{'background-color':'#15171a'}},
@@ -174,7 +175,7 @@
   function off(){ box.style.display='none'; curKey=''; leafletBase(true); rasterLabels(true); setAttr(''); map.eachLayer(function(l){ if(l.setOpacity&&l.options&&/Offline map/.test(l.options.attribution||'')) l.setOpacity(1) }) }
   var seq=0;
   function apply(){ if(dead) return off(); var w=want(), key=w.kind+'|'+w.hill+'|'+w.lab+'|'+w.poi, my=++seq;
-    if(w.kind==='sat'&&!w.lab&&!w.hill){ off(); return }
+    if(w.kind==='sat'&&!w.lab&&!w.hill&&!w.poi){ off(); return }
     if(key===curKey){ after(w); return }
     (w.poi&&w.kind==='sat'&&PM&&PM.Protocol&&ls('aw-ovt')!=='0'?ovt().catch(function(){ return null }):Promise.resolve(null)).then(function(u){ w.ovt=u; return build(w) }).then(function(st){ if(my!==seq) return; curKey=key; loaded=false; box.style.display=''; pane.style.zIndex=w.kind==='sat'?250:150; size(); place();
       if(!gl){ try{ gl=new ML.Map(L.extend({container:box,style:st,interactive:false,attributionControl:false,fadeDuration:200,trackResize:false,renderWorldCopies:false,maxPitch:0,antialias:!LOW,pixelRatio:LOW?1:Math.min(window.devicePixelRatio||1,2),maxTileCacheSize:LOW?8:60,refreshExpiredTiles:false},cam()));
@@ -215,6 +216,8 @@
     var s=l.querySelector('select'); s.value=val; s.onchange=function(){ fn(s.value) } }
   row(document.querySelector('.lyrp[aria-label="On road layers"]'),'aw_style','Map style',[['sat','Satellite'],['liberty','Liberty'],['dark','Dark']],style,function(v){ style=v; ls('aw-style',v); apply() });
   window.__gl.setNeon=function(v){ neon=!!v; ls('aw-neon',v?'1':'0'); document.body.classList.toggle('neon',neon); apply() }; window.__gl.neon=function(){ return neon }; document.body.classList.toggle('neon',neon);
+  window.__gl.setStores=function(v){ ls('aw-ovt',v?'1':'0'); apply() }; window.__gl.stores=function(){ return ls('aw-ovt')!=='0' };
+  /* stores are BC only: switch them on or off as the map crosses the border */ var wasBC=inBC(); map.on('moveend',function(){ var b=inBC(); if(b!==wasBC){ wasBC=b; apply() } });
   window.__gl.setHill=function(v){ hill=!!v; ls('aw-hill',v?'1':'0'); apply() }; window.__gl.hill=function(){ return hill };
   apply();
 })();
