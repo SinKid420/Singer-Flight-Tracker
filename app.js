@@ -875,7 +875,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var follow=false, wId=null, lastSave=0, gpsLost=null, locBtn=document.getElementById('locate'), lastFix=0, msgT=null;
   var NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
   var locMsg=document.createElement('div'); locMsg.id='locmsg'; locMsg.setAttribute('role','status'); locMsg.hidden=true; document.body.appendChild(locMsg); locMsg.onclick=function(e){ var t=e.target; if(t&&t.id==='gpschk'){ gpsCheck(); return } if(t&&t.id==='gpscmp'){ rotAsk().then(function(r){ if(r==='denied') say('<b>Compass is blocked</b>Tap the icon left of the web address ▸ Permissions ▸ Motion sensors ▸ Allow.',15000); else gpsCheck() }); return } if(t&&t.id==='gpsgo'){ locMsg.hidden=true; locBtn.click(); return } if(t&&t.id==='gpsno'){ locMsg.hidden=true; return } if(t&&t.id==='gpsset'){ locMsg.hidden=true; try{ window.__native.settings() }catch(x){} return } locMsg.hidden=true };
-  var AWV=342, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
+  var AWV=343, lastAcc=0, lastErr=null, CHK='<button type="button" id="gpschk">GPS check</button>'; window.__AWV=AWV;
   window.__gpsCheck=function(){ gpsCheck() };
   function gpsCheck(){ say('<b>GPS check</b>Reading GPS and compass…',5000); rotProbe(function(na,nr){ gpsCheck2(na,nr) }) }
   function gpsCheck2(na,nr){ var P=(navigator.permissions&&navigator.permissions.query)?navigator.permissions.query({name:'geolocation'}).then(function(r){ return r.state },function(){ return '' }):Promise.resolve('');
@@ -910,7 +910,7 @@ var map = L.map('map',{zoomControl:false,attributionControl:true,maxZoom:19,minZ
   var accC=L.circle([me.lat,me.lon],{radius:1,color:'#ff3b30',weight:1,opacity:.45,fillColor:'#ff3b30',fillOpacity:.08,interactive:false});
   function onFix(pos){ var c=pos.coords, nl=c.latitude, nn=c.longitude; if(!isFinite(nl)||!isFinite(nn)) return;
     // a rough Wi-Fi/cell spot never replaces a good GPS spot from the last 20 s (stops the dot jumping blocks away)
-    var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; meShow(); lastFix=Date.now(); lastErr=null;
+    var ac0=c.accuracy||9999, nowF=Date.now(); if(goodT&&nowF-goodT<20000&&ac0>Math.max(100,goodAcc*3)) return; if(ac0<=50){ goodT=nowF; goodAcc=ac0 } me.lat=nl; me.lon=nn; me.label='you'; meShow(); lastFix=Date.now(); lastErr=null; try{ window.dispatchEvent(new CustomEvent('aw-fix',{detail:{lat:nl,lon:nn,acc:ac0,sp:(c.speed!=null&&isFinite(c.speed))?c.speed:-1,t:pos.timestamp||nowF}})) }catch(x){} /* for the odometer */
     ring.setLatLng([nl,nn]); var ac=c.accuracy||0; lastAcc=ac; accC.setLatLng([nl,nn]).setRadius(Math.min(ac,3000)); if(ac>30){ accC.setStyle(ac>120?{fillOpacity:0,weight:1.5,opacity:.7,dashArray:'6 6'}:{fillOpacity:.08,weight:1,opacity:.45,dashArray:null}); if(!map.hasLayer(accC)) accC.addTo(map) } else if(map.hasLayer(accC)) map.removeLayer(accC);
     var el=meMark.getElement(); if(el) el.classList.remove('stale');
     // Driving: speed and direction from the GPS (or worked out from the last spot), arrow shows which way you're heading
