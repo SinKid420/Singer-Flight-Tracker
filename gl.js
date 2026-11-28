@@ -222,7 +222,7 @@
   function near(lat,lon,name){ if(!gl||!loaded||dead||!gl.getSource||!gl.getSource('ovt')||!ovLyr) return null; var F; try{ F=gl.querySourceFeatures('ovt',{sourceLayer:ovLyr}) }catch(e){ return null } var best=null, bd=80;
     F.forEach(function(f){ var g=f.geometry; if(!g||g.type!=='Point') return; var c=g.coordinates, d=Math.hypot(c[1]-lat,(c[0]-lon)*Math.cos(lat*Math.PI/180))*111320, n=ovName(f.properties||{}); if(name&&!simil(n,name)) return; if(d<bd){ bd=d; best={n:n,p:f.properties||{},d:d,status:(f.properties||{}).operating_status||'open'} } }); return best }
   window.__ovt={ name:ovName, json:pj, near:near, ready:function(){ return !!(gl&&loaded&&gl.getSource&&gl.getSource('ovt')) } };
-  window.__gl={ apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
+  window.__gl={ aurora:function(){ return auroraStyle({}) }, apply:apply, state:function(){ return {style:style,hill:hill,lab:labOn,key:curKey,loaded:loaded,dead:dead,arch:archM} } };
 
   // ---------- controls in the layer panels ----------
   function row(pn,id,lab,opts,val,fn,top){ if(!pn||document.getElementById(id)) return; var l=document.createElement('label'); l.className=top?'fpt':'fps';
